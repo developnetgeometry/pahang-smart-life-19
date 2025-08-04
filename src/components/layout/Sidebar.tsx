@@ -43,74 +43,74 @@ export function AppSidebar() {
 
   const residentNavigation: NavigationGroup[] = [
     {
-      label: t('nav.dashboard'),
+      label: language === 'en' ? 'Dashboard' : 'Papan Pemuka',
       items: [
-        { title: t('nav.dashboard'), url: '/', icon: LayoutDashboard }
+        { title: language === 'en' ? 'Dashboard' : 'Papan Pemuka', url: '/', icon: LayoutDashboard }
       ]
     },
     {
-      label: t('nav.myActivities'),
+      label: language === 'en' ? 'My Activities' : 'Aktiviti Saya',
       items: [
-        { title: t('nav.myBookings'), url: '/my-bookings', icon: Calendar },
-        { title: t('nav.myVisitors'), url: '/my-visitors', icon: Users },
-        { title: t('nav.myComplaints'), url: '/my-complaints', icon: FileText },
-        { title: t('nav.myProfile'), url: '/my-profile', icon: Settings }
+        { title: language === 'en' ? 'My Bookings' : 'Tempahan Saya', url: '/my-bookings', icon: Calendar },
+        { title: language === 'en' ? 'My Visitors' : 'Pelawat Saya', url: '/my-visitors', icon: Users },
+        { title: language === 'en' ? 'My Complaints' : 'Aduan Saya', url: '/my-complaints', icon: FileText },
+        { title: language === 'en' ? 'My Profile' : 'Profil Saya', url: '/my-profile', icon: Settings }
       ]
     },
     {
-      label: t('nav.communityHub'),
+      label: language === 'en' ? 'Community Hub' : 'Hub Komuniti',
       items: [
-        { title: t('nav.announcements'), url: '/announcements', icon: Megaphone },
-        { title: t('nav.discussions'), url: '/discussions', icon: MessageSquare }
+        { title: language === 'en' ? 'Announcements' : 'Pengumuman', url: '/announcements', icon: Megaphone },
+        { title: language === 'en' ? 'Discussions' : 'Perbincangan', url: '/discussions', icon: MessageSquare }
       ]
     },
     {
-      label: t('nav.servicesAndFacilities'),
+      label: language === 'en' ? 'Services & Facilities' : 'Perkhidmatan & Kemudahan',
       items: [
-        { title: t('nav.facilities'), url: '/facilities', icon: Building },
-        { title: t('nav.marketplace'), url: '/marketplace', icon: ShoppingCart },
-        { title: t('nav.cctvLiveFeed'), url: '/cctv-live', icon: Camera }
+        { title: language === 'en' ? 'Facilities' : 'Kemudahan', url: '/facilities', icon: Building },
+        { title: language === 'en' ? 'Marketplace' : 'Pasar Maya', url: '/marketplace', icon: ShoppingCart },
+        { title: language === 'en' ? 'CCTV Live Feed' : 'Siaran Langsung CCTV', url: '/cctv-live', icon: Camera }
       ]
     }
   ];
 
   const professionalNavigation: NavigationGroup[] = [
     {
-      label: t('nav.dashboard'),
+      label: language === 'en' ? 'Dashboard' : 'Papan Pemuka',
       items: [
-        { title: t('nav.dashboard'), url: '/', icon: LayoutDashboard }
+        { title: language === 'en' ? 'Dashboard' : 'Papan Pemuka', url: '/', icon: LayoutDashboard }
       ]
     },
     {
-      label: t('nav.administration'),
+      label: language === 'en' ? 'Administration' : 'Pentadbiran',
       items: [
-        { title: t('nav.userManagement'), url: '/admin/users', icon: UserPlus },
-        { title: t('nav.communityManagement'), url: '/admin/communities', icon: Home },
-        { title: t('nav.districtManagement'), url: '/admin/districts', icon: Settings }
+        { title: language === 'en' ? 'User Management' : 'Pengurusan Pengguna', url: '/admin/users', icon: UserPlus },
+        { title: language === 'en' ? 'Community Management' : 'Pengurusan Komuniti', url: '/admin/communities', icon: Home },
+        { title: language === 'en' ? 'District Management' : 'Pengurusan Daerah', url: '/admin/districts', icon: Settings }
       ]
     },
     {
-      label: t('nav.operations'),
+      label: language === 'en' ? 'Operations' : 'Operasi',
       items: [
-        { title: t('nav.facilitiesManagement'), url: '/admin/facilities', icon: Building },
-        { title: t('nav.maintenanceManagement'), url: '/admin/maintenance', icon: Wrench },
-        { title: t('nav.complaintsManagement'), url: '/admin/complaints', icon: AlertTriangle }
+        { title: language === 'en' ? 'Facilities Management' : 'Pengurusan Kemudahan', url: '/admin/facilities', icon: Building },
+        { title: language === 'en' ? 'Maintenance Management' : 'Pengurusan Penyelenggaraan', url: '/admin/maintenance', icon: Wrench },
+        { title: language === 'en' ? 'Complaints Management' : 'Pengurusan Aduan', url: '/admin/complaints', icon: AlertTriangle }
       ]
     },
     {
-      label: t('nav.securityAndMonitoring'),
+      label: language === 'en' ? 'Security & Monitoring' : 'Keselamatan & Pemantauan',
       items: [
-        { title: t('nav.securityDashboard'), url: '/admin/security', icon: Shield },
-        { title: t('nav.cctvManagement'), url: '/admin/cctv', icon: Camera },
-        { title: t('nav.smartMonitoring'), url: '/admin/monitoring', icon: Monitor },
-        { title: t('nav.sensorManagement'), url: '/admin/sensors', icon: Radio }
+        { title: language === 'en' ? 'Security Dashboard' : 'Papan Pemuka Keselamatan', url: '/admin/security', icon: Shield },
+        { title: language === 'en' ? 'CCTV Management' : 'Pengurusan CCTV', url: '/admin/cctv', icon: Camera },
+        { title: language === 'en' ? 'Smart Monitoring' : 'Pemantauan Pintar', url: '/admin/monitoring', icon: Monitor },
+        { title: language === 'en' ? 'Sensor Management' : 'Pengurusan Sensor', url: '/admin/sensors', icon: Radio }
       ]
     },
     {
-      label: t('nav.communication'),
+      label: language === 'en' ? 'Communication' : 'Komunikasi',
       items: [
-        { title: t('nav.announcements'), url: '/admin/announcements', icon: Megaphone },
-        { title: t('nav.discussions'), url: '/admin/discussions', icon: MessageSquare }
+        { title: language === 'en' ? 'Announcements' : 'Pengumuman', url: '/admin/announcements', icon: Megaphone },
+        { title: language === 'en' ? 'Discussions' : 'Perbincangan', url: '/admin/discussions', icon: MessageSquare }
       ]
     }
   ];
