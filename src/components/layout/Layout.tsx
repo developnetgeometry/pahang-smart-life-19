@@ -1,7 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from './Header';
 import { AppSidebar } from './Sidebar';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -16,15 +16,13 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <AppSidebar />
-        <div className="flex-1 flex flex-col">
-          <Header />
-          <main className="flex-1 container mx-auto px-4 py-6">
-            {children}
-          </main>
+      <AppSidebar />
+      <SidebarInset>
+        <Header />
+        <div className="flex-1 px-4 py-6">
+          {children}
         </div>
-      </div>
+      </SidebarInset>
     </SidebarProvider>
   );
 }

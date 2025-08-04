@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import {
   Dialog,
   DialogContent,
@@ -52,8 +53,9 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
       <div className="container flex h-16 items-center justify-between px-4">
-        {/* Logo and Title */}
+        {/* Left side - Sidebar trigger and Logo */}
         <div className="flex items-center space-x-4">
+          <SidebarTrigger />
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
               <span className="text-sm font-bold text-primary-foreground">SC</span>

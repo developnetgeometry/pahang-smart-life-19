@@ -130,7 +130,7 @@ export function AppSidebar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <Sidebar className={collapsed ? 'w-14' : 'w-64'} collapsible="icon">
+    <Sidebar collapsible="icon" className="hidden border-r bg-sidebar md:flex">
       <SidebarContent>
         {navigation.map((group, groupIndex) => (
           <SidebarGroup key={groupIndex}>
