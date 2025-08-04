@@ -7,6 +7,11 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { Layout } from "@/components/layout/Layout";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import MyBookings from "./pages/MyBookings";
+import MyVisitors from "./pages/MyVisitors";
+import MyComplaints from "./pages/MyComplaints";
+import MyProfile from "./pages/MyProfile";
+import Announcements from "./pages/Announcements";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,15 +52,12 @@ const App = () => (
                 } 
               />
               
-              {/* Placeholder routes for navigation items */}
+              {/* Resident modules */}
               <Route 
                 path="/my-bookings" 
                 element={
                   <ProtectedRoute>
-                    <div className="text-center py-20">
-                      <h1 className="text-2xl font-bold">My Bookings</h1>
-                      <p className="text-muted-foreground">Coming soon...</p>
-                    </div>
+                    <MyBookings />
                   </ProtectedRoute>
                 } 
               />
@@ -63,10 +65,7 @@ const App = () => (
                 path="/my-visitors" 
                 element={
                   <ProtectedRoute>
-                    <div className="text-center py-20">
-                      <h1 className="text-2xl font-bold">My Visitors</h1>
-                      <p className="text-muted-foreground">Coming soon...</p>
-                    </div>
+                    <MyVisitors />
                   </ProtectedRoute>
                 } 
               />
@@ -74,10 +73,7 @@ const App = () => (
                 path="/my-complaints" 
                 element={
                   <ProtectedRoute>
-                    <div className="text-center py-20">
-                      <h1 className="text-2xl font-bold">My Complaints</h1>
-                      <p className="text-muted-foreground">Coming soon...</p>
-                    </div>
+                    <MyComplaints />
                   </ProtectedRoute>
                 } 
               />
@@ -85,10 +81,7 @@ const App = () => (
                 path="/my-profile" 
                 element={
                   <ProtectedRoute>
-                    <div className="text-center py-20">
-                      <h1 className="text-2xl font-bold">My Profile</h1>
-                      <p className="text-muted-foreground">Coming soon...</p>
-                    </div>
+                    <MyProfile />
                   </ProtectedRoute>
                 } 
               />
@@ -96,10 +89,7 @@ const App = () => (
                 path="/announcements" 
                 element={
                   <ProtectedRoute>
-                    <div className="text-center py-20">
-                      <h1 className="text-2xl font-bold">Announcements</h1>
-                      <p className="text-muted-foreground">Coming soon...</p>
-                    </div>
+                    <Announcements />
                   </ProtectedRoute>
                 } 
               />
