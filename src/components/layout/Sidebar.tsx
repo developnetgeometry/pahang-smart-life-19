@@ -1,17 +1,9 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
 import { NavLink, useLocation } from 'react-router-dom';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import {
   LayoutDashboard,
   Calendar,
@@ -47,8 +39,6 @@ interface NavigationGroup {
 export function AppSidebar() {
   const { currentViewRole, language } = useAuth();
   const { t } = useTranslation(language);
-  const { state } = useSidebar();
-  const collapsed = state === 'collapsed';
   const location = useLocation();
 
   const residentNavigation: NavigationGroup[] = [
@@ -130,39 +120,53 @@ export function AppSidebar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <Sidebar collapsible="icon" className="hidden border-r bg-sidebar md:flex">
-      <SidebarContent>
-        {navigation.map((group, groupIndex) => (
-          <SidebarGroup key={groupIndex}>
-            <SidebarGroupLabel className={collapsed ? 'sr-only' : ''}>
-              {group.label}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
+    <div className="flex h-full w-full flex-col bg-card border-r border-border">
+      {/* Logo section */}
+      <div className="flex h-16 items-center border-b border-border px-4">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+            <span className="text-sm font-bold text-primary-foreground">SC</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-foreground">Smart Community</span>
+            <span className="text-xs text-muted-foreground">Pahang</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <ScrollArea className="flex-1 px-3">
+        <div className="space-y-4 py-4">
+          {navigation.map((group, groupIndex) => (
+            <div key={groupIndex} className="space-y-2">
+              <h4 className="text-sm font-medium text-muted-foreground px-3 py-2">
+                {group.label}
+              </h4>
+              <div className="space-y-1">
                 {group.items.map((item) => (
-                  <SidebarMenuItem key={item.url}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.url}
-                        className={({ isActive }) =>
-                          `flex items-center space-x-2 w-full ${
-                            isActive
-                              ? 'bg-primary text-primary-foreground font-medium'
-                              : 'hover:bg-muted/50'
-                          }`
-                        }
-                      >
-                        <item.icon className="h-4 w-4 flex-shrink-0" />
-                        {!collapsed && <span className="truncate">{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  <NavLink
+                    key={item.url}
+                    to={item.url}
+                    className={({ isActive }) =>
+                      `flex items-center space-x-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                        isActive
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                      }`
+                    }
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
+                  </NavLink>
                 ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
-      </SidebarContent>
-    </Sidebar>
+              </div>
+              {groupIndex < navigation.length - 1 && (
+                <Separator className="my-2" />
+              )}
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
   );
 }
