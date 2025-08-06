@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Video, VideoOff, Maximize, RotateCcw, Settings, Eye, EyeOff, Signal, SignalHigh, SignalLow } from 'lucide-react';
+import { Video, VideoOff, Maximize, RotateCcw, Settings, Eye, EyeOff, Signal, SignalHigh, SignalLow, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Home, Play, Square, Wifi, WifiOff } from 'lucide-react';
 
 interface CCTVCamera {
   id: string;
@@ -14,6 +14,9 @@ interface CCTVCamera {
   signal: 'high' | 'medium' | 'low';
   isRecording: boolean;
   lastUpdate: string;
+  rtspUrl?: string;
+  hasPtz: boolean;
+  presets?: string[];
 }
 
 export default function CCTVLiveFeed() {
@@ -44,7 +47,18 @@ export default function CCTVLiveFeed() {
       liveFeed: 'Live Feed',
       noSignal: 'No Signal',
       connecting: 'Connecting...',
-      cameraOffline: 'Camera is currently offline'
+      cameraOffline: 'Camera is currently offline',
+      ptzControls: 'PTZ Controls',
+      pan: 'Pan',
+      tilt: 'Tilt',
+      zoom: 'Zoom',
+      presets: 'Presets',
+      home: 'Home',
+      rtspConnection: 'RTSP Connection',
+      connected: 'Connected',
+      disconnected: 'Disconnected',
+      connect: 'Connect',
+      disconnect: 'Disconnect'
     },
     ms: {
       title: 'Suapan Langsung CCTV',
@@ -68,11 +82,25 @@ export default function CCTVLiveFeed() {
       liveFeed: 'Suapan Langsung',
       noSignal: 'Tiada Isyarat',
       connecting: 'Menyambung...',
-      cameraOffline: 'Kamera sedang luar talian'
+      cameraOffline: 'Kamera sedang luar talian',
+      ptzControls: 'Kawalan PTZ',
+      pan: 'Pan',
+      tilt: 'Tilt',
+      zoom: 'Zum',
+      presets: 'Pratetap',
+      home: 'Rumah',
+      rtspConnection: 'Sambungan RTSP',
+      connected: 'Disambung',
+      disconnected: 'Terputus',
+      connect: 'Sambung',
+      disconnect: 'Putus'
     }
   };
 
   const t = text[language];
+
+  const [rtspConnected, setRtspConnected] = useState(false);
+  const [ptzPosition, setPtzPosition] = useState({ pan: 0, tilt: 0, zoom: 1 });
 
   const mockCameras: CCTVCamera[] = [
     {
@@ -82,7 +110,10 @@ export default function CCTVLiveFeed() {
       status: 'online',
       signal: 'high',
       isRecording: true,
-      lastUpdate: '2 minutes ago'
+      lastUpdate: '2 minutes ago',
+      rtspUrl: 'rtsp://192.168.1.100:554/stream1',
+      hasPtz: true,
+      presets: ['Home', 'Entrance', 'Exit']
     },
     {
       id: '2',
@@ -91,7 +122,10 @@ export default function CCTVLiveFeed() {
       status: 'online',
       signal: 'medium',
       isRecording: true,
-      lastUpdate: '1 minute ago'
+      lastUpdate: '1 minute ago',
+      rtspUrl: 'rtsp://192.168.1.101:554/stream1',
+      hasPtz: true,
+      presets: ['Overview', 'Lane 1', 'Lane 2']
     },
     {
       id: '3',
@@ -100,7 +134,9 @@ export default function CCTVLiveFeed() {
       status: 'online',
       signal: 'high',
       isRecording: false,
-      lastUpdate: '3 minutes ago'
+      lastUpdate: '3 minutes ago',
+      rtspUrl: 'rtsp://192.168.1.102:554/stream1',
+      hasPtz: false
     },
     {
       id: '4',
@@ -109,7 +145,10 @@ export default function CCTVLiveFeed() {
       status: 'offline',
       signal: 'low',
       isRecording: false,
-      lastUpdate: '15 minutes ago'
+      lastUpdate: '15 minutes ago',
+      rtspUrl: 'rtsp://192.168.1.103:554/stream1',
+      hasPtz: true,
+      presets: ['Swings', 'Slide', 'Sandbox']
     },
     {
       id: '5',
@@ -118,7 +157,9 @@ export default function CCTVLiveFeed() {
       status: 'maintenance',
       signal: 'medium',
       isRecording: false,
-      lastUpdate: '1 hour ago'
+      lastUpdate: '1 hour ago',
+      rtspUrl: 'rtsp://192.168.1.104:554/stream1',
+      hasPtz: false
     },
     {
       id: '6',
@@ -127,7 +168,10 @@ export default function CCTVLiveFeed() {
       status: 'online',
       signal: 'high',
       isRecording: true,
-      lastUpdate: '30 seconds ago'
+      lastUpdate: '30 seconds ago',
+      rtspUrl: 'rtsp://192.168.1.105:554/stream1',
+      hasPtz: true,
+      presets: ['Entrance', 'Equipment Area', 'Cardio Zone']
     }
   ];
 
@@ -174,6 +218,43 @@ export default function CCTVLiveFeed() {
   const mainCamera = selectedCamera !== 'all' 
     ? mockCameras.find(camera => camera.id === selectedCamera)
     : mockCameras[0];
+
+  const handlePtzControl = (direction: string) => {
+    const speed = 5;
+    setPtzPosition(prev => {
+      switch (direction) {
+        case 'up':
+          return { ...prev, tilt: Math.min(prev.tilt + speed, 90) };
+        case 'down':
+          return { ...prev, tilt: Math.max(prev.tilt - speed, -90) };
+        case 'left':
+          return { ...prev, pan: Math.max(prev.pan - speed, -180) };
+        case 'right':
+          return { ...prev, pan: Math.min(prev.pan + speed, 180) };
+        default:
+          return prev;
+      }
+    });
+  };
+
+  const handleZoom = (direction: 'in' | 'out') => {
+    setPtzPosition(prev => ({
+      ...prev,
+      zoom: direction === 'in' 
+        ? Math.min(prev.zoom + 0.1, 10) 
+        : Math.max(prev.zoom - 0.1, 1)
+    }));
+  };
+
+  const handlePreset = (preset: string) => {
+    // In a real implementation, this would send commands to the camera
+    console.log(`Moving to preset: ${preset}`);
+  };
+
+  const handleRtspConnection = () => {
+    setRtspConnected(!rtspConnected);
+    // In a real implementation, this would establish/close RTSP connection
+  };
 
   return (
     <div className="space-y-6">
@@ -241,7 +322,7 @@ export default function CCTVLiveFeed() {
           </Card>
 
           {/* Camera Controls */}
-          <div className="mt-4">
+          <div className="mt-4 space-y-4">
             <Select value={selectedCamera} onValueChange={setSelectedCamera}>
               <SelectTrigger>
                 <SelectValue placeholder={t.selectCamera} />
@@ -255,6 +336,110 @@ export default function CCTVLiveFeed() {
                 ))}
               </SelectContent>
             </Select>
+
+            {/* RTSP Connection */}
+            {mainCamera && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    {rtspConnected ? <Wifi className="h-4 w-4 text-green-500" /> : <WifiOff className="h-4 w-4 text-red-500" />}
+                    {t.rtspConnection}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="text-xs">
+                    <span className="text-muted-foreground">URL: </span>
+                    <span className="font-mono text-xs break-all">{mainCamera.rtspUrl}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Badge variant={rtspConnected ? 'default' : 'secondary'}>
+                      {rtspConnected ? t.connected : t.disconnected}
+                    </Badge>
+                    <Button size="sm" variant="outline" onClick={handleRtspConnection}>
+                      {rtspConnected ? t.disconnect : t.connect}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* PTZ Controls */}
+            {mainCamera?.hasPtz && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">{t.ptzControls}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Pan/Tilt Controls */}
+                  <div className="space-y-2">
+                    <div className="text-xs font-medium">{t.pan} / {t.tilt}</div>
+                    <div className="grid grid-cols-3 gap-1 w-fit mx-auto">
+                      <div></div>
+                      <Button size="sm" variant="outline" onClick={() => handlePtzControl('up')}>
+                        <ChevronUp className="h-4 w-4" />
+                      </Button>
+                      <div></div>
+                      <Button size="sm" variant="outline" onClick={() => handlePtzControl('left')}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => handlePtzControl('home')}>
+                        <Home className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => handlePtzControl('right')}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <div></div>
+                      <Button size="sm" variant="outline" onClick={() => handlePtzControl('down')}>
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                      <div></div>
+                    </div>
+                  </div>
+
+                  {/* Zoom Controls */}
+                  <div className="space-y-2">
+                    <div className="text-xs font-medium">{t.zoom}</div>
+                    <div className="flex gap-2 justify-center">
+                      <Button size="sm" variant="outline" onClick={() => handleZoom('out')}>
+                        <ZoomOut className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => handleZoom('in')}>
+                        <ZoomIn className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="text-xs text-center text-muted-foreground">
+                      {ptzPosition.zoom.toFixed(1)}x
+                    </div>
+                  </div>
+
+                  {/* Position Display */}
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div>{t.pan}: {ptzPosition.pan}°</div>
+                    <div>{t.tilt}: {ptzPosition.tilt}°</div>
+                  </div>
+
+                  {/* Presets */}
+                  {mainCamera.presets && mainCamera.presets.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium">{t.presets}</div>
+                      <div className="flex flex-wrap gap-1">
+                        {mainCamera.presets.map((preset) => (
+                          <Button
+                            key={preset}
+                            size="sm"
+                            variant="outline"
+                            className="text-xs"
+                            onClick={() => handlePreset(preset)}
+                          >
+                            {preset}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
 
