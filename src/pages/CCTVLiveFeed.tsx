@@ -318,18 +318,96 @@ export default function CCTVLiveFeed() {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className={`bg-black flex items-center justify-center ${isFullscreen ? 'h-screen' : 'aspect-video'}`}>
-                {mainCamera?.status === 'online' ? (
-                  <div className="text-white text-center">
-                    <Video className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg mb-2">{t.liveFeed}</p>
-                    <p className="text-sm opacity-75">{mainCamera.name}</p>
-                  </div>
-                ) : (
-                  <div className="text-white text-center">
-                    <VideoOff className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg mb-2">{t.cameraOffline}</p>
-                    <p className="text-sm opacity-75">{mainCamera?.name}</p>
+              <div className={`bg-black relative ${isFullscreen ? 'h-screen' : 'aspect-video'}`}>
+                {/* Main Video Feed */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {mainCamera?.status === 'online' ? (
+                    <div className="text-white text-center">
+                      <Video className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                      <p className="text-lg mb-2">{t.liveFeed}</p>
+                      <p className="text-sm opacity-75">{mainCamera.name}</p>
+                    </div>
+                  ) : (
+                    <div className="text-white text-center">
+                      <VideoOff className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                      <p className="text-lg mb-2">{t.cameraOffline}</p>
+                      <p className="text-sm opacity-75">{mainCamera?.name}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* PTZ Controls Overlay */}
+                {mainCamera?.hasPtz && (
+                  <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-sm rounded-lg p-3 text-white">
+                    <div className="text-xs font-medium mb-2">{t.ptzControls}</div>
+                    
+                    {/* Pan/Tilt */}
+                    <div className="mb-3">
+                      <div className="text-xs mb-1">{t.pan} / {t.tilt}</div>
+                      <div className="grid grid-cols-3 gap-1 w-20">
+                        <div></div>
+                        <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handlePtzControl('up')}>
+                          <ChevronUp className="h-3 w-3" />
+                        </Button>
+                        <div></div>
+                        <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handlePtzControl('left')}>
+                          <ChevronLeft className="h-3 w-3" />
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handlePtzControl('home')}>
+                          <Home className="h-3 w-3" />
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handlePtzControl('right')}>
+                          <ChevronRight className="h-3 w-3" />
+                        </Button>
+                        <div></div>
+                        <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handlePtzControl('down')}>
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                        <div></div>
+                      </div>
+                    </div>
+
+                    {/* Zoom */}
+                    <div className="mb-3">
+                      <div className="text-xs mb-1">{t.zoom}</div>
+                      <div className="flex gap-1 justify-center">
+                        <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handleZoom('out')}>
+                          <ZoomOut className="h-3 w-3" />
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handleZoom('in')}>
+                          <ZoomIn className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <div className="text-xs text-center mt-1">
+                        {ptzPosition.zoom.toFixed(1)}x
+                      </div>
+                    </div>
+
+                    {/* Position */}
+                    <div className="text-xs space-y-1 mb-3">
+                      <div>{t.pan}: {ptzPosition.pan}°</div>
+                      <div>{t.tilt}: {ptzPosition.tilt}°</div>
+                    </div>
+
+                    {/* Presets */}
+                    {mainCamera.presets && mainCamera.presets.length > 0 && (
+                      <div>
+                        <div className="text-xs mb-1">{t.presets}</div>
+                        <div className="flex flex-wrap gap-1">
+                          {mainCamera.presets.map((preset) => (
+                            <Button
+                              key={preset}
+                              size="sm"
+                              variant="outline"
+                              className="text-xs h-5 px-2 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                              onClick={() => handlePreset(preset)}
+                            >
+                              {preset}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -378,83 +456,6 @@ export default function CCTVLiveFeed() {
               </Card>
             )}
 
-            {/* PTZ Controls */}
-            {mainCamera?.hasPtz && (
-              <Card className="max-w-xs">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-xs">{t.ptzControls}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {/* Pan/Tilt Controls */}
-                  <div className="space-y-1">
-                    <div className="text-xs font-medium">{t.pan} / {t.tilt}</div>
-                    <div className="grid grid-cols-3 gap-1 w-20 mx-auto">
-                      <div></div>
-                      <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => handlePtzControl('up')}>
-                        <ChevronUp className="h-3 w-3" />
-                      </Button>
-                      <div></div>
-                      <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => handlePtzControl('left')}>
-                        <ChevronLeft className="h-3 w-3" />
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => handlePtzControl('home')}>
-                        <Home className="h-3 w-3" />
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => handlePtzControl('right')}>
-                        <ChevronRight className="h-3 w-3" />
-                      </Button>
-                      <div></div>
-                      <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => handlePtzControl('down')}>
-                        <ChevronDown className="h-3 w-3" />
-                      </Button>
-                      <div></div>
-                    </div>
-                  </div>
-
-                  {/* Zoom Controls */}
-                  <div className="space-y-1">
-                    <div className="text-xs font-medium">{t.zoom}</div>
-                    <div className="flex gap-1 justify-center">
-                      <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => handleZoom('out')}>
-                        <ZoomOut className="h-3 w-3" />
-                      </Button>
-                      <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => handleZoom('in')}>
-                        <ZoomIn className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <div className="text-xs text-center text-muted-foreground">
-                      {ptzPosition.zoom.toFixed(1)}x
-                    </div>
-                  </div>
-
-                  {/* Position Display */}
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <div>{t.pan}: {ptzPosition.pan}°</div>
-                    <div>{t.tilt}: {ptzPosition.tilt}°</div>
-                  </div>
-
-                  {/* Presets */}
-                  {mainCamera.presets && mainCamera.presets.length > 0 && (
-                    <div className="space-y-1">
-                      <div className="text-xs font-medium">{t.presets}</div>
-                      <div className="flex flex-wrap gap-1">
-                        {mainCamera.presets.map((preset) => (
-                          <Button
-                            key={preset}
-                            size="sm"
-                            variant="outline"
-                            className="text-xs h-6 px-2"
-                            onClick={() => handlePreset(preset)}
-                          >
-                            {preset}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
 
             {/* Motion Detection */}
             <Card>
