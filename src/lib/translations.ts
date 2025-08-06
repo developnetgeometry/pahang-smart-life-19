@@ -171,17 +171,24 @@ export const translations = {
   }
 };
 
-export function useTranslation(language: Language) {
+export function useTranslation(language: Language = 'ms') {
   return {
     t: (key: string): string => {
       const keys = key.split('.');
-      let value: any = translations[language];
+      const langTranslations = translations[language] || translations['ms'];
+      let value: any = langTranslations;
       
       for (const k of keys) {
         value = value?.[k];
         if (value === undefined) {
-          console.warn(`Translation key "${key}" not found for language "${language}"`);
-          return key; // Return the key as fallback
+          // Try fallback language
+          const fallbackTranslations = translations[language === 'en' ? 'ms' : 'en'];
+          let fallbackValue: any = fallbackTranslations;
+          for (const fk of keys) {
+            fallbackValue = fallbackValue?.[fk];
+            if (fallbackValue === undefined) break;
+          }
+          return typeof fallbackValue === 'string' ? fallbackValue : key;
         }
       }
       
