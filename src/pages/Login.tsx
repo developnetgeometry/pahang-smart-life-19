@@ -14,7 +14,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { login, language } = useAuth();
-  const { t } = useTranslation(language);
+  const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

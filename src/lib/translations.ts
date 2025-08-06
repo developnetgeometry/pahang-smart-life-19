@@ -179,9 +179,13 @@ export function useTranslation(language: Language) {
       
       for (const k of keys) {
         value = value?.[k];
+        if (value === undefined) {
+          console.warn(`Translation key "${key}" not found for language "${language}"`);
+          return key; // Return the key as fallback
+        }
       }
       
-      return value || key;
+      return typeof value === 'string' ? value : key;
     }
   };
 }

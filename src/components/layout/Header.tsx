@@ -36,7 +36,7 @@ import {
 
 export function Header() {
   const { user, currentViewRole, switchViewRole, language, switchLanguage, theme, switchTheme, logout } = useAuth();
-  const { t } = useTranslation(language);
+  const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
   const [showRoleDialog, setShowRoleDialog] = useState(false);
 
   if (!user) return null;

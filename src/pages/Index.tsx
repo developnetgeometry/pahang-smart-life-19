@@ -19,7 +19,7 @@ import {
 
 const Index = () => {
   const { user, currentViewRole, language } = useAuth();
-  const { t } = useTranslation(language);
+  const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
 
   if (!user) return null;
 

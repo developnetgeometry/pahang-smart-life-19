@@ -17,7 +17,7 @@ import {
 
 export function QuickActions() {
   const { currentViewRole, language } = useAuth();
-  const { t } = useTranslation(language);
+  const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
 
   const residentActions = [
     {
