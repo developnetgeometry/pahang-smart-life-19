@@ -514,10 +514,10 @@ export default function CCTVManagement() {
         </Dialog>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="overview">{t.overview}</TabsTrigger>
+      <Tabs defaultValue="livefeed" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="livefeed">{t.liveFeedView}</TabsTrigger>
+          <TabsTrigger value="overview">{t.overview}</TabsTrigger>
           <TabsTrigger value="cameras">{t.cameras}</TabsTrigger>
           <TabsTrigger value="recordings">{t.recordings}</TabsTrigger>
         </TabsList>
