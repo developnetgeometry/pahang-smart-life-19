@@ -81,7 +81,7 @@ export const translations = {
     'theme.dark': 'Dark',
     
     // System
-    'system.smartCommunity': 'Smart Community Management',
+    'system.smartCommunity': 'Integrated Smart City System',
     'system.pahangState': 'Pahang State',
     'system.poweredBy': 'Powered by Smart City Initiative'
   },
@@ -165,7 +165,7 @@ export const translations = {
     'theme.dark': 'Gelap',
     
     // System
-    'system.smartCommunity': 'Pengurusan Komuniti Pintar',
+    'system.smartCommunity': 'Sistem Bandar Pintar Bersepadu',
     'system.pahangState': 'Negeri Pahang',
     'system.poweredBy': 'Dikuasakan oleh Inisiatif Bandar Pintar'
   }
