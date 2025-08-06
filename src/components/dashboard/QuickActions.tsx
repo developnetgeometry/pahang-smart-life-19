@@ -96,7 +96,7 @@ export function QuickActions() {
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Activity className="w-5 h-5" />
-          <span>{t('dashboard.quickActions')}</span>
+          <span>Quick Actions</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
