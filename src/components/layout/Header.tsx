@@ -131,10 +131,10 @@ export function Header() {
               <DropdownMenuLabel>Language / Bahasa</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => switchLanguage('en')}>
-                {language === 'en' && '✓ '}{t('language.english')}
+                {language === 'en' && '✓ '}{t('english')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => switchLanguage('ms')}>
-                {language === 'ms' && '✓ '}{t('language.malay')}
+                {language === 'ms' && '✓ '}{t('malay')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

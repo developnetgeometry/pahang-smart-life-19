@@ -75,8 +75,8 @@ export const translations = {
     'viewRole.switch': 'Switch View',
     
     // Language & Theme
-    'language.english': 'English',
-    'language.malay': 'Bahasa Malaysia',
+    'english': 'English',
+    'malay': 'Bahasa Malaysia',
     'theme.light': 'Light',
     'theme.dark': 'Dark',
     
@@ -159,8 +159,8 @@ export const translations = {
     'viewRole.switch': 'Tukar Pandangan',
     
     // Language & Theme
-    'language.english': 'Bahasa Inggeris',
-    'language.malay': 'Bahasa Malaysia',
+    'english': 'Bahasa Inggeris',
+    'malay': 'Bahasa Malaysia',
     'theme.light': 'Terang',
     'theme.dark': 'Gelap',
     
