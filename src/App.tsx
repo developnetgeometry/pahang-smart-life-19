@@ -12,6 +12,11 @@ import MyVisitors from "./pages/MyVisitors";
 import MyComplaints from "./pages/MyComplaints";
 import MyProfile from "./pages/MyProfile";
 import Announcements from "./pages/Announcements";
+import Discussions from "./pages/Discussions";
+import Facilities from "./pages/Facilities";
+import Marketplace from "./pages/Marketplace";
+import CCTVLiveFeed from "./pages/CCTVLiveFeed";
+import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -93,14 +98,11 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
-              <Route 
+               <Route 
                 path="/discussions" 
                 element={
                   <ProtectedRoute>
-                    <div className="text-center py-20">
-                      <h1 className="text-2xl font-bold">Discussions</h1>
-                      <p className="text-muted-foreground">Coming soon...</p>
-                    </div>
+                    <Discussions />
                   </ProtectedRoute>
                 } 
               />
@@ -108,10 +110,7 @@ const App = () => (
                 path="/facilities" 
                 element={
                   <ProtectedRoute>
-                    <div className="text-center py-20">
-                      <h1 className="text-2xl font-bold">Facilities</h1>
-                      <p className="text-muted-foreground">Coming soon...</p>
-                    </div>
+                    <Facilities />
                   </ProtectedRoute>
                 } 
               />
@@ -119,10 +118,7 @@ const App = () => (
                 path="/marketplace" 
                 element={
                   <ProtectedRoute>
-                    <div className="text-center py-20">
-                      <h1 className="text-2xl font-bold">Marketplace</h1>
-                      <p className="text-muted-foreground">Coming soon...</p>
-                    </div>
+                    <Marketplace />
                   </ProtectedRoute>
                 } 
               />
@@ -130,10 +126,7 @@ const App = () => (
                 path="/cctv-live" 
                 element={
                   <ProtectedRoute>
-                    <div className="text-center py-20">
-                      <h1 className="text-2xl font-bold">CCTV Live Feed</h1>
-                      <p className="text-muted-foreground">Coming soon...</p>
-                    </div>
+                    <CCTVLiveFeed />
                   </ProtectedRoute>
                 } 
               />
@@ -143,10 +136,7 @@ const App = () => (
                 path="/admin/*" 
                 element={
                   <ProtectedRoute>
-                    <div className="text-center py-20">
-                      <h1 className="text-2xl font-bold">Admin Panel</h1>
-                      <p className="text-muted-foreground">Coming soon...</p>
-                    </div>
+                    <AdminPanel />
                   </ProtectedRoute>
                 } 
               />
