@@ -54,6 +54,8 @@ export default function CCTVManagement() {
   const [rtspConnected, setRtspConnected] = useState(false);
   const [ptzPosition, setPtzPosition] = useState({ pan: 0, tilt: 0, zoom: 1 });
   const [activeTab, setActiveTab] = useState('cameras');
+  const [isLiveViewOpen, setIsLiveViewOpen] = useState(false);
+  const [liveViewCamera, setLiveViewCamera] = useState<CCTVCamera | null>(null);
 
   const text = {
     en: {
@@ -444,8 +446,8 @@ export default function CCTVManagement() {
   };
 
   const handleViewLiveCamera = (camera: CCTVCamera) => {
-    setSelectedCamera(camera.id);
-    // Note: Live feed tab removed, this function kept for potential future use
+    setLiveViewCamera(camera);
+    setIsLiveViewOpen(true);
   };
 
   const filteredCameras = selectedCamera === 'all' 
@@ -669,6 +671,230 @@ export default function CCTVManagement() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Live View Modal */}
+      <Dialog open={isLiveViewOpen} onOpenChange={setIsLiveViewOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] p-0">
+          <DialogHeader className="p-6 pb-0">
+            <DialogTitle className="flex items-center gap-2">
+              <Video className="h-5 w-5" />
+              {t.liveView} - {liveViewCamera?.name}
+            </DialogTitle>
+            <DialogDescription>
+              {liveViewCamera?.location} • {liveViewCamera?.resolution}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col lg:flex-row gap-6 p-6">
+            {/* Main Feed */}
+            <div className="flex-1">
+              <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className={`bg-black relative ${isFullscreen ? 'h-screen' : 'aspect-video'}`}>
+                    {/* Main Video Feed */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      {liveViewCamera?.status === 'online' ? (
+                        <div className="text-white text-center">
+                          <Video className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                          <p className="text-lg mb-2">{t.liveFeed}</p>
+                          <p className="text-sm opacity-75">{liveViewCamera.name}</p>
+                        </div>
+                      ) : (
+                        <div className="text-white text-center">
+                          <VideoOff className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                          <p className="text-lg mb-2">{t.cameraOffline}</p>
+                          <p className="text-sm opacity-75">{liveViewCamera?.name}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* PTZ Controls Overlay */}
+                    {liveViewCamera?.hasPtz && (
+                      <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-sm rounded-lg p-3 text-white">
+                        <div className="text-xs font-medium mb-2">{t.ptzControls}</div>
+                        
+                        {/* Pan/Tilt */}
+                        <div className="mb-3">
+                          <div className="text-xs mb-1">{t.pan} / {t.tilt}</div>
+                          <div className="grid grid-cols-3 gap-1 w-20">
+                            <div></div>
+                            <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handlePtzControl('up')}>
+                              <ChevronUp className="h-3 w-3" />
+                            </Button>
+                            <div></div>
+                            <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handlePtzControl('left')}>
+                              <ChevronLeft className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handlePtzControl('home')}>
+                              <Home className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handlePtzControl('right')}>
+                              <ChevronRight className="h-3 w-3" />
+                            </Button>
+                            <div></div>
+                            <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handlePtzControl('down')}>
+                              <ChevronDown className="h-3 w-3" />
+                            </Button>
+                            <div></div>
+                          </div>
+                        </div>
+
+                        {/* Zoom */}
+                        <div className="mb-3">
+                          <div className="text-xs mb-1">{t.zoom}</div>
+                          <div className="flex gap-1 justify-center">
+                            <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handleZoom('out')}>
+                              <ZoomOut className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handleZoom('in')}>
+                              <ZoomIn className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <div className="text-xs text-center mt-1">
+                            {ptzPosition.zoom.toFixed(1)}x
+                          </div>
+                        </div>
+
+                        {/* Position */}
+                        <div className="text-xs space-y-1 mb-3">
+                          <div>{t.pan}: {ptzPosition.pan}°</div>
+                          <div>{t.tilt}: {ptzPosition.tilt}°</div>
+                        </div>
+
+                        {/* Presets */}
+                        {liveViewCamera.presets && liveViewCamera.presets.length > 0 && (
+                          <div>
+                            <div className="text-xs mb-1">{t.presets}</div>
+                            <div className="flex flex-wrap gap-1">
+                              {liveViewCamera.presets.map((preset) => (
+                                <Button
+                                  key={preset}
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs h-5 px-2 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                                  onClick={() => handlePreset(preset)}
+                                >
+                                  {preset}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Camera Controls */}
+            <div className="lg:w-80 space-y-4">
+              {/* RTSP Connection */}
+              {liveViewCamera && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      {rtspConnected ? <Wifi className="h-4 w-4 text-green-500" /> : <WifiOff className="h-4 w-4 text-red-500" />}
+                      {t.rtspConnection}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="text-xs">
+                      <span className="text-muted-foreground">URL: </span>
+                      <span className="font-mono text-xs break-all">{liveViewCamera.streamUrl}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Badge variant={rtspConnected ? 'default' : 'secondary'}>
+                        {rtspConnected ? t.connected : t.disconnected}
+                      </Badge>
+                      <Button size="sm" variant="outline" onClick={handleRtspConnection}>
+                        {rtspConnected ? t.disconnect : t.connect}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Motion Detection Settings */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Activity className="h-4 w-4" />
+                    {t.motionDetection}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="motion-detection-modal" className="text-sm font-medium">
+                      {t.enableMotionDetection}
+                    </label>
+                    <Switch
+                      id="motion-detection-modal"
+                      checked={motionDetectionEnabled}
+                      onCheckedChange={setMotionDetectionEnabled}
+                    />
+                  </div>
+                  
+                  {motionDetectionEnabled && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium">{t.sensitivity}</label>
+                        <div className="flex items-center space-x-3 mt-2">
+                          <span className="text-xs text-muted-foreground">1</span>
+                          <Slider
+                            value={motionSensitivity}
+                            onValueChange={setMotionSensitivity}
+                            max={100}
+                            min={1}
+                            step={1}
+                            className="flex-1"
+                          />
+                          <span className="text-xs text-muted-foreground">100</span>
+                        </div>
+                        <div className="text-center mt-1">
+                          <span className="text-sm font-medium">{motionSensitivity[0]}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Recording Controls */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">{t.recording}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Status:</span>
+                    <Badge variant={liveViewCamera?.recording ? 'destructive' : 'secondary'}>
+                      {liveViewCamera?.recording ? t.recording : t.notRecording}
+                    </Badge>
+                  </div>
+                  <Button 
+                    className="w-full"
+                    variant={liveViewCamera?.recording ? "destructive" : "default"}
+                    onClick={() => liveViewCamera && handleToggleRecording(liveViewCamera)}
+                  >
+                    {liveViewCamera?.recording ? (
+                      <>
+                        <Pause className="h-4 w-4 mr-2" />
+                        {t.stopRecording}
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4 mr-2" />
+                        {t.startRecording}
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
