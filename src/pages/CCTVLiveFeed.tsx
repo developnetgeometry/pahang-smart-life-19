@@ -4,7 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Video, VideoOff, Maximize, RotateCcw, Settings, Eye, EyeOff, Signal, SignalHigh, SignalLow, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Home, Play, Square, Wifi, WifiOff } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
+import { Video, VideoOff, Maximize, RotateCcw, Settings, Eye, EyeOff, Signal, SignalHigh, SignalLow, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Home, Play, Square, Wifi, WifiOff, Activity } from 'lucide-react';
 
 interface CCTVCamera {
   id: string;
@@ -23,6 +25,9 @@ export default function CCTVLiveFeed() {
   const { language } = useAuth();
   const [selectedCamera, setSelectedCamera] = useState('all');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [motionDetectionEnabled, setMotionDetectionEnabled] = useState(false);
+  const [motionSensitivity, setMotionSensitivity] = useState([30]);
+  const [motionEvents] = useState<Array<{ id: string; timestamp: string; camera: string }>>([]);
 
   const text = {
     en: {
@@ -58,7 +63,12 @@ export default function CCTVLiveFeed() {
       connected: 'Connected',
       disconnected: 'Disconnected',
       connect: 'Connect',
-      disconnect: 'Disconnect'
+      disconnect: 'Disconnect',
+      motionDetection: 'Motion Detection',
+      enableMotionDetection: 'Enable Motion Detection',
+      sensitivity: 'Sensitivity',
+      recentEvents: 'Recent Events',
+      noMotionEvents: 'No motion events detected'
     },
     ms: {
       title: 'Suapan Langsung CCTV',
@@ -93,7 +103,12 @@ export default function CCTVLiveFeed() {
       connected: 'Disambung',
       disconnected: 'Terputus',
       connect: 'Sambung',
-      disconnect: 'Putus'
+      disconnect: 'Putus',
+      motionDetection: 'Pengesanan Pergerakan',
+      enableMotionDetection: 'Aktifkan Pengesanan Pergerakan',
+      sensitivity: 'Kepekaan',
+      recentEvents: 'Acara Terkini',
+      noMotionEvents: 'Tiada acara pergerakan dikesan'
     }
   };
 
@@ -440,6 +455,67 @@ export default function CCTVLiveFeed() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Motion Detection */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Activity className="h-4 w-4" />
+                  {t.motionDetection}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">{t.enableMotionDetection}</span>
+                  <Switch
+                    checked={motionDetectionEnabled}
+                    onCheckedChange={setMotionDetectionEnabled}
+                  />
+                </div>
+
+                {motionDetectionEnabled && (
+                  <>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">{t.sensitivity}: {motionSensitivity[0]}</span>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>Low</span>
+                          <span>High</span>
+                        </div>
+                      </div>
+                      <Slider
+                        value={motionSensitivity}
+                        onValueChange={setMotionSensitivity}
+                        max={100}
+                        min={1}
+                        step={1}
+                        className="w-full"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">{t.recentEvents}</div>
+                      <div className="p-3 border rounded-lg bg-muted/30">
+                        {motionEvents.length > 0 ? (
+                          <div className="space-y-2">
+                            {motionEvents.map((event) => (
+                              <div key={event.id} className="text-xs p-2 bg-background rounded border">
+                                <div className="font-medium">{event.camera}</div>
+                                <div className="text-muted-foreground">{event.timestamp}</div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-muted-foreground text-center py-2">
+                            {t.noMotionEvents}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
 
