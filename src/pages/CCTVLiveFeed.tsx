@@ -380,46 +380,46 @@ export default function CCTVLiveFeed() {
 
             {/* PTZ Controls */}
             {mainCamera?.hasPtz && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">{t.ptzControls}</CardTitle>
+              <Card className="max-w-xs">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs">{t.ptzControls}</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3">
                   {/* Pan/Tilt Controls */}
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <div className="text-xs font-medium">{t.pan} / {t.tilt}</div>
-                    <div className="grid grid-cols-3 gap-1 w-fit mx-auto">
+                    <div className="grid grid-cols-3 gap-1 w-20 mx-auto">
                       <div></div>
-                      <Button size="sm" variant="outline" onClick={() => handlePtzControl('up')}>
-                        <ChevronUp className="h-4 w-4" />
-                      </Button>
-                      <div></div>
-                      <Button size="sm" variant="outline" onClick={() => handlePtzControl('left')}>
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => handlePtzControl('home')}>
-                        <Home className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => handlePtzControl('right')}>
-                        <ChevronRight className="h-4 w-4" />
+                      <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => handlePtzControl('up')}>
+                        <ChevronUp className="h-3 w-3" />
                       </Button>
                       <div></div>
-                      <Button size="sm" variant="outline" onClick={() => handlePtzControl('down')}>
-                        <ChevronDown className="h-4 w-4" />
+                      <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => handlePtzControl('left')}>
+                        <ChevronLeft className="h-3 w-3" />
+                      </Button>
+                      <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => handlePtzControl('home')}>
+                        <Home className="h-3 w-3" />
+                      </Button>
+                      <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => handlePtzControl('right')}>
+                        <ChevronRight className="h-3 w-3" />
+                      </Button>
+                      <div></div>
+                      <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => handlePtzControl('down')}>
+                        <ChevronDown className="h-3 w-3" />
                       </Button>
                       <div></div>
                     </div>
                   </div>
 
                   {/* Zoom Controls */}
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <div className="text-xs font-medium">{t.zoom}</div>
-                    <div className="flex gap-2 justify-center">
-                      <Button size="sm" variant="outline" onClick={() => handleZoom('out')}>
-                        <ZoomOut className="h-4 w-4" />
+                    <div className="flex gap-1 justify-center">
+                      <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => handleZoom('out')}>
+                        <ZoomOut className="h-3 w-3" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleZoom('in')}>
-                        <ZoomIn className="h-4 w-4" />
+                      <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => handleZoom('in')}>
+                        <ZoomIn className="h-3 w-3" />
                       </Button>
                     </div>
                     <div className="text-xs text-center text-muted-foreground">
@@ -435,7 +435,7 @@ export default function CCTVLiveFeed() {
 
                   {/* Presets */}
                   {mainCamera.presets && mainCamera.presets.length > 0 && (
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <div className="text-xs font-medium">{t.presets}</div>
                       <div className="flex flex-wrap gap-1">
                         {mainCamera.presets.map((preset) => (
@@ -443,7 +443,7 @@ export default function CCTVLiveFeed() {
                             key={preset}
                             size="sm"
                             variant="outline"
-                            className="text-xs"
+                            className="text-xs h-6 px-2"
                             onClick={() => handlePreset(preset)}
                           >
                             {preset}
