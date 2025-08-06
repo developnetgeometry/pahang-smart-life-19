@@ -53,6 +53,7 @@ export default function CCTVManagement() {
   const [motionEvents] = useState<Array<{ id: string; timestamp: string; camera: string }>>([]);
   const [rtspConnected, setRtspConnected] = useState(false);
   const [ptzPosition, setPtzPosition] = useState({ pan: 0, tilt: 0, zoom: 1 });
+  const [activeTab, setActiveTab] = useState('livefeed');
 
   const text = {
     en: {
@@ -442,6 +443,11 @@ export default function CCTVManagement() {
     setRtspConnected(!rtspConnected);
   };
 
+  const handleViewLiveCamera = (camera: CCTVCamera) => {
+    setSelectedCamera(camera.id);
+    setActiveTab('livefeed');
+  };
+
   const filteredCameras = selectedCamera === 'all' 
     ? mockCameras 
     : mockCameras.filter(camera => camera.id === selectedCamera);
@@ -514,7 +520,7 @@ export default function CCTVManagement() {
         </Dialog>
       </div>
 
-      <Tabs defaultValue="livefeed" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="livefeed">{t.liveFeedView}</TabsTrigger>
           <TabsTrigger value="cameras">{t.cameras}</TabsTrigger>
@@ -878,7 +884,7 @@ export default function CCTVManagement() {
                   </div>
                   
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="flex-1">
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => handleViewLiveCamera(camera)}>
                       <Eye className="h-4 w-4 mr-1" />
                       {t.liveView}
                     </Button>
