@@ -26,6 +26,8 @@ import ComplaintsManagement from "./pages/admin/ComplaintsManagement";
 import CCTVManagement from "./pages/admin/CCTVManagement";
 import SmartMonitoring from "./pages/admin/SmartMonitoring";
 import SensorManagement from "./pages/admin/SensorManagement";
+import AnnouncementManagement from "./pages/admin/AnnouncementManagement";
+import DiscussionManagement from "./pages/admin/DiscussionManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -218,6 +220,22 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <SensorManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/announcements" 
+                element={
+                  <ProtectedRoute>
+                    <AnnouncementManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/discussions" 
+                element={
+                  <ProtectedRoute>
+                    <DiscussionManagement />
                   </ProtectedRoute>
                 } 
               />
