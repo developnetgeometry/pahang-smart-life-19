@@ -2,6 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
 import { 
   Calendar, 
   UserPlus, 
@@ -18,6 +19,7 @@ import {
 export function QuickActions() {
   const { currentViewRole, language } = useAuth();
   const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
+  const navigate = useNavigate();
 
   const residentActions = [
     {
@@ -91,6 +93,14 @@ export function QuickActions() {
     );
   };
 
+  const handleActionClick = (action: any) => {
+    if (action.href === '#emergency') {
+      handleEmergencyAlert();
+    } else {
+      navigate(action.href);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -106,7 +116,7 @@ export function QuickActions() {
               key={index}
               variant="ghost"
               className="h-auto p-4 justify-start text-left hover:shadow-community transition-spring group"
-              onClick={action.href === '#emergency' ? handleEmergencyAlert : undefined}
+              onClick={() => handleActionClick(action)}
             >
               <div className="flex items-start space-x-3 w-full">
                 <div className={`p-2 rounded-lg ${action.color} group-hover:shadow-glow transition-spring flex-shrink-0`}>
