@@ -23,6 +23,9 @@ import CommunityManagement from "./pages/admin/CommunityManagement";
 import DistrictManagement from "./pages/admin/DistrictManagement";
 import MaintenanceManagement from "./pages/admin/MaintenanceManagement";
 import ComplaintsManagement from "./pages/admin/ComplaintsManagement";
+import CCTVManagement from "./pages/admin/CCTVManagement";
+import SmartMonitoring from "./pages/admin/SmartMonitoring";
+import SensorManagement from "./pages/admin/SensorManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -191,6 +194,30 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <ComplaintsManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/cctv" 
+                element={
+                  <ProtectedRoute>
+                    <CCTVManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/smart-monitoring" 
+                element={
+                  <ProtectedRoute>
+                    <SmartMonitoring />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/sensors" 
+                element={
+                  <ProtectedRoute>
+                    <SensorManagement />
                   </ProtectedRoute>
                 } 
               />
