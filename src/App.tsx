@@ -17,6 +17,8 @@ import Facilities from "./pages/Facilities";
 import Marketplace from "./pages/Marketplace";
 import CCTVLiveFeed from "./pages/CCTVLiveFeed";
 import AdminPanel from "./pages/AdminPanel";
+import UserManagement from "./pages/admin/UserManagement";
+import SecurityDashboard from "./pages/admin/SecurityDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -137,6 +139,22 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <AdminPanel />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/users" 
+                element={
+                  <ProtectedRoute>
+                    <UserManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/security" 
+                element={
+                  <ProtectedRoute>
+                    <SecurityDashboard />
                   </ProtectedRoute>
                 } 
               />
