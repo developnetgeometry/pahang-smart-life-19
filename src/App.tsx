@@ -19,6 +19,10 @@ import CCTVLiveFeed from "./pages/CCTVLiveFeed";
 import AdminPanel from "./pages/AdminPanel";
 import UserManagement from "./pages/admin/UserManagement";
 import SecurityDashboard from "./pages/admin/SecurityDashboard";
+import CommunityManagement from "./pages/admin/CommunityManagement";
+import DistrictManagement from "./pages/admin/DistrictManagement";
+import MaintenanceManagement from "./pages/admin/MaintenanceManagement";
+import ComplaintsManagement from "./pages/admin/ComplaintsManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -155,6 +159,38 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <SecurityDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/communities" 
+                element={
+                  <ProtectedRoute>
+                    <CommunityManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/districts" 
+                element={
+                  <ProtectedRoute>
+                    <DistrictManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/maintenance" 
+                element={
+                  <ProtectedRoute>
+                    <MaintenanceManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/complaints" 
+                element={
+                  <ProtectedRoute>
+                    <ComplaintsManagement />
                   </ProtectedRoute>
                 } 
               />
