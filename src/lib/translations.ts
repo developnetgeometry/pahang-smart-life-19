@@ -3,193 +3,185 @@ export type Language = 'en' | 'ms';
 export const translations = {
   en: {
     // Navigation
-    'nav.dashboard': 'Dashboard',
-    'nav.myActivities': 'My Activities',
-    'nav.myBookings': 'My Bookings',
-    'nav.myVisitors': 'My Visitors',
-    'nav.myComplaints': 'My Complaints',
-    'nav.myProfile': 'My Profile',
-    'nav.communityHub': 'Community Hub',
-    'nav.announcements': 'Announcements',
-    'nav.discussions': 'Discussions',
-    'nav.servicesAndFacilities': 'Services & Facilities',
-    'nav.facilities': 'Facilities',
-    'nav.marketplace': 'Marketplace',
-    'nav.cctvLiveFeed': 'CCTV Live Feed',
-    'nav.administration': 'Administration',
-    'nav.userManagement': 'User Management',
-    'nav.communityManagement': 'Community Management',
-    'nav.districtManagement': 'District Management',
-    'nav.operations': 'Operations',
-    'nav.facilitiesManagement': 'Facilities Management',
-    'nav.maintenanceManagement': 'Maintenance Management',
-    'nav.complaintsManagement': 'Complaints Management',
-    'nav.securityAndMonitoring': 'Security & Monitoring',
-    'nav.securityDashboard': 'Security Dashboard',
-    'nav.cctvManagement': 'CCTV Management',
-    'nav.smartMonitoring': 'Smart Monitoring',
-    'nav.sensorManagement': 'Sensor Management',
-    'nav.communication': 'Communication',
+    'dashboard': 'Dashboard',
+    'myActivities': 'My Activities',
+    'myBookings': 'My Bookings',
+    'myVisitors': 'My Visitors',
+    'myComplaints': 'My Complaints',
+    'myProfile': 'My Profile',
+    'communityHub': 'Community Hub',
+    'announcements': 'Announcements',
+    'discussions': 'Discussions',
+    'servicesAndFacilities': 'Services & Facilities',
+    'facilities': 'Facilities',
+    'marketplace': 'Marketplace',
+    'cctvLiveFeed': 'CCTV Live Feed',
+    'administration': 'Administration',
+    'userManagement': 'User Management',
+    'communityManagement': 'Community Management',
+    'districtManagement': 'District Management',
+    'operations': 'Operations',
+    'facilitiesManagement': 'Facilities Management',
+    'maintenanceManagement': 'Maintenance Management',
+    'complaintsManagement': 'Complaints Management',
+    'securityAndMonitoring': 'Security & Monitoring',
+    'securityDashboard': 'Security Dashboard',
+    'cctvManagement': 'CCTV Management',
+    'smartMonitoring': 'Smart Monitoring',
+    'sensorManagement': 'Sensor Management',
+    'communication': 'Communication',
 
     // Common
-    'common.welcome': 'Welcome',
-    'common.login': 'Login',
-    'common.logout': 'Logout',
-    'common.save': 'Save',
-    'common.cancel': 'Cancel',
-    'common.submit': 'Submit',
-    'common.search': 'Search',
-    'common.filter': 'Filter',
-    'common.loading': 'Loading...',
-    'common.error': 'Error',
-    'common.success': 'Success',
-    'common.noData': 'No data available',
+    'welcome': 'Welcome',
+    'login': 'Login',
+    'logout': 'Logout',
+    'save': 'Save',
+    'cancel': 'Cancel',
+    'submit': 'Submit',
+    'search': 'Search',
+    'filter': 'Filter',
+    'loading': 'Loading...',
+    'error': 'Error',
+    'success': 'Success',
+    'noData': 'No data available',
     
     // Authentication
-    'auth.email': 'Email',
-    'auth.password': 'Password',
-    'auth.forgotPassword': 'Forgot Password?',
-    'auth.signIn': 'Sign In',
-    'auth.signUp': 'Sign Up',
+    'email': 'Email',
+    'password': 'Password',
+    'forgotPassword': 'Forgot Password?',
+    'signIn': 'Sign In',
+    'signUp': 'Sign Up',
     
     // Dashboard
-    'dashboard.title': 'Dashboard',
-    'dashboard.welcome': 'Welcome back',
-    'dashboard.overview': 'Overview',
-    'dashboard.recentActivity': 'Recent Activity',
-    'dashboard.quickActions': 'Quick Actions',
-    'dashboard.weather': 'Weather',
-    'dashboard.panicButton': 'Emergency Alert',
+    'title': 'Dashboard',
+    'welcomeBack': 'Welcome back',
+    'overview': 'Overview',
+    'recentActivity': 'Recent Activity',
+    'quickActions': 'Quick Actions',
+    'weather': 'Weather',
+    'panicButton': 'Emergency Alert',
     
     // Profile
-    'profile.title': 'My Profile',
-    'profile.personalInfo': 'Personal Information',
-    'profile.contactInfo': 'Contact Information',
-    'profile.emergencyContact': 'Emergency Contact',
-    'profile.vehicleInfo': 'Vehicle Information',
-    'profile.preferences': 'Preferences',
+    'profileTitle': 'My Profile',
+    'personalInfo': 'Personal Information',
+    'contactInfo': 'Contact Information',
+    'emergencyContact': 'Emergency Contact',
+    'vehicleInfo': 'Vehicle Information',
+    'preferences': 'Preferences',
     
     // View Roles
-    'viewRole.resident': 'Resident View',
-    'viewRole.professional': 'Professional View',
-    'viewRole.switch': 'Switch View',
+    'residentView': 'Resident View',
+    'professionalView': 'Professional View',
+    'switchView': 'Switch View',
     
     // Language & Theme
     'english': 'English',
     'malay': 'Bahasa Malaysia',
-    'theme.light': 'Light',
-    'theme.dark': 'Dark',
+    'lightTheme': 'Light',
+    'darkTheme': 'Dark',
     
     // System
-    'system.smartCommunity': 'Integrated Smart City System',
-    'system.pahangState': 'Pahang State',
-    'system.poweredBy': 'Powered by Smart City Initiative'
+    'smartCommunity': 'Integrated Smart City System',
+    'pahangState': 'Pahang State',
+    'poweredBy': 'Powered by Smart City Initiative'
   },
   ms: {
     // Navigation
-    'nav.dashboard': 'Papan Pemuka',
-    'nav.myActivities': 'Aktiviti Saya',
-    'nav.myBookings': 'Tempahan Saya',
-    'nav.myVisitors': 'Pelawat Saya',
-    'nav.myComplaints': 'Aduan Saya',
-    'nav.myProfile': 'Profil Saya',
-    'nav.communityHub': 'Hub Komuniti',
-    'nav.announcements': 'Pengumuman',
-    'nav.discussions': 'Perbincangan',
-    'nav.servicesAndFacilities': 'Perkhidmatan & Kemudahan',
-    'nav.facilities': 'Kemudahan',
-    'nav.marketplace': 'Pasar Maya',
-    'nav.cctvLiveFeed': 'Siaran Langsung CCTV',
-    'nav.administration': 'Pentadbiran',
-    'nav.userManagement': 'Pengurusan Pengguna',
-    'nav.communityManagement': 'Pengurusan Komuniti',
-    'nav.districtManagement': 'Pengurusan Daerah',
-    'nav.operations': 'Operasi',
-    'nav.facilitiesManagement': 'Pengurusan Kemudahan',
-    'nav.maintenanceManagement': 'Pengurusan Penyelenggaraan',
-    'nav.complaintsManagement': 'Pengurusan Aduan',
-    'nav.securityAndMonitoring': 'Keselamatan & Pemantauan',
-    'nav.securityDashboard': 'Papan Pemuka Keselamatan',
-    'nav.cctvManagement': 'Pengurusan CCTV',
-    'nav.smartMonitoring': 'Pemantauan Pintar',
-    'nav.sensorManagement': 'Pengurusan Sensor',
-    'nav.communication': 'Komunikasi',
+    'dashboard': 'Papan Pemuka',
+    'myActivities': 'Aktiviti Saya',
+    'myBookings': 'Tempahan Saya',
+    'myVisitors': 'Pelawat Saya',
+    'myComplaints': 'Aduan Saya',
+    'myProfile': 'Profil Saya',
+    'communityHub': 'Hub Komuniti',
+    'announcements': 'Pengumuman',
+    'discussions': 'Perbincangan',
+    'servicesAndFacilities': 'Perkhidmatan & Kemudahan',
+    'facilities': 'Kemudahan',
+    'marketplace': 'Pasar Maya',
+    'cctvLiveFeed': 'Siaran Langsung CCTV',
+    'administration': 'Pentadbiran',
+    'userManagement': 'Pengurusan Pengguna',
+    'communityManagement': 'Pengurusan Komuniti',
+    'districtManagement': 'Pengurusan Daerah',
+    'operations': 'Operasi',
+    'facilitiesManagement': 'Pengurusan Kemudahan',
+    'maintenanceManagement': 'Pengurusan Penyelenggaraan',
+    'complaintsManagement': 'Pengurusan Aduan',
+    'securityAndMonitoring': 'Keselamatan & Pemantauan',
+    'securityDashboard': 'Papan Pemuka Keselamatan',
+    'cctvManagement': 'Pengurusan CCTV',
+    'smartMonitoring': 'Pemantauan Pintar',
+    'sensorManagement': 'Pengurusan Sensor',
+    'communication': 'Komunikasi',
 
     // Common
-    'common.welcome': 'Selamat Datang',
-    'common.login': 'Log Masuk',
-    'common.logout': 'Log Keluar',
-    'common.save': 'Simpan',
-    'common.cancel': 'Batal',
-    'common.submit': 'Hantar',
-    'common.search': 'Cari',
-    'common.filter': 'Tapis',
-    'common.loading': 'Memuatkan...',
-    'common.error': 'Ralat',
-    'common.success': 'Berjaya',
-    'common.noData': 'Tiada data tersedia',
+    'welcome': 'Selamat Datang',
+    'login': 'Log Masuk',
+    'logout': 'Log Keluar',
+    'save': 'Simpan',
+    'cancel': 'Batal',
+    'submit': 'Hantar',
+    'search': 'Cari',
+    'filter': 'Tapis',
+    'loading': 'Memuatkan...',
+    'error': 'Ralat',
+    'success': 'Berjaya',
+    'noData': 'Tiada data tersedia',
     
     // Authentication
-    'auth.email': 'Emel',
-    'auth.password': 'Kata Laluan',
-    'auth.forgotPassword': 'Lupa Kata Laluan?',
-    'auth.signIn': 'Log Masuk',
-    'auth.signUp': 'Daftar',
+    'email': 'Emel',
+    'password': 'Kata Laluan',
+    'forgotPassword': 'Lupa Kata Laluan?',
+    'signIn': 'Log Masuk',
+    'signUp': 'Daftar',
     
     // Dashboard
-    'dashboard.title': 'Papan Pemuka',
-    'dashboard.welcome': 'Selamat kembali',
-    'dashboard.overview': 'Ringkasan',
-    'dashboard.recentActivity': 'Aktiviti Terkini',
-    'dashboard.quickActions': 'Tindakan Pantas',
-    'dashboard.weather': 'Cuaca',
-    'dashboard.panicButton': 'Amaran Kecemasan',
+    'title': 'Papan Pemuka',
+    'welcomeBack': 'Selamat kembali',
+    'overview': 'Ringkasan',
+    'recentActivity': 'Aktiviti Terkini',
+    'quickActions': 'Tindakan Pantas',
+    'weather': 'Cuaca',
+    'panicButton': 'Amaran Kecemasan',
     
     // Profile
-    'profile.title': 'Profil Saya',
-    'profile.personalInfo': 'Maklumat Peribadi',
-    'profile.contactInfo': 'Maklumat Hubungan',
-    'profile.emergencyContact': 'Hubungan Kecemasan',
-    'profile.vehicleInfo': 'Maklumat Kenderaan',
-    'profile.preferences': 'Keutamaan',
+    'profileTitle': 'Profil Saya',
+    'personalInfo': 'Maklumat Peribadi',
+    'contactInfo': 'Maklumat Hubungan',
+    'emergencyContact': 'Hubungan Kecemasan',
+    'vehicleInfo': 'Maklumat Kenderaan',
+    'preferences': 'Keutamaan',
     
     // View Roles
-    'viewRole.resident': 'Pandangan Penduduk',
-    'viewRole.professional': 'Pandangan Profesional',
-    'viewRole.switch': 'Tukar Pandangan',
+    'residentView': 'Pandangan Penduduk',
+    'professionalView': 'Pandangan Profesional',
+    'switchView': 'Tukar Pandangan',
     
     // Language & Theme
     'english': 'Bahasa Inggeris',
     'malay': 'Bahasa Malaysia',
-    'theme.light': 'Terang',
-    'theme.dark': 'Gelap',
+    'lightTheme': 'Terang',
+    'darkTheme': 'Gelap',
     
     // System
-    'system.smartCommunity': 'Sistem Bandar Pintar Bersepadu',
-    'system.pahangState': 'Negeri Pahang',
-    'system.poweredBy': 'Dikuasakan oleh Inisiatif Bandar Pintar'
+    'smartCommunity': 'Sistem Bandar Pintar Bersepadu',
+    'pahangState': 'Negeri Pahang',
+    'poweredBy': 'Dikuasakan oleh Inisiatif Bandar Pintar'
   }
 };
 
 export function useTranslation(language: Language = 'ms') {
   return {
     t: (key: string): string => {
-      const keys = key.split('.');
       const langTranslations = translations[language] || translations['ms'];
-      let value: any = langTranslations;
+      let value: any = langTranslations[key];
       
-      for (const k of keys) {
-        value = value?.[k];
-        if (value === undefined) {
-          // Try fallback language
-          const fallbackTranslations = translations[language === 'en' ? 'ms' : 'en'];
-          let fallbackValue: any = fallbackTranslations;
-          for (const fk of keys) {
-            fallbackValue = fallbackValue?.[fk];
-            if (fallbackValue === undefined) break;
-          }
-          return typeof fallbackValue === 'string' ? fallbackValue : key;
-        }
+      if (value === undefined) {
+        // Try fallback language
+        const fallbackTranslations = translations[language === 'en' ? 'ms' : 'en'];
+        let fallbackValue: any = fallbackTranslations[key];
+        return typeof fallbackValue === 'string' ? fallbackValue : key;
       }
       
       return typeof value === 'string' ? value : key;

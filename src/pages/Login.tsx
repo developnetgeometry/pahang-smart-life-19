@@ -38,10 +38,10 @@ export default function Login() {
           <div className="space-y-4">
             <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur rounded-full px-4 py-2">
               <MapPin className="w-5 h-5" />
-              <span className="font-medium">{t('system.pahangState')}</span>
+              <span className="font-medium">{t('pahangState')}</span>
             </div>
             <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
-              {t('system.smartCommunity')}
+              {t('smartCommunity')}
             </h1>
             <p className="text-xl text-white/90 max-w-lg">
               {language === 'en' 
@@ -78,7 +78,7 @@ export default function Login() {
         <div className="w-full max-w-md mx-auto">
           <Card className="shadow-elegant border-white/20 bg-card/95 backdrop-blur">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold">{t('auth.signIn')}</CardTitle>
+              <CardTitle className="text-2xl font-bold">{t('signIn')}</CardTitle>
               <CardDescription>
                 {language === 'en' 
                   ? 'Access your smart community platform'
@@ -95,7 +95,7 @@ export default function Login() {
                 )}
                 
                 <div className="space-y-2">
-                  <Label htmlFor="email">{t('auth.email')}</Label>
+                  <Label htmlFor="email">{t('email')}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -108,7 +108,7 @@ export default function Login() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">{t('auth.password')}</Label>
+                  <Label htmlFor="password">{t('password')}</Label>
                   <Input
                     id="password"
                     type="password"
@@ -127,16 +127,16 @@ export default function Login() {
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t('common.loading')}
+                      {t('loading')}
                     </>
                   ) : (
-                    t('auth.signIn')
+                    t('signIn')
                   )}
                 </Button>
 
                 <div className="text-center">
                   <Button variant="link" className="text-muted-foreground">
-                    {t('auth.forgotPassword')}
+                    {t('forgotPassword')}
                   </Button>
                 </div>
               </form>
@@ -155,7 +155,7 @@ export default function Login() {
           </Card>
 
           <p className="text-center text-white/70 text-sm mt-6">
-            {t('system.poweredBy')}
+            {t('poweredBy')}
           </p>
         </div>
       </div>

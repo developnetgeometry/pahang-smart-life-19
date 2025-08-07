@@ -61,10 +61,10 @@ export function Header() {
             </div>
             <div className="hidden sm:block">
               <h1 className="text-lg font-semibold text-foreground">
-                {t('system.smartCommunity')}
+                {t('smartCommunity')}
               </h1>
               <p className="text-xs text-muted-foreground">
-                {t('system.pahangState')}
+                {t('pahangState')}
               </p>
             </div>
           </div>
@@ -78,12 +78,12 @@ export function Header() {
                 {currentViewRole === 'resident' ? (
                   <>
                     <User className="w-4 h-4" />
-                    <span>{t('viewRole.resident')}</span>
+                    <span>{t('residentView')}</span>
                   </>
                 ) : (
                   <>
                     <UserCheck className="w-4 h-4" />
-                    <span>{t('viewRole.professional')}</span>
+                    <span>{t('professionalView')}</span>
                   </>
                 )}
                 <ChevronDown className="w-4 h-4" />
@@ -91,7 +91,7 @@ export function Header() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{t('viewRole.switch')}</DialogTitle>
+                <DialogTitle>{t('switchView')}</DialogTitle>
                 <DialogDescription>
                   Choose how you want to view and interact with the platform
                 </DialogDescription>
@@ -103,15 +103,15 @@ export function Header() {
                   className="justify-start"
                 >
                   <User className="w-4 h-4 mr-2" />
-                  {t('viewRole.resident')}
+                  {t('residentView')}
                 </Button>
                 <Button
                   variant={currentViewRole === 'professional' ? 'default' : 'outline'}
+                  className="flex-1"
                   onClick={() => handleViewRoleSwitch('professional')}
-                  className="justify-start"
                 >
                   <UserCheck className="w-4 h-4 mr-2" />
-                  {t('viewRole.professional')}
+                  {t('professionalView')}
                 </Button>
               </div>
             </DialogContent>
@@ -179,7 +179,7 @@ export function Header() {
               <DropdownMenuSeparator />
               <DropdownMenuItem>
                 <User className="mr-2 h-4 w-4" />
-                <span>{t('profile.title')}</span>
+                <span>{t('profileTitle')}</span>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />
@@ -188,7 +188,7 @@ export function Header() {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>{t('common.logout')}</span>
+                <span>{t('logout')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

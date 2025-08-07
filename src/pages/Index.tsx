@@ -60,7 +60,7 @@ const Index = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">
-              {t('dashboard.welcome')}, {user.display_name}!
+              {t('welcomeBack')}, {user.display_name}!
             </h1>
             <p className="text-muted-foreground">
               {language === 'en' 
@@ -71,7 +71,7 @@ const Index = () => {
           </div>
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="bg-gradient-primary text-white border-none">
-              {currentViewRole === 'resident' ? t('viewRole.resident') : t('viewRole.professional')}
+              {currentViewRole === 'resident' ? t('residentView') : t('professionalView')}
             </Badge>
             <Badge variant="secondary">
               {user.district}
@@ -94,7 +94,7 @@ const Index = () => {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Activity className="w-5 h-5" />
-                <span>{t('dashboard.recentActivity')}</span>
+                <span>{t('recentActivity')}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
