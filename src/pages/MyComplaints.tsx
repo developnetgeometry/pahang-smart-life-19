@@ -61,6 +61,8 @@ export default function MyComplaints() {
   ]);
 
   const [showNewComplaintDialog, setShowNewComplaintDialog] = useState(false);
+  const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -136,6 +138,11 @@ export default function MyComplaints() {
       default:
         return <AlertTriangle className="w-4 h-4" />;
     }
+  };
+
+  const handleViewDetails = (complaint: Complaint) => {
+    setSelectedComplaint(complaint);
+    setShowDetailsDialog(true);
   };
 
   return (
@@ -248,6 +255,132 @@ export default function MyComplaints() {
         </Dialog>
       </div>
 
+      {/* Complaint Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'en' ? 'Complaint Details' : 'Butiran Aduan'}
+            </DialogTitle>
+            <DialogDescription>
+              {language === 'en' 
+                ? 'Complete information about this complaint'
+                : 'Maklumat lengkap tentang aduan ini'
+              }
+            </DialogDescription>
+          </DialogHeader>
+          {selectedComplaint && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  {language === 'en' ? 'Issue Title' : 'Tajuk Masalah'}
+                </Label>
+                <div className="p-3 bg-muted rounded-md">
+                  <p className="text-sm">{selectedComplaint.title}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    {language === 'en' ? 'Category' : 'Kategori'}
+                  </Label>
+                  <div className="p-3 bg-muted rounded-md flex items-center space-x-2">
+                    {getCategoryIcon(selectedComplaint.category)}
+                    <span className="text-sm">{selectedComplaint.category}</span>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    {language === 'en' ? 'Priority Level' : 'Tahap Keutamaan'}
+                  </Label>
+                  <div className="p-3 bg-muted rounded-md">
+                    <Badge className={`${getPriorityColor(selectedComplaint.priority)} text-white`}>
+                      {getPriorityText(selectedComplaint.priority)}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  {language === 'en' ? 'Location' : 'Lokasi'}
+                </Label>
+                <div className="p-3 bg-muted rounded-md">
+                  <p className="text-sm">{selectedComplaint.location}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  {language === 'en' ? 'Detailed Description' : 'Penerangan Terperinci'}
+                </Label>
+                <div className="p-3 bg-muted rounded-md">
+                  <p className="text-sm">{selectedComplaint.description}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    {language === 'en' ? 'Status' : 'Status'}
+                  </Label>
+                  <div className="p-3 bg-muted rounded-md">
+                    <Badge className={`${getStatusColor(selectedComplaint.status)} text-white`}>
+                      {getStatusText(selectedComplaint.status)}
+                    </Badge>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    {language === 'en' ? 'Date Submitted' : 'Tarikh Dihantar'}
+                  </Label>
+                  <div className="p-3 bg-muted rounded-md flex items-center space-x-2">
+                    <Calendar className="w-4 h-4" />
+                    <span className="text-sm">{selectedComplaint.created_date}</span>
+                  </div>
+                </div>
+              </div>
+              
+              {selectedComplaint.assigned_to && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    {language === 'en' ? 'Assigned To' : 'Ditugaskan Kepada'}
+                  </Label>
+                  <div className="p-3 bg-muted rounded-md">
+                    <p className="text-sm text-blue-600">{selectedComplaint.assigned_to}</p>
+                  </div>
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  {language === 'en' ? 'Photos' : 'Foto'}
+                </Label>
+                <div className="p-3 bg-muted rounded-md">
+                  {selectedComplaint.photos && selectedComplaint.photos.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      {selectedComplaint.photos.map((photo, index) => (
+                        <div key={index} className="aspect-square bg-gray-200 rounded-md flex items-center justify-center">
+                          <Camera className="w-6 h-6 text-gray-400" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground flex items-center space-x-2">
+                      <Camera className="w-4 h-4" />
+                      <span>{language === 'en' ? 'No photos attached' : 'Tiada foto dilampirkan'}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -357,7 +490,11 @@ export default function MyComplaints() {
                   </span> {complaint.category}
                 </div>
                 <div className="space-x-2">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleViewDetails(complaint)}
+                  >
                     {language === 'en' ? 'View Details' : 'Lihat Butiran'}
                   </Button>
                   {complaint.status === 'submitted' && (
