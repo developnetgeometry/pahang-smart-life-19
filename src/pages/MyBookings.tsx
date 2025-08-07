@@ -3,6 +3,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Calendar, Clock, MapPin, Users, Plus } from 'lucide-react';
 
 interface Booking {
@@ -18,7 +21,7 @@ interface Booking {
 
 export default function MyBookings() {
   const { language } = useAuth();
-  const [bookings] = useState<Booking[]>([
+  const [bookings, setBookings] = useState<Booking[]>([
     {
       id: '1',
       facility_name: language === 'en' ? 'Swimming Pool' : 'Kolam Renang',
@@ -76,6 +79,14 @@ export default function MyBookings() {
         default: return 'Tidak Diketahui';
       }
     }
+  };
+
+  const handleModifyBooking = (bookingId: string, updatedData: Partial<Booking>) => {
+    setBookings(prev => prev.map(booking => 
+      booking.id === bookingId 
+        ? { ...booking, ...updatedData }
+        : booking
+    ));
   };
 
   return (
@@ -186,9 +197,71 @@ export default function MyBookings() {
                 </div>
                 <div className="space-x-2">
                   {booking.status === 'confirmed' && (
-                    <Button variant="outline" size="sm">
-                      {language === 'en' ? 'Modify' : 'Ubah'}
-                    </Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          {language === 'en' ? 'Modify' : 'Ubah'}
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>
+                            {language === 'en' ? 'Modify Booking' : 'Ubah Tempahan'}
+                          </DialogTitle>
+                          <DialogDescription>
+                            {language === 'en' 
+                              ? 'Update your booking details below.'
+                              : 'Kemas kini butiran tempahan anda di bawah.'
+                            }
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="date" className="text-right">
+                              {language === 'en' ? 'Date' : 'Tarikh'}
+                            </Label>
+                            <Input
+                              id="date"
+                              type="date"
+                              defaultValue={booking.date}
+                              className="col-span-3"
+                            />
+                          </div>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="time" className="text-right">
+                              {language === 'en' ? 'Time' : 'Masa'}
+                            </Label>
+                            <Input
+                              id="time"
+                              type="time"
+                              defaultValue={booking.time}
+                              className="col-span-3"
+                            />
+                          </div>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="duration" className="text-right">
+                              {language === 'en' ? 'Duration' : 'Tempoh'}
+                            </Label>
+                            <Input
+                              id="duration"
+                              type="number"
+                              defaultValue={booking.duration}
+                              min="1"
+                              max="8"
+                              className="col-span-3"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                          <Button variant="outline">
+                            {language === 'en' ? 'Cancel' : 'Batal'}
+                          </Button>
+                          <Button type="submit">
+                            {language === 'en' ? 'Save Changes' : 'Simpan Perubahan'}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   )}
                   {booking.status !== 'cancelled' && (
                     <Button variant="destructive" size="sm">
