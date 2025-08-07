@@ -16,7 +16,7 @@ export type Database = {
     Tables: {
       announcements: {
         Row: {
-          author_id: string
+          author_id: string | null
           content: string
           created_at: string | null
           district_id: string | null
@@ -30,7 +30,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          author_id: string
+          author_id?: string | null
           content: string
           created_at?: string | null
           district_id?: string | null
@@ -44,7 +44,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          author_id?: string
+          author_id?: string | null
           content?: string
           created_at?: string | null
           district_id?: string | null
@@ -80,7 +80,7 @@ export type Database = {
           status: Database["public"]["Enums"]["booking_status"] | null
           total_amount: number | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           booking_date: string
@@ -94,7 +94,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["booking_status"] | null
           total_amount?: number | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           booking_date?: string
@@ -108,7 +108,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["booking_status"] | null
           total_amount?: number | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -206,7 +206,7 @@ export type Database = {
           status: Database["public"]["Enums"]["complaint_status"] | null
           title: string
           updated_at: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           assigned_to?: string | null
@@ -222,7 +222,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["complaint_status"] | null
           title: string
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           assigned_to?: string | null
@@ -238,7 +238,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["complaint_status"] | null
           title?: string
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -276,7 +276,7 @@ export type Database = {
       }
       discussion_replies: {
         Row: {
-          author_id: string
+          author_id: string | null
           content: string
           created_at: string | null
           discussion_id: string
@@ -286,7 +286,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          author_id: string
+          author_id?: string | null
           content: string
           created_at?: string | null
           discussion_id: string
@@ -296,7 +296,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          author_id?: string
+          author_id?: string | null
           content?: string
           created_at?: string | null
           discussion_id?: string
@@ -324,7 +324,7 @@ export type Database = {
       }
       discussions: {
         Row: {
-          author_id: string
+          author_id: string | null
           category_id: string | null
           content: string
           created_at: string | null
@@ -338,7 +338,7 @@ export type Database = {
           views_count: number | null
         }
         Insert: {
-          author_id: string
+          author_id?: string | null
           category_id?: string | null
           content: string
           created_at?: string | null
@@ -352,7 +352,7 @@ export type Database = {
           views_count?: number | null
         }
         Update: {
-          author_id?: string
+          author_id?: string | null
           category_id?: string | null
           content?: string
           created_at?: string | null
@@ -473,7 +473,7 @@ export type Database = {
           image_urls: string[] | null
           location: string | null
           price: number
-          seller_id: string
+          seller_id: string | null
           status: Database["public"]["Enums"]["marketplace_status"] | null
           title: string
           updated_at: string | null
@@ -488,7 +488,7 @@ export type Database = {
           image_urls?: string[] | null
           location?: string | null
           price: number
-          seller_id: string
+          seller_id?: string | null
           status?: Database["public"]["Enums"]["marketplace_status"] | null
           title: string
           updated_at?: string | null
@@ -503,7 +503,7 @@ export type Database = {
           image_urls?: string[] | null
           location?: string | null
           price?: number
-          seller_id?: string
+          seller_id?: string | null
           status?: Database["public"]["Enums"]["marketplace_status"] | null
           title?: string
           updated_at?: string | null
@@ -688,7 +688,7 @@ export type Database = {
           purpose: string | null
           status: Database["public"]["Enums"]["visitor_status"] | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
           visit_date: string
           visit_time: string
           visitor_ic: string | null
@@ -704,7 +704,7 @@ export type Database = {
           purpose?: string | null
           status?: Database["public"]["Enums"]["visitor_status"] | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
           visit_date: string
           visit_time: string
           visitor_ic?: string | null
@@ -720,7 +720,7 @@ export type Database = {
           purpose?: string | null
           status?: Database["public"]["Enums"]["visitor_status"] | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
           visit_date?: string
           visit_time?: string
           visitor_ic?: string | null
