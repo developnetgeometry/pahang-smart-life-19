@@ -9,7 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageSquare, Plus, Search, Users, Clock, Pin } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { MessageSquare, Plus, Search, Users, Clock, Pin, ArrowLeft, Reply, ThumbsUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Discussion {
@@ -24,12 +25,23 @@ interface Discussion {
   tags: string[];
 }
 
+interface Comment {
+  id: string;
+  author: string;
+  content: string;
+  timestamp: string;
+  likes: number;
+  replies?: Comment[];
+}
+
 export default function Discussions() {
   const { language } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [selectedDiscussion, setSelectedDiscussion] = useState<Discussion | null>(null);
+  const [newComment, setNewComment] = useState('');
 
   const text = {
     en: {
@@ -55,7 +67,14 @@ export default function Discussions() {
       tags: 'Tags (comma separated)',
       create: 'Create Discussion',
       cancel: 'Cancel',
-      createSuccess: 'Discussion created successfully!'
+      createSuccess: 'Discussion created successfully!',
+      backToDiscussions: 'Back to Discussions',
+      comments: 'Comments',
+      addComment: 'Add Comment',
+      postComment: 'Post Comment',
+      writeComment: 'Write your comment...',
+      like: 'Like',
+      reply: 'Reply'
     },
     ms: {
       title: 'Perbincangan Komuniti',
@@ -80,11 +99,55 @@ export default function Discussions() {
       tags: 'Tag (dipisahkan koma)',
       create: 'Cipta Perbincangan',
       cancel: 'Batal',
-      createSuccess: 'Perbincangan berjaya dicipta!'
+      createSuccess: 'Perbincangan berjaya dicipta!',
+      backToDiscussions: 'Kembali ke Perbincangan',
+      comments: 'Komen',
+      addComment: 'Tambah Komen',
+      postComment: 'Hantar Komen',
+      writeComment: 'Tulis komen anda...',
+      like: 'Suka',
+      reply: 'Balas'
     }
   };
 
   const t = text[language];
+
+  const mockComments: Record<string, Comment[]> = {
+    '1': [
+      {
+        id: '1',
+        author: 'Alex Thompson',
+        content: language === 'en' ? 'Great idea! I can help with the grilling setup.' : 'Idea yang bagus! Saya boleh bantu dengan persediaan pemanggang.',
+        timestamp: '1 hour ago',
+        likes: 5
+      },
+      {
+        id: '2',
+        author: 'Maria Garcia',
+        content: language === 'en' ? 'Count me in! Should we create a sign-up sheet?' : 'Saya sertai! Haruskah kita buat senarai pendaftaran?',
+        timestamp: '30 minutes ago',
+        likes: 3
+      }
+    ],
+    '2': [
+      {
+        id: '3',
+        author: 'John Smith',
+        content: language === 'en' ? 'Thanks for the update. What time will this happen?' : 'Terima kasih atas kemas kini. Pukul berapa ini akan berlaku?',
+        timestamp: '2 hours ago',
+        likes: 1
+      }
+    ],
+    '3': [
+      {
+        id: '4',
+        author: 'Lisa Brown',
+        content: language === 'en' ? 'These measures are much needed. Good work!' : 'Langkah-langkah ini sangat diperlukan. Kerja yang bagus!',
+        timestamp: '8 hours ago',
+        likes: 7
+      }
+    ]
+  };
 
   const mockDiscussions: Discussion[] = [
     {
@@ -145,6 +208,159 @@ export default function Discussions() {
     setIsCreateOpen(false);
   };
 
+  const handleDiscussionClick = (discussion: Discussion) => {
+    setSelectedDiscussion(discussion);
+  };
+
+  const handlePostComment = () => {
+    if (newComment.trim()) {
+      toast({
+        title: language === 'en' ? 'Comment posted successfully!' : 'Komen berjaya dihantar!',
+      });
+      setNewComment('');
+    }
+  };
+
+  const handleBackToDiscussions = () => {
+    setSelectedDiscussion(null);
+  };
+
+  // If a discussion is selected, show the discussion details view
+  if (selectedDiscussion) {
+    const comments = mockComments[selectedDiscussion.id] || [];
+    
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleBackToDiscussions}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {t.backToDiscussions}
+          </Button>
+        </div>
+
+        {/* Discussion Details */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2 mb-2">
+              {selectedDiscussion.isPinned && (
+                <Pin className="h-4 w-4 text-primary" />
+              )}
+              <CardTitle className="text-2xl">{selectedDiscussion.title}</CardTitle>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src="" />
+                  <AvatarFallback className="text-xs">
+                    {selectedDiscussion.author.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                <span>{selectedDiscussion.author}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                <span>{t.lastActivity}: {selectedDiscussion.lastActivity}</span>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1 mt-3">
+              {selectedDiscussion.tags.map((tag, index) => (
+                <Badge key={index} variant="secondary" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-base leading-relaxed">{selectedDiscussion.content}</p>
+          </CardContent>
+        </Card>
+
+        <Separator />
+
+        {/* Comments Section */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            {t.comments} ({comments.length})
+          </h2>
+
+          {/* Add Comment */}
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                <Textarea
+                  placeholder={t.writeComment}
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  rows={3}
+                />
+                <div className="flex justify-end">
+                  <Button onClick={handlePostComment} disabled={!newComment.trim()}>
+                    {t.postComment}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Comments List */}
+          <div className="space-y-4">
+            {comments.map((comment) => (
+              <Card key={comment.id}>
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src="" />
+                      <AvatarFallback className="text-xs">
+                        {comment.author.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-sm">{comment.author}</span>
+                        <span className="text-xs text-muted-foreground">{comment.timestamp}</span>
+                      </div>
+                      <p className="text-sm leading-relaxed mb-3">{comment.content}</p>
+                      <div className="flex items-center gap-4">
+                        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+                          <ThumbsUp className="h-3 w-3 mr-1" />
+                          {t.like} ({comment.likes})
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+                          <Reply className="h-3 w-3 mr-1" />
+                          {t.reply}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {comments.length === 0 && (
+            <Card>
+              <CardContent className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">
+                    {language === 'en' ? 'No comments yet. Be the first to comment!' : 'Belum ada komen. Jadilah yang pertama berkomen!'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Main discussions list view
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -235,7 +451,11 @@ export default function Discussions() {
 
       <div className="space-y-4">
         {filteredDiscussions.map((discussion) => (
-          <Card key={discussion.id} className="hover:shadow-md transition-shadow">
+          <Card 
+            key={discussion.id} 
+            className="hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleDiscussionClick(discussion)}
+          >
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -243,7 +463,7 @@ export default function Discussions() {
                     {discussion.isPinned && (
                       <Pin className="h-4 w-4 text-primary" />
                     )}
-                    <CardTitle className="text-lg hover:text-primary cursor-pointer">
+                    <CardTitle className="text-lg hover:text-primary">
                       {discussion.title}
                     </CardTitle>
                   </div>
