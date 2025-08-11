@@ -750,6 +750,15 @@ export type Database = {
         | "user"
         | "security_guard"
         | "maintenance_staff"
+        | "state_admin"
+        | "district_coordinator"
+        | "community_admin"
+        | "security_officer"
+        | "facility_manager"
+        | "resident"
+        | "service_provider"
+        | "community_leader"
+        | "state_service_manager"
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
       complaint_priority: "low" | "medium" | "high" | "urgent"
       complaint_status: "pending" | "in_progress" | "resolved" | "closed"
@@ -901,6 +910,15 @@ export const Constants = {
         "user",
         "security_guard",
         "maintenance_staff",
+        "state_admin",
+        "district_coordinator",
+        "community_admin",
+        "security_officer",
+        "facility_manager",
+        "resident",
+        "service_provider",
+        "community_leader",
+        "state_service_manager",
       ],
       booking_status: ["pending", "confirmed", "cancelled", "completed"],
       complaint_priority: ["low", "medium", "high", "urgent"],
