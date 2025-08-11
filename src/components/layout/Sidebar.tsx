@@ -120,6 +120,9 @@ export function AppSidebar() {
 
   const isActive = (path: string) => location.pathname === path;
   const canSee = (item: NavigationItem) => !item.requiredRoles || item.requiredRoles.some(r => hasRole?.(r as any));
+  const filteredNavigation = navigation
+    .map((group) => ({ ...group, items: group.items.filter(canSee) }))
+    .filter((group) => group.items.length > 0);
   return (
     <div className="flex h-full w-full flex-col bg-card border-r border-border">
       {/* Logo section */}
@@ -138,13 +141,13 @@ export function AppSidebar() {
       {/* Navigation */}
       <ScrollArea className="flex-1 px-3">
         <div className="space-y-4 py-4">
-          {navigation.map((group, groupIndex) => (
+          {filteredNavigation.map((group, groupIndex) => (
             <div key={groupIndex} className="space-y-2">
               <h4 className="text-sm font-medium text-muted-foreground px-3 py-2">
                 {group.label}
               </h4>
               <div className="space-y-1">
-                {group.items.filter(canSee).map((item) => (
+                {group.items.map((item) => (
                   <NavLink
                     key={item.url}
                     to={item.url}
@@ -161,7 +164,7 @@ export function AppSidebar() {
                   </NavLink>
                 ))}
               </div>
-              {groupIndex < navigation.length - 1 && (
+              {groupIndex < filteredNavigation.length - 1 && (
                 <Separator className="my-2" />
               )}
             </div>
