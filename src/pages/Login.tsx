@@ -112,7 +112,7 @@ export default function Login() {
                   {t('signIn')}
                 </Button>
                 <Button type="button" variant={mode === 'signUp' ? 'default' : 'outline'} size="sm" onClick={() => setMode('signUp')}>
-                  {language === 'en' ? 'Create Demo' : 'Buat Demo'}
+                  Sign Up
                 </Button>
               </div>
             </CardHeader>
