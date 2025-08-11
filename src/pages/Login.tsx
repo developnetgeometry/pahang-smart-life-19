@@ -7,12 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, MapPin, Shield, Users } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
+  const [role, setRole] = useState<string>('resident');
   const { login, language } = useAuth();
   const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
 
@@ -22,9 +26,26 @@ export default function Login() {
     setError('');
 
     try {
-      await login(email, password);
-    } catch (err) {
-      setError('Invalid credentials. Please try again.');
+      if (mode === 'signIn') {
+        await login(email, password);
+      } else {
+        const redirectUrl = `${window.location.origin}/`;
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: redirectUrl }
+        });
+        if (signUpError) throw signUpError;
+
+        // Try to sign in immediately (if confirm email disabled)
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (!signInError) {
+          const { error: rpcError } = await supabase.rpc('self_assign_demo_role', { _role: role as any });
+          if (rpcError) console.warn('Role assign failed:', rpcError.message);
+        }
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -78,13 +99,22 @@ export default function Login() {
         <div className="w-full max-w-md mx-auto">
           <Card className="shadow-elegant border-white/20 bg-card/95 backdrop-blur">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold">{t('signIn')}</CardTitle>
+              <CardTitle className="text-2xl font-bold">
+                {mode === 'signIn' ? t('signIn') : (language === 'en' ? 'Create Demo Account' : 'Buat Akaun Demo')}
+              </CardTitle>
               <CardDescription>
-                {language === 'en' 
-                  ? 'Access your smart community platform'
-                  : 'Akses platform komuniti pintar anda'
-                }
+                {mode === 'signIn'
+                  ? (language === 'en' ? 'Access your smart community platform' : 'Akses platform komuniti pintar anda')
+                  : (language === 'en' ? 'Sign up and choose a role to preview its view' : 'Daftar dan pilih peranan untuk pratonton')}
               </CardDescription>
+              <div className="mt-2 flex justify-center gap-2">
+                <Button type="button" variant={mode === 'signIn' ? 'default' : 'outline'} size="sm" onClick={() => setMode('signIn')}>
+                  {t('signIn')}
+                </Button>
+                <Button type="button" variant={mode === 'signUp' ? 'default' : 'outline'} size="sm" onClick={() => setMode('signUp')}>
+                  {language === 'en' ? 'Create Demo' : 'Buat Demo'}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -119,6 +149,29 @@ export default function Login() {
                   />
                 </div>
 
+                {mode === 'signUp' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="role">{language === 'en' ? 'Role' : 'Peranan'}</Label>
+                    <Select value={role} onValueChange={setRole}>
+                      <SelectTrigger id="role">
+                        <SelectValue placeholder={language === 'en' ? 'Select role' : 'Pilih peranan'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="state_admin">State Admin</SelectItem>
+                        <SelectItem value="district_coordinator">District Coordinator</SelectItem>
+                        <SelectItem value="community_admin">Community Admin</SelectItem>
+                        <SelectItem value="security_officer">Security Officer</SelectItem>
+                        <SelectItem value="facility_manager">Facility Manager</SelectItem>
+                        <SelectItem value="maintenance_staff">Maintenance Staff</SelectItem>
+                        <SelectItem value="resident">Resident</SelectItem>
+                        <SelectItem value="service_provider">Service Provider</SelectItem>
+                        <SelectItem value="community_leader">Community Leader</SelectItem>
+                        <SelectItem value="state_service_manager">State Service Manager</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <Button 
                   type="submit" 
                   className="w-full bg-gradient-primary hover:shadow-glow transition-spring"
@@ -130,9 +183,17 @@ export default function Login() {
                       {t('loading')}
                     </>
                   ) : (
-                    t('signIn')
+                    mode === 'signIn' ? t('signIn') : (language === 'en' ? 'Create account' : 'Cipta akaun')
                   )}
                 </Button>
+
+                {mode === 'signUp' && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    {language === 'en'
+                      ? 'Tip: Disable Confirm email in Supabase Auth settings for testing, or check your inbox for the confirmation link.'
+                      : 'Tip: Matikan pengesahan e-mel di tetapan Supabase Auth untuk ujian, atau semak e-mel pengesahan.'}
+                  </p>
+                )}
 
                 <div className="text-center">
                   <Button variant="link" className="text-muted-foreground">

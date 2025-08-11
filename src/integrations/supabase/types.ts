@@ -883,6 +883,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      self_assign_demo_role: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: undefined
+      }
       user_has_any_community_role_in_district: {
         Args: {
           _user_id: string
