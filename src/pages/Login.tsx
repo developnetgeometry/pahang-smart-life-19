@@ -72,7 +72,7 @@ export default function Login() {
     const created: string[] = [];
     try {
       for (const role of roles) {
-        const email = `demo.${role}.${timestamp}@example.com`;
+        const email = `demo.${role}.${timestamp}@gmail.com`;
         const password = 'password123';
         const redirectUrl = `${window.location.origin}/`;
 
