@@ -17,7 +17,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
   const [role, setRole] = useState<string>('resident');
-  const { login, language } = useAuth();
+  const { login, language, switchLanguage } = useAuth();
   const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,7 +52,23 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
+    <div className="min-h-screen relative bg-gradient-hero flex items-center justify-center p-4">
+      <div className="absolute top-4 right-4 flex gap-2">
+        <Button
+          variant={language === 'en' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => switchLanguage('en')}
+        >
+          EN
+        </Button>
+        <Button
+          variant={language === 'ms' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => switchLanguage('ms')}
+        >
+          BM
+        </Button>
+      </div>
       <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
         {/* Left side - Hero content */}
         <div className="text-center lg:text-left space-y-6 text-white">
