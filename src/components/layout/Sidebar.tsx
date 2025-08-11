@@ -29,6 +29,7 @@ interface NavigationItem {
   title: string;
   url: string;
   icon: React.ComponentType<{ className?: string }>;
+  requiredRoles?: string[];
 }
 
 interface NavigationGroup {
@@ -37,7 +38,7 @@ interface NavigationGroup {
 }
 
 export function AppSidebar() {
-  const { currentViewRole, language } = useAuth();
+  const { currentViewRole, language, hasRole } = useAuth();
   const { t } = useTranslation(language);
   const location = useLocation();
 
@@ -69,7 +70,7 @@ export function AppSidebar() {
       items: [
         { title: t('facilities'), url: '/facilities', icon: Building },
         { title: t('marketplace'), url: '/marketplace', icon: ShoppingCart },
-        { title: t('cctvLiveFeed'), url: '/cctv-live', icon: Camera }
+        { title: t('cctvLiveFeed'), url: '/cctv-live', icon: Camera, requiredRoles: ['security_officer','state_admin'] }
       ]
     }
   ];
@@ -84,33 +85,33 @@ export function AppSidebar() {
     {
       label: t('administration'),
       items: [
-        { title: t('userManagement'), url: '/admin/users', icon: UserPlus },
-        { title: t('communityManagement'), url: '/admin/communities', icon: Home },
-        { title: t('districtManagement'), url: '/admin/districts', icon: Settings }
+        { title: t('userManagement'), url: '/admin/users', icon: UserPlus, requiredRoles: ['state_admin'] },
+        { title: t('communityManagement'), url: '/admin/communities', icon: Home, requiredRoles: ['state_admin','community_admin','community_leader'] },
+        { title: t('districtManagement'), url: '/admin/districts', icon: Settings, requiredRoles: ['state_admin','district_coordinator'] }
       ]
     },
     {
       label: t('operations'),
       items: [
-        { title: t('facilitiesManagement'), url: '/admin/facilities', icon: Building },
-        { title: t('maintenanceManagement'), url: '/admin/maintenance', icon: Wrench },
-        { title: t('complaintsManagement'), url: '/admin/complaints', icon: AlertTriangle }
+        { title: t('facilitiesManagement'), url: '/admin/facilities', icon: Building, requiredRoles: ['state_admin','facility_manager'] },
+        { title: t('maintenanceManagement'), url: '/admin/maintenance', icon: Wrench, requiredRoles: ['state_admin','maintenance_staff'] },
+        { title: t('complaintsManagement'), url: '/admin/complaints', icon: AlertTriangle, requiredRoles: ['state_admin','maintenance_staff'] }
       ]
     },
     {
       label: t('securityAndMonitoring'),
       items: [
-        { title: t('securityDashboard'), url: '/admin/security', icon: Shield },
-        { title: t('cctvManagement'), url: '/admin/cctv', icon: Camera },
-        { title: t('smartMonitoring'), url: '/admin/monitoring', icon: Monitor },
-        { title: t('sensorManagement'), url: '/admin/sensors', icon: Radio }
+        { title: t('securityDashboard'), url: '/admin/security', icon: Shield, requiredRoles: ['state_admin','security_officer'] },
+        { title: t('cctvManagement'), url: '/admin/cctv', icon: Camera, requiredRoles: ['state_admin','security_officer'] },
+        { title: t('smartMonitoring'), url: '/admin/monitoring', icon: Monitor, requiredRoles: ['state_admin','state_service_manager'] },
+        { title: t('sensorManagement'), url: '/admin/sensors', icon: Radio, requiredRoles: ['state_admin','state_service_manager'] }
       ]
     },
     {
       label: t('communication'),
       items: [
-        { title: t('announcements'), url: '/admin/announcements', icon: Megaphone },
-        { title: t('discussions'), url: '/admin/discussions', icon: MessageSquare }
+        { title: t('announcements'), url: '/admin/announcements', icon: Megaphone, requiredRoles: ['state_admin','district_coordinator','community_leader'] },
+        { title: t('discussions'), url: '/admin/discussions', icon: MessageSquare, requiredRoles: ['state_admin','district_coordinator','community_leader'] }
       ]
     }
   ];
@@ -118,7 +119,7 @@ export function AppSidebar() {
   const navigation = currentViewRole === 'resident' ? residentNavigation : professionalNavigation;
 
   const isActive = (path: string) => location.pathname === path;
-
+  const canSee = (item: NavigationItem) => !item.requiredRoles || item.requiredRoles.some(r => hasRole?.(r as any));
   return (
     <div className="flex h-full w-full flex-col bg-card border-r border-border">
       {/* Logo section */}
@@ -143,7 +144,7 @@ export function AppSidebar() {
                 {group.label}
               </h4>
               <div className="space-y-1">
-                {group.items.map((item) => (
+                {group.items.filter(canSee).map((item) => (
                   <NavLink
                     key={item.url}
                     to={item.url}
