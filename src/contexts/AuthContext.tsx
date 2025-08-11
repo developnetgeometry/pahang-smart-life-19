@@ -47,11 +47,13 @@ interface AuthContextType {
   roles: UserRole[];
   hasRole: (role: UserRole) => boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginDemo: (role: UserRole, opts?: { name?: string; email?: string }) => void;
   logout: () => Promise<void>;
   switchViewRole: (role: ViewRole) => void;
   switchLanguage: (lang: Language) => void;
   switchTheme: (theme: Theme) => void;
   updateProfile: (updates: Partial<User>) => void;
+  demoMode: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -62,12 +64,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
   const [roles, setRoles] = useState<UserRole[]>([]);
   const [currentViewRole, setCurrentViewRole] = useState<ViewRole>('resident');
+  const [demoMode, setDemoMode] = useState<boolean>(false);
 
   // Apply theme
   useEffect(() => {
     if (theme === 'dark') document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
   }, [theme]);
+
+  // Hydrate demo mode from localStorage
+  useEffect(() => {
+    const savedDemo = localStorage.getItem('demoMode');
+    if (savedDemo === 'true') {
+      const savedUser = localStorage.getItem('demoUser');
+      if (savedUser) {
+        try {
+          const parsed: User = JSON.parse(savedUser);
+          setUser(parsed);
+          setRoles(parsed.available_roles || []);
+          setCurrentViewRole(parsed.current_view_role || 'resident');
+          setDemoMode(true);
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }, []);
 
   const hasRole = useMemo(() => (role: UserRole) => roles.includes(role), [roles]);
 
@@ -129,8 +151,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Auth state listener + initial session
+  // Auth state listener + initial session (disabled in demo mode)
   useEffect(() => {
+    if (demoMode) return; // skip Supabase auth when in demo mode
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const uid = session?.user?.id;
       if (uid) {
@@ -148,20 +172,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [demoMode]);
 
   const login = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   };
 
+  const loginDemo = (role: UserRole, opts?: { name?: string; email?: string }) => {
+    const display = opts?.name || `${role.replace(/_/g, ' ')} User`;
+    const mail = opts?.email || `demo.${role}@demo.local`;
+    const demoUser: User = {
+      id: `demo-${role}`,
+      display_name: display,
+      email: mail,
+      associated_community_ids: [],
+      active_community_id: '',
+      district: 'Demo District',
+      user_role: role,
+      available_roles: [role],
+      current_view_role: role === 'resident' ? 'resident' : 'professional',
+      phone: '',
+      address: '',
+      language_preference: language,
+      theme_preference: theme,
+      unit_type: undefined,
+      ownership_status: undefined,
+      vehicle_registration_numbers: [],
+      emergency_contact_name: undefined,
+      emergency_contact_phone: undefined,
+    };
+    setUser(demoUser);
+    setRoles(demoUser.available_roles);
+    setCurrentViewRole(demoUser.current_view_role);
+    setDemoMode(true);
+    localStorage.setItem('demoMode', 'true');
+    localStorage.setItem('demoUser', JSON.stringify(demoUser));
+  };
+
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
     setRoles([]);
+    setDemoMode(false);
+    localStorage.removeItem('demoMode');
+    localStorage.removeItem('demoUser');
   };
-
   const switchViewRole = (role: ViewRole) => {
     setCurrentViewRole(role);
     if (user) setUser({ ...user, current_view_role: role });
@@ -190,11 +246,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     roles,
     hasRole,
     login,
+    loginDemo,
     logout,
     switchViewRole,
     switchLanguage,
     switchTheme,
     updateProfile,
+    demoMode,
   };
 
   return (

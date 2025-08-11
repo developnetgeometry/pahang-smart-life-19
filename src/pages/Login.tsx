@@ -16,9 +16,9 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
+  const [mode, setMode] = useState<'signIn' | 'signUp' | 'demo'>('signIn');
   const [role, setRole] = useState<string>('resident');
-  const { login, language, switchLanguage } = useAuth();
+  const { login, language, switchLanguage, loginDemo } = useAuth();
   const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
   const { toast } = useToast();
   const [isSeeding, setIsSeeding] = useState(false);
@@ -29,6 +29,12 @@ export default function Login() {
     setError('');
 
     try {
+      if (mode === 'demo') {
+        loginDemo(role as any);
+        setIsLoading(false);
+        return;
+      }
+
       if (mode === 'signIn') {
         await login(email, password);
       } else {
@@ -190,12 +196,18 @@ export default function Login() {
           <Card className="shadow-elegant border-white/20 bg-card/95 backdrop-blur">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold">
-                {mode === 'signIn' ? t('signIn') : (language === 'en' ? 'Create Demo Account' : 'Buat Akaun Demo')}
+                {mode === 'signIn'
+                  ? t('signIn')
+                  : mode === 'signUp'
+                  ? (language === 'en' ? 'Create Demo Account' : 'Buat Akaun Demo')
+                  : (language === 'en' ? 'Demo Mode' : 'Mod Demo')}
               </CardTitle>
               <CardDescription>
                 {mode === 'signIn'
                   ? (language === 'en' ? 'Access your smart community platform' : 'Akses platform komuniti pintar anda')
-                  : (language === 'en' ? 'Sign up and choose a role to preview its view' : 'Daftar dan pilih peranan untuk pratonton')}
+                  : mode === 'signUp'
+                  ? (language === 'en' ? 'Sign up and choose a role to preview its view' : 'Daftar dan pilih peranan untuk pratonton')
+                  : (language === 'en' ? 'Instantly explore any role with mock data (no signup required).' : 'Terokai mana-mana peranan serta-merta dengan data demo (tanpa daftar).')}
               </CardDescription>
               <div className="mt-2 flex justify-center gap-2">
                 <Button type="button" variant={mode === 'signIn' ? 'default' : 'outline'} size="sm" onClick={() => setMode('signIn')}>
@@ -203,6 +215,9 @@ export default function Login() {
                 </Button>
                 <Button type="button" variant={mode === 'signUp' ? 'default' : 'outline'} size="sm" onClick={() => setMode('signUp')}>
                   Sign Up
+                </Button>
+                <Button type="button" variant={mode === 'demo' ? 'default' : 'outline'} size="sm" onClick={() => setMode('demo')}>
+                  Demo
                 </Button>
               </div>
             </CardHeader>
@@ -214,32 +229,36 @@ export default function Login() {
                   </Alert>
                 )}
                 
-                <div className="space-y-2">
-                  <Label htmlFor="email">{t('email')}</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="ahmad.razak@example.com"
-                    required
-                    className="transition-smooth"
-                  />
-                </div>
+                {mode !== 'demo' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="email">{t('email')}</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="ahmad.razak@example.com"
+                      required
+                      className="transition-smooth"
+                    />
+                  </div>
+                )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="password">{t('password')}</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="transition-smooth"
-                  />
-                </div>
+                {mode !== 'demo' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="password">{t('password')}</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="transition-smooth"
+                    />
+                  </div>
+                )}
 
-                {mode === 'signUp' && (
+                {mode !== 'signIn' && (
                   <div className="space-y-2">
                     <Label htmlFor="role">{language === 'en' ? 'Role' : 'Peranan'}</Label>
                     <Select value={role} onValueChange={setRole}>
@@ -273,7 +292,11 @@ export default function Login() {
                       {t('loading')}
                     </>
                   ) : (
-                    mode === 'signIn' ? t('signIn') : (language === 'en' ? 'Create account' : 'Cipta akaun')
+                    mode === 'signIn' 
+                      ? t('signIn') 
+                      : mode === 'signUp' 
+                        ? (language === 'en' ? 'Create account' : 'Cipta akaun')
+                        : (language === 'en' ? 'Enter Demo' : 'Masuk Demo')
                   )}
                 </Button>
 
