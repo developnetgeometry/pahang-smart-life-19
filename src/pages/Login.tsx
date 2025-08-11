@@ -9,7 +9,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, MapPin, Shield, Users } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
-
+import { useToast } from '@/components/ui/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,6 +20,8 @@ export default function Login() {
   const [role, setRole] = useState<string>('resident');
   const { login, language, switchLanguage } = useAuth();
   const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
+  const { toast } = useToast();
+  const [isSeeding, setIsSeeding] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +51,77 @@ export default function Login() {
       setError(err?.message || 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const seedDemoUsers = async () => {
+    setIsSeeding(true);
+    const roles = [
+      'state_admin',
+      'district_coordinator',
+      'community_admin',
+      'security_officer',
+      'facility_manager',
+      'maintenance_staff',
+      'resident',
+      'service_provider',
+      'community_leader',
+      'state_service_manager',
+    ];
+    const timestamp = Date.now();
+    const created: string[] = [];
+    try {
+      for (const role of roles) {
+        const email = `demo.${role}.${timestamp}@pahang.local`;
+        const password = 'password123';
+        const redirectUrl = `${window.location.origin}/`;
+
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: redirectUrl }
+        });
+        if (signUpError && !/registered/i.test(signUpError.message)) {
+          console.warn(`Sign up failed for ${role}:`, signUpError.message);
+          toast({
+            variant: 'destructive',
+            title: language === 'en' ? 'Sign up failed' : 'Daftar gagal',
+            description: `${email} — ${signUpError.message}`,
+          });
+          continue;
+        }
+
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) {
+          toast({
+            title: language === 'en' ? 'Email confirmation required?' : 'Perlu pengesahan e-mel?',
+            description: `${email} — ${signInError.message}`,
+          });
+          continue;
+        }
+
+        const { error: rpcError } = await supabase.rpc('self_assign_demo_role', { _role: role as any });
+        if (rpcError) {
+          toast({
+            variant: 'destructive',
+            title: language === 'en' ? 'Role assign failed' : 'Gagal tetapkan peranan',
+            description: `${role} — ${rpcError.message}`,
+          });
+        } else {
+          created.push(`${email} (${role})`);
+        }
+
+        await supabase.auth.signOut();
+      }
+
+      if (created.length) {
+        toast({
+          title: language === 'en' ? 'Demo users created' : 'Pengguna demo dicipta',
+          description: created.join(', '),
+        });
+      }
+    } finally {
+      setIsSeeding(false);
     }
   };
 
@@ -227,6 +301,43 @@ export default function Login() {
                   Email: ahmad.razak@example.com<br />
                   Password: password123
                 </p>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="mt-4 w-full"
+                      disabled={isSeeding}
+                    >
+                      {isSeeding ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {language === 'en' ? 'Seeding...' : 'Menjana...'}
+                        </>
+                      ) : (
+                        language === 'en' ? 'Create demo users' : 'Cipta pengguna demo'
+                      )}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        {language === 'en' ? 'Create demo users?' : 'Cipta pengguna demo?'}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {language === 'en'
+                          ? 'Creates one account per role with password "password123" and assigns roles. Tip: disable Confirm email in Supabase Auth for best results.'
+                          : 'Mencipta satu akaun bagi setiap peranan dengan kata laluan "password123" dan menetapkan peranan. Tip: matikan Pengesahan e-mel di Supabase Auth untuk hasil terbaik.'}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{language === 'en' ? 'Cancel' : 'Batal'}</AlertDialogCancel>
+                      <AlertDialogAction onClick={seedDemoUsers}>
+                        {language === 'en' ? 'Proceed' : 'Teruskan'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </CardContent>
           </Card>
