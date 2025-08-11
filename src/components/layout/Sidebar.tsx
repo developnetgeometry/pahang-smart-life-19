@@ -85,7 +85,7 @@ export function AppSidebar() {
     {
       label: t('administration'),
       items: [
-        { title: t('userManagement'), url: '/admin/users', icon: UserPlus, requiredRoles: ['state_admin'] },
+        { title: t('userManagement'), url: '/admin/users', icon: UserPlus, requiredRoles: ['state_admin','district_coordinator','community_admin','state_service_manager'] },
         { title: t('communityManagement'), url: '/admin/communities', icon: Home, requiredRoles: ['state_admin','community_admin','community_leader'] },
         { title: t('districtManagement'), url: '/admin/districts', icon: Settings, requiredRoles: ['state_admin','district_coordinator'] }
       ]
@@ -93,16 +93,16 @@ export function AppSidebar() {
     {
       label: t('operations'),
       items: [
-        { title: t('facilitiesManagement'), url: '/admin/facilities', icon: Building, requiredRoles: ['state_admin','facility_manager'] },
-        { title: t('maintenanceManagement'), url: '/admin/maintenance', icon: Wrench, requiredRoles: ['state_admin','maintenance_staff'] },
-        { title: t('complaintsManagement'), url: '/admin/complaints', icon: AlertTriangle, requiredRoles: ['state_admin','maintenance_staff'] }
+        { title: t('facilitiesManagement'), url: '/admin/facilities', icon: Building, requiredRoles: ['state_admin','facility_manager','community_admin','district_coordinator'] },
+        { title: t('maintenanceManagement'), url: '/admin/maintenance', icon: Wrench, requiredRoles: ['state_admin','maintenance_staff','facility_manager','district_coordinator','community_admin'] },
+        { title: t('complaintsManagement'), url: '/admin/complaints', icon: AlertTriangle, requiredRoles: ['state_admin','maintenance_staff','district_coordinator','community_admin'] }
       ]
     },
     {
       label: t('securityAndMonitoring'),
       items: [
-        { title: t('securityDashboard'), url: '/admin/security', icon: Shield, requiredRoles: ['state_admin','security_officer'] },
-        { title: t('cctvManagement'), url: '/admin/cctv', icon: Camera, requiredRoles: ['state_admin','security_officer'] },
+        { title: t('securityDashboard'), url: '/admin/security', icon: Shield, requiredRoles: ['state_admin','security_officer','district_coordinator','community_admin','state_service_manager'] },
+        { title: t('cctvManagement'), url: '/admin/cctv', icon: Camera, requiredRoles: ['state_admin','security_officer','district_coordinator','community_admin'] },
         { title: t('smartMonitoring'), url: '/admin/monitoring', icon: Monitor, requiredRoles: ['state_admin','state_service_manager'] },
         { title: t('sensorManagement'), url: '/admin/sensors', icon: Radio, requiredRoles: ['state_admin','state_service_manager'] }
       ]
@@ -110,8 +110,8 @@ export function AppSidebar() {
     {
       label: t('communication'),
       items: [
-        { title: t('announcements'), url: '/admin/announcements', icon: Megaphone, requiredRoles: ['state_admin','district_coordinator','community_leader'] },
-        { title: t('discussions'), url: '/admin/discussions', icon: MessageSquare, requiredRoles: ['state_admin','district_coordinator','community_leader'] }
+        { title: t('announcements'), url: '/admin/announcements', icon: Megaphone, requiredRoles: ['state_admin','district_coordinator','community_leader','community_admin','state_service_manager'] },
+        { title: t('discussions'), url: '/admin/discussions', icon: MessageSquare, requiredRoles: ['state_admin','district_coordinator','community_leader','community_admin','state_service_manager'] }
       ]
     }
   ];
