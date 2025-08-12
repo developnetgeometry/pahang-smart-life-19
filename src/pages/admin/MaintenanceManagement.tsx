@@ -175,7 +175,7 @@ export default function MaintenanceManagement() {
 
   const t = text[language];
 
-  const mockRequests: MaintenanceRequest[] = [
+  const [requests, setRequests] = useState<MaintenanceRequest[]>([
     {
       id: '1',
       title: language === 'en' ? 'Elevator malfunction on Floor 15' : 'Lif rosak di Tingkat 15',
@@ -217,7 +217,7 @@ export default function MaintenanceManagement() {
       dueDate: '2024-01-20',
       estimatedCost: 450
     }
-  ];
+  ]);
 
   const mockTechnicians: Technician[] = [
     {
@@ -328,7 +328,7 @@ export default function MaintenanceManagement() {
     }
   };
 
-  const filteredRequests = mockRequests.filter(request => {
+  const filteredRequests = requests.filter(request => {
     const matchesSearch = request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          request.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || request.status === selectedStatus;
@@ -340,6 +340,13 @@ export default function MaintenanceManagement() {
       title: t.requestCreated,
     });
     setIsCreateOpen(false);
+  };
+
+  const handleAssign = (id: string) => {
+    setRequests((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status: 'assigned', assignedTo: 'Auto-assign' } : r))
+    );
+    toast({ title: t.assign });
   };
 
   return (
@@ -446,7 +453,7 @@ export default function MaintenanceManagement() {
                 <Wrench className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{mockRequests.length}</div>
+                <div className="text-2xl font-bold">{requests.length}</div>
               </CardContent>
             </Card>
 
@@ -457,7 +464,7 @@ export default function MaintenanceManagement() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {mockRequests.filter(r => r.status === 'pending').length}
+                  {requests.filter(r => r.status === 'pending').length}
                 </div>
               </CardContent>
             </Card>
@@ -469,7 +476,7 @@ export default function MaintenanceManagement() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {mockRequests.filter(r => r.status === 'completed').length}
+                  {requests.filter(r => r.status === 'completed').length}
                 </div>
               </CardContent>
             </Card>
@@ -549,7 +556,7 @@ export default function MaintenanceManagement() {
                         <Button variant="outline" size="sm">
                           {t.view}
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => handleAssign(request.id)}>
                           {t.assign}
                         </Button>
                       </div>

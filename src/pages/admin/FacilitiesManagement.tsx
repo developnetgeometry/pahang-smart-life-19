@@ -39,6 +39,14 @@ export default function FacilitiesManagement() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
+  const [form, setForm] = useState<{ name: string; type: Facility["type"] | ""; location: string; capacity: number }>({
+    name: "",
+    type: "",
+    location: "",
+    capacity: 0,
+  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   const text = {
     en: {
       title: "Facilities Management",
@@ -167,10 +175,37 @@ export default function FacilitiesManagement() {
   };
 
   const handleCreate = () => {
-    toast({ title: t.facilityCreated });
-    setIsCreateOpen(false);
-  };
+    if (!form.name || !form.type || !form.location) {
+      toast({ title: t.save, description: "Please fill all fields." });
+      return;
+    }
 
+    if (editingId) {
+      setFacilities((prev) =>
+        prev.map((f) =>
+          f.id === editingId
+            ? { ...f, name: form.name, type: form.type as Facility["type"], location: form.location, capacity: Number(form.capacity) }
+            : f
+        )
+      );
+    } else {
+      const newFacility: Facility = {
+        id: String(Date.now()),
+        name: form.name,
+        type: form.type as Facility["type"],
+        location: form.location,
+        capacity: Number(form.capacity),
+        status: "open",
+        available: true,
+      };
+      setFacilities((prev) => [newFacility, ...prev]);
+    }
+
+    setIsCreateOpen(false);
+    setEditingId(null);
+    setForm({ name: "", type: "", location: "", capacity: 0 });
+    toast({ title: t.facilityCreated });
+  };
   const handleToggleAvailability = (id: string) => {
     setFacilities((prev) =>
       prev.map((f) =>
@@ -178,6 +213,19 @@ export default function FacilitiesManagement() {
       )
     );
     toast({ title: t.toggleAvailability });
+  };
+
+  const handleEdit = (facility: Facility) => {
+    setEditingId(facility.id);
+    setForm({ name: facility.name, type: facility.type, location: facility.location, capacity: facility.capacity });
+    setIsCreateOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    if (window.confirm("Delete this facility?")) {
+      setFacilities((prev) => prev.filter((f) => f.id !== id));
+      toast({ title: "Facility deleted" });
+    }
   };
 
   const filteredFacilities = facilities.filter((f) => {
@@ -200,7 +248,16 @@ export default function FacilitiesManagement() {
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <Dialog
+          open={isCreateOpen}
+          onOpenChange={(open) => {
+            setIsCreateOpen(open);
+            if (!open) {
+              setEditingId(null);
+              setForm({ name: "", type: "", location: "", capacity: 0 });
+            }
+          }}
+        >
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
@@ -215,12 +272,20 @@ export default function FacilitiesManagement() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">{t.name}</Label>
-                <Input id="name" placeholder={t.name} />
+                <Input
+                  id="name"
+                  placeholder={t.name}
+                  value={form.name}
+                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{t.type}</Label>
-                  <Select>
+                  <Select
+                    value={form.type || undefined}
+                    onValueChange={(v) => setForm((prev) => ({ ...prev, type: v as Facility["type"] }))}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder={t.selectType} />
                     </SelectTrigger>
@@ -236,12 +301,12 @@ export default function FacilitiesManagement() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="capacity">{t.capacity}</Label>
-                  <Input id="capacity" type="number" placeholder="0" />
+                  <Input id="capacity" type="number" placeholder="0" value={form.capacity} onChange={(e) => setForm((prev) => ({ ...prev, capacity: Number(e.target.value) }))} />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="location">{t.location}</Label>
-                <Input id="location" placeholder={t.location} />
+                <Input id="location" placeholder={t.location} value={form.location} onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))} />
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
@@ -341,8 +406,8 @@ export default function FacilitiesManagement() {
                     <Button size="sm" variant="outline" onClick={() => handleToggleAvailability(f.id)}>
                       {t.toggleAvailability}
                     </Button>
-                    <Button size="sm" variant="outline">Edit</Button>
-                    <Button size="sm" variant="outline">Delete</Button>
+                    <Button size="sm" variant="outline" onClick={() => handleEdit(f)}>Edit</Button>
+                    <Button size="sm" variant="outline" onClick={() => handleDelete(f.id)}>Delete</Button>
                   </div>
                 </CardContent>
               </Card>
