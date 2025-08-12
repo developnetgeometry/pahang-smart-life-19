@@ -53,7 +53,8 @@ export default function MaintenanceManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-
+  const [viewOpen, setViewOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequest | null>(null);
   const text = {
     en: {
       title: 'Maintenance Management',
@@ -349,6 +350,16 @@ export default function MaintenanceManagement() {
     toast({ title: t.assign });
   };
 
+  const handleComplete = (id: string) => {
+    setRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'completed' } : r));
+    toast({ title: t.complete });
+  };
+
+  const handleView = (req: MaintenanceRequest) => {
+    setSelectedRequest(req);
+    setViewOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -553,12 +564,17 @@ export default function MaintenanceManagement() {
                         {getStatusText(request.status)}
                       </Badge>
                       <div className="flex gap-1">
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => handleView(request)}>
                           {t.view}
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => handleAssign(request.id)}>
                           {t.assign}
                         </Button>
+                        {request.status !== 'completed' && (
+                          <Button variant="outline" size="sm" onClick={() => handleComplete(request.id)}>
+                            {t.complete}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -566,6 +582,31 @@ export default function MaintenanceManagement() {
               </div>
             </CardContent>
           </Card>
+
+          <Dialog open={viewOpen} onOpenChange={setViewOpen}>
+            <DialogContent className="sm:max-w-[525px]">
+              <DialogHeader>
+                <DialogTitle>{t.view}</DialogTitle>
+                <DialogDescription>{selectedRequest?.title}</DialogDescription>
+              </DialogHeader>
+              {selectedRequest && (
+                <div className="space-y-3 text-sm">
+                  <div><strong>{t.description}:</strong> {selectedRequest.description}</div>
+                  <div className="flex gap-4">
+                    <span><strong>{t.category}:</strong> {selectedRequest.category}</span>
+                    <span><strong>{t.priority}:</strong> {getPriorityText(selectedRequest.priority)}</span>
+                  </div>
+                  <div className="flex gap-4">
+                    <span><strong>{t.location}:</strong> {selectedRequest.location}</span>
+                    <span><strong>{t.dueDate}:</strong> {selectedRequest.dueDate}</span>
+                  </div>
+                  {selectedRequest.assignedTo && (
+                    <div><strong>{t.assignedTo}:</strong> {selectedRequest.assignedTo}</div>
+                  )}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="technicians" className="space-y-6">

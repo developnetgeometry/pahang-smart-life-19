@@ -151,7 +151,7 @@ export default function ComplaintsManagement() {
 
   const t = text[language];
 
-  const mockComplaints: Complaint[] = [
+  const [complaints, setComplaints] = useState<Complaint[]>([
     {
       id: '1',
       subject: language === 'en' ? 'Loud music from neighbor' : 'Muzik kuat dari jiran',
@@ -192,7 +192,7 @@ export default function ComplaintsManagement() {
       updatedDate: '2024-01-17',
       resolution: language === 'en' ? 'Car owner contacted and vehicle removed' : 'Pemilik kereta dihubungi dan kenderaan dialihkan'
     }
-  ];
+  ]);
 
   const categories = [
     { value: 'all', label: t.allCategories },
@@ -267,7 +267,7 @@ export default function ComplaintsManagement() {
     }
   };
 
-  const filteredComplaints = mockComplaints.filter(complaint => {
+  const filteredComplaints = complaints.filter(complaint => {
     const matchesSearch = complaint.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          complaint.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || complaint.status === selectedStatus;
@@ -277,22 +277,29 @@ export default function ComplaintsManagement() {
   });
 
   const stats = {
-    total: mockComplaints.length,
-    pending: mockComplaints.filter(c => c.status === 'pending').length,
-    resolved: mockComplaints.filter(c => c.status === 'resolved').length,
+    total: complaints.length,
+    pending: complaints.filter(c => c.status === 'pending').length,
+    resolved: complaints.filter(c => c.status === 'resolved').length,
     avgDays: 2.5
   };
 
-  const handleResolve = () => {
+  const handleResolve = (id: string) => {
+    setComplaints(prev => prev.map(c => c.id === id ? { ...c, status: 'resolved', updatedDate: new Date().toISOString().slice(0,10) } : c));
     toast({
       title: t.complaintResolved,
     });
   };
 
-  const handleAssign = () => {
+  const handleAssign = (id: string) => {
+    setComplaints(prev => prev.map(c => c.id === id ? { ...c, status: c.status === 'pending' ? 'investigating' : 'in-progress', assignedTo: 'Team' } : c));
     toast({
       title: t.complaintAssigned,
     });
+  };
+
+  const handleClose = (id: string) => {
+    setComplaints(prev => prev.map(c => c.id === id ? { ...c, status: 'closed', updatedDate: new Date().toISOString().slice(0,10) } : c));
+    toast({ title: t.complaintClosed });
   };
 
   return (
@@ -439,12 +446,17 @@ export default function ComplaintsManagement() {
                         <Button variant="outline" size="sm">
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm" onClick={handleAssign}>
+                        <Button variant="outline" size="sm" onClick={() => handleAssign(complaint.id)}>
                           {t.assign}
                         </Button>
-                        {complaint.status !== 'resolved' && (
-                          <Button variant="outline" size="sm" onClick={handleResolve}>
+                        {complaint.status !== 'resolved' && complaint.status !== 'closed' && (
+                          <Button variant="outline" size="sm" onClick={() => handleResolve(complaint.id)}>
                             {t.resolve}
+                          </Button>
+                        )}
+                        {complaint.status === 'resolved' && (
+                          <Button variant="outline" size="sm" onClick={() => handleClose(complaint.id)}>
+                            {t.close}
                           </Button>
                         )}
                       </div>
