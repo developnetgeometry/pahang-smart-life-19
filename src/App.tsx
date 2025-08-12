@@ -27,6 +27,7 @@ import CCTVManagement from "./pages/admin/CCTVManagement";
 import SmartMonitoring from "./pages/admin/SmartMonitoring";
 import SensorManagement from "./pages/admin/SensorManagement";
 import AnnouncementManagement from "./pages/admin/AnnouncementManagement";
+import FacilitiesManagement from "./pages/admin/FacilitiesManagement";
 import DiscussionManagement from "./pages/admin/DiscussionManagement";
 import NotFound from "./pages/NotFound";
 
@@ -180,6 +181,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <DistrictManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/facilities" 
+                element={
+                  <ProtectedRoute>
+                    <FacilitiesManagement />
                   </ProtectedRoute>
                 } 
               />

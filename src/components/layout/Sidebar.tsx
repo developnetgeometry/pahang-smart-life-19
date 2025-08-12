@@ -103,7 +103,7 @@ export function AppSidebar() {
       items: [
         { title: t('securityDashboard'), url: '/admin/security', icon: Shield, requiredRoles: ['state_admin','security_officer','district_coordinator','community_admin','state_service_manager'] },
         { title: t('cctvManagement'), url: '/admin/cctv', icon: Camera, requiredRoles: ['state_admin','security_officer','district_coordinator','community_admin'] },
-        { title: t('smartMonitoring'), url: '/admin/monitoring', icon: Monitor, requiredRoles: ['state_admin','state_service_manager'] },
+        { title: t('smartMonitoring'), url: '/admin/smart-monitoring', icon: Monitor, requiredRoles: ['state_admin','state_service_manager'] },
         { title: t('sensorManagement'), url: '/admin/sensors', icon: Radio, requiredRoles: ['state_admin','state_service_manager'] }
       ]
     },
