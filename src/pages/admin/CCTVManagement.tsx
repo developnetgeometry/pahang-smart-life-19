@@ -43,6 +43,7 @@ export default function CCTVManagement() {
   const { language } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [newCam, setNewCam] = useState<{ name: string; location: string; type: CCTVCamera['type'] | ''; streamUrl: string }>({ name: '', location: '', type: '', streamUrl: '' });
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [isAddCameraOpen, setIsAddCameraOpen] = useState(false);
@@ -224,7 +225,7 @@ export default function CCTVManagement() {
 
   const t = text[language];
 
-  const mockCameras: CCTVCamera[] = [
+  const [cameras, setCameras] = useState<CCTVCamera[]>([
     {
       id: '1',
       name: language === 'en' ? 'Main Entrance' : 'Pintu Masuk Utama',
@@ -312,7 +313,7 @@ export default function CCTVManagement() {
       streamUrl: 'rtsp://192.168.1.105/stream1',
       hasPtz: false
     }
-  ];
+  ]);
 
   const mockRecordings: Recording[] = [
     {
@@ -392,7 +393,7 @@ export default function CCTVManagement() {
     }
   };
 
-  const searchFilteredCameras = mockCameras.filter(camera => {
+  const searchFilteredCameras = cameras.filter(camera => {
     const matchesSearch = camera.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          camera.location.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || camera.status === selectedStatus;
@@ -401,12 +402,34 @@ export default function CCTVManagement() {
   });
 
   const handleAddCamera = () => {
-    toast({ title: t.cameraAddedSuccess });
+    if (!newCam.name || !newCam.location || !newCam.type || !newCam.streamUrl) {
+      toast({ title: t.addCameraTitle, description: 'Please fill all fields' });
+      return;
+    }
+    const now = new Date();
+    const newCamera: CCTVCamera = {
+      id: String(Date.now()),
+      name: newCam.name,
+      location: newCam.location,
+      type: newCam.type as CCTVCamera['type'],
+      status: 'online',
+      signal: 'high',
+      resolution: '1080p',
+      recording: false,
+      lastSeen: `${now.toISOString().slice(0,10)} ${now.toTimeString().slice(0,8)}`,
+      communityId: '1',
+      streamUrl: newCam.streamUrl,
+      hasPtz: false,
+    };
+    setCameras(prev => [newCamera, ...prev]);
     setIsAddCameraOpen(false);
+    setNewCam({ name: '', location: '', type: '', streamUrl: '' });
+    toast({ title: t.cameraAddedSuccess });
   };
 
   const handleToggleRecording = (camera: CCTVCamera) => {
     const message = camera.recording ? t.recordingStopped : t.recordingStarted;
+    setCameras(prev => prev.map(c => c.id === camera.id ? { ...c, recording: !c.recording } : c));
     toast({ title: message });
   };
 
@@ -451,15 +474,15 @@ export default function CCTVManagement() {
   };
 
   const filteredCameras = selectedCamera === 'all' 
-    ? mockCameras 
-    : mockCameras.filter(camera => camera.id === selectedCamera);
+    ? cameras 
+    : cameras.filter(camera => camera.id === selectedCamera);
 
   const mainCamera = selectedCamera !== 'all' 
-    ? mockCameras.find(camera => camera.id === selectedCamera)
-    : mockCameras[0];
+    ? cameras.find(camera => camera.id === selectedCamera)
+    : cameras[0];
 
-  const onlineCameras = mockCameras.filter(c => c.status === 'online').length;
-  const recordingCameras = mockCameras.filter(c => c.recording).length;
+  const onlineCameras = cameras.filter(c => c.status === 'online').length;
+  const recordingCameras = cameras.filter(c => c.recording).length;
 
   return (
     <div className="space-y-6">
@@ -468,7 +491,7 @@ export default function CCTVManagement() {
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
-        <Dialog open={isAddCameraOpen} onOpenChange={setIsAddCameraOpen}>
+        <Dialog open={isAddCameraOpen} onOpenChange={(open) => { setIsAddCameraOpen(open); if (!open) setNewCam({ name: '', location: '', type: '', streamUrl: '' }); }}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
@@ -483,16 +506,16 @@ export default function CCTVManagement() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">{t.cameraName}</Label>
-                <Input id="name" placeholder={t.cameraName} />
+                <Input id="name" placeholder={t.cameraName} value={newCam.name} onChange={(e) => setNewCam(prev => ({ ...prev, name: e.target.value }))} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="location">{t.cameraLocation}</Label>
-                  <Input id="location" placeholder={t.cameraLocation} />
+                  <Input id="location" placeholder={t.cameraLocation} value={newCam.location} onChange={(e) => setNewCam(prev => ({ ...prev, location: e.target.value }))} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="type">{t.cameraType}</Label>
-                  <Select>
+                  <Select value={newCam.type} onValueChange={(v) => setNewCam(prev => ({ ...prev, type: v as CCTVCamera['type'] }))}>
                     <SelectTrigger>
                       <SelectValue placeholder={t.cameraType} />
                     </SelectTrigger>
@@ -507,7 +530,7 @@ export default function CCTVManagement() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="streamUrl">{t.streamUrl}</Label>
-                <Input id="streamUrl" placeholder="rtsp://..." />
+                <Input id="streamUrl" placeholder="rtsp://..." value={newCam.streamUrl} onChange={(e) => setNewCam(prev => ({ ...prev, streamUrl: e.target.value }))} />
               </div>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsAddCameraOpen(false)}>

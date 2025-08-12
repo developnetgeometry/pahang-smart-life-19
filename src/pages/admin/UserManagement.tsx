@@ -29,7 +29,8 @@ export default function UserManagement() {
   const [selectedRole, setSelectedRole] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-
+  const [form, setForm] = useState<{ name: string; email: string; phone: string; unit: string; role: User['role'] | ''; status: User['status'] | '' }>({ name: '', email: '', phone: '', unit: '', role: '', status: '' });
+  const [editingId, setEditingId] = useState<string | null>(null);
   const text = {
     en: {
       title: 'User Management',
@@ -107,7 +108,7 @@ export default function UserManagement() {
 
   const t = text[language];
 
-  const mockUsers: User[] = [
+  const [users, setUsers] = useState<User[]>([
     {
       id: '1',
       name: 'John Doe',
@@ -138,7 +139,7 @@ export default function UserManagement() {
       status: 'active',
       joinDate: '2024-01-08'
     }
-  ];
+  ]);
 
   const roles = [
     { value: 'all', label: t.allRoles },
@@ -193,7 +194,7 @@ export default function UserManagement() {
     }
   };
 
-  const filteredUsers = mockUsers.filter(user => {
+  const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = selectedRole === 'all' || user.role === selectedRole;
@@ -202,10 +203,45 @@ export default function UserManagement() {
   });
 
   const handleCreateUser = () => {
-    toast({
-      title: t.userCreated,
-    });
+    if (!form.name || !form.email || !form.role || !form.status) {
+      toast({ title: t.createUser, description: 'Please fill all required fields.' });
+      return;
+    }
+
+    if (editingId) {
+      setUsers(prev => prev.map(u => u.id === editingId ? { ...u, ...form, role: form.role as User['role'], status: form.status as User['status'] } : u));
+      toast({ title: t.userUpdated });
+    } else {
+      const newUser: User = {
+        id: String(Date.now()),
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        unit: form.unit,
+        role: form.role as User['role'],
+        status: form.status as User['status'],
+        joinDate: new Date().toISOString().slice(0,10)
+      };
+      setUsers(prev => [newUser, ...prev]);
+      toast({ title: t.userCreated });
+    }
+
     setIsCreateOpen(false);
+    setEditingId(null);
+    setForm({ name: '', email: '', phone: '', unit: '', role: '', status: '' });
+  };
+
+  const handleEdit = (user: User) => {
+    setEditingId(user.id);
+    setForm({ name: user.name, email: user.email, phone: user.phone, unit: user.unit, role: user.role, status: user.status });
+    setIsCreateOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('Delete this user?')) {
+      setUsers(prev => prev.filter(u => u.id !== id));
+      toast({ title: t.userDeleted });
+    }
   };
 
   return (
@@ -215,7 +251,7 @@ export default function UserManagement() {
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <Dialog open={isCreateOpen} onOpenChange={(open) => { setIsCreateOpen(open); if (!open) { setEditingId(null); setForm({ name: '', email: '', phone: '', unit: '', role: '', status: '' }); } }}>
           <DialogTrigger asChild>
             <Button>
               <UserPlus className="h-4 w-4 mr-2" />
@@ -230,24 +266,24 @@ export default function UserManagement() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">{t.fullName}</Label>
-                <Input id="name" placeholder={t.fullName} />
+                <Input id="name" placeholder={t.fullName} value={form.name} onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">{t.email}</Label>
-                <Input id="email" type="email" placeholder={t.email} />
+                <Input id="email" type="email" placeholder={t.email} value={form.email} onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">{t.phone}</Label>
-                <Input id="phone" placeholder={t.phone} />
+                <Input id="phone" placeholder={t.phone} value={form.phone} onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="unit">{t.unit}</Label>
-                <Input id="unit" placeholder={t.unit} />
+                <Input id="unit" placeholder={t.unit} value={form.unit} onChange={(e) => setForm(prev => ({ ...prev, unit: e.target.value }))} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">{t.role}</Label>
-                  <Select>
+                  <Select value={form.role} onValueChange={(v) => setForm(prev => ({ ...prev, role: v as User['role'] }))}>
                     <SelectTrigger>
                       <SelectValue placeholder={t.selectRole} />
                     </SelectTrigger>
@@ -262,7 +298,7 @@ export default function UserManagement() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="status">{t.status}</Label>
-                  <Select>
+                  <Select value={form.status} onValueChange={(v) => setForm(prev => ({ ...prev, status: v as User['status'] }))}>
                     <SelectTrigger>
                       <SelectValue placeholder={t.selectStatus} />
                     </SelectTrigger>
@@ -281,7 +317,7 @@ export default function UserManagement() {
                   {t.cancel}
                 </Button>
                 <Button onClick={handleCreateUser}>
-                  {t.create}
+                  {editingId ? t.edit : t.create}
                 </Button>
               </div>
             </div>
@@ -361,13 +397,13 @@ export default function UserManagement() {
                     {getStatusText(user.status)}
                   </Badge>
                   <div className="flex gap-1">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(user)}>
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button variant="outline" size="sm">
                       <Shield className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => handleDelete(user.id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
