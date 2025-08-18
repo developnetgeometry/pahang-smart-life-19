@@ -111,26 +111,56 @@ const testUsers = [
   },
 ];
 
+// Helper function to add delay
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export async function createTestUsers() {
   console.log('🔧 createTestUsers function called');
   console.log('👥 Total users to create:', testUsers.length);
   
   const results = [];
 
-  for (const user of testUsers) {
-    console.log(`🔨 Creating user: ${user.email} (${user.role})`);
+  for (let i = 0; i < testUsers.length; i++) {
+    const user = testUsers[i];
+    console.log(`🔨 Creating user ${i + 1}/${testUsers.length}: ${user.email} (${user.role})`);
+    
     try {
-      // Create auth user
+      // Add delay between requests to avoid rate limiting (except for first user)
+      if (i > 0) {
+        console.log('⏳ Waiting 3 seconds to avoid rate limiting...');
+        await delay(3000);
+      }
+
+      // Create auth user with retry logic
       console.log(`📝 Attempting signUp for: ${user.email}`);
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: user.email,
-        password: user.password,
-        options: {
-          data: {
-            full_name: user.full_name,
+      let signUpError = null;
+      let authData = null;
+      
+      // Try up to 3 times with exponential backoff
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const result = await supabase.auth.signUp({
+          email: user.email,
+          password: user.password,
+          options: {
+            data: {
+              full_name: user.full_name,
+            }
           }
+        });
+        
+        authData = result.data;
+        signUpError = result.error;
+        
+        if (!signUpError || signUpError.message !== 'email rate limit exceeded') {
+          break; // Success or non-rate-limit error
         }
-      });
+        
+        if (attempt < 3) {
+          const waitTime = attempt * 2000; // 2s, 4s
+          console.log(`⚠️ Rate limited, waiting ${waitTime/1000}s before retry ${attempt + 1}...`);
+          await delay(waitTime);
+        }
+      }
 
       if (signUpError) {
         console.error(`❌ SignUp failed for ${user.email}:`, signUpError);
