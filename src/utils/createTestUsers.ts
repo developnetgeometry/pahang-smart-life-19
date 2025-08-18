@@ -101,7 +101,7 @@ const testUsers = [
     district_id: '64a08b8c-820d-40e6-910c-0fc03c45ffe5', // Pahang Prima West
   },
   {
-    email: 'state.service.manager@pahangprima.com',
+    email: 'state.service.mgr@pahangprima.com',
     password: 'password123',
     role: 'state_service_manager' as const,
     full_name: 'David Wong',

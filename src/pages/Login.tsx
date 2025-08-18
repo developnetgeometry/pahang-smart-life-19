@@ -258,7 +258,7 @@ export default function Login() {
                   <p><strong>Resident:</strong> resident@pahangprima.com / password123</p>
                   <p><strong>Service Provider:</strong> service.provider@pahangprima.com / password123</p>
                   <p><strong>Community Leader:</strong> community.leader@pahangprima.com / password123</p>
-                  <p><strong>State Service Manager:</strong> state.service.manager@pahangprima.com / password123</p>
+                  <p><strong>State Service Manager:</strong> state.service.mgr@pahangprima.com / password123</p>
                 </div>
                 
                 <Button
