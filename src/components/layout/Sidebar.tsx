@@ -69,6 +69,7 @@ export function AppSidebar() {
     nav.push({
       label: t('communityHub'),
       items: [
+        { title: t('communication'), url: '/communication', icon: MessageSquare },
         { title: t('announcements'), url: '/announcements', icon: Megaphone },
         { title: t('discussions'), url: '/discussions', icon: MessageSquare }
       ]

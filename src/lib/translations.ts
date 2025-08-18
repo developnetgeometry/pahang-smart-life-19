@@ -9,7 +9,7 @@ export const translations = {
     'myVisitors': 'My Visitors',
     'myComplaints': 'My Complaints',
     'myProfile': 'My Profile',
-    'communityHub': 'Community Hub',
+    'communication': 'Communication Hub',
     'announcements': 'Announcements',
     'discussions': 'Discussions',
     'servicesAndFacilities': 'Services & Facilities',
@@ -27,10 +27,10 @@ export const translations = {
     'securityAndMonitoring': 'Security & Monitoring',
     'securityDashboard': 'Security Dashboard',
     'cctvManagement': 'CCTV Management',
+    'smartMonitoring': 'Smart Monitoring',
     'visitorSecurity': 'Visitor Security',
     'visitorAnalytics': 'Visitor Analytics',
     'sensorManagement': 'Sensor Management',
-    'communication': 'Communication',
 
     // Common
     'welcome': 'Welcome',
@@ -112,10 +112,11 @@ export const translations = {
     'securityAndMonitoring': 'Keselamatan & Pemantauan',
     'securityDashboard': 'Papan Pemuka Keselamatan',
     'cctvManagement': 'Pengurusan CCTV',
+    'smartMonitoring': 'Pemantauan Pintar',
     'visitorSecurity': 'Keselamatan Pelawat',
     'visitorAnalytics': 'Analitik Pelawat',
     'sensorManagement': 'Pengurusan Sensor',
-    'communication': 'Komunikasi',
+    'communication': 'Pusat Komunikasi',
 
     // Common
     'welcome': 'Selamat Datang',

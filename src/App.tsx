@@ -32,6 +32,7 @@ import FacilitiesManagement from "./pages/admin/FacilitiesManagement";
 import DiscussionManagement from "./pages/admin/DiscussionManagement";
 import VisitorSecurity from "./pages/VisitorSecurity";
 import VisitorAnalytics from "./pages/VisitorAnalytics";
+import CommunicationHub from "./pages/CommunicationHub";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -141,6 +142,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Marketplace />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/communication" 
+                element={
+                  <ProtectedRoute>
+                    <CommunicationHub />
                   </ProtectedRoute>
                 } 
               />
