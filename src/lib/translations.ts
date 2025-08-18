@@ -27,7 +27,8 @@ export const translations = {
     'securityAndMonitoring': 'Security & Monitoring',
     'securityDashboard': 'Security Dashboard',
     'cctvManagement': 'CCTV Management',
-    'smartMonitoring': 'Smart Monitoring',
+    'visitorSecurity': 'Visitor Security',
+    'visitorAnalytics': 'Visitor Analytics',
     'sensorManagement': 'Sensor Management',
     'communication': 'Communication',
 
@@ -111,7 +112,8 @@ export const translations = {
     'securityAndMonitoring': 'Keselamatan & Pemantauan',
     'securityDashboard': 'Papan Pemuka Keselamatan',
     'cctvManagement': 'Pengurusan CCTV',
-    'smartMonitoring': 'Pemantauan Pintar',
+    'visitorSecurity': 'Keselamatan Pelawat',
+    'visitorAnalytics': 'Analitik Pelawat',
     'sensorManagement': 'Pengurusan Sensor',
     'communication': 'Komunikasi',
 

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,61 +8,98 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar, Clock, UserPlus, Users, Car, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 interface Visitor {
   id: string;
-  name: string;
-  phone: string;
-  vehicle_number?: string;
+  visitor_name: string;
+  visitor_phone: string;
+  visitor_ic?: string;
+  vehicle_plate?: string;
   visit_date: string;
-  visit_time: string;
-  purpose: string;
-  status: 'registered' | 'checked_in' | 'checked_out' | 'expired';
-  qr_code?: string;
+  visit_time?: string;
+  purpose?: string;
+  status: "pending" | "approved" | "denied" | "checked_in" | "checked_out";
+  created_at?: string;
 }
 
 export default function MyVisitors() {
-  const { language } = useAuth();
-  const [visitors] = useState<Visitor[]>([
-    {
-      id: '1',
-      name: 'Siti Aminah',
-      phone: '+60123456789',
-      vehicle_number: 'WJT5678',
-      visit_date: '2024-01-15',
-      visit_time: '14:00',
-      purpose: language === 'en' ? 'Family visit' : 'Lawatan keluarga',
-      status: 'registered'
-    },
-    {
-      id: '2',
-      name: 'Ahmad Rahman',
-      phone: '+60987654321',
-      visit_date: '2024-01-12',
-      visit_time: '10:00',
-      purpose: language === 'en' ? 'Delivery' : 'Penghantaran',
-      status: 'checked_out'
-    },
-    {
-      id: '3',
-      name: 'Lim Wei Ming',
-      phone: '+60111222333',
-      vehicle_number: 'KLT9999',
-      visit_date: '2024-01-10',
-      visit_time: '19:00',
-      purpose: language === 'en' ? 'Business meeting' : 'Mesyuarat perniagaan',
-      status: 'expired'
-    }
-  ]);
-
+  const { language, user } = useAuth();
+  const { toast } = useToast();
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showRegisterDialog, setShowRegisterDialog] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      fetchVisitors();
+    }
+  }, [user]);
+
+  const fetchVisitors = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('visitors')
+        .select('*')
+        .eq('host_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setVisitors(data || []);
+    } catch (error) {
+      console.error('Error fetching visitors:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch visitors',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegisterVisitor = async (formData: any) => {
+    try {
+      const { error } = await supabase
+        .from('visitors')
+        .insert([{
+          host_id: user?.id,
+          visitor_name: formData.name,
+          visitor_phone: formData.phone,
+          visitor_ic: formData.ic,
+          vehicle_plate: formData.vehicle,
+          visit_date: formData.date,
+          visit_time: formData.time,
+          purpose: formData.purpose,
+          status: 'pending'
+        }]);
+
+      if (error) throw error;
+      
+      toast({
+        title: 'Success',
+        description: language === 'en' ? 'Visitor registered successfully' : 'Pelawat berjaya didaftarkan',
+      });
+
+      fetchVisitors();
+      setShowRegisterDialog(false);
+    } catch (error) {
+      console.error('Error registering visitor:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to register visitor',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'registered': return 'bg-blue-500';
-      case 'checked_in': return 'bg-green-500';
+      case 'pending': return 'bg-blue-500';
+      case 'approved': return 'bg-green-500';
+      case 'checked_in': return 'bg-emerald-500';
       case 'checked_out': return 'bg-gray-500';
-      case 'expired': return 'bg-red-500';
+      case 'denied': return 'bg-red-500';
       default: return 'bg-gray-500';
     }
   };
@@ -69,18 +107,20 @@ export default function MyVisitors() {
   const getStatusText = (status: string) => {
     if (language === 'en') {
       switch (status) {
-        case 'registered': return 'Registered';
+        case 'pending': return 'Pending';
+        case 'approved': return 'Approved';
         case 'checked_in': return 'Checked In';
         case 'checked_out': return 'Checked Out';
-        case 'expired': return 'Expired';
+        case 'denied': return 'Denied';
         default: return 'Unknown';
       }
     } else {
       switch (status) {
-        case 'registered': return 'Didaftarkan';
+        case 'pending': return 'Menunggu';
+        case 'approved': return 'Diluluskan';
         case 'checked_in': return 'Daftar Masuk';
         case 'checked_out': return 'Daftar Keluar';
-        case 'expired': return 'Tamat Tempoh';
+        case 'denied': return 'Ditolak';
         default: return 'Tidak Diketahui';
       }
     }
@@ -88,13 +128,26 @@ export default function MyVisitors() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'registered': return <Clock className="w-4 h-4" />;
+      case 'pending': return <Clock className="w-4 h-4" />;
+      case 'approved': return <CheckCircle className="w-4 h-4" />;
       case 'checked_in': return <CheckCircle className="w-4 h-4" />;
       case 'checked_out': return <XCircle className="w-4 h-4" />;
-      case 'expired': return <AlertTriangle className="w-4 h-4" />;
+      case 'denied': return <XCircle className="w-4 h-4" />;
       default: return <Clock className="w-4 h-4" />;
     }
   };
+
+  // Calculate stats
+  const stats = {
+    pending: visitors.filter(v => v.status === 'pending').length,
+    approved: visitors.filter(v => v.status === 'approved').length,
+    checkedIn: visitors.filter(v => v.status === 'checked_in').length,
+    completed: visitors.filter(v => v.status === 'checked_out').length,
+  };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -187,7 +240,7 @@ export default function MyVisitors() {
                 <p className="text-sm text-muted-foreground">
                   {language === 'en' ? 'Registered' : 'Didaftarkan'}
                 </p>
-                <p className="text-2xl font-bold">1</p>
+                <p className="text-2xl font-bold">{stats.pending}</p>
               </div>
             </div>
           </CardContent>
@@ -202,7 +255,7 @@ export default function MyVisitors() {
                 <p className="text-sm text-muted-foreground">
                   {language === 'en' ? 'Checked In' : 'Daftar Masuk'}
                 </p>
-                <p className="text-2xl font-bold">0</p>
+                <p className="text-2xl font-bold">{stats.checkedIn}</p>
               </div>
             </div>
           </CardContent>
@@ -217,7 +270,7 @@ export default function MyVisitors() {
                 <p className="text-sm text-muted-foreground">
                   {language === 'en' ? 'Completed' : 'Selesai'}
                 </p>
-                <p className="text-2xl font-bold">1</p>
+                <p className="text-2xl font-bold">{stats.completed}</p>
               </div>
             </div>
           </CardContent>
@@ -232,7 +285,7 @@ export default function MyVisitors() {
                 <p className="text-sm text-muted-foreground">
                   {language === 'en' ? 'Expired' : 'Tamat Tempoh'}
                 </p>
-                <p className="text-2xl font-bold">1</p>
+                <p className="text-2xl font-bold">{visitors.filter(v => v.status === 'denied').length}</p>
               </div>
             </div>
           </CardContent>
@@ -248,14 +301,14 @@ export default function MyVisitors() {
                 <div>
                   <CardTitle className="text-lg flex items-center space-x-2">
                     <Users className="w-5 h-5" />
-                    <span>{visitor.name}</span>
+                    <span>{visitor.visitor_name}</span>
                   </CardTitle>
                   <CardDescription className="flex items-center space-x-4 mt-2">
-                    <span>{visitor.phone}</span>
-                    {visitor.vehicle_number && (
+                    <span>{visitor.visitor_phone}</span>
+                    {visitor.vehicle_plate && (
                       <span className="flex items-center">
                         <Car className="w-4 h-4 mr-1" />
-                        {visitor.vehicle_number}
+                        {visitor.vehicle_plate}
                       </span>
                     )}
                   </CardDescription>
@@ -282,7 +335,7 @@ export default function MyVisitors() {
                   </p>
                 </div>
                 <div className="space-x-2">
-                  {visitor.status === 'registered' && (
+                  {visitor.status === 'pending' && (
                     <Button variant="outline" size="sm">
                       {language === 'en' ? 'Share QR' : 'Kongsi QR'}
                     </Button>

@@ -113,7 +113,8 @@ export function AppSidebar() {
       nav.push({
         label: t('securityAndMonitoring'),
         items: [
-          { title: t('securityDashboard'), url: '/admin/security', icon: Shield, requiredRoles: ['admin','security','manager'] },
+          { title: t('visitorSecurity'), url: '/visitor-security', icon: Shield, requiredRoles: ['admin','security','manager'] },
+          { title: t('visitorAnalytics'), url: '/visitor-analytics', icon: Activity, requiredRoles: ['admin','manager'] },
           { title: t('cctvManagement'), url: '/admin/cctv', icon: Camera, requiredRoles: ['admin','security','manager'] },
           { title: t('smartMonitoring'), url: '/admin/smart-monitoring', icon: Monitor, requiredRoles: ['admin','manager'] },
           { title: t('sensorManagement'), url: '/admin/sensors', icon: Radio, requiredRoles: ['admin','manager'] }

@@ -30,6 +30,8 @@ import SensorManagement from "./pages/admin/SensorManagement";
 import AnnouncementManagement from "./pages/admin/AnnouncementManagement";
 import FacilitiesManagement from "./pages/admin/FacilitiesManagement";
 import DiscussionManagement from "./pages/admin/DiscussionManagement";
+import VisitorSecurity from "./pages/VisitorSecurity";
+import VisitorAnalytics from "./pages/VisitorAnalytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -143,10 +145,18 @@ const App = () => (
                 } 
               />
               <Route 
-                path="/cctv-live" 
+                path="/visitor-security" 
                 element={
                   <ProtectedRoute>
-                    <CCTVLiveFeed />
+                    <VisitorSecurity />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/visitor-analytics" 
+                element={
+                  <ProtectedRoute>
+                    <VisitorAnalytics />
                   </ProtectedRoute>
                 } 
               />
