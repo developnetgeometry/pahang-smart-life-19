@@ -9,12 +9,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, MapPin, Shield, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { createTestUsers } from '@/utils/createTestUsers';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
+  const [isCreatingUsers, setIsCreatingUsers] = useState(false);
   const { login, language, switchLanguage } = useAuth();
   const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
   const { toast } = useToast();
@@ -45,6 +47,38 @@ export default function Login() {
       setError(err?.message || 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCreateTestUsers = async () => {
+    setIsCreatingUsers(true);
+    try {
+      const results = await createTestUsers();
+      const successful = results.filter(r => r.success);
+      const failed = results.filter(r => !r.success);
+      
+      if (successful.length > 0) {
+        toast({
+          title: language === 'en' ? 'Test Users Created' : 'Pengguna Ujian Dicipta',
+          description: `${successful.length} accounts created successfully: ${successful.map(r => `${r.email} (${r.role})`).join(', ')}`,
+        });
+      }
+      
+      if (failed.length > 0) {
+        toast({
+          variant: 'destructive',
+          title: language === 'en' ? 'Some Users Failed' : 'Sesetengah Pengguna Gagal',
+          description: `${failed.length} accounts failed: ${failed.map(r => r.email).join(', ')}`,
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: language === 'en' ? 'Error Creating Users' : 'Ralat Mencipta Pengguna',
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } finally {
+      setIsCreatingUsers(false);
     }
   };
 
@@ -197,6 +231,34 @@ export default function Login() {
                 </div>
               </form>
 
+              {/* Test Users Section */}
+              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm font-medium mb-2">
+                  {language === 'en' ? 'Test Credentials:' : 'Kredensi Ujian:'}
+                </p>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p><strong>Admin:</strong> admin@test.com / password123</p>
+                  <p><strong>Manager:</strong> manager@test.com / password123</p>
+                  <p><strong>Security:</strong> security@test.com / password123</p>
+                  <p><strong>Resident:</strong> resident@test.com / password123</p>
+                </div>
+                
+                <Button
+                  onClick={handleCreateTestUsers}
+                  variant="outline"
+                  className="mt-4 w-full"
+                  disabled={isCreatingUsers}
+                >
+                  {isCreatingUsers ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {language === 'en' ? 'Creating Users...' : 'Mencipta Pengguna...'}
+                    </>
+                  ) : (
+                    language === 'en' ? 'Create Test Users' : 'Cipta Pengguna Ujian'
+                  )}
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
