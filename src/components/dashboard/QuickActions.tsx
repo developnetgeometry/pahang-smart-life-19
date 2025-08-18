@@ -17,8 +17,8 @@ import {
 } from 'lucide-react';
 
 export function QuickActions() {
-  const { currentViewRole, language } = useAuth();
-  const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
+  const { language, hasRole } = useAuth();
+  const { t } = useTranslation(language || 'ms');
   const navigate = useNavigate();
 
   const residentActions = [
@@ -83,7 +83,13 @@ export function QuickActions() {
     }
   ];
 
-  const actions = currentViewRole === 'resident' ? residentActions : professionalActions;
+  // Show resident actions by default, professional actions for admin roles
+  const showProfessionalActions = hasRole('state_admin') || hasRole('district_coordinator') || 
+                                  hasRole('community_admin') || hasRole('security_officer') || 
+                                  hasRole('facility_manager') || hasRole('maintenance_staff') ||
+                                  hasRole('state_service_manager');
+  
+  const actions = showProfessionalActions ? professionalActions : residentActions;
 
   const handleEmergencyAlert = () => {
     // In a real app, this would trigger emergency protocols

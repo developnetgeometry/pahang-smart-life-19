@@ -121,14 +121,9 @@ export default function MyProfile() {
               </div>
               <div>
                 <Label className="text-sm font-medium">
-                  {language === 'en' ? 'Current View' : 'Paparan Semasa'}
+                  {language === 'en' ? 'Primary Role' : 'Peranan Utama'}
                 </Label>
-                <p className="text-sm text-muted-foreground">
-                  {user.current_view_role === 'resident' 
-                    ? (language === 'en' ? 'Resident View' : 'Paparan Penduduk')
-                    : (language === 'en' ? 'Professional View' : 'Paparan Profesional')
-                  }
-                </p>
+                <p className="text-sm text-muted-foreground capitalize">{user.user_role.replace('_', ' ')}</p>
               </div>
             </CardContent>
           </Card>

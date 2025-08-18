@@ -38,18 +38,24 @@ interface NavigationGroup {
 }
 
 export function AppSidebar() {
-  const { currentViewRole, language, hasRole } = useAuth();
+  const { language, hasRole } = useAuth();
   const { t } = useTranslation(language);
   const location = useLocation();
 
-  const residentNavigation: NavigationGroup[] = [
-    {
+  // Role-based navigation groups
+  const getNavigationForUser = () => {
+    const nav: NavigationGroup[] = [];
+
+    // Everyone gets dashboard
+    nav.push({
       label: t('dashboard'),
       items: [
         { title: t('dashboard'), url: '/', icon: LayoutDashboard }
       ]
-    },
-    {
+    });
+
+    // Resident features - available to everyone
+    nav.push({
       label: t('myActivities'),
       items: [
         { title: t('myBookings'), url: '/my-bookings', icon: Calendar },
@@ -57,72 +63,86 @@ export function AppSidebar() {
         { title: t('myComplaints'), url: '/my-complaints', icon: FileText },
         { title: t('myProfile'), url: '/my-profile', icon: Settings }
       ]
-    },
-    {
+    });
+
+    // Community features - available to everyone
+    nav.push({
       label: t('communityHub'),
       items: [
         { title: t('announcements'), url: '/announcements', icon: Megaphone },
         { title: t('discussions'), url: '/discussions', icon: MessageSquare }
       ]
-    },
-    {
+    });
+
+    // Services & Facilities - available to everyone, including CCTV for residents
+    nav.push({
       label: t('servicesAndFacilities'),
       items: [
         { title: t('facilities'), url: '/facilities', icon: Building },
         { title: t('marketplace'), url: '/marketplace', icon: ShoppingCart },
-        { title: t('cctvLiveFeed'), url: '/cctv-live', icon: Camera, requiredRoles: ['security_officer','state_admin'] }
+        { title: t('cctvLiveFeed'), url: '/cctv-live', icon: Camera } // Now available to all users
       ]
-    }
-  ];
+    });
 
-  const professionalNavigation: NavigationGroup[] = [
-    {
-      label: t('dashboard'),
-      items: [
-        { title: t('dashboard'), url: '/', icon: LayoutDashboard }
-      ]
-    },
-    {
-      label: t('administration'),
-      items: [
-        { title: t('userManagement'), url: '/admin/users', icon: UserPlus, requiredRoles: ['state_admin','district_coordinator','community_admin','state_service_manager'] },
-        { title: t('communityManagement'), url: '/admin/communities', icon: Home, requiredRoles: ['state_admin','community_admin','community_leader'] },
-        { title: t('districtManagement'), url: '/admin/districts', icon: Settings, requiredRoles: ['state_admin','district_coordinator'] }
-      ]
-    },
-    {
-      label: t('operations'),
-      items: [
-        { title: t('facilitiesManagement'), url: '/admin/facilities', icon: Building, requiredRoles: ['state_admin','facility_manager','community_admin','district_coordinator'] },
-        { title: t('maintenanceManagement'), url: '/admin/maintenance', icon: Wrench, requiredRoles: ['state_admin','maintenance_staff','facility_manager','district_coordinator','community_admin'] },
-        { title: t('complaintsManagement'), url: '/admin/complaints', icon: AlertTriangle, requiredRoles: ['state_admin','maintenance_staff','district_coordinator','community_admin'] }
-      ]
-    },
-    {
-      label: t('securityAndMonitoring'),
-      items: [
-        { title: t('securityDashboard'), url: '/admin/security', icon: Shield, requiredRoles: ['state_admin','security_officer','district_coordinator','community_admin','state_service_manager'] },
-        { title: t('cctvManagement'), url: '/admin/cctv', icon: Camera, requiredRoles: ['state_admin','security_officer','district_coordinator','community_admin'] },
-        { title: t('smartMonitoring'), url: '/admin/smart-monitoring', icon: Monitor, requiredRoles: ['state_admin','state_service_manager'] },
-        { title: t('sensorManagement'), url: '/admin/sensors', icon: Radio, requiredRoles: ['state_admin','state_service_manager'] }
-      ]
-    },
-    {
-      label: t('communication'),
-      items: [
-        { title: t('announcements'), url: '/admin/announcements', icon: Megaphone, requiredRoles: ['state_admin','district_coordinator','community_leader','community_admin','state_service_manager'] },
-        { title: t('discussions'), url: '/admin/discussions', icon: MessageSquare, requiredRoles: ['state_admin','district_coordinator','community_leader','community_admin','state_service_manager'] }
-      ]
+    // Admin features - only for users with admin roles
+    if (hasRole('state_admin') || hasRole('district_coordinator') || hasRole('community_admin') || hasRole('state_service_manager')) {
+      nav.push({
+        label: t('administration'),
+        items: [
+          { title: t('userManagement'), url: '/admin/users', icon: UserPlus, requiredRoles: ['state_admin','district_coordinator','community_admin','state_service_manager'] },
+          { title: t('communityManagement'), url: '/admin/communities', icon: Home, requiredRoles: ['state_admin','community_admin','community_leader'] },
+          { title: t('districtManagement'), url: '/admin/districts', icon: Settings, requiredRoles: ['state_admin','district_coordinator'] }
+        ]
+      });
     }
-  ];
 
-  const navigation = currentViewRole === 'resident' ? residentNavigation : professionalNavigation;
+    // Operations - for facility and maintenance staff
+    if (hasRole('state_admin') || hasRole('facility_manager') || hasRole('maintenance_staff') || hasRole('community_admin') || hasRole('district_coordinator')) {
+      nav.push({
+        label: t('operations'),
+        items: [
+          { title: t('facilitiesManagement'), url: '/admin/facilities', icon: Building, requiredRoles: ['state_admin','facility_manager','community_admin','district_coordinator'] },
+          { title: t('maintenanceManagement'), url: '/admin/maintenance', icon: Wrench, requiredRoles: ['state_admin','maintenance_staff','facility_manager','district_coordinator','community_admin'] },
+          { title: t('complaintsManagement'), url: '/admin/complaints', icon: AlertTriangle, requiredRoles: ['state_admin','maintenance_staff','district_coordinator','community_admin'] }
+        ]
+      });
+    }
+
+    // Security & Monitoring - for security and admin staff
+    if (hasRole('state_admin') || hasRole('security_officer') || hasRole('district_coordinator') || hasRole('community_admin') || hasRole('state_service_manager')) {
+      nav.push({
+        label: t('securityAndMonitoring'),
+        items: [
+          { title: t('securityDashboard'), url: '/admin/security', icon: Shield, requiredRoles: ['state_admin','security_officer','district_coordinator','community_admin','state_service_manager'] },
+          { title: t('cctvManagement'), url: '/admin/cctv', icon: Camera, requiredRoles: ['state_admin','security_officer','district_coordinator','community_admin'] },
+          { title: t('smartMonitoring'), url: '/admin/smart-monitoring', icon: Monitor, requiredRoles: ['state_admin','state_service_manager'] },
+          { title: t('sensorManagement'), url: '/admin/sensors', icon: Radio, requiredRoles: ['state_admin','state_service_manager'] }
+        ]
+      });
+    }
+
+    // Communication - for community leaders and admins
+    if (hasRole('state_admin') || hasRole('district_coordinator') || hasRole('community_leader') || hasRole('community_admin') || hasRole('state_service_manager')) {
+      nav.push({
+        label: t('communication'),
+        items: [
+          { title: t('announcements'), url: '/admin/announcements', icon: Megaphone, requiredRoles: ['state_admin','district_coordinator','community_leader','community_admin','state_service_manager'] },
+          { title: t('discussions'), url: '/admin/discussions', icon: MessageSquare, requiredRoles: ['state_admin','district_coordinator','community_leader','community_admin','state_service_manager'] }
+        ]
+      });
+    }
+
+    return nav;
+  };
+
+  const navigation = getNavigationForUser();
 
   const isActive = (path: string) => location.pathname === path;
   const canSee = (item: NavigationItem) => !item.requiredRoles || item.requiredRoles.some(r => hasRole?.(r as any));
   const filteredNavigation = navigation
     .map((group) => ({ ...group, items: group.items.filter(canSee) }))
     .filter((group) => group.items.length > 0);
+
   return (
     <div className="flex h-full w-full flex-col bg-card border-r border-border">
       {/* Logo section */}

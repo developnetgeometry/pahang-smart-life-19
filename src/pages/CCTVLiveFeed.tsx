@@ -218,23 +218,21 @@ export default function CCTVLiveFeed() {
     }
   ];
 
-  // Filter cameras based on user role and location
-  const getAccessibleCameras = () => {
-    if (hasRole('security_officer') || hasRole('facility_manager') || hasRole('community_admin')) {
-      return mockCameras; // Admin users see all cameras
+  // Remove the requiredRoles restriction for CCTV - now available to all residents
+  const accessibleCameras = mockCameras.filter(camera => {
+    // Admin roles see all cameras
+    if (hasRole('security_officer') || hasRole('facility_manager') || hasRole('community_admin') || 
+        hasRole('state_admin') || hasRole('district_coordinator')) {
+      return true;
     }
     
     // Residents see public cameras and cameras in their building/area
     const userBuilding = user?.address?.includes('Block A') ? 'Block A' : 
                         user?.address?.includes('Block B') ? 'Block B' : 'Block A'; // Default to Block A
     
-    return mockCameras.filter(camera => 
-      camera.accessLevel === 'public' || 
-      (camera.accessLevel === 'resident' && camera.building === userBuilding)
-    );
-  };
-
-  const accessibleCameras = getAccessibleCameras();
+    return camera.accessLevel === 'public' || 
+           (camera.accessLevel === 'resident' && camera.building === userBuilding);
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {

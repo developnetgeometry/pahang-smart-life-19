@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 const Index = () => {
-  const { user, currentViewRole, language } = useAuth();
+  const { user, language, hasRole } = useAuth();
   const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
 
   if (!user) return null;
@@ -71,7 +71,7 @@ const Index = () => {
           </div>
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="bg-gradient-primary text-white border-none">
-              {currentViewRole === 'resident' ? t('residentView') : t('professionalView')}
+              {user.user_role.replace('_', ' ')}
             </Badge>
             <Badge variant="secondary">
               {user.district}

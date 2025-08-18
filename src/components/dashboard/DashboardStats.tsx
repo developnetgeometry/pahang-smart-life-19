@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, Users, AlertTriangle, CheckCircle, Building, Shield, Activity, TrendingUp } from 'lucide-react';
 
 export function DashboardStats() {
-  const { currentViewRole, language } = useAuth();
+  const { language, hasRole } = useAuth();
   const { t } = useTranslation(language);
 
   const residentStats = [
@@ -78,7 +78,13 @@ export function DashboardStats() {
     }
   ];
 
-  const stats = currentViewRole === 'resident' ? residentStats : professionalStats;
+  // Show resident stats by default, professional stats for admin roles
+  const showProfessionalStats = hasRole('state_admin') || hasRole('district_coordinator') || 
+                                hasRole('community_admin') || hasRole('security_officer') || 
+                                hasRole('facility_manager') || hasRole('maintenance_staff') ||
+                                hasRole('state_service_manager');
+  
+  const stats = showProfessionalStats ? professionalStats : residentStats;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

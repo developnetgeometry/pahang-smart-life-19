@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
@@ -12,42 +11,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { 
   User, 
   Settings, 
   LogOut, 
   Globe, 
-  Monitor, 
-  Users,
-  UserCheck,
   Moon,
-  Sun,
-  ChevronDown
+  Sun
 } from 'lucide-react';
 
 export function Header() {
-  const { user, currentViewRole, switchViewRole, language, switchLanguage, theme, switchTheme, logout } = useAuth();
-  const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
-  const [showRoleDialog, setShowRoleDialog] = useState(false);
+  const { user, language, switchLanguage, theme, switchTheme, logout } = useAuth();
+  const { t } = useTranslation(language || 'ms');
 
   if (!user) return null;
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
-  };
-
-  const handleViewRoleSwitch = (role: 'resident' | 'professional') => {
-    switchViewRole(role);
-    setShowRoleDialog(false);
   };
 
   return (
@@ -68,54 +48,6 @@ export function Header() {
               </p>
             </div>
           </div>
-        </div>
-
-        {/* Center - View Role Switcher */}
-        <div className="flex items-center space-x-2">
-          <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="hidden sm:flex items-center space-x-2">
-                {currentViewRole === 'resident' ? (
-                  <>
-                    <User className="w-4 h-4" />
-                    <span>{t('residentView')}</span>
-                  </>
-                ) : (
-                  <>
-                    <UserCheck className="w-4 h-4" />
-                    <span>{t('professionalView')}</span>
-                  </>
-                )}
-                <ChevronDown className="w-4 h-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{t('switchView')}</DialogTitle>
-                <DialogDescription>
-                  Choose how you want to view and interact with the platform
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <Button
-                  variant={currentViewRole === 'resident' ? 'default' : 'outline'}
-                  onClick={() => handleViewRoleSwitch('resident')}
-                  className="justify-start"
-                >
-                  <User className="w-4 h-4 mr-2" />
-                  {t('residentView')}
-                </Button>
-                <Button
-                  variant={currentViewRole === 'professional' ? 'default' : 'outline'}
-                  className="flex-1"
-                  onClick={() => handleViewRoleSwitch('professional')}
-                >
-                  <UserCheck className="w-4 h-4 mr-2" />
-                  {t('professionalView')}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
 
         {/* Right side - User menu */}

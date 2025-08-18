@@ -13,7 +13,7 @@ export type UserRole =
   | 'community_leader'
   | 'state_service_manager';
 
-export type ViewRole = 'resident' | 'professional';
+// ViewRole removed - using role-based navigation instead
 export type Language = 'en' | 'ms';
 export type Theme = 'light' | 'dark';
 
@@ -26,7 +26,7 @@ export interface User {
   district: string;
   user_role: UserRole; // primary role for display
   available_roles: UserRole[];
-  current_view_role: ViewRole;
+  // current_view_role removed - using role-based navigation
   phone: string;
   address: string;
   language_preference: Language;
@@ -43,13 +43,11 @@ interface AuthContextType {
   isAuthenticated: boolean;
   language: Language;
   theme: Theme;
-  currentViewRole: ViewRole;
   roles: UserRole[];
   hasRole: (role: UserRole) => boolean;
   login: (email: string, password: string) => Promise<void>;
   loginDemo: (role: UserRole, opts?: { name?: string; email?: string }) => void;
   logout: () => Promise<void>;
-  switchViewRole: (role: ViewRole) => void;
   switchLanguage: (lang: Language) => void;
   switchTheme: (theme: Theme) => void;
   updateProfile: (updates: Partial<User>) => void;
@@ -63,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Language>('ms');
   const [theme, setTheme] = useState<Theme>('light');
   const [roles, setRoles] = useState<UserRole[]>([]);
-  const [currentViewRole, setCurrentViewRole] = useState<ViewRole>('resident');
+  // currentViewRole removed - using role-based navigation
   const [demoMode, setDemoMode] = useState<boolean>(false);
 
   // Apply theme
@@ -82,7 +80,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const parsed: User = JSON.parse(savedUser);
           setUser(parsed);
           setRoles(parsed.available_roles || []);
-          setCurrentViewRole(parsed.current_view_role || 'resident');
           setDemoMode(true);
         } catch {
           // ignore
@@ -130,7 +127,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         district: districtName,
         user_role: primaryRole,
         available_roles: roleList.length ? roleList : ['resident'],
-        current_view_role: currentViewRole,
         phone: '',
         address: '',
         language_preference: language,
@@ -191,7 +187,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       district: 'Demo District',
       user_role: role,
       available_roles: [role],
-      current_view_role: role === 'resident' ? 'resident' : 'professional',
       phone: '',
       address: '',
       language_preference: language,
@@ -204,7 +199,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
     setUser(demoUser);
     setRoles(demoUser.available_roles);
-    setCurrentViewRole(demoUser.current_view_role);
     setDemoMode(true);
     localStorage.setItem('demoMode', 'true');
     localStorage.setItem('demoUser', JSON.stringify(demoUser));
@@ -217,10 +211,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setDemoMode(false);
     localStorage.removeItem('demoMode');
     localStorage.removeItem('demoUser');
-  };
-  const switchViewRole = (role: ViewRole) => {
-    setCurrentViewRole(role);
-    if (user) setUser({ ...user, current_view_role: role });
   };
 
   const switchLanguage = (lang: Language) => {
@@ -242,13 +232,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: !!user,
     language,
     theme,
-    currentViewRole,
     roles,
     hasRole,
     login,
     loginDemo,
     logout,
-    switchViewRole,
     switchLanguage,
     switchTheme,
     updateProfile,
