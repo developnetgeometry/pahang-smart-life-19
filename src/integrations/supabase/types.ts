@@ -1978,6 +1978,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_current_user_role_safe: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
       get_user_district: {
         Args: Record<PropertyKey, never>
         Returns: string
