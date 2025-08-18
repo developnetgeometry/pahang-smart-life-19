@@ -247,18 +247,18 @@ export default function Login() {
                   {language === 'en' ? 'Test Credentials (12 Users - All Roles):' : 'Kredensi Ujian (12 Pengguna - Semua Peranan):'}
                 </p>
                 <div className="text-xs text-muted-foreground space-y-1 max-h-40 overflow-y-auto">
-                  <p><strong>State Admin:</strong> state.admin@pahangprima.com / password123</p>
-                  <p><strong>District Coordinator:</strong> district.coordinator@pahangprima.com / password123</p>
-                  <p><strong>Community Admin:</strong> community.admin@pahangprima.com / password123</p>
-                  <p><strong>Admin:</strong> admin@pahangprima.com / password123</p>
-                  <p><strong>Manager:</strong> manager.north@pahangprima.com / password123</p>
-                  <p><strong>Facility Manager:</strong> facility.manager@pahangprima.com / password123</p>
-                  <p><strong>Security Officer:</strong> security.north@pahangprima.com / password123</p>
-                  <p><strong>Maintenance Staff:</strong> maintenance.staff@pahangprima.com / password123</p>
-                  <p><strong>Resident:</strong> resident@pahangprima.com / password123</p>
-                  <p><strong>Service Provider:</strong> service.provider@pahangprima.com / password123</p>
-                  <p><strong>Community Leader:</strong> community.leader@pahangprima.com / password123</p>
-                  <p><strong>State Service Manager:</strong> state.service.mgr@pahangprima.com / password123</p>
+                  <p><strong>State Admin:</strong> stateadmin@test.com / password123</p>
+                  <p><strong>District Coordinator:</strong> districtcoord@test.com / password123</p>
+                  <p><strong>Community Admin:</strong> communityadmin@test.com / password123</p>
+                  <p><strong>Admin:</strong> admin@test.com / password123</p>
+                  <p><strong>Manager:</strong> managernorth@test.com / password123</p>
+                  <p><strong>Facility Manager:</strong> facilitymanager@test.com / password123</p>
+                  <p><strong>Security Officer:</strong> securitynorth@test.com / password123</p>
+                  <p><strong>Maintenance Staff:</strong> maintenancestaff@test.com / password123</p>
+                  <p><strong>Resident:</strong> resident@test.com / password123</p>
+                  <p><strong>Service Provider:</strong> serviceprovider@test.com / password123</p>
+                  <p><strong>Community Leader:</strong> communityleader@test.com / password123</p>
+                  <p><strong>State Service Manager:</strong> stateservicemgr@test.com / password123</p>
                 </div>
                 
                 <Button

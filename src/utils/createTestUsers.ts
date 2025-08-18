@@ -2,7 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const testUsers = [
   {
-    email: 'state.admin@pahangprima.com',
+    email: 'stateadmin@test.com',
     password: 'password123',
     role: 'state_admin' as const,
     full_name: 'Dato Ahmad Rashid',
@@ -11,7 +11,7 @@ const testUsers = [
     district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
   },
   {
-    email: 'district.coordinator@pahangprima.com',
+    email: 'districtcoord@test.com',
     password: 'password123',
     role: 'district_coordinator' as const,
     full_name: 'Hajjah Siti Aminah',
@@ -20,7 +20,7 @@ const testUsers = [
     district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
   },
   {
-    email: 'community.admin@pahangprima.com',
+    email: 'communityadmin@test.com',
     password: 'password123',
     role: 'community_admin' as const,
     full_name: 'Encik Lim Chee Kong',
@@ -29,7 +29,7 @@ const testUsers = [
     district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
   },
   {
-    email: 'admin@pahangprima.com',
+    email: 'admin@test.com',
     password: 'password123',
     role: 'admin' as const,
     full_name: 'Ahmad Rahman',
@@ -38,7 +38,7 @@ const testUsers = [
     district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
   },
   {
-    email: 'manager.north@pahangprima.com',
+    email: 'managernorth@test.com',
     password: 'password123',
     role: 'manager' as const,
     full_name: 'Siti Nurhaliza',
@@ -47,7 +47,7 @@ const testUsers = [
     district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
   },
   {
-    email: 'facility.manager@pahangprima.com',
+    email: 'facilitymanager@test.com',
     password: 'password123',
     role: 'facility_manager' as const,
     full_name: 'Kumar Selvam',
@@ -56,7 +56,7 @@ const testUsers = [
     district_id: '2384b1ce-dbb1-4449-8e78-136d11dbc28e', // Pahang Prima South
   },
   {
-    email: 'security.north@pahangprima.com',
+    email: 'securitynorth@test.com',
     password: 'password123',
     role: 'security' as const,
     full_name: 'Mohd Faizal',
@@ -65,7 +65,7 @@ const testUsers = [
     district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
   },
   {
-    email: 'maintenance.staff@pahangprima.com',
+    email: 'maintenancestaff@test.com',
     password: 'password123',
     role: 'maintenance_staff' as const,
     full_name: 'Raj Kumar',
@@ -74,7 +74,7 @@ const testUsers = [
     district_id: '0a1c51a3-55dd-46b2-b894-c39c6d75557c', // Pahang Prima East
   },
   {
-    email: 'resident@pahangprima.com',
+    email: 'resident@test.com',
     password: 'password123',
     role: 'resident' as const,
     full_name: 'Ali bin Hassan',
@@ -83,7 +83,7 @@ const testUsers = [
     district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
   },
   {
-    email: 'service.provider@pahangprima.com',
+    email: 'serviceprovider@test.com',
     password: 'password123',
     role: 'service_provider' as const,
     full_name: 'Mary Tan',
@@ -92,7 +92,7 @@ const testUsers = [
     district_id: '2384b1ce-dbb1-4449-8e78-136d11dbc28e', // Pahang Prima South
   },
   {
-    email: 'community.leader@pahangprima.com',
+    email: 'communityleader@test.com',
     password: 'password123',
     role: 'community_leader' as const,
     full_name: 'Fatimah binti Ahmad',
@@ -101,7 +101,7 @@ const testUsers = [
     district_id: '64a08b8c-820d-40e6-910c-0fc03c45ffe5', // Pahang Prima West
   },
   {
-    email: 'state.service.mgr@pahangprima.com',
+    email: 'stateservicemgr@test.com',
     password: 'password123',
     role: 'state_service_manager' as const,
     full_name: 'David Wong',
