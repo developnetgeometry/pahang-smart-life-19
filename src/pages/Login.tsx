@@ -7,34 +7,23 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, MapPin, Shield, Users } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [mode, setMode] = useState<'signIn' | 'signUp' | 'demo'>('signIn');
-  const [role, setRole] = useState<string>('resident');
-  const { login, language, switchLanguage, loginDemo } = useAuth();
+  const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
+  const { login, language, switchLanguage } = useAuth();
   const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
   const { toast } = useToast();
-  const [isSeeding, setIsSeeding] = useState(false);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
     try {
-      if (mode === 'demo') {
-        loginDemo(role as any);
-        setIsLoading(false);
-        return;
-      }
-
       if (mode === 'signIn') {
         await login(email, password);
       } else {
@@ -59,57 +48,6 @@ export default function Login() {
     }
   };
 
-  const seedDemoUsers = async () => {
-    setIsSeeding(true);
-    const roles = ['admin', 'manager', 'security', 'resident'];
-    const timestamp = Date.now();
-    const created: string[] = [];
-    try {
-      for (const role of roles) {
-        const email = `demo.${role}.${timestamp}@gmail.com`;
-        const password = 'password123';
-        const redirectUrl = `${window.location.origin}/`;
-
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: redirectUrl }
-        });
-        if (signUpError && !/registered/i.test(signUpError.message)) {
-          console.warn(`Sign up failed for ${role}:`, signUpError.message);
-          toast({
-            variant: 'destructive',
-            title: language === 'en' ? 'Sign up failed' : 'Daftar gagal',
-            description: `${email} — ${signUpError.message}`,
-          });
-          continue;
-        }
-
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInError) {
-          toast({
-            title: language === 'en' ? 'Email confirmation required?' : 'Perlu pengesahan e-mel?',
-            description: `${email} — ${signInError.message}`,
-          });
-          continue;
-        }
-
-        console.log(`Successfully created account for ${email} with role ${role}`);
-        created.push(`${email} (${role})`);
-
-        await supabase.auth.signOut();
-      }
-
-      if (created.length) {
-        toast({
-          title: language === 'en' ? 'Demo users created' : 'Pengguna demo dicipta',
-          description: created.join(', '),
-        });
-      }
-    } finally {
-      setIsSeeding(false);
-    }
-  };
 
   return (
     <div className="min-h-screen relative bg-gradient-hero flex items-center justify-center p-4">
@@ -178,26 +116,19 @@ export default function Login() {
               <CardTitle className="text-2xl font-bold">
                 {mode === 'signIn'
                   ? t('signIn')
-                  : mode === 'signUp'
-                  ? (language === 'en' ? 'Create Demo Account' : 'Buat Akaun Demo')
-                  : (language === 'en' ? 'Demo Mode' : 'Mod Demo')}
+                  : (language === 'en' ? 'Create Account' : 'Buat Akaun')}
               </CardTitle>
               <CardDescription>
                 {mode === 'signIn'
                   ? (language === 'en' ? 'Access your smart community platform' : 'Akses platform komuniti pintar anda')
-                  : mode === 'signUp'
-                  ? (language === 'en' ? 'Sign up and choose a role to preview its view' : 'Daftar dan pilih peranan untuk pratonton')
-                  : (language === 'en' ? 'Instantly explore any role with mock data (no signup required).' : 'Terokai mana-mana peranan serta-merta dengan data demo (tanpa daftar).')}
+                  : (language === 'en' ? 'Join your smart community platform' : 'Sertai platform komuniti pintar anda')}
               </CardDescription>
               <div className="mt-2 flex justify-center gap-2">
                 <Button type="button" variant={mode === 'signIn' ? 'default' : 'outline'} size="sm" onClick={() => setMode('signIn')}>
                   {t('signIn')}
                 </Button>
                 <Button type="button" variant={mode === 'signUp' ? 'default' : 'outline'} size="sm" onClick={() => setMode('signUp')}>
-                  Sign Up
-                </Button>
-                <Button type="button" variant={mode === 'demo' ? 'default' : 'outline'} size="sm" onClick={() => setMode('demo')}>
-                  Demo
+                  {language === 'en' ? 'Sign Up' : 'Daftar'}
                 </Button>
               </div>
             </CardHeader>
@@ -209,51 +140,30 @@ export default function Login() {
                   </Alert>
                 )}
                 
-                {mode !== 'demo' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="email">{t('email')}</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="ahmad.razak@example.com"
-                      required
-                      className="transition-smooth"
-                    />
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label htmlFor="email">{t('email')}</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="ahmad.razak@example.com"
+                    required
+                    className="transition-smooth"
+                  />
+                </div>
 
-                {mode !== 'demo' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="password">{t('password')}</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="transition-smooth"
-                    />
-                  </div>
-                )}
-
-                {mode !== 'signIn' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="role">{language === 'en' ? 'Role' : 'Peranan'}</Label>
-                    <Select value={role} onValueChange={setRole}>
-                      <SelectTrigger id="role">
-                        <SelectValue placeholder={language === 'en' ? 'Select role' : 'Pilih peranan'} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="manager">Manager</SelectItem>
-                        <SelectItem value="security">Security</SelectItem>
-                        <SelectItem value="resident">Resident</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label htmlFor="password">{t('password')}</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="transition-smooth"
+                  />
+                </div>
 
                 <Button 
                   type="submit" 
@@ -268,9 +178,7 @@ export default function Login() {
                   ) : (
                     mode === 'signIn' 
                       ? t('signIn') 
-                      : mode === 'signUp' 
-                        ? (language === 'en' ? 'Create account' : 'Cipta akaun')
-                        : (language === 'en' ? 'Enter Demo' : 'Masuk Demo')
+                      : (language === 'en' ? 'Create account' : 'Cipta akaun')
                   )}
                 </Button>
 
@@ -289,53 +197,6 @@ export default function Login() {
                 </div>
               </form>
 
-              {/* Demo credentials */}
-              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm font-medium mb-2">
-                  {language === 'en' ? 'Demo Credentials:' : 'Kredensi Demo:'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Email: ahmad.razak@example.com<br />
-                  Password: password123
-                </p>
-
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="mt-4 w-full"
-                      disabled={isSeeding}
-                    >
-                      {isSeeding ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          {language === 'en' ? 'Seeding...' : 'Menjana...'}
-                        </>
-                      ) : (
-                        language === 'en' ? 'Create demo users' : 'Cipta pengguna demo'
-                      )}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        {language === 'en' ? 'Create demo users?' : 'Cipta pengguna demo?'}
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {language === 'en'
-                          ? 'Creates one account per role with password "password123" and assigns roles. Tip: disable Confirm email in Supabase Auth for best results.'
-                          : 'Mencipta satu akaun bagi setiap peranan dengan kata laluan "password123" dan menetapkan peranan. Tip: matikan Pengesahan e-mel di Supabase Auth untuk hasil terbaik.'}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>{language === 'en' ? 'Cancel' : 'Batal'}</AlertDialogCancel>
-                      <AlertDialogAction onClick={seedDemoUsers}>
-                        {language === 'en' ? 'Proceed' : 'Teruskan'}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
             </CardContent>
           </Card>
 

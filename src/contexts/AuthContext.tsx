@@ -36,12 +36,10 @@ interface AuthContextType {
   roles: UserRole[];
   hasRole: (role: UserRole) => boolean;
   login: (email: string, password: string) => Promise<void>;
-  loginDemo: (role: UserRole, opts?: { name?: string; email?: string }) => void;
   logout: () => Promise<void>;
   switchLanguage: (lang: Language) => void;
   switchTheme: (theme: Theme) => void;
   updateProfile: (updates: Partial<User>) => void;
-  demoMode: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,8 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Language>('ms');
   const [theme, setTheme] = useState<Theme>('light');
   const [roles, setRoles] = useState<UserRole[]>([]);
-  // currentViewRole removed - using role-based navigation
-  const [demoMode, setDemoMode] = useState<boolean>(false);
 
   // Apply theme
   useEffect(() => {
@@ -60,23 +56,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     else document.documentElement.classList.remove('dark');
   }, [theme]);
 
-  // Hydrate demo mode from localStorage
-  useEffect(() => {
-    const savedDemo = localStorage.getItem('demoMode');
-    if (savedDemo === 'true') {
-      const savedUser = localStorage.getItem('demoUser');
-      if (savedUser) {
-        try {
-          const parsed: User = JSON.parse(savedUser);
-          setUser(parsed);
-          setRoles(parsed.available_roles || []);
-          setDemoMode(true);
-        } catch {
-          // ignore
-        }
-      }
-    }
-  }, []);
 
   const hasRole = useMemo(() => (role: UserRole) => roles.includes(role), [roles]);
 
@@ -137,10 +116,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Auth state listener + initial session (disabled in demo mode)
+  // Auth state listener + initial session
   useEffect(() => {
-    if (demoMode) return; // skip Supabase auth when in demo mode
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const uid = session?.user?.id;
       if (uid) {
@@ -158,58 +135,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [demoMode]);
+  }, []);
 
   const login = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   };
 
-  const loginDemo = (role: UserRole, opts?: { name?: string; email?: string }) => {
-    const display = opts?.name || `${role.replace(/_/g, ' ')} User`;
-    const mail = opts?.email || `demo.${role}@demo.local`;
-    
-    // Use proper UUID format for demo users to match database
-    const userIdMap = {
-      'resident': '11111111-1111-1111-1111-111111111111',
-      'admin': '22222222-2222-2222-2222-222222222222',
-      'manager': '33333333-3333-3333-3333-333333333333',
-      'security': '44444444-4444-4444-4444-444444444444'
-    };
-    
-    const demoUser: User = {
-      id: userIdMap[role] || `demo-${role}`,
-      display_name: display,
-      email: mail,
-      associated_community_ids: [],
-      active_community_id: '',
-      district: 'Pahang Prima North',
-      user_role: role,
-      available_roles: [role],
-      phone: '013-1234567',
-      address: 'Unit A-12-05',
-      language_preference: language,
-      theme_preference: theme,
-      unit_type: 'Condominium',
-      ownership_status: 'Owner',
-      vehicle_registration_numbers: ['WYZ 1234'],
-      emergency_contact_name: 'Siti Aminah',
-      emergency_contact_phone: '019-8765432',
-    };
-    setUser(demoUser);
-    setRoles(demoUser.available_roles);
-    setDemoMode(true);
-    localStorage.setItem('demoMode', 'true');
-    localStorage.setItem('demoUser', JSON.stringify(demoUser));
-  };
-
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
     setRoles([]);
-    setDemoMode(false);
-    localStorage.removeItem('demoMode');
-    localStorage.removeItem('demoUser');
   };
 
   const switchLanguage = (lang: Language) => {
@@ -234,12 +170,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     roles,
     hasRole,
     login,
-    loginDemo,
     logout,
     switchLanguage,
     switchTheme,
     updateProfile,
-    demoMode,
   };
 
   return (
