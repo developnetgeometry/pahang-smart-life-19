@@ -18,22 +18,14 @@ export function DashboardStats() {
       
       try {
         // In demo mode, show sample stats without user filtering
-        if (user.id.startsWith('demo-')) {
-          // Get general stats for demo mode
-          const [bookingsRes, complaintsRes, announcementsRes, facilitiesRes, profilesRes] = await Promise.all([
-            supabase.from('bookings').select('id', { count: 'exact', head: true }),
-            supabase.from('complaints').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-            supabase.from('announcements').select('id', { count: 'exact', head: true }),
-            supabase.from('facilities').select('id', { count: 'exact', head: true }),
-            supabase.from('facilities').select('id', { count: 'exact', head: true }) // Use facilities count as demo user count
-          ]);
-
+        if (user.id.startsWith('demo-') || user.id === '11111111-1111-1111-1111-111111111111') {
+          // Show realistic demo data
           setStats({
-            bookings: Math.min(bookingsRes.count || 0, 3), // Show realistic numbers for demo user
-            pendingComplaints: Math.min(complaintsRes.count || 0, 1),
-            announcements: announcementsRes.count || 0,
-            facilities: facilitiesRes.count || 0,
-            totalProfiles: (profilesRes.count || 0) * 15 // Multiply for realistic community size
+            bookings: 3, // Active bookings for demo user
+            pendingComplaints: 2, // Pending complaints for demo user  
+            announcements: 5, // Total announcements in district
+            facilities: 5, // Available facilities
+            totalProfiles: 247 // Total community members
           });
         } else {
           // Real user mode - filter by user

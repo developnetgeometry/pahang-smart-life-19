@@ -30,6 +30,42 @@ const Index = () => {
   useEffect(() => {
     const fetchRecentActivities = async () => {
       try {
+        // In demo mode, show rich sample data
+        if (user?.id.startsWith('demo-') || user?.id === '11111111-1111-1111-1111-111111111111') {
+          const sampleActivities = [
+            {
+              id: 'demo-1',
+              type: 'announcement',
+              title: 'Jadual Penyelenggaraan Kolam Renang', 
+              description: 'Kolam renang akan ditutup untuk penyelenggaraan rutin pada 25 Ogos 2025 dari jam 8:00 pagi hingga 5:00 petang...',
+              time: '2 jam yang lalu',
+              icon: Megaphone,
+              color: 'text-blue-600'
+            },
+            {
+              id: 'demo-2',
+              type: 'booking',
+              title: 'Tempahan Dewan Komuniti Disahkan',
+              description: 'Tempahan anda untuk Majlis Perkahwinan pada 31 Ogos 2025 telah disahkan. Tempat: Dewan Komuniti Pahang Prima',
+              time: '5 jam yang lalu', 
+              icon: Clock,
+              color: 'text-green-600'
+            },
+            {
+              id: 'demo-3',
+              type: 'discussion',
+              title: 'Balasan Baru: Cadangan Peningkatan Keselamatan',
+              description: 'Ahmad Zakaria telah membalas cadangan pemasangan lampu tambahan di kawasan parking...',
+              time: '1 hari yang lalu',
+              icon: MessageSquare,
+              color: 'text-purple-600'
+            }
+          ];
+          setRecentActivities(sampleActivities);
+          setLoading(false);
+          return;
+        }
+
         // Fetch recent announcements, discussions, and complaints
         const [announcementsRes, discussionsRes, complaintsRes] = await Promise.all([
           supabase
