@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, MapPin, Users, Clock, Plus, Search, Car, Dumbbell, Waves, TreePine } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, Plus, Search, Car, Dumbbell, Waves, TreePine, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Facility {
   id: string;
@@ -24,12 +25,21 @@ interface Facility {
 }
 
 export default function Facilities() {
-  const { language } = useAuth();
+  const { language, user } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
+  const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [bookingData, setBookingData] = useState({
+    date: '',
+    startTime: '',
+    endTime: '',
+    purpose: '',
+    notes: ''
+  });
 
   const text = {
     en: {
@@ -98,61 +108,75 @@ export default function Facilities() {
 
   const t = text[language];
 
-  const mockFacilities: Facility[] = [
-    {
-      id: '1',
-      name: language === 'en' ? 'Community Gym' : 'Gim Komuniti',
-      description: language === 'en' ? 'Fully equipped fitness center with modern equipment' : 'Pusat kecergasan lengkap dengan peralatan moden',
-      location: 'Block A, Ground Floor',
-      capacity: 20,
-      availability: 'available',
-      amenities: ['Treadmills', 'Weight Training', 'Air Conditioning', 'Lockers'],
-      image: '/gym.jpg',
-      hourlyRate: 10
-    },
-    {
-      id: '2',
-      name: language === 'en' ? 'Swimming Pool' : 'Kolam Renang',
-      description: language === 'en' ? 'Olympic-size swimming pool with children\'s area' : 'Kolam renang saiz olimpik dengan kawasan kanak-kanak',
-      location: 'Recreation Area',
-      capacity: 50,
-      availability: 'available',
-      amenities: ['Lifeguard', 'Changing Rooms', 'Pool Equipment', 'Shower'],
-      image: '/pool.jpg'
-    },
-    {
-      id: '3',
-      name: language === 'en' ? 'Function Hall A' : 'Dewan Majlis A',
-      description: language === 'en' ? 'Large multipurpose hall for events and gatherings' : 'Dewan serbaguna besar untuk acara dan perhimpunan',
-      location: 'Block B, Level 2',
-      capacity: 100,
-      availability: 'occupied',
-      amenities: ['Sound System', 'Projector', 'Tables & Chairs', 'Kitchen Access'],
-      image: '/hall.jpg',
-      hourlyRate: 50
-    },
-    {
-      id: '4',
-      name: language === 'en' ? 'Garden Park' : 'Taman Landskap',
-      description: language === 'en' ? 'Beautiful garden space for outdoor activities' : 'Ruang taman indah untuk aktiviti luar',
-      location: 'Central Garden',
-      capacity: 200,
-      availability: 'available',
-      amenities: ['Playground', 'Benches', 'Walking Paths', 'Gazebo'],
-      image: '/garden.jpg'
-    },
-    {
-      id: '5',
-      name: language === 'en' ? 'Covered Parking' : 'Tempat Letak Kereta Berbumbung',
-      description: language === 'en' ? 'Secure covered parking spaces' : 'Tempat letak kereta berbumbung selamat',
-      location: 'Basement Level',
-      capacity: 50,
-      availability: 'maintenance',
-      amenities: ['CCTV', 'Security Access', 'Electric Charging'],
-      image: '/parking.jpg',
-      hourlyRate: 5
-    }
-  ];
+  // Fetch facilities from Supabase
+  useEffect(() => {
+    const fetchFacilities = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('facilities')
+          .select('*')
+          .eq('is_available', true);
+
+        if (error) throw error;
+
+        // Transform Supabase data to match our interface
+        const transformedFacilities: Facility[] = (data || []).map(facility => ({
+          id: facility.id,
+          name: facility.name,
+          description: facility.description || '',
+          location: facility.location || '',
+          capacity: facility.capacity || 0,
+          availability: facility.is_available ? 'available' : 'maintenance',
+          amenities: facility.amenities || [],
+          image: facility.images?.[0] || '/placeholder.svg',
+          hourlyRate: facility.hourly_rate ? Number(facility.hourly_rate) : undefined
+        }));
+
+        setFacilities(transformedFacilities);
+      } catch (error) {
+        console.error('Error fetching facilities:', error);
+        // Fallback to demo data
+        setFacilities([
+          {
+            id: '1',
+            name: language === 'en' ? 'Community Gym' : 'Gim Komuniti',
+            description: language === 'en' ? 'Fully equipped fitness center with modern equipment' : 'Pusat kecergasan lengkap dengan peralatan moden',
+            location: 'Block A, Ground Floor',
+            capacity: 20,
+            availability: 'available',
+            amenities: ['Treadmills', 'Weight Training', 'Air Conditioning', 'Lockers'],
+            image: '/placeholder.svg',
+            hourlyRate: 10
+          },
+          {
+            id: '2',
+            name: language === 'en' ? 'Swimming Pool' : 'Kolam Renang',
+            description: language === 'en' ? 'Olympic-size swimming pool with children\'s area' : 'Kolam renang saiz olimpik dengan kawasan kanak-kanak',
+            location: 'Recreation Area',
+            capacity: 50,
+            availability: 'available',
+            amenities: ['Lifeguard', 'Changing Rooms', 'Pool Equipment', 'Shower'],
+            image: '/placeholder.svg'
+          },
+          {
+            id: '3',
+            name: language === 'en' ? 'Function Hall A' : 'Dewan Majlis A',
+            description: language === 'en' ? 'Large multipurpose hall for events and gatherings' : 'Dewan serbaguna besar untuk acara dan perhimpunan',
+            location: 'Block B, Level 2',
+            capacity: 100,
+            availability: 'available',
+            amenities: ['Sound System', 'Projector', 'Tables & Chairs', 'Kitchen Access'],
+            image: '/placeholder.svg',
+            hourlyRate: 50
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFacilities();
+  }, [language]);
 
   const facilityTypes = [
     { value: 'all', label: t.allTypes },
@@ -189,7 +213,7 @@ export default function Facilities() {
     return <MapPin className="h-5 w-5" />;
   };
 
-  const filteredFacilities = mockFacilities.filter(facility =>
+  const filteredFacilities = facilities.filter(facility =>
     facility.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     facility.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -201,12 +225,54 @@ export default function Facilities() {
     }
   };
 
-  const handleConfirmBooking = () => {
-    toast({
-      title: t.bookingSuccess,
-    });
-    setIsBookingOpen(false);
-    setSelectedFacility(null);
+  const handleConfirmBooking = async () => {
+    if (!selectedFacility || !user) return;
+
+    // Calculate duration
+    const startTime = new Date(`${bookingData.date}T${bookingData.startTime}`);
+    const endTime = new Date(`${bookingData.date}T${bookingData.endTime}`);
+    const durationHours = Math.ceil((endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60));
+    
+    const totalAmount = selectedFacility.hourlyRate ? selectedFacility.hourlyRate * durationHours : 0;
+
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .insert({
+          facility_id: selectedFacility.id,
+          user_id: user.id,
+          booking_date: bookingData.date,
+          start_time: bookingData.startTime,
+          end_time: bookingData.endTime,
+          duration_hours: durationHours,
+          purpose: bookingData.purpose,
+          notes: bookingData.notes,
+          total_amount: totalAmount,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: t.bookingSuccess,
+        description: language === 'en' 
+          ? `Your booking for ${selectedFacility.name} has been submitted and is pending approval.`
+          : `Tempahan anda untuk ${selectedFacility.name} telah dihantar dan menunggu kelulusan.`
+      });
+
+      setIsBookingOpen(false);
+      setSelectedFacility(null);
+      setBookingData({ date: '', startTime: '', endTime: '', purpose: '', notes: '' });
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      toast({
+        variant: 'destructive',
+        title: language === 'en' ? 'Booking Failed' : 'Tempahan Gagal',
+        description: language === 'en' 
+          ? 'There was an error creating your booking. Please try again.'
+          : 'Terdapat ralat semasa mencipta tempahan anda. Sila cuba lagi.'
+      });
+    }
   };
 
   return (
@@ -242,8 +308,27 @@ export default function Facilities() {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredFacilities.map((facility) => (
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="overflow-hidden">
+              <div className="aspect-video bg-muted animate-pulse" />
+              <CardHeader>
+                <div className="h-4 bg-muted animate-pulse rounded mb-2" />
+                <div className="h-3 bg-muted animate-pulse rounded w-3/4" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="h-3 bg-muted animate-pulse rounded" />
+                  <div className="h-3 bg-muted animate-pulse rounded w-1/2" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredFacilities.map((facility) => (
           <Card key={facility.id} className="overflow-hidden hover:shadow-lg transition-shadow">
             <div className="aspect-video bg-muted flex items-center justify-center">
               {getIcon(facility.name)}
@@ -300,8 +385,9 @@ export default function Facilities() {
               </Button>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
         <DialogContent className="sm:max-w-[525px]">
@@ -322,27 +408,54 @@ export default function Facilities() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="date">{t.date}</Label>
-                  <Input id="date" type="date" />
+                  <Input 
+                    id="date" 
+                    type="date" 
+                    value={bookingData.date}
+                    onChange={(e) => setBookingData(prev => ({ ...prev, date: e.target.value }))}
+                    min={new Date().toISOString().split('T')[0]}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="startTime">{t.startTime}</Label>
-                  <Input id="startTime" type="time" />
+                  <Input 
+                    id="startTime" 
+                    type="time" 
+                    value={bookingData.startTime}
+                    onChange={(e) => setBookingData(prev => ({ ...prev, startTime: e.target.value }))}
+                  />
                 </div>
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="endTime">{t.endTime}</Label>
-                <Input id="endTime" type="time" />
+                <Input 
+                  id="endTime" 
+                  type="time" 
+                  value={bookingData.endTime}
+                  onChange={(e) => setBookingData(prev => ({ ...prev, endTime: e.target.value }))}
+                />
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="purpose">{t.purpose}</Label>
-                <Input id="purpose" placeholder={t.purpose} />
+                <Input 
+                  id="purpose" 
+                  placeholder={t.purpose} 
+                  value={bookingData.purpose}
+                  onChange={(e) => setBookingData(prev => ({ ...prev, purpose: e.target.value }))}
+                />
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="notes">{t.notes}</Label>
-                <Textarea id="notes" placeholder={t.notes} rows={3} />
+                <Textarea 
+                  id="notes" 
+                  placeholder={t.notes} 
+                  rows={3} 
+                  value={bookingData.notes}
+                  onChange={(e) => setBookingData(prev => ({ ...prev, notes: e.target.value }))}
+                />
               </div>
               
               <div className="flex justify-end space-x-2">

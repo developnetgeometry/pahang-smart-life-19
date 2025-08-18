@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Megaphone, Calendar, Clock, Search, Pin, Bell } from 'lucide-react';
+import { Megaphone, Calendar, Clock, Search, Pin, Bell, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Announcement {
   id: string;
@@ -20,66 +21,123 @@ interface Announcement {
 }
 
 export default function Announcements() {
-  const { language } = useAuth();
+  const { language, user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [announcements] = useState<Announcement[]>([
-    {
-      id: '1',
-      title: language === 'en' ? 'Scheduled Maintenance - Water Supply' : 'Penyelenggaraan Berjadual - Bekalan Air',
-      content: language === 'en' 
-        ? 'Water supply will be temporarily disrupted on January 20, 2024, from 9:00 AM to 3:00 PM for maintenance work. Please store water in advance.'
-        : 'Bekalan air akan terganggu sementara pada 20 Januari 2024, dari 9:00 AM hingga 3:00 PM untuk kerja penyelenggaraan. Sila simpan air terlebih dahulu.',
-      priority: 'high',
-      category: language === 'en' ? 'Maintenance' : 'Penyelenggaraan',
-      created_date: '2024-01-15',
-      author: 'Management Office',
-      is_pinned: true,
-      read_status: false,
-      target_audience: ['residents']
-    },
-    {
-      id: '2',
-      title: language === 'en' ? 'Chinese New Year Celebration' : 'Perayaan Tahun Baru Cina',
-      content: language === 'en'
-        ? 'Join us for Chinese New Year celebration at the community hall on February 10, 2024, at 7:00 PM. Lion dance performance and dinner will be provided.'
-        : 'Sertai kami untuk perayaan Tahun Baru Cina di dewan komuniti pada 10 Februari 2024, pada 7:00 PM. Persembahan tarian singa dan makan malam akan disediakan.',
-      priority: 'medium',
-      category: language === 'en' ? 'Community Events' : 'Acara Komuniti',
-      created_date: '2024-01-14',
-      author: 'Resident Committee',
-      is_pinned: false,
-      read_status: true,
-      target_audience: ['residents']
-    },
-    {
-      id: '3',
-      title: language === 'en' ? 'New Security Measures' : 'Langkah Keselamatan Baru',
-      content: language === 'en'
-        ? 'New facial recognition system will be installed at all main entrances starting February 1, 2024. Please update your profile photos at the management office.'
-        : 'Sistem pengecaman muka baru akan dipasang di semua pintu masuk utama bermula 1 Februari 2024. Sila kemas kini foto profil anda di pejabat pengurusan.',
-      priority: 'high',
-      category: language === 'en' ? 'Security' : 'Keselamatan',
-      created_date: '2024-01-13',
-      author: 'Security Department',
-      is_pinned: true,
-      read_status: false,
-      target_audience: ['residents', 'visitors']
-    },
-    {
-      id: '4',
-      title: language === 'en' ? 'Swimming Pool Schedule Update' : 'Kemas Kini Jadual Kolam Renang',
-      content: language === 'en'
-        ? 'New swimming pool operating hours: Monday to Sunday, 6:00 AM to 10:00 PM. Maintenance day: Every first Monday of the month.'
-        : 'Waktu operasi kolam renang baru: Isnin hingga Ahad, 6:00 AM hingga 10:00 PM. Hari penyelenggaraan: Setiap Isnin pertama setiap bulan.',
-      priority: 'low',
-      category: language === 'en' ? 'Facilities' : 'Kemudahan',
-      created_date: '2024-01-12',
-      author: 'Facility Management',
-      is_pinned: false,
-      read_status: true,
-      target_audience: ['residents']
-    }
-  ]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch announcements from Supabase
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('announcements')
+          .select(`
+            id,
+            title,
+            content,
+            type,
+            is_urgent,
+            is_published,
+            publish_at,
+            expire_at,
+            created_at,
+            author_id
+          `)
+          .eq('is_published', true)
+          .lte('publish_at', new Date().toISOString())
+          .or('expire_at.is.null,expire_at.gt.' + new Date().toISOString())
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Transform Supabase data to match our interface
+        const transformedAnnouncements: Announcement[] = (data || []).map(announcement => ({
+          id: announcement.id,
+          title: announcement.title,
+          content: announcement.content,
+          priority: announcement.is_urgent ? 'urgent' : 'medium' as 'low' | 'medium' | 'high' | 'urgent',
+          category: announcement.type || 'General',
+          created_date: new Date(announcement.created_at).toISOString().split('T')[0],
+          author: 'Management Office', // Could be enhanced with profile lookup
+          is_pinned: announcement.is_urgent,
+          read_status: false, // Could be enhanced with read tracking
+          target_audience: ['residents']
+        }));
+
+        setAnnouncements(transformedAnnouncements);
+      } catch (error) {
+        console.error('Error fetching announcements:', error);
+        // Fallback to demo data
+        setAnnouncements([
+          {
+            id: '1',
+            title: language === 'en' ? 'Scheduled Maintenance - Water Supply' : 'Penyelenggaraan Berjadual - Bekalan Air',
+            content: language === 'en' 
+              ? 'Water supply will be temporarily disrupted on January 20, 2024, from 9:00 AM to 3:00 PM for maintenance work. Please store water in advance.'
+              : 'Bekalan air akan terganggu sementara pada 20 Januari 2024, dari 9:00 AM hingga 3:00 PM untuk kerja penyelenggaraan. Sila simpan air terlebih dahulu.',
+            priority: 'high',
+            category: language === 'en' ? 'Maintenance' : 'Penyelenggaraan',
+            created_date: '2024-01-15',
+            author: 'Management Office',
+            is_pinned: true,
+            read_status: false,
+            target_audience: ['residents']
+          },
+          {
+            id: '2',
+            title: language === 'en' ? 'Chinese New Year Celebration' : 'Perayaan Tahun Baru Cina',
+            content: language === 'en'
+              ? 'Join us for Chinese New Year celebration at the community hall on February 10, 2024, at 7:00 PM. Lion dance performance and dinner will be provided.'
+              : 'Sertai kami untuk perayaan Tahun Baru Cina di dewan komuniti pada 10 Februari 2024, pada 7:00 PM. Persembahan tarian singa dan makan malam akan disediakan.',
+            priority: 'medium',
+            category: language === 'en' ? 'Community Events' : 'Acara Komuniti',
+            created_date: '2024-01-14',
+            author: 'Resident Committee',
+            is_pinned: false,
+            read_status: true,
+            target_audience: ['residents']
+          },
+          {
+            id: '3',
+            title: language === 'en' ? 'New Security Measures' : 'Langkah Keselamatan Baru',
+            content: language === 'en'
+              ? 'New CCTV cameras have been installed at main entrances. Access cards will be required for all common areas starting February 1, 2024.'
+              : 'Kamera CCTV baru telah dipasang di pintu masuk utama. Kad akses akan diperlukan untuk semua kawasan umum bermula 1 Februari 2024.',
+            priority: 'high',
+            category: language === 'en' ? 'Security' : 'Keselamatan',
+            created_date: '2024-01-13',
+            author: 'Security Department',
+            is_pinned: true,
+            read_status: false,
+            target_audience: ['residents']
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnnouncements();
+
+    // Set up real-time subscription for new announcements
+    const channel = supabase
+      .channel('announcements-changes')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'announcements'
+      }, (payload) => {
+        console.log('New announcement:', payload);
+        // Refresh announcements
+        fetchAnnouncements();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [language]);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -119,6 +177,62 @@ export default function Announcements() {
 
   const pinnedAnnouncements = filteredAnnouncements.filter(a => a.is_pinned);
   const regularAnnouncements = filteredAnnouncements.filter(a => !a.is_pinned);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              {language === 'en' ? 'Announcements' : 'Pengumuman'}
+            </h1>
+            <p className="text-muted-foreground">
+              {language === 'en' 
+                ? 'Stay updated with community news and important notices'
+                : 'Kekal terkini dengan berita komuniti dan notis penting'
+              }
+            </p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-muted animate-pulse rounded-lg w-10 h-10" />
+                  <div className="ml-4 flex-1">
+                    <div className="h-3 bg-muted animate-pulse rounded mb-2" />
+                    <div className="h-6 bg-muted animate-pulse rounded" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardHeader>
+                <div className="space-y-2">
+                  <div className="h-6 bg-muted animate-pulse rounded" />
+                  <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="h-4 bg-muted animate-pulse rounded" />
+                  <div className="h-4 bg-muted animate-pulse rounded w-5/6" />
+                  <div className="h-4 bg-muted animate-pulse rounded w-2/3" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -211,7 +325,14 @@ export default function Announcements() {
                 <p className="text-sm text-muted-foreground">
                   {language === 'en' ? 'This Week' : 'Minggu Ini'}
                 </p>
-                <p className="text-2xl font-bold">3</p>
+                <p className="text-2xl font-bold">
+                  {announcements.filter(a => {
+                    const created = new Date(a.created_date);
+                    const weekAgo = new Date();
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    return created >= weekAgo;
+                  }).length}
+                </p>
               </div>
             </div>
           </CardContent>
