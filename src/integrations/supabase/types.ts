@@ -14,6 +14,127 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_cards: {
+        Row: {
+          access_zones: string[] | null
+          card_number: string
+          card_type: string
+          created_at: string
+          district_id: string | null
+          expiry_date: string | null
+          id: string
+          is_active: boolean
+          issued_date: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          access_zones?: string[] | null
+          card_number: string
+          card_type?: string
+          created_at?: string
+          district_id?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean
+          issued_date?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          access_zones?: string[] | null
+          card_number?: string
+          card_type?: string
+          created_at?: string
+          district_id?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean
+          issued_date?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_cards_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_cards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      access_logs: {
+        Row: {
+          access_time: string
+          access_type: string
+          card_id: string | null
+          created_at: string
+          district_id: string | null
+          door_controller_id: string | null
+          failure_reason: string | null
+          id: string
+          location: string
+          success: boolean
+          user_id: string | null
+        }
+        Insert: {
+          access_time?: string
+          access_type: string
+          card_id?: string | null
+          created_at?: string
+          district_id?: string | null
+          door_controller_id?: string | null
+          failure_reason?: string | null
+          id?: string
+          location: string
+          success?: boolean
+          user_id?: string | null
+        }
+        Update: {
+          access_time?: string
+          access_type?: string
+          card_id?: string | null
+          created_at?: string
+          district_id?: string | null
+          door_controller_id?: string | null
+          failure_reason?: string | null
+          id?: string
+          location?: string
+          success?: boolean
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_logs_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "access_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_logs_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcements: {
         Row: {
           author_id: string | null
@@ -152,6 +273,63 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          action: string
+          district_id: string | null
+          id: string
+          ip_address: unknown | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          table_name: string
+          timestamp: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          district_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name: string
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          district_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           approved_at: string | null
@@ -280,6 +458,190 @@ export type Database = {
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          created_at: string
+          edited_at: string | null
+          file_url: string | null
+          id: string
+          is_deleted: boolean
+          is_edited: boolean
+          message_text: string
+          message_type: string
+          reply_to_id: string | null
+          room_id: string
+          sender_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          edited_at?: string | null
+          file_url?: string | null
+          id?: string
+          is_deleted?: boolean
+          is_edited?: boolean
+          message_text: string
+          message_type?: string
+          reply_to_id?: string | null
+          room_id: string
+          sender_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          edited_at?: string | null
+          file_url?: string | null
+          id?: string
+          is_deleted?: boolean
+          is_edited?: boolean
+          message_text?: string
+          message_type?: string
+          reply_to_id?: string | null
+          room_id?: string
+          sender_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_rooms: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          district_id: string | null
+          id: string
+          is_active: boolean
+          is_private: boolean
+          max_members: number | null
+          name: string
+          room_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          is_active?: boolean
+          is_private?: boolean
+          max_members?: number | null
+          name: string
+          room_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          is_active?: boolean
+          is_private?: boolean
+          max_members?: number | null
+          name?: string
+          room_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_rooms_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_rooms_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_groups: {
+        Row: {
+          contact_info: string | null
+          created_at: string
+          description: string | null
+          district_id: string | null
+          group_type: string
+          id: string
+          is_active: boolean
+          leader_id: string | null
+          max_members: number | null
+          meeting_schedule: string | null
+          name: string
+          requires_approval: boolean
+          updated_at: string
+        }
+        Insert: {
+          contact_info?: string | null
+          created_at?: string
+          description?: string | null
+          district_id?: string | null
+          group_type?: string
+          id?: string
+          is_active?: boolean
+          leader_id?: string | null
+          max_members?: number | null
+          meeting_schedule?: string | null
+          name: string
+          requires_approval?: boolean
+          updated_at?: string
+        }
+        Update: {
+          contact_info?: string | null
+          created_at?: string
+          description?: string | null
+          district_id?: string | null
+          group_type?: string
+          id?: string
+          is_active?: boolean
+          leader_id?: string | null
+          max_members?: number | null
+          meeting_schedule?: string | null
+          name?: string
+          requires_approval?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_groups_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_groups_leader_id_fkey"
+            columns: ["leader_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -630,6 +992,59 @@ export type Database = {
           version?: string | null
         }
         Relationships: []
+      }
+      door_controllers: {
+        Row: {
+          access_zones: string[] | null
+          controller_type: string
+          created_at: string
+          district_id: string | null
+          id: string
+          ip_address: unknown | null
+          is_online: boolean
+          last_heartbeat: string | null
+          location: string
+          mac_address: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          access_zones?: string[] | null
+          controller_type?: string
+          created_at?: string
+          district_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          is_online?: boolean
+          last_heartbeat?: string | null
+          location: string
+          mac_address?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          access_zones?: string[] | null
+          controller_type?: string
+          created_at?: string
+          district_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          is_online?: boolean
+          last_heartbeat?: string | null
+          location?: string
+          mac_address?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "door_controllers_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       emergency_contacts: {
         Row: {
@@ -1147,6 +1562,72 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          created_at: string
+          district_id: string | null
+          due_date: string
+          id: string
+          invoice_date: string
+          invoice_number: string
+          notes: string | null
+          payment_terms: string | null
+          status: string
+          subtotal: number
+          tax_amount: number
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          district_id?: string | null
+          due_date: string
+          id?: string
+          invoice_date?: string
+          invoice_number: string
+          notes?: string | null
+          payment_terms?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          total_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          district_id?: string | null
+          due_date?: string
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          notes?: string | null
+          payment_terms?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_requests: {
         Row: {
           actual_cost: number | null
@@ -1487,6 +1968,69 @@ export type Database = {
           zone?: string
         }
         Relationships: []
+      }
+      payment_plans: {
+        Row: {
+          created_at: string
+          frequency: string
+          id: string
+          installment_amount: number
+          installments: number
+          invoice_id: string | null
+          next_due_date: string
+          paid_installments: number
+          start_date: string
+          status: string
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          frequency?: string
+          id?: string
+          installment_amount: number
+          installments?: number
+          invoice_id?: string | null
+          next_due_date: string
+          paid_installments?: number
+          start_date?: string
+          status?: string
+          total_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          frequency?: string
+          id?: string
+          installment_amount?: number
+          installments?: number
+          invoice_id?: string | null
+          next_due_date?: string
+          paid_installments?: number
+          start_date?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_plans_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
@@ -1897,6 +2441,151 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      utility_readings: {
+        Row: {
+          consumption: number | null
+          cost_per_unit: number | null
+          created_at: string
+          district_id: string | null
+          id: string
+          is_estimated: boolean
+          meter_id: string
+          previous_reading: number | null
+          reading_date: string
+          reading_value: number
+          total_cost: number | null
+          unit: string
+          user_id: string | null
+          utility_type: string
+        }
+        Insert: {
+          consumption?: number | null
+          cost_per_unit?: number | null
+          created_at?: string
+          district_id?: string | null
+          id?: string
+          is_estimated?: boolean
+          meter_id: string
+          previous_reading?: number | null
+          reading_date?: string
+          reading_value: number
+          total_cost?: number | null
+          unit?: string
+          user_id?: string | null
+          utility_type: string
+        }
+        Update: {
+          consumption?: number | null
+          cost_per_unit?: number | null
+          created_at?: string
+          district_id?: string | null
+          id?: string
+          is_estimated?: boolean
+          meter_id?: string
+          previous_reading?: number | null
+          reading_date?: string
+          reading_value?: number
+          total_cost?: number | null
+          unit?: string
+          user_id?: string | null
+          utility_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utility_readings_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "utility_readings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_blacklist: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          district_id: string | null
+          ic_number: string | null
+          id: string
+          is_active: boolean | null
+          phone_number: string | null
+          reason: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          district_id?: string | null
+          ic_number?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone_number?: string | null
+          reason: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          district_id?: string | null
+          ic_number?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone_number?: string | null
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_blacklist_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_logs: {
+        Row: {
+          action: string
+          id: string
+          location: string | null
+          notes: string | null
+          performed_by: string | null
+          timestamp: string
+          visitor_id: string | null
+        }
+        Insert: {
+          action: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          performed_by?: string | null
+          timestamp?: string
+          visitor_id?: string | null
+        }
+        Update: {
+          action?: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          performed_by?: string | null
+          timestamp?: string
+          visitor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_logs_visitor_id_fkey"
+            columns: ["visitor_id"]
+            isOneToOne: false
+            referencedRelation: "visitors"
             referencedColumns: ["id"]
           },
         ]
