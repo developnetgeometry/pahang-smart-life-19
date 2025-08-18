@@ -112,11 +112,16 @@ const testUsers = [
 ];
 
 export async function createTestUsers() {
+  console.log('🔧 createTestUsers function called');
+  console.log('👥 Total users to create:', testUsers.length);
+  
   const results = [];
 
   for (const user of testUsers) {
+    console.log(`🔨 Creating user: ${user.email} (${user.role})`);
     try {
       // Create auth user
+      console.log(`📝 Attempting signUp for: ${user.email}`);
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: user.email,
         password: user.password,
@@ -128,7 +133,7 @@ export async function createTestUsers() {
       });
 
       if (signUpError) {
-        console.error(`Failed to create ${user.role}:`, signUpError);
+        console.error(`❌ SignUp failed for ${user.email}:`, signUpError);
         results.push({
           email: user.email,
           role: user.role,
@@ -139,7 +144,10 @@ export async function createTestUsers() {
       }
 
       const userId = authData.user?.id;
+      console.log(`🆔 User ID for ${user.email}:`, userId);
+      
       if (!userId) {
+        console.error(`❌ No user ID returned for ${user.email}`);
         results.push({
           email: user.email,
           role: user.role,
@@ -149,7 +157,8 @@ export async function createTestUsers() {
         continue;
       }
 
-      // Update profile with user-specific details
+      // Update profile with user-specific details  
+      console.log(`👤 Updating profile for ${user.email}`);
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -161,10 +170,13 @@ export async function createTestUsers() {
         .eq('id', userId);
 
       if (profileError) {
-        console.error(`Failed to update profile for ${user.role}:`, profileError);
+        console.error(`❌ Profile update failed for ${user.email}:`, profileError);
+      } else {
+        console.log(`✅ Profile updated for ${user.email}`);
       }
 
       // Assign role
+      console.log(`🏷️ Assigning role ${user.role} to ${user.email}`);
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
@@ -174,7 +186,7 @@ export async function createTestUsers() {
         });
 
       if (roleError) {
-        console.error(`Failed to assign role for ${user.role}:`, roleError);
+        console.error(`❌ Role assignment failed for ${user.email}:`, roleError);
         results.push({
           email: user.email,
           role: user.role,
@@ -184,6 +196,8 @@ export async function createTestUsers() {
         continue;
       }
 
+      console.log(`✅ Role assigned for ${user.email}`);
+      
       results.push({
         email: user.email,
         role: user.role,
@@ -194,7 +208,7 @@ export async function createTestUsers() {
       console.log(`✅ Created ${user.role}: ${user.email}`);
 
     } catch (error) {
-      console.error(`Unexpected error creating ${user.role}:`, error);
+      console.error(`💥 Unexpected error creating ${user.role} (${user.email}):`, error);
       results.push({
         email: user.email,
         role: user.role,
@@ -204,5 +218,6 @@ export async function createTestUsers() {
     }
   }
 
+  console.log('📋 Final results:', results);
   return results;
 }

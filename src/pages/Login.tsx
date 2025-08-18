@@ -51,13 +51,20 @@ export default function Login() {
   };
 
   const handleCreateTestUsers = async () => {
+    console.log('🚀 Starting user creation process...');
     setIsCreatingUsers(true);
     try {
+      console.log('📞 Calling createTestUsers function...');
       const results = await createTestUsers();
+      console.log('📊 User creation results:', results);
+      
       const successful = results.filter(r => r.success);
       const failed = results.filter(r => !r.success);
       
+      console.log(`✅ Successful: ${successful.length}, ❌ Failed: ${failed.length}`);
+      
       if (successful.length > 0) {
+        console.log('✅ Showing success toast');
         toast({
           title: language === 'en' ? 'Test Users Created' : 'Pengguna Ujian Dicipta',
           description: `${successful.length} accounts created successfully: ${successful.map(r => `${r.email} (${r.role})`).join(', ')}`,
@@ -65,6 +72,7 @@ export default function Login() {
       }
       
       if (failed.length > 0) {
+        console.log('❌ Showing failure toast', failed);
         toast({
           variant: 'destructive',
           title: language === 'en' ? 'Some Users Failed' : 'Sesetengah Pengguna Gagal',
@@ -72,12 +80,14 @@ export default function Login() {
         });
       }
     } catch (error) {
+      console.error('💥 Unexpected error in handleCreateTestUsers:', error);
       toast({
         variant: 'destructive',
         title: language === 'en' ? 'Error Creating Users' : 'Ralat Mencipta Pengguna',
         description: error instanceof Error ? error.message : 'Unknown error',
       });
     } finally {
+      console.log('🏁 User creation process completed');
       setIsCreatingUsers(false);
     }
   };
