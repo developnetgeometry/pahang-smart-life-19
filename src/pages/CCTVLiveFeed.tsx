@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Video, VideoOff, Maximize, RotateCcw, Settings, Eye, EyeOff, Signal, SignalHigh, SignalLow, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Home, Play, Square, Wifi, WifiOff, Activity, Calendar, Clock, Download } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Video, VideoOff, Maximize, RotateCcw, Settings, Eye, EyeOff, Signal, SignalHigh, SignalLow, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Home, Play, Square, Wifi, WifiOff, Activity, Calendar, Clock, Download, X } from 'lucide-react';
 
 interface CCTVCamera {
   id: string;
@@ -47,6 +48,7 @@ export default function CCTVLiveFeed() {
   const [motionDetectionEnabled, setMotionDetectionEnabled] = useState(false);
   const [motionSensitivity, setMotionSensitivity] = useState([30]);
   const [motionEvents] = useState<Array<{ id: string; timestamp: string; camera: string }>>([]);
+  const [selectedRecording, setSelectedRecording] = useState<CCTVRecording | null>(null);
 
   const text = {
     en: {
@@ -99,7 +101,11 @@ export default function CCTVLiveFeed() {
       download: 'Download',
       play: 'Play',
       noRecordings: 'No recordings available',
-      recordingsSubtitle: 'View recorded events from security cameras'
+      recordingsSubtitle: 'View recorded events from security cameras',
+      playRecording: 'Play Recording',
+      closePlayer: 'Close Player',
+      loading: 'Loading...',
+      recordingPlayer: 'Recording Player'
     },
     ms: {
       title: 'Suapan Langsung CCTV',
@@ -151,7 +157,11 @@ export default function CCTVLiveFeed() {
       download: 'Muat Turun',
       play: 'Main',
       noRecordings: 'Tiada rakaman tersedia',
-      recordingsSubtitle: 'Lihat acara yang dirakam daripada kamera keselamatan'
+      recordingsSubtitle: 'Lihat acara yang dirakam daripada kamera keselamatan',
+      playRecording: 'Main Rakaman',
+      closePlayer: 'Tutup Pemain',
+      loading: 'Memuatkan...',
+      recordingPlayer: 'Pemain Rakaman'
     }
   };
 
@@ -785,10 +795,60 @@ export default function CCTVLiveFeed() {
                         </div>
                         
                         <div className="flex flex-col gap-2">
-                          <Button size="sm" className="flex items-center gap-2">
-                            <Play className="h-4 w-4" />
-                            {t.play}
-                          </Button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm" className="flex items-center gap-2" onClick={() => setSelectedRecording(recording)}>
+                                <Play className="h-4 w-4" />
+                                {t.play}
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-4xl w-full p-0">
+                              <DialogHeader className="p-6 pb-0">
+                                <DialogTitle>{t.recordingPlayer}</DialogTitle>
+                                <DialogDescription>
+                                  {selectedRecording?.cameraName} - {selectedRecording?.startTime}
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="p-6 pt-0">
+                                <div className="bg-black rounded-lg overflow-hidden mb-4">
+                                  <div className="aspect-video relative">
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <div className="text-white text-center">
+                                        <Video className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                                        <p className="text-lg mb-2">{t.recordingPlayer}</p>
+                                        <p className="text-sm opacity-75">{selectedRecording?.cameraName}</p>
+                                        <div className="mt-4 p-2 bg-white/10 rounded">
+                                          <p className="text-xs">{t.loading}</p>
+                                          <p className="text-xs mt-1 font-mono">{selectedRecording?.filePath}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                {selectedRecording && (
+                                  <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                      <span className="text-muted-foreground">{t.eventType}: </span>
+                                      <span className="capitalize">{t[selectedRecording.eventType as keyof typeof t] || selectedRecording.eventType}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">{t.duration}: </span>
+                                      <span>{selectedRecording.duration}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">{language === 'en' ? 'Start Time' : 'Masa Mula'}: </span>
+                                      <span className="font-mono">{selectedRecording.startTime}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">{t.fileSize}: </span>
+                                      <span>{selectedRecording.fileSize}</span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                           <Button size="sm" variant="outline" className="flex items-center gap-2">
                             <Download className="h-4 w-4" />
                             {t.download}
