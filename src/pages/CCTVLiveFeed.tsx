@@ -12,6 +12,10 @@ interface CCTVCamera {
   id: string;
   name: string;
   location: string;
+  building?: string;
+  floor?: string;
+  area?: string;
+  accessLevel: 'public' | 'resident' | 'admin';
   status: 'online' | 'offline' | 'maintenance';
   signal: 'high' | 'medium' | 'low';
   isRecording: boolean;
@@ -22,7 +26,7 @@ interface CCTVCamera {
 }
 
 export default function CCTVLiveFeed() {
-  const { language } = useAuth();
+  const { language, user, hasRole } = useAuth();
   const [selectedCamera, setSelectedCamera] = useState('all');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [motionDetectionEnabled, setMotionDetectionEnabled] = useState(false);
@@ -122,6 +126,10 @@ export default function CCTVLiveFeed() {
       id: '1',
       name: language === 'en' ? 'Main Entrance' : 'Pintu Masuk Utama',
       location: 'Ground Floor Lobby',
+      building: 'Block A',
+      floor: 'Ground Floor',
+      area: 'Main Lobby',
+      accessLevel: 'public',
       status: 'online',
       signal: 'high',
       isRecording: true,
@@ -134,6 +142,10 @@ export default function CCTVLiveFeed() {
       id: '2',
       name: language === 'en' ? 'Parking Area A' : 'Kawasan Parkir A',
       location: 'Basement Level 1',
+      building: 'Block A',
+      floor: 'Basement Level 1',
+      area: 'Parking',
+      accessLevel: 'resident',
       status: 'online',
       signal: 'medium',
       isRecording: true,
@@ -146,6 +158,10 @@ export default function CCTVLiveFeed() {
       id: '3',
       name: language === 'en' ? 'Swimming Pool' : 'Kolam Renang',
       location: 'Recreation Area',
+      building: 'Block A',
+      floor: 'Ground Floor',
+      area: 'Recreation',
+      accessLevel: 'resident',
       status: 'online',
       signal: 'high',
       isRecording: false,
@@ -157,6 +173,10 @@ export default function CCTVLiveFeed() {
       id: '4',
       name: language === 'en' ? 'Playground' : 'Taman Permainan',
       location: 'Central Garden',
+      building: 'Common Area',
+      floor: 'Ground Level',
+      area: 'Garden',
+      accessLevel: 'public',
       status: 'offline',
       signal: 'low',
       isRecording: false,
@@ -167,8 +187,12 @@ export default function CCTVLiveFeed() {
     },
     {
       id: '5',
-      name: language === 'en' ? 'Emergency Exit' : 'Pintu Kecemasan',
-      location: 'Block B, Level 1',
+      name: language === 'en' ? 'Emergency Exit Level 5' : 'Pintu Kecemasan Tingkat 5',
+      location: 'Block A, Level 5',
+      building: 'Block A',
+      floor: 'Level 5',
+      area: 'Emergency Exit',
+      accessLevel: 'resident',
       status: 'maintenance',
       signal: 'medium',
       isRecording: false,
@@ -180,6 +204,10 @@ export default function CCTVLiveFeed() {
       id: '6',
       name: language === 'en' ? 'Gym Area' : 'Kawasan Gim',
       location: 'Block A, Ground Floor',
+      building: 'Block A',
+      floor: 'Ground Floor',
+      area: 'Gym',
+      accessLevel: 'resident',
       status: 'online',
       signal: 'high',
       isRecording: true,
@@ -189,6 +217,24 @@ export default function CCTVLiveFeed() {
       presets: ['Entrance', 'Equipment Area', 'Cardio Zone']
     }
   ];
+
+  // Filter cameras based on user role and location
+  const getAccessibleCameras = () => {
+    if (hasRole('security_officer') || hasRole('facility_manager') || hasRole('community_admin')) {
+      return mockCameras; // Admin users see all cameras
+    }
+    
+    // Residents see public cameras and cameras in their building/area
+    const userBuilding = user?.address?.includes('Block A') ? 'Block A' : 
+                        user?.address?.includes('Block B') ? 'Block B' : 'Block A'; // Default to Block A
+    
+    return mockCameras.filter(camera => 
+      camera.accessLevel === 'public' || 
+      (camera.accessLevel === 'resident' && camera.building === userBuilding)
+    );
+  };
+
+  const accessibleCameras = getAccessibleCameras();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -227,12 +273,12 @@ export default function CCTVLiveFeed() {
   };
 
   const filteredCameras = selectedCamera === 'all' 
-    ? mockCameras 
-    : mockCameras.filter(camera => camera.id === selectedCamera);
+    ? accessibleCameras 
+    : accessibleCameras.filter(camera => camera.id === selectedCamera);
 
   const mainCamera = selectedCamera !== 'all' 
-    ? mockCameras.find(camera => camera.id === selectedCamera)
-    : mockCameras[0];
+    ? accessibleCameras.find(camera => camera.id === selectedCamera)
+    : accessibleCameras[0];
 
   const handlePtzControl = (direction: string) => {
     const speed = 5;
@@ -422,7 +468,7 @@ export default function CCTVLiveFeed() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t.allCameras}</SelectItem>
-                {mockCameras.map((camera) => (
+                {accessibleCameras.map((camera) => (
                   <SelectItem key={camera.id} value={camera.id}>
                     {camera.name} - {camera.location}
                   </SelectItem>
@@ -527,7 +573,7 @@ export default function CCTVLiveFeed() {
               <CardTitle className="text-lg">{t.allCameras}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {mockCameras.map((camera) => (
+              {accessibleCameras.map((camera) => (
                 <div 
                   key={camera.id}
                   className={`p-3 border rounded-lg cursor-pointer transition-colors hover:bg-muted ${
