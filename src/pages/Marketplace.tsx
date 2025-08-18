@@ -291,6 +291,15 @@ export default function Marketplace() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="image">Item Image</Label>
+                <Input 
+                  id="image" 
+                  type="file" 
+                  accept="image/*"
+                  className="file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground file:cursor-pointer hover:file:bg-primary/90"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="contact">{t.contactInfo}</Label>
                 <Input id="contact" placeholder="Phone number or email" />
               </div>
