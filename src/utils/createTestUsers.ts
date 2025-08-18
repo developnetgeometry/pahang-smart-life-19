@@ -2,34 +2,99 @@ import { supabase } from '@/integrations/supabase/client';
 
 const testUsers = [
   {
-    email: 'admin@test.com',
+    email: 'admin@pahangprima.com',
     password: 'password123',
     role: 'admin' as const,
-    full_name: 'System Administrator',
+    full_name: 'Ahmad Rahman',
+    phone: '013-2341234',
+    unit_number: 'A-1-01',
+    district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
   },
   {
-    email: 'manager@test.com',
+    email: 'manager.north@pahangprima.com',
     password: 'password123',
     role: 'manager' as const,
-    full_name: 'Community Manager',
+    full_name: 'Siti Nurhaliza',
+    phone: '013-3451234',
+    unit_number: 'B-2-05',
+    district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
   },
   {
-    email: 'security@test.com',
+    email: 'manager.south@pahangprima.com',
+    password: 'password123',
+    role: 'manager' as const,
+    full_name: 'Lim Wei Ming',
+    phone: '013-4561234',
+    unit_number: 'C-3-07',
+    district_id: '2384b1ce-dbb1-4449-8e78-136d11dbc28e', // Pahang Prima South
+  },
+  {
+    email: 'security.north@pahangprima.com',
     password: 'password123',
     role: 'security' as const,
-    full_name: 'Security Officer',
+    full_name: 'Mohd Faizal',
+    phone: '013-5671234',
+    unit_number: 'Guard House A',
+    district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
   },
   {
-    email: 'resident@test.com',
+    email: 'security.south@pahangprima.com',
+    password: 'password123',
+    role: 'security' as const,
+    full_name: 'Raj Kumar',
+    phone: '013-6781234',
+    unit_number: 'Guard House B',
+    district_id: '2384b1ce-dbb1-4449-8e78-136d11dbc28e', // Pahang Prima South
+  },
+  {
+    email: 'resident.ali@pahangprima.com',
     password: 'password123',
     role: 'resident' as const,
-    full_name: 'Resident User',
+    full_name: 'Ali bin Hassan',
+    phone: '013-7891234',
+    unit_number: 'A-5-12',
+    district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
+  },
+  {
+    email: 'resident.mary@pahangprima.com',
+    password: 'password123',
+    role: 'resident' as const,
+    full_name: 'Mary Tan',
+    phone: '013-8901234',
+    unit_number: 'B-7-08',
+    district_id: '2384b1ce-dbb1-4449-8e78-136d11dbc28e', // Pahang Prima South
+  },
+  {
+    email: 'resident.kumar@pahangprima.com',
+    password: 'password123',
+    role: 'resident' as const,
+    full_name: 'Kumar Selvam',
+    phone: '013-9012345',
+    unit_number: 'C-4-15',
+    district_id: '0a1c51a3-55dd-46b2-b894-c39c6d75557c', // Pahang Prima East
+  },
+  {
+    email: 'resident.fatimah@pahangprima.com',
+    password: 'password123',
+    role: 'resident' as const,
+    full_name: 'Fatimah binti Ahmad',
+    phone: '013-0123456',
+    unit_number: 'D-6-09',
+    district_id: '64a08b8c-820d-40e6-910c-0fc03c45ffe5', // Pahang Prima West
+  },
+  {
+    email: 'resident.david@pahangprima.com',
+    password: 'password123',
+    role: 'resident' as const,
+    full_name: 'David Wong',
+    phone: '013-1234567',
+    unit_number: 'E-3-11',
+    district_id: 'f44ef553-d0af-40e0-a9fd-aa741b5fd2fc', // Pahang Prima North (different from default)
   },
 ];
 
 export async function createTestUsers() {
   const results = [];
-  const districtId = '00000000-0000-0000-0000-000000000001';
 
   for (const user of testUsers) {
     try {
@@ -66,13 +131,14 @@ export async function createTestUsers() {
         continue;
       }
 
-      // Update profile with district
+      // Update profile with user-specific details
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          district_id: districtId,
+          district_id: user.district_id,
           full_name: user.full_name,
-          phone: '013-1234567',
+          phone: user.phone,
+          unit_number: user.unit_number,
         })
         .eq('id', userId);
 
@@ -86,7 +152,7 @@ export async function createTestUsers() {
         .insert({
           user_id: userId,
           role: user.role,
-          district_id: districtId,
+          district_id: user.district_id,
         });
 
       if (roleError) {

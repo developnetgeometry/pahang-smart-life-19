@@ -234,13 +234,19 @@ export default function Login() {
               {/* Test Users Section */}
               <div className="mt-6 p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm font-medium mb-2">
-                  {language === 'en' ? 'Test Credentials:' : 'Kredensi Ujian:'}
+                  {language === 'en' ? 'Test Credentials (10 Users):' : 'Kredensi Ujian (10 Pengguna):'}
                 </p>
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <p><strong>Admin:</strong> admin@test.com / password123</p>
-                  <p><strong>Manager:</strong> manager@test.com / password123</p>
-                  <p><strong>Security:</strong> security@test.com / password123</p>
-                  <p><strong>Resident:</strong> resident@test.com / password123</p>
+                <div className="text-xs text-muted-foreground space-y-1 max-h-32 overflow-y-auto">
+                  <p><strong>Admin:</strong> admin@pahangprima.com / password123</p>
+                  <p><strong>Manager (North):</strong> manager.north@pahangprima.com / password123</p>
+                  <p><strong>Manager (South):</strong> manager.south@pahangprima.com / password123</p>
+                  <p><strong>Security (North):</strong> security.north@pahangprima.com / password123</p>
+                  <p><strong>Security (South):</strong> security.south@pahangprima.com / password123</p>
+                  <p><strong>Resident Ali:</strong> resident.ali@pahangprima.com / password123</p>
+                  <p><strong>Resident Mary:</strong> resident.mary@pahangprima.com / password123</p>
+                  <p><strong>Resident Kumar:</strong> resident.kumar@pahangprima.com / password123</p>
+                  <p><strong>Resident Fatimah:</strong> resident.fatimah@pahangprima.com / password123</p>
+                  <p><strong>Resident David:</strong> resident.david@pahangprima.com / password123</p>
                 </div>
                 
                 <Button
@@ -255,7 +261,7 @@ export default function Login() {
                       {language === 'en' ? 'Creating Users...' : 'Mencipta Pengguna...'}
                     </>
                   ) : (
-                    language === 'en' ? 'Create Test Users' : 'Cipta Pengguna Ujian'
+                    language === 'en' ? 'Create All 10 Users' : 'Cipta Semua 10 Pengguna'
                   )}
                 </Button>
               </div>
