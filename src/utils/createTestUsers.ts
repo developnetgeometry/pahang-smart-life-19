@@ -2,11 +2,38 @@ import { supabase } from '@/integrations/supabase/client';
 
 const testUsers = [
   {
+    email: 'state.admin@pahangprima.com',
+    password: 'password123',
+    role: 'state_admin' as const,
+    full_name: 'Dato Ahmad Rashid',
+    phone: '013-1001001',
+    unit_number: 'State Office',
+    district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
+  },
+  {
+    email: 'district.coordinator@pahangprima.com',
+    password: 'password123',
+    role: 'district_coordinator' as const,
+    full_name: 'Hajjah Siti Aminah',
+    phone: '013-1001002',
+    unit_number: 'District Office A',
+    district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
+  },
+  {
+    email: 'community.admin@pahangprima.com',
+    password: 'password123',
+    role: 'community_admin' as const,
+    full_name: 'Encik Lim Chee Kong',
+    phone: '013-1001003',
+    unit_number: 'Community Center',
+    district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
+  },
+  {
     email: 'admin@pahangprima.com',
     password: 'password123',
     role: 'admin' as const,
     full_name: 'Ahmad Rahman',
-    phone: '013-2341234',
+    phone: '013-1001004',
     unit_number: 'A-1-01',
     district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
   },
@@ -15,17 +42,17 @@ const testUsers = [
     password: 'password123',
     role: 'manager' as const,
     full_name: 'Siti Nurhaliza',
-    phone: '013-3451234',
+    phone: '013-1001005',
     unit_number: 'B-2-05',
     district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
   },
   {
-    email: 'manager.south@pahangprima.com',
+    email: 'facility.manager@pahangprima.com',
     password: 'password123',
-    role: 'manager' as const,
-    full_name: 'Lim Wei Ming',
-    phone: '013-4561234',
-    unit_number: 'C-3-07',
+    role: 'facility_manager' as const,
+    full_name: 'Kumar Selvam',
+    phone: '013-1001006',
+    unit_number: 'Facility Office',
     district_id: '2384b1ce-dbb1-4449-8e78-136d11dbc28e', // Pahang Prima South
   },
   {
@@ -33,63 +60,54 @@ const testUsers = [
     password: 'password123',
     role: 'security' as const,
     full_name: 'Mohd Faizal',
-    phone: '013-5671234',
+    phone: '013-1001007',
     unit_number: 'Guard House A',
     district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
   },
   {
-    email: 'security.south@pahangprima.com',
+    email: 'maintenance.staff@pahangprima.com',
     password: 'password123',
-    role: 'security' as const,
+    role: 'maintenance_staff' as const,
     full_name: 'Raj Kumar',
-    phone: '013-6781234',
-    unit_number: 'Guard House B',
-    district_id: '2384b1ce-dbb1-4449-8e78-136d11dbc28e', // Pahang Prima South
+    phone: '013-1001008',
+    unit_number: 'Maintenance Office',
+    district_id: '0a1c51a3-55dd-46b2-b894-c39c6d75557c', // Pahang Prima East
   },
   {
-    email: 'resident.ali@pahangprima.com',
+    email: 'resident@pahangprima.com',
     password: 'password123',
     role: 'resident' as const,
     full_name: 'Ali bin Hassan',
-    phone: '013-7891234',
+    phone: '013-1001009',
     unit_number: 'A-5-12',
     district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
   },
   {
-    email: 'resident.mary@pahangprima.com',
+    email: 'service.provider@pahangprima.com',
     password: 'password123',
-    role: 'resident' as const,
+    role: 'service_provider' as const,
     full_name: 'Mary Tan',
-    phone: '013-8901234',
-    unit_number: 'B-7-08',
+    phone: '013-1001010',
+    unit_number: 'Service Center',
     district_id: '2384b1ce-dbb1-4449-8e78-136d11dbc28e', // Pahang Prima South
   },
   {
-    email: 'resident.kumar@pahangprima.com',
+    email: 'community.leader@pahangprima.com',
     password: 'password123',
-    role: 'resident' as const,
-    full_name: 'Kumar Selvam',
-    phone: '013-9012345',
-    unit_number: 'C-4-15',
-    district_id: '0a1c51a3-55dd-46b2-b894-c39c6d75557c', // Pahang Prima East
-  },
-  {
-    email: 'resident.fatimah@pahangprima.com',
-    password: 'password123',
-    role: 'resident' as const,
+    role: 'community_leader' as const,
     full_name: 'Fatimah binti Ahmad',
-    phone: '013-0123456',
+    phone: '013-1001011',
     unit_number: 'D-6-09',
     district_id: '64a08b8c-820d-40e6-910c-0fc03c45ffe5', // Pahang Prima West
   },
   {
-    email: 'resident.david@pahangprima.com',
+    email: 'state.service.manager@pahangprima.com',
     password: 'password123',
-    role: 'resident' as const,
+    role: 'state_service_manager' as const,
     full_name: 'David Wong',
-    phone: '013-1234567',
-    unit_number: 'E-3-11',
-    district_id: 'f44ef553-d0af-40e0-a9fd-aa741b5fd2fc', // Pahang Prima North (different from default)
+    phone: '013-1001012',
+    unit_number: 'State Service Office',
+    district_id: 'f44ef553-d0af-40e0-a9fd-aa741b5fd2fc', // Pahang Prima North (different district)
   },
 ];
 

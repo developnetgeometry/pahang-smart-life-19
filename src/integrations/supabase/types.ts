@@ -2002,7 +2002,19 @@ export type Database = {
       complaint_priority: "low" | "medium" | "high" | "urgent"
       complaint_status: "pending" | "in_progress" | "resolved" | "closed"
       marketplace_condition: "new" | "excellent" | "good" | "fair" | "poor"
-      user_role: "admin" | "security" | "manager" | "resident"
+      user_role:
+        | "admin"
+        | "security"
+        | "manager"
+        | "resident"
+        | "state_admin"
+        | "district_coordinator"
+        | "community_admin"
+        | "facility_manager"
+        | "maintenance_staff"
+        | "service_provider"
+        | "community_leader"
+        | "state_service_manager"
       visitor_status:
         | "pending"
         | "approved"
@@ -2147,7 +2159,20 @@ export const Constants = {
       complaint_priority: ["low", "medium", "high", "urgent"],
       complaint_status: ["pending", "in_progress", "resolved", "closed"],
       marketplace_condition: ["new", "excellent", "good", "fair", "poor"],
-      user_role: ["admin", "security", "manager", "resident"],
+      user_role: [
+        "admin",
+        "security",
+        "manager",
+        "resident",
+        "state_admin",
+        "district_coordinator",
+        "community_admin",
+        "facility_manager",
+        "maintenance_staff",
+        "service_provider",
+        "community_leader",
+        "state_service_manager",
+      ],
       visitor_status: [
         "pending",
         "approved",

@@ -234,19 +234,21 @@ export default function Login() {
               {/* Test Users Section */}
               <div className="mt-6 p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm font-medium mb-2">
-                  {language === 'en' ? 'Test Credentials (10 Users):' : 'Kredensi Ujian (10 Pengguna):'}
+                  {language === 'en' ? 'Test Credentials (12 Users - All Roles):' : 'Kredensi Ujian (12 Pengguna - Semua Peranan):'}
                 </p>
-                <div className="text-xs text-muted-foreground space-y-1 max-h-32 overflow-y-auto">
+                <div className="text-xs text-muted-foreground space-y-1 max-h-40 overflow-y-auto">
+                  <p><strong>State Admin:</strong> state.admin@pahangprima.com / password123</p>
+                  <p><strong>District Coordinator:</strong> district.coordinator@pahangprima.com / password123</p>
+                  <p><strong>Community Admin:</strong> community.admin@pahangprima.com / password123</p>
                   <p><strong>Admin:</strong> admin@pahangprima.com / password123</p>
-                  <p><strong>Manager (North):</strong> manager.north@pahangprima.com / password123</p>
-                  <p><strong>Manager (South):</strong> manager.south@pahangprima.com / password123</p>
-                  <p><strong>Security (North):</strong> security.north@pahangprima.com / password123</p>
-                  <p><strong>Security (South):</strong> security.south@pahangprima.com / password123</p>
-                  <p><strong>Resident Ali:</strong> resident.ali@pahangprima.com / password123</p>
-                  <p><strong>Resident Mary:</strong> resident.mary@pahangprima.com / password123</p>
-                  <p><strong>Resident Kumar:</strong> resident.kumar@pahangprima.com / password123</p>
-                  <p><strong>Resident Fatimah:</strong> resident.fatimah@pahangprima.com / password123</p>
-                  <p><strong>Resident David:</strong> resident.david@pahangprima.com / password123</p>
+                  <p><strong>Manager:</strong> manager.north@pahangprima.com / password123</p>
+                  <p><strong>Facility Manager:</strong> facility.manager@pahangprima.com / password123</p>
+                  <p><strong>Security Officer:</strong> security.north@pahangprima.com / password123</p>
+                  <p><strong>Maintenance Staff:</strong> maintenance.staff@pahangprima.com / password123</p>
+                  <p><strong>Resident:</strong> resident@pahangprima.com / password123</p>
+                  <p><strong>Service Provider:</strong> service.provider@pahangprima.com / password123</p>
+                  <p><strong>Community Leader:</strong> community.leader@pahangprima.com / password123</p>
+                  <p><strong>State Service Manager:</strong> state.service.manager@pahangprima.com / password123</p>
                 </div>
                 
                 <Button
@@ -261,7 +263,7 @@ export default function Login() {
                       {language === 'en' ? 'Creating Users...' : 'Mencipta Pengguna...'}
                     </>
                   ) : (
-                    language === 'en' ? 'Create All 10 Users' : 'Cipta Semua 10 Pengguna'
+                    language === 'en' ? 'Create All 12 Users (Complete Hierarchy)' : 'Cipta Semua 12 Pengguna (Hierarki Lengkap)'
                   )}
                 </Button>
               </div>
