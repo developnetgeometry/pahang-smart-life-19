@@ -74,6 +74,84 @@ export type Database = {
           },
         ]
       }
+      assets: {
+        Row: {
+          asset_type: string
+          assigned_to: string | null
+          brand: string | null
+          condition_status: string | null
+          created_at: string | null
+          current_value: number | null
+          description: string | null
+          district_id: string | null
+          documents: string[] | null
+          id: string
+          is_active: boolean | null
+          last_maintenance_date: string | null
+          location: string
+          maintenance_schedule: string | null
+          model: string | null
+          name: string
+          next_maintenance_date: string | null
+          photos: string[] | null
+          purchase_date: string | null
+          purchase_price: number | null
+          serial_number: string | null
+          updated_at: string | null
+          warranty_expiry: string | null
+        }
+        Insert: {
+          asset_type: string
+          assigned_to?: string | null
+          brand?: string | null
+          condition_status?: string | null
+          created_at?: string | null
+          current_value?: number | null
+          description?: string | null
+          district_id?: string | null
+          documents?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          last_maintenance_date?: string | null
+          location: string
+          maintenance_schedule?: string | null
+          model?: string | null
+          name: string
+          next_maintenance_date?: string | null
+          photos?: string[] | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          serial_number?: string | null
+          updated_at?: string | null
+          warranty_expiry?: string | null
+        }
+        Update: {
+          asset_type?: string
+          assigned_to?: string | null
+          brand?: string | null
+          condition_status?: string | null
+          created_at?: string | null
+          current_value?: number | null
+          description?: string | null
+          district_id?: string | null
+          documents?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          last_maintenance_date?: string | null
+          location?: string
+          maintenance_schedule?: string | null
+          model?: string | null
+          name?: string
+          next_maintenance_date?: string | null
+          photos?: string[] | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          serial_number?: string | null
+          updated_at?: string | null
+          warranty_expiry?: string | null
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           approved_at: string | null
@@ -282,6 +360,69 @@ export type Database = {
           },
         ]
       }
+      deliveries: {
+        Row: {
+          collected_at: string | null
+          collected_by: string | null
+          collection_method: string | null
+          courier_company: string | null
+          created_at: string | null
+          delivery_date: string
+          delivery_time: string | null
+          district_id: string | null
+          id: string
+          notes: string | null
+          package_type: string | null
+          photos: string[] | null
+          received_by_staff: string | null
+          recipient_id: string
+          sender_name: string
+          status: string | null
+          tracking_number: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          collected_at?: string | null
+          collected_by?: string | null
+          collection_method?: string | null
+          courier_company?: string | null
+          created_at?: string | null
+          delivery_date: string
+          delivery_time?: string | null
+          district_id?: string | null
+          id?: string
+          notes?: string | null
+          package_type?: string | null
+          photos?: string[] | null
+          received_by_staff?: string | null
+          recipient_id: string
+          sender_name: string
+          status?: string | null
+          tracking_number?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          collected_at?: string | null
+          collected_by?: string | null
+          collection_method?: string | null
+          courier_company?: string | null
+          created_at?: string | null
+          delivery_date?: string
+          delivery_time?: string | null
+          district_id?: string | null
+          id?: string
+          notes?: string | null
+          package_type?: string | null
+          photos?: string[] | null
+          received_by_staff?: string | null
+          recipient_id?: string
+          sender_name?: string
+          status?: string | null
+          tracking_number?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       discussion_replies: {
         Row: {
           author_id: string | null
@@ -436,6 +577,197 @@ export type Database = {
         }
         Relationships: []
       }
+      documents: {
+        Row: {
+          access_roles: string[] | null
+          created_at: string | null
+          description: string | null
+          district_id: string | null
+          document_type: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+          is_public: boolean | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          uploaded_by: string | null
+          version: string | null
+        }
+        Insert: {
+          access_roles?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          document_type: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          is_public?: boolean | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+          version?: string | null
+        }
+        Update: {
+          access_roles?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          document_type?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          is_public?: boolean | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+          version?: string | null
+        }
+        Relationships: []
+      }
+      emergency_contacts: {
+        Row: {
+          address: string | null
+          contact_type: string
+          created_at: string | null
+          district_id: string | null
+          id: string
+          is_24_hours: boolean | null
+          name: string
+          phone_number: string
+          priority_level: number | null
+          services: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          contact_type: string
+          created_at?: string | null
+          district_id?: string | null
+          id?: string
+          is_24_hours?: boolean | null
+          name: string
+          phone_number: string
+          priority_level?: number | null
+          services?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          contact_type?: string
+          created_at?: string | null
+          district_id?: string | null
+          id?: string
+          is_24_hours?: boolean | null
+          name?: string
+          phone_number?: string
+          priority_level?: number | null
+          services?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      event_registrations: {
+        Row: {
+          attendance_status: string | null
+          event_id: string | null
+          id: string
+          notes: string | null
+          registration_date: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attendance_status?: string | null
+          event_id?: string | null
+          id?: string
+          notes?: string | null
+          registration_date?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attendance_status?: string | null
+          event_id?: string | null
+          id?: string
+          notes?: string | null
+          registration_date?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string | null
+          description: string
+          district_id: string | null
+          end_date: string | null
+          end_time: string | null
+          event_type: string
+          id: string
+          is_registration_required: boolean | null
+          location: string | null
+          max_participants: number | null
+          organizer_id: string | null
+          registration_fee: number | null
+          start_date: string
+          start_time: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          district_id?: string | null
+          end_date?: string | null
+          end_time?: string | null
+          event_type?: string
+          id?: string
+          is_registration_required?: boolean | null
+          location?: string | null
+          max_participants?: number | null
+          organizer_id?: string | null
+          registration_fee?: number | null
+          start_date: string
+          start_time?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          district_id?: string | null
+          end_date?: string | null
+          end_time?: string | null
+          event_type?: string
+          id?: string
+          is_registration_required?: boolean | null
+          location?: string | null
+          max_participants?: number | null
+          organizer_id?: string | null
+          registration_fee?: number | null
+          start_date?: string
+          start_time?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       facilities: {
         Row: {
           amenities: string[] | null
@@ -491,6 +823,326 @@ export type Database = {
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          district_id: string | null
+          feedback_type: string | null
+          id: string
+          is_anonymous: boolean | null
+          message: string
+          priority: string | null
+          rating: number | null
+          responded_at: string | null
+          responded_by: string | null
+          response: string | null
+          status: string | null
+          submitted_by: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          district_id?: string | null
+          feedback_type?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          message: string
+          priority?: string | null
+          rating?: number | null
+          responded_at?: string | null
+          responded_by?: string | null
+          response?: string | null
+          status?: string | null
+          submitted_by?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          district_id?: string | null
+          feedback_type?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          message?: string
+          priority?: string | null
+          rating?: number | null
+          responded_at?: string | null
+          responded_by?: string | null
+          response?: string | null
+          status?: string | null
+          submitted_by?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      financial_records: {
+        Row: {
+          amount: number
+          approved_by: string | null
+          budget_category: string | null
+          category: string
+          created_at: string | null
+          currency: string | null
+          description: string
+          district_id: string | null
+          fiscal_month: number | null
+          fiscal_year: number | null
+          id: string
+          is_recurring: boolean | null
+          payment_method: string | null
+          receipt_url: string | null
+          recorded_by: string | null
+          recurring_frequency: string | null
+          reference_number: string | null
+          transaction_date: string
+          transaction_type: string
+          updated_at: string | null
+          vendor_supplier: string | null
+        }
+        Insert: {
+          amount: number
+          approved_by?: string | null
+          budget_category?: string | null
+          category: string
+          created_at?: string | null
+          currency?: string | null
+          description: string
+          district_id?: string | null
+          fiscal_month?: number | null
+          fiscal_year?: number | null
+          id?: string
+          is_recurring?: boolean | null
+          payment_method?: string | null
+          receipt_url?: string | null
+          recorded_by?: string | null
+          recurring_frequency?: string | null
+          reference_number?: string | null
+          transaction_date: string
+          transaction_type: string
+          updated_at?: string | null
+          vendor_supplier?: string | null
+        }
+        Update: {
+          amount?: number
+          approved_by?: string | null
+          budget_category?: string | null
+          category?: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string
+          district_id?: string | null
+          fiscal_month?: number | null
+          fiscal_year?: number | null
+          id?: string
+          is_recurring?: boolean | null
+          payment_method?: string | null
+          receipt_url?: string | null
+          recorded_by?: string | null
+          recurring_frequency?: string | null
+          reference_number?: string | null
+          transaction_date?: string
+          transaction_type?: string
+          updated_at?: string | null
+          vendor_supplier?: string | null
+        }
+        Relationships: []
+      }
+      incident_reports: {
+        Row: {
+          assigned_to: string | null
+          created_at: string | null
+          description: string
+          district_id: string | null
+          documents: string[] | null
+          follow_up_date: string | null
+          follow_up_required: boolean | null
+          id: string
+          incident_date: string
+          incident_time: string | null
+          incident_type: string
+          location: string
+          photos: string[] | null
+          reported_by: string | null
+          resolution: string | null
+          resolved_at: string | null
+          severity: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          witnesses: string[] | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string | null
+          description: string
+          district_id?: string | null
+          documents?: string[] | null
+          follow_up_date?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          incident_date: string
+          incident_time?: string | null
+          incident_type: string
+          location: string
+          photos?: string[] | null
+          reported_by?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          severity?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          witnesses?: string[] | null
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string | null
+          description?: string
+          district_id?: string | null
+          documents?: string[] | null
+          follow_up_date?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          incident_date?: string
+          incident_time?: string | null
+          incident_type?: string
+          location?: string
+          photos?: string[] | null
+          reported_by?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          severity?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          witnesses?: string[] | null
+        }
+        Relationships: []
+      }
+      inventory: {
+        Row: {
+          brand: string | null
+          category: string
+          created_at: string | null
+          current_stock: number
+          description: string | null
+          district_id: string | null
+          expiry_date: string | null
+          id: string
+          is_active: boolean | null
+          item_name: string
+          last_restocked: string | null
+          maximum_stock: number | null
+          minimum_stock: number | null
+          notes: string | null
+          storage_location: string
+          supplier: string | null
+          unit: string
+          unit_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          brand?: string | null
+          category: string
+          created_at?: string | null
+          current_stock?: number
+          description?: string | null
+          district_id?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_name: string
+          last_restocked?: string | null
+          maximum_stock?: number | null
+          minimum_stock?: number | null
+          notes?: string | null
+          storage_location: string
+          supplier?: string | null
+          unit: string
+          unit_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          brand?: string | null
+          category?: string
+          created_at?: string | null
+          current_stock?: number
+          description?: string | null
+          district_id?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_name?: string
+          last_restocked?: string | null
+          maximum_stock?: number | null
+          minimum_stock?: number | null
+          notes?: string | null
+          storage_location?: string
+          supplier?: string | null
+          unit?: string
+          unit_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      inventory_movements: {
+        Row: {
+          id: string
+          inventory_id: string | null
+          moved_by: string | null
+          movement_date: string | null
+          movement_type: string
+          new_stock: number
+          notes: string | null
+          previous_stock: number
+          quantity: number
+          reason: string | null
+          reference_document: string | null
+        }
+        Insert: {
+          id?: string
+          inventory_id?: string | null
+          moved_by?: string | null
+          movement_date?: string | null
+          movement_type: string
+          new_stock: number
+          notes?: string | null
+          previous_stock: number
+          quantity: number
+          reason?: string | null
+          reference_document?: string | null
+        }
+        Update: {
+          id?: string
+          inventory_id?: string | null
+          moved_by?: string | null
+          movement_date?: string | null
+          movement_type?: string
+          new_stock?: number
+          notes?: string | null
+          previous_stock?: number
+          quantity?: number
+          reason?: string | null
+          reference_document?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "inventory"
             referencedColumns: ["id"]
           },
         ]
@@ -647,6 +1299,335 @@ export type Database = {
           },
         ]
       }
+      meeting_minutes: {
+        Row: {
+          action_items: Json | null
+          agenda: string
+          approved_at: string | null
+          approved_by: string | null
+          attendees: string[] | null
+          chairperson: string | null
+          created_at: string | null
+          created_by: string | null
+          decisions: string
+          discussions: string
+          district_id: string | null
+          id: string
+          location: string | null
+          meeting_date: string
+          meeting_time: string | null
+          meeting_title: string
+          meeting_type: string
+          next_meeting_date: string | null
+          secretary: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          action_items?: Json | null
+          agenda: string
+          approved_at?: string | null
+          approved_by?: string | null
+          attendees?: string[] | null
+          chairperson?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          decisions: string
+          discussions: string
+          district_id?: string | null
+          id?: string
+          location?: string | null
+          meeting_date: string
+          meeting_time?: string | null
+          meeting_title: string
+          meeting_type: string
+          next_meeting_date?: string | null
+          secretary?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          action_items?: Json | null
+          agenda?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          attendees?: string[] | null
+          chairperson?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          decisions?: string
+          discussions?: string
+          district_id?: string | null
+          id?: string
+          location?: string | null
+          meeting_date?: string
+          meeting_time?: string | null
+          meeting_title?: string
+          meeting_type?: string
+          next_meeting_date?: string | null
+          secretary?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          delivery_method: string[] | null
+          district_id: string | null
+          expires_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          notification_type: string | null
+          priority: string | null
+          read_at: string | null
+          recipient_id: string | null
+          recipient_roles: string[] | null
+          recipient_type: string | null
+          reference_id: string | null
+          reference_table: string | null
+          scheduled_at: string | null
+          sent_at: string | null
+          title: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          delivery_method?: string[] | null
+          district_id?: string | null
+          expires_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          notification_type?: string | null
+          priority?: string | null
+          read_at?: string | null
+          recipient_id?: string | null
+          recipient_roles?: string[] | null
+          recipient_type?: string | null
+          reference_id?: string | null
+          reference_table?: string | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          title: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          delivery_method?: string[] | null
+          district_id?: string | null
+          expires_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          notification_type?: string | null
+          priority?: string | null
+          read_at?: string | null
+          recipient_id?: string | null
+          recipient_roles?: string[] | null
+          recipient_type?: string | null
+          reference_id?: string | null
+          reference_table?: string | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      parking_slots: {
+        Row: {
+          assigned_user_id: string | null
+          created_at: string | null
+          district_id: string | null
+          hourly_rate: number | null
+          id: string
+          is_active: boolean | null
+          is_occupied: boolean | null
+          monthly_rate: number | null
+          slot_number: string
+          slot_type: string | null
+          updated_at: string | null
+          vehicle_plate: string | null
+          zone: string
+        }
+        Insert: {
+          assigned_user_id?: string | null
+          created_at?: string | null
+          district_id?: string | null
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_occupied?: boolean | null
+          monthly_rate?: number | null
+          slot_number: string
+          slot_type?: string | null
+          updated_at?: string | null
+          vehicle_plate?: string | null
+          zone: string
+        }
+        Update: {
+          assigned_user_id?: string | null
+          created_at?: string | null
+          district_id?: string | null
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_occupied?: boolean | null
+          monthly_rate?: number | null
+          slot_number?: string
+          slot_type?: string | null
+          updated_at?: string | null
+          vehicle_plate?: string | null
+          zone?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          district_id: string | null
+          due_date: string | null
+          id: string
+          payment_date: string | null
+          payment_method: string | null
+          payment_type: string
+          receipt_url: string | null
+          reference_id: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          district_id?: string | null
+          due_date?: string | null
+          id?: string
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_type: string
+          receipt_url?: string | null
+          reference_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          district_id?: string | null
+          due_date?: string | null
+          id?: string
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_type?: string
+          receipt_url?: string | null
+          reference_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      poll_votes: {
+        Row: {
+          id: string
+          poll_id: string | null
+          rating: number | null
+          selected_options: number[] | null
+          user_id: string
+          voted_at: string | null
+        }
+        Insert: {
+          id?: string
+          poll_id?: string | null
+          rating?: number | null
+          selected_options?: number[] | null
+          user_id: string
+          voted_at?: string | null
+        }
+        Update: {
+          id?: string
+          poll_id?: string | null
+          rating?: number | null
+          selected_options?: number[] | null
+          user_id?: string
+          voted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      polls: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string
+          district_id: string | null
+          end_date: string
+          id: string
+          is_active: boolean | null
+          is_anonymous: boolean | null
+          options: Json
+          poll_type: string | null
+          start_date: string | null
+          title: string
+          total_votes: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          district_id?: string | null
+          end_date: string
+          id?: string
+          is_active?: boolean | null
+          is_anonymous?: boolean | null
+          options: Json
+          poll_type?: string | null
+          start_date?: string | null
+          title: string
+          total_votes?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          district_id?: string | null
+          end_date?: string
+          id?: string
+          is_active?: boolean | null
+          is_anonymous?: boolean | null
+          options?: Json
+          poll_type?: string | null
+          start_date?: string | null
+          title?: string
+          total_votes?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -787,6 +1768,86 @@ export type Database = {
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff: {
+        Row: {
+          address: string | null
+          certifications: string[] | null
+          created_at: string | null
+          department: string
+          district_id: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          employee_id: string
+          employment_type: string | null
+          full_name: string
+          hire_date: string
+          id: string
+          is_active: boolean | null
+          phone: string
+          position: string
+          salary: number | null
+          shift_schedule: Json | null
+          skills: string[] | null
+          supervisor_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          certifications?: string[] | null
+          created_at?: string | null
+          department: string
+          district_id?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          employee_id: string
+          employment_type?: string | null
+          full_name: string
+          hire_date: string
+          id?: string
+          is_active?: boolean | null
+          phone: string
+          position: string
+          salary?: number | null
+          shift_schedule?: Json | null
+          skills?: string[] | null
+          supervisor_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          certifications?: string[] | null
+          created_at?: string | null
+          department?: string
+          district_id?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          employee_id?: string
+          employment_type?: string | null
+          full_name?: string
+          hire_date?: string
+          id?: string
+          is_active?: boolean | null
+          phone?: string
+          position?: string
+          salary?: number | null
+          shift_schedule?: Json | null
+          skills?: string[] | null
+          supervisor_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_supervisor_id_fkey"
+            columns: ["supervisor_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
         ]
