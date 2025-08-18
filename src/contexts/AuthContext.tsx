@@ -1,7 +1,19 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-export type UserRole = 'admin' | 'security' | 'manager' | 'resident';
+export type UserRole = 
+  | 'admin' 
+  | 'security' 
+  | 'manager' 
+  | 'resident'
+  | 'state_admin'
+  | 'district_coordinator'
+  | 'community_admin'
+  | 'community_leader'
+  | 'facility_manager'
+  | 'maintenance_staff'
+  | 'service_provider'
+  | 'state_service_manager';
 
 // ViewRole removed - using role-based navigation instead
 export type Language = 'en' | 'ms';
