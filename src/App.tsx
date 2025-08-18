@@ -169,6 +169,14 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
+              <Route 
+                path="/cctv-live" 
+                element={
+                  <ProtectedRoute>
+                    <CCTVLiveFeed />
+                  </ProtectedRoute>
+                } 
+              />
 
               {/* Professional view routes */}
               <Route 
