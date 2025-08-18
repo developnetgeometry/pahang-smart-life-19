@@ -84,10 +84,7 @@ export function QuickActions() {
   ];
 
   // Show resident actions by default, professional actions for admin roles
-  const showProfessionalActions = hasRole('state_admin') || hasRole('district_coordinator') || 
-                                  hasRole('community_admin') || hasRole('security_officer') || 
-                                  hasRole('facility_manager') || hasRole('maintenance_staff') ||
-                                  hasRole('state_service_manager');
+  const showProfessionalActions = hasRole('admin') || hasRole('manager') || hasRole('security');
   
   const actions = showProfessionalActions ? professionalActions : residentActions;
 

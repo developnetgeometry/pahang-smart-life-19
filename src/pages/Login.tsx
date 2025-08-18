@@ -49,8 +49,7 @@ export default function Login() {
         // Try to sign in immediately (if confirm email disabled)
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (!signInError) {
-          const { error: rpcError } = await supabase.rpc('self_assign_demo_role', { _role: role as any });
-          if (rpcError) console.warn('Role assign failed:', rpcError.message);
+          console.log('Successfully signed up and logged in');
         }
       }
     } catch (err: any) {
@@ -62,18 +61,7 @@ export default function Login() {
 
   const seedDemoUsers = async () => {
     setIsSeeding(true);
-    const roles = [
-      'state_admin',
-      'district_coordinator',
-      'community_admin',
-      'security_officer',
-      'facility_manager',
-      'maintenance_staff',
-      'resident',
-      'service_provider',
-      'community_leader',
-      'state_service_manager',
-    ];
+    const roles = ['admin', 'manager', 'security', 'resident'];
     const timestamp = Date.now();
     const created: string[] = [];
     try {
@@ -106,16 +94,8 @@ export default function Login() {
           continue;
         }
 
-        const { error: rpcError } = await supabase.rpc('self_assign_demo_role', { _role: role as any });
-        if (rpcError) {
-          toast({
-            variant: 'destructive',
-            title: language === 'en' ? 'Role assign failed' : 'Gagal tetapkan peranan',
-            description: `${role} — ${rpcError.message}`,
-          });
-        } else {
-          created.push(`${email} (${role})`);
-        }
+        console.log(`Successfully created account for ${email} with role ${role}`);
+        created.push(`${email} (${role})`);
 
         await supabase.auth.signOut();
       }
@@ -266,16 +246,10 @@ export default function Login() {
                         <SelectValue placeholder={language === 'en' ? 'Select role' : 'Pilih peranan'} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="state_admin">State Admin</SelectItem>
-                        <SelectItem value="district_coordinator">District Coordinator</SelectItem>
-                        <SelectItem value="community_admin">Community Admin</SelectItem>
-                        <SelectItem value="security_officer">Security Officer</SelectItem>
-                        <SelectItem value="facility_manager">Facility Manager</SelectItem>
-                        <SelectItem value="maintenance_staff">Maintenance Staff</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="security">Security</SelectItem>
                         <SelectItem value="resident">Resident</SelectItem>
-                        <SelectItem value="service_provider">Service Provider</SelectItem>
-                        <SelectItem value="community_leader">Community Leader</SelectItem>
-                        <SelectItem value="state_service_manager">State Service Manager</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

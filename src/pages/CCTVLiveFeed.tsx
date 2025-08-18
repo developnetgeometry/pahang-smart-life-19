@@ -221,8 +221,7 @@ export default function CCTVLiveFeed() {
   // Remove the requiredRoles restriction for CCTV - now available to all residents
   const accessibleCameras = mockCameras.filter(camera => {
     // Admin roles see all cameras
-    if (hasRole('security_officer') || hasRole('facility_manager') || hasRole('community_admin') || 
-        hasRole('state_admin') || hasRole('district_coordinator')) {
+    if (hasRole('admin') || hasRole('security') || hasRole('manager')) {
       return true;
     }
     

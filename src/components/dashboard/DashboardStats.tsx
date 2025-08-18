@@ -79,10 +79,7 @@ export function DashboardStats() {
   ];
 
   // Show resident stats by default, professional stats for admin roles
-  const showProfessionalStats = hasRole('state_admin') || hasRole('district_coordinator') || 
-                                hasRole('community_admin') || hasRole('security_officer') || 
-                                hasRole('facility_manager') || hasRole('maintenance_staff') ||
-                                hasRole('state_service_manager');
+  const showProfessionalStats = hasRole('admin') || hasRole('manager') || hasRole('security');
   
   const stats = showProfessionalStats ? professionalStats : residentStats;
 

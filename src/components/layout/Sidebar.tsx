@@ -85,49 +85,49 @@ export function AppSidebar() {
     });
 
     // Admin features - only for users with admin roles
-    if (hasRole('state_admin') || hasRole('district_coordinator') || hasRole('community_admin') || hasRole('state_service_manager')) {
+    if (hasRole('admin') || hasRole('manager')) {
       nav.push({
         label: t('administration'),
         items: [
-          { title: t('userManagement'), url: '/admin/users', icon: UserPlus, requiredRoles: ['state_admin','district_coordinator','community_admin','state_service_manager'] },
-          { title: t('communityManagement'), url: '/admin/communities', icon: Home, requiredRoles: ['state_admin','community_admin','community_leader'] },
-          { title: t('districtManagement'), url: '/admin/districts', icon: Settings, requiredRoles: ['state_admin','district_coordinator'] }
+          { title: t('userManagement'), url: '/admin/users', icon: UserPlus, requiredRoles: ['admin','manager'] },
+          { title: t('communityManagement'), url: '/admin/communities', icon: Home, requiredRoles: ['admin','manager'] },
+          { title: t('districtManagement'), url: '/admin/districts', icon: Settings, requiredRoles: ['admin','manager'] }
         ]
       });
     }
 
     // Operations - for facility and maintenance staff
-    if (hasRole('state_admin') || hasRole('facility_manager') || hasRole('maintenance_staff') || hasRole('community_admin') || hasRole('district_coordinator')) {
+    if (hasRole('admin') || hasRole('manager')) {
       nav.push({
         label: t('operations'),
         items: [
-          { title: t('facilitiesManagement'), url: '/admin/facilities', icon: Building, requiredRoles: ['state_admin','facility_manager','community_admin','district_coordinator'] },
-          { title: t('maintenanceManagement'), url: '/admin/maintenance', icon: Wrench, requiredRoles: ['state_admin','maintenance_staff','facility_manager','district_coordinator','community_admin'] },
-          { title: t('complaintsManagement'), url: '/admin/complaints', icon: AlertTriangle, requiredRoles: ['state_admin','maintenance_staff','district_coordinator','community_admin'] }
+          { title: t('facilitiesManagement'), url: '/admin/facilities', icon: Building, requiredRoles: ['admin','manager'] },
+          { title: t('maintenanceManagement'), url: '/admin/maintenance', icon: Wrench, requiredRoles: ['admin','manager'] },
+          { title: t('complaintsManagement'), url: '/admin/complaints', icon: AlertTriangle, requiredRoles: ['admin','manager'] }
         ]
       });
     }
 
     // Security & Monitoring - for security and admin staff
-    if (hasRole('state_admin') || hasRole('security_officer') || hasRole('district_coordinator') || hasRole('community_admin') || hasRole('state_service_manager')) {
+    if (hasRole('admin') || hasRole('security') || hasRole('manager')) {
       nav.push({
         label: t('securityAndMonitoring'),
         items: [
-          { title: t('securityDashboard'), url: '/admin/security', icon: Shield, requiredRoles: ['state_admin','security_officer','district_coordinator','community_admin','state_service_manager'] },
-          { title: t('cctvManagement'), url: '/admin/cctv', icon: Camera, requiredRoles: ['state_admin','security_officer','district_coordinator','community_admin'] },
-          { title: t('smartMonitoring'), url: '/admin/smart-monitoring', icon: Monitor, requiredRoles: ['state_admin','state_service_manager'] },
-          { title: t('sensorManagement'), url: '/admin/sensors', icon: Radio, requiredRoles: ['state_admin','state_service_manager'] }
+          { title: t('securityDashboard'), url: '/admin/security', icon: Shield, requiredRoles: ['admin','security','manager'] },
+          { title: t('cctvManagement'), url: '/admin/cctv', icon: Camera, requiredRoles: ['admin','security','manager'] },
+          { title: t('smartMonitoring'), url: '/admin/smart-monitoring', icon: Monitor, requiredRoles: ['admin','manager'] },
+          { title: t('sensorManagement'), url: '/admin/sensors', icon: Radio, requiredRoles: ['admin','manager'] }
         ]
       });
     }
 
     // Communication - for community leaders and admins
-    if (hasRole('state_admin') || hasRole('district_coordinator') || hasRole('community_leader') || hasRole('community_admin') || hasRole('state_service_manager')) {
+    if (hasRole('admin') || hasRole('manager')) {
       nav.push({
         label: t('communication'),
         items: [
-          { title: t('announcements'), url: '/admin/announcements', icon: Megaphone, requiredRoles: ['state_admin','district_coordinator','community_leader','community_admin','state_service_manager'] },
-          { title: t('discussions'), url: '/admin/discussions', icon: MessageSquare, requiredRoles: ['state_admin','district_coordinator','community_leader','community_admin','state_service_manager'] }
+          { title: t('announcements'), url: '/admin/announcements', icon: Megaphone, requiredRoles: ['admin','manager'] },
+          { title: t('discussions'), url: '/admin/discussions', icon: MessageSquare, requiredRoles: ['admin','manager'] }
         ]
       });
     }
