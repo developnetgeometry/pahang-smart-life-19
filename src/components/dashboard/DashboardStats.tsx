@@ -17,21 +17,42 @@ export function DashboardStats() {
       if (!user) return;
       
       try {
-        const [bookingsRes, complaintsRes, announcementsRes, facilitiesRes, profilesRes] = await Promise.all([
-          supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-          supabase.from('complaints').select('id', { count: 'exact', head: true }).eq('complainant_id', user.id).eq('status', 'pending'),
-          supabase.from('announcements').select('id', { count: 'exact', head: true }),
-          supabase.from('facilities').select('id', { count: 'exact', head: true }),
-          supabase.from('profiles').select('id', { count: 'exact', head: true })
-        ]);
+        // In demo mode, show sample stats without user filtering
+        if (user.id.startsWith('demo-')) {
+          // Get general stats for demo mode
+          const [bookingsRes, complaintsRes, announcementsRes, facilitiesRes, profilesRes] = await Promise.all([
+            supabase.from('bookings').select('id', { count: 'exact', head: true }),
+            supabase.from('complaints').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+            supabase.from('announcements').select('id', { count: 'exact', head: true }),
+            supabase.from('facilities').select('id', { count: 'exact', head: true }),
+            supabase.from('facilities').select('id', { count: 'exact', head: true }) // Use facilities count as demo user count
+          ]);
 
-        setStats({
-          bookings: bookingsRes.count || 0,
-          pendingComplaints: complaintsRes.count || 0,
-          announcements: announcementsRes.count || 0,
-          facilities: facilitiesRes.count || 0,
-          totalProfiles: profilesRes.count || 0
-        });
+          setStats({
+            bookings: Math.min(bookingsRes.count || 0, 3), // Show realistic numbers for demo user
+            pendingComplaints: Math.min(complaintsRes.count || 0, 1),
+            announcements: announcementsRes.count || 0,
+            facilities: facilitiesRes.count || 0,
+            totalProfiles: (profilesRes.count || 0) * 15 // Multiply for realistic community size
+          });
+        } else {
+          // Real user mode - filter by user
+          const [bookingsRes, complaintsRes, announcementsRes, facilitiesRes, profilesRes] = await Promise.all([
+            supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+            supabase.from('complaints').select('id', { count: 'exact', head: true }).eq('complainant_id', user.id).eq('status', 'pending'),
+            supabase.from('announcements').select('id', { count: 'exact', head: true }),
+            supabase.from('facilities').select('id', { count: 'exact', head: true }),
+            supabase.from('profiles').select('id', { count: 'exact', head: true })
+          ]);
+
+          setStats({
+            bookings: bookingsRes.count || 0,
+            pendingComplaints: complaintsRes.count || 0,
+            announcements: announcementsRes.count || 0,
+            facilities: facilitiesRes.count || 0,
+            totalProfiles: profilesRes.count || 0
+          });
+        }
       } catch (error) {
         console.error('Error fetching stats:', error);
       } finally {

@@ -57,7 +57,7 @@ const Index = () => {
             id: `announcement-${item.id}`,
             type: 'announcement',
             title: item.title,
-            description: item.content.substring(0, 100) + '...',
+            description: item.content.substring(0, 80) + '...',
             time: new Date(item.created_at).toLocaleDateString('ms-MY'),
             icon: Megaphone,
             color: 'text-blue-600'
@@ -70,7 +70,7 @@ const Index = () => {
             id: `discussion-${item.id}`,
             type: 'discussion',
             title: item.title,
-            description: item.content.substring(0, 100) + '...',
+            description: item.content.substring(0, 80) + '...',
             time: new Date(item.created_at).toLocaleDateString('ms-MY'),
             icon: MessageSquare,
             color: 'text-purple-600'
@@ -83,7 +83,7 @@ const Index = () => {
             id: `complaint-${item.id}`,
             type: 'complaint',
             title: item.title,
-            description: item.description.substring(0, 100) + '...',
+            description: item.description.substring(0, 80) + '...',
             time: new Date(item.created_at).toLocaleDateString('ms-MY'),
             icon: AlertTriangle,
             color: item.status === 'resolved' ? 'text-green-600' : 'text-orange-600'
@@ -95,13 +95,34 @@ const Index = () => {
         setRecentActivities(activities.slice(0, 3));
       } catch (error) {
         console.error('Error fetching activities:', error);
+        // Fallback to demo data if fetch fails
+        setRecentActivities([
+          {
+            id: 1,
+            type: 'announcement',
+            title: language === 'en' ? 'Independence Day Celebration' : 'Sambutan Hari Kemerdekaan',
+            description: language === 'en' ? 'Join our community celebration on August 31st...' : 'Sertai sambutan komuniti pada 31 Ogos...',
+            time: '2 jam yang lalu',
+            icon: Megaphone,
+            color: 'text-blue-600'
+          },
+          {
+            id: 2,
+            type: 'discussion',
+            title: language === 'en' ? 'Security Improvement Suggestions' : 'Cadangan Peningkatan Keselamatan',
+            description: language === 'en' ? 'Additional lighting needed for parking area...' : 'Lampu tambahan diperlukan di kawasan parking...',
+            time: '1 hari yang lalu',
+            icon: MessageSquare,
+            color: 'text-purple-600'
+          }
+        ]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchRecentActivities();
-  }, []);
+  }, [language]);
 
   return (
     <div className="space-y-6 animate-fade-in">
