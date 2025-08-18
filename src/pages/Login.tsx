@@ -261,21 +261,14 @@ export default function Login() {
                   <p><strong>State Service Manager:</strong> stateservicemgr@test.com / password123</p>
                 </div>
                 
-                <Button
-                  onClick={handleCreateTestUsers}
-                  variant="outline"
-                  className="mt-4 w-full"
-                  disabled={isCreatingUsers}
-                >
-                  {isCreatingUsers ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {language === 'en' ? 'Creating Users...' : 'Mencipta Pengguna...'}
-                    </>
-                  ) : (
-                    language === 'en' ? 'Create All 12 Users (Complete Hierarchy)' : 'Cipta Semua 12 Pengguna (Hierarki Lengkap)'
-                  )}
-                </Button>
+                <div className="text-center p-4 bg-green-50 border border-green-200 rounded-md">
+                  <p className="text-green-800 font-medium">
+                    {language === 'en' ? '✅ All 12 test users are ready!' : '✅ Semua 12 pengguna ujian sudah siap!'}
+                  </p>
+                  <p className="text-green-600 text-sm mt-1">
+                    {language === 'en' ? 'Use any email above with password: password123' : 'Gunakan mana-mana e-mel di atas dengan kata laluan: password123'}
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
