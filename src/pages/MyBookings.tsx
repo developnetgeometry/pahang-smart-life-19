@@ -1,299 +1,87 @@
 import { useState } from 'react';
 import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Calendar, Clock, MapPin, Users, Plus } from 'lucide-react';
-
-interface Booking {
-  id: string;
-  facility_name: string;
-  date: string;
-  time: string;
-  duration: number;
-  status: 'confirmed' | 'pending' | 'cancelled';
-  location: string;
-  capacity: number;
-}
+import { Button } from '@/components/ui/button';
+import { Calendar, Clock, MapPin, Plus } from 'lucide-react';
 
 export default function MyBookings() {
   const { user } = useSimpleAuth();
-  const [bookings, setBookings] = useState<Booking[]>([
+  const [bookings] = useState([
     {
       id: '1',
-      facility_name: language === 'en' ? 'Swimming Pool' : 'Kolam Renang',
-      date: '2024-01-15',
-      time: '14:00',
-      duration: 2,
+      facility_name: 'Dewan Komuniti',
+      date: '2024-01-25',
+      time: '7:00 PM - 11:00 PM',
+      purpose: 'Majlis Perkahwinan',
       status: 'confirmed',
-      location: language === 'en' ? 'Recreation Center' : 'Pusat Rekreasi',
-      capacity: 50
+      location: 'Blok B, Tingkat Bawah'
     },
     {
       id: '2',
-      facility_name: language === 'en' ? 'Function Hall' : 'Dewan Serbaguna',
+      facility_name: 'Kolam Renang',
       date: '2024-01-20',
-      time: '19:00',
-      duration: 4,
+      time: '8:00 AM - 10:00 AM',
+      purpose: 'Latihan Renang',
       status: 'pending',
-      location: language === 'en' ? 'Community Center' : 'Pusat Komuniti',
-      capacity: 100
-    },
-    {
-      id: '3',
-      facility_name: language === 'en' ? 'Tennis Court' : 'Gelanggang Tenis',
-      date: '2024-01-10',
-      time: '08:00',
-      duration: 1,
-      status: 'cancelled',
-      location: language === 'en' ? 'Sports Complex' : 'Kompleks Sukan',
-      capacity: 4
+      location: 'Blok A, Tingkat 1'
     }
   ]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed': return 'bg-green-500';
-      case 'pending': return 'bg-yellow-500';
-      case 'cancelled': return 'bg-red-500';
-      default: return 'bg-gray-500';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    if (language === 'en') {
-      switch (status) {
-        case 'confirmed': return 'Confirmed';
-        case 'pending': return 'Pending';
-        case 'cancelled': return 'Cancelled';
-        default: return 'Unknown';
-      }
-    } else {
-      switch (status) {
-        case 'confirmed': return 'Disahkan';
-        case 'pending': return 'Menunggu';
-        case 'cancelled': return 'Dibatalkan';
-        default: return 'Tidak Diketahui';
-      }
-    }
-  };
-
-  const handleModifyBooking = (bookingId: string, updatedData: Partial<Booking>) => {
-    setBookings(prev => prev.map(booking => 
-      booking.id === bookingId 
-        ? { ...booking, ...updatedData }
-        : booking
-    ));
-  };
+  if (!user) return null;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            {language === 'en' ? 'My Bookings' : 'Tempahan Saya'}
-          </h1>
-          <p className="text-muted-foreground">
-            {language === 'en' 
-              ? 'Manage your facility reservations'
-              : 'Urus tempahan kemudahan anda'
-            }
-          </p>
+          <h1 className="text-3xl font-bold text-foreground">Tempahan Saya</h1>
+          <p className="text-muted-foreground">Urus tempahan kemudahan anda</p>
         </div>
         <Button className="bg-gradient-primary">
           <Plus className="w-4 h-4 mr-2" />
-          {language === 'en' ? 'New Booking' : 'Tempahan Baru'}
+          Tempahan Baru
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-500/10 rounded-lg">
-                <Calendar className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-muted-foreground">
-                  {language === 'en' ? 'Active Bookings' : 'Tempahan Aktif'}
-                </p>
-                <p className="text-2xl font-bold">2</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-500/10 rounded-lg">
-                <Clock className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-muted-foreground">
-                  {language === 'en' ? 'This Month' : 'Bulan Ini'}
-                </p>
-                <p className="text-2xl font-bold">5</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-500/10 rounded-lg">
-                <Users className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-muted-foreground">
-                  {language === 'en' ? 'Total Hours' : 'Jumlah Jam'}
-                </p>
-                <p className="text-2xl font-bold">24</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Bookings List */}
       <div className="space-y-4">
         {bookings.map((booking) => (
           <Card key={booking.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-lg">{booking.facility_name}</CardTitle>
-                  <CardDescription className="flex items-center space-x-4 mt-2">
-                    <span className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      {booking.date}
-                    </span>
-                    <span className="flex items-center">
-                      <Clock className="w-4 h-4 mr-1" />
-                      {booking.time} ({booking.duration}h)
-                    </span>
-                    <span className="flex items-center">
-                      <MapPin className="w-4 h-4 mr-1" />
-                      {booking.location}
-                    </span>
-                  </CardDescription>
-                </div>
-                <Badge className={`${getStatusColor(booking.status)} text-white`}>
-                  {getStatusText(booking.status)}
+                <CardTitle className="text-lg">{booking.facility_name}</CardTitle>
+                <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
+                  {booking.status === 'confirmed' ? 'Disahkan' : 'Pending'}
                 </Badge>
               </div>
+              <CardDescription>{booking.purpose}</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                  <span className="flex items-center">
-                    <Users className="w-4 h-4 mr-1" />
-                    {language === 'en' ? 'Capacity' : 'Kapasiti'}: {booking.capacity}
-                  </span>
-                </div>
-                <div className="space-x-2">
-                  {booking.status === 'confirmed' && (
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          {language === 'en' ? 'Modify' : 'Ubah'}
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                          <DialogTitle>
-                            {language === 'en' ? 'Modify Booking' : 'Ubah Tempahan'}
-                          </DialogTitle>
-                          <DialogDescription>
-                            {language === 'en' 
-                              ? 'Update your booking details below.'
-                              : 'Kemas kini butiran tempahan anda di bawah.'
-                            }
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="date" className="text-right">
-                              {language === 'en' ? 'Date' : 'Tarikh'}
-                            </Label>
-                            <Input
-                              id="date"
-                              type="date"
-                              defaultValue={booking.date}
-                              className="col-span-3"
-                            />
-                          </div>
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="time" className="text-right">
-                              {language === 'en' ? 'Time' : 'Masa'}
-                            </Label>
-                            <Input
-                              id="time"
-                              type="time"
-                              defaultValue={booking.time}
-                              className="col-span-3"
-                            />
-                          </div>
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="duration" className="text-right">
-                              {language === 'en' ? 'Duration' : 'Tempoh'}
-                            </Label>
-                            <Input
-                              id="duration"
-                              type="number"
-                              defaultValue={booking.duration}
-                              min="1"
-                              max="8"
-                              className="col-span-3"
-                            />
-                          </div>
-                        </div>
-                        <div className="flex justify-end space-x-2">
-                          <Button variant="outline">
-                            {language === 'en' ? 'Cancel' : 'Batal'}
-                          </Button>
-                          <Button type="submit">
-                            {language === 'en' ? 'Save Changes' : 'Simpan Perubahan'}
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  )}
-                  {booking.status !== 'cancelled' && (
-                    <Button variant="destructive" size="sm">
-                      {language === 'en' ? 'Cancel' : 'Batal'}
-                    </Button>
-                  )}
-                </div>
+            <CardContent className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm">{booking.date}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm">{booking.time}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <MapPin className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm">{booking.location}</span>
+              </div>
+              <div className="flex space-x-2 pt-2">
+                <Button variant="outline" size="sm">
+                  Lihat Butiran
+                </Button>
+                {booking.status === 'pending' && (
+                  <Button variant="destructive" size="sm">
+                    Batal
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
-
-      {bookings.length === 0 && (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">
-              {language === 'en' ? 'No bookings yet' : 'Tiada tempahan lagi'}
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              {language === 'en' 
-                ? 'Start by booking a facility for your community activities.'
-                : 'Mulakan dengan menempah kemudahan untuk aktiviti komuniti anda.'
-              }
-            </p>
-            <Button className="bg-gradient-primary">
-              {language === 'en' ? 'Make a booking' : 'Buat tempahan'}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
