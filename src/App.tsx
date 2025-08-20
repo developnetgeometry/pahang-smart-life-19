@@ -33,6 +33,7 @@ import DiscussionManagement from "./pages/admin/DiscussionManagement";
 import VisitorSecurity from "./pages/VisitorSecurity";
 import VisitorAnalytics from "./pages/VisitorAnalytics";
 import CommunicationHub from "./pages/CommunicationHub";
+import RoleManagement from "./pages/RoleManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -110,6 +111,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <MyProfile />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/role-management" 
+                element={
+                  <ProtectedRoute>
+                    <RoleManagement />
                   </ProtectedRoute>
                 } 
               />
