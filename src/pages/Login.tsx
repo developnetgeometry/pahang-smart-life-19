@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, MapPin, Shield, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -13,6 +14,10 @@ import { createTestUsers } from '@/utils/createTestUsers';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [districtId, setDistrictId] = useState('');
+  const [districts, setDistricts] = useState<Array<{id: string, name: string}>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
@@ -20,6 +25,24 @@ export default function Login() {
   const { login, language, switchLanguage } = useAuth();
   const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
   const { toast } = useToast();
+
+  // Load districts for registration
+  useEffect(() => {
+    const loadDistricts = async () => {
+      const { data, error } = await supabase
+        .from('districts')
+        .select('id, name')
+        .order('name');
+      
+      if (!error && data) {
+        setDistricts(data);
+      }
+    };
+    
+    if (mode === 'signUp') {
+      loadDistricts();
+    }
+  }, [mode]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -29,18 +52,75 @@ export default function Login() {
       if (mode === 'signIn') {
         await login(email, password);
       } else {
+        // Validate required fields for registration
+        if (!fullName.trim()) {
+          throw new Error(language === 'en' ? 'Full name is required' : 'Nama penuh diperlukan');
+        }
+        if (!districtId) {
+          throw new Error(language === 'en' ? 'Please select a district' : 'Sila pilih daerah');
+        }
+
         const redirectUrl = `${window.location.origin}/`;
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: redirectUrl }
+          options: { 
+            emailRedirectTo: redirectUrl,
+            data: {
+              full_name: fullName.trim()
+            }
+          }
         });
+        
         if (signUpError) throw signUpError;
+        
+        if (authData.user) {
+          // Create profile record
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: authData.user.id,
+              email: email,
+              full_name: fullName.trim(),
+              phone: phone.trim() || null,
+              district_id: districtId,
+              language: language,
+              is_active: true
+            });
 
-        // Try to sign in immediately (if confirm email disabled)
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-        if (!signInError) {
-          console.log('Successfully signed up and logged in');
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+            // Don't throw error - profile will be created by trigger if this fails
+          }
+
+          // Assign default resident role
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: authData.user.id,
+              role: 'resident',
+              district_id: districtId
+            });
+
+          if (roleError) {
+            console.error('Role assignment error:', roleError);
+            // Don't throw error - this is not critical for signup
+          }
+
+          // Show success message
+          toast({
+            title: language === 'en' ? 'Account Created!' : 'Akaun Dicipta!',
+            description: language === 'en' 
+              ? 'Your account has been created successfully. You can now sign in.'
+              : 'Akaun anda telah berjaya dicipta. Anda boleh log masuk sekarang.',
+          });
+
+          // Switch to sign in mode
+          setMode('signIn');
+          setFullName('');
+          setPhone('');
+          setDistrictId('');
+          setPassword('');
         }
       }
     } catch (err: any) {
@@ -184,6 +264,59 @@ export default function Login() {
                   </Alert>
                 )}
                 
+                {mode === 'signUp' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">
+                        {language === 'en' ? 'Full Name' : 'Nama Penuh'} *
+                      </Label>
+                      <Input
+                        id="fullName"
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder={language === 'en' ? 'Ahmad Razak bin Abdullah' : 'Ahmad Razak bin Abdullah'}
+                        required
+                        className="transition-smooth"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">
+                        {language === 'en' ? 'Phone Number (Optional)' : 'Nombor Telefon (Pilihan)'}
+                      </Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="+60123456789"
+                        className="transition-smooth"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="district">
+                        {language === 'en' ? 'Select District' : 'Pilih Daerah'} *
+                      </Label>
+                      <Select value={districtId} onValueChange={setDistrictId} required>
+                        <SelectTrigger className="transition-smooth">
+                          <SelectValue placeholder={
+                            language === 'en' ? 'Choose your district' : 'Pilih daerah anda'
+                          } />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {districts.map((district) => (
+                            <SelectItem key={district.id} value={district.id}>
+                              {district.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="email">{t('email')}</Label>
                   <Input
