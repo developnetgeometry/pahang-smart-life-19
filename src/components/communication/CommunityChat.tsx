@@ -198,35 +198,54 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
   };
 
   const fetchDirectMessages = async () => {
-    // Mock direct messages data
-    const mockDirectMessages: DirectMessage[] = [
-      {
-        id: 'dm_sarah_123',
-        other_user_name: 'Sarah Lee',
-        last_message: 'Thanks for helping with the pool booking!',
-        last_message_time: new Date(Date.now() - 60000 * 15).toISOString(),
-        unread_count: 2,
-        avatar: 'SL'
-      },
-      {
-        id: 'dm_ahmad_456',
-        other_user_name: 'Ahmad Rahman',
-        last_message: 'The maintenance is scheduled for tomorrow',
-        last_message_time: new Date(Date.now() - 60000 * 45).toISOString(),
-        unread_count: 0,
-        avatar: 'AR'
-      },
-      {
-        id: 'dm_maria_789',
-        other_user_name: 'Maria Santos',
-        last_message: 'Let me know when you\'re free to chat',
-        last_message_time: new Date(Date.now() - 60000 * 120).toISOString(),
-        unread_count: 1,
-        avatar: 'MS'
+    try {
+      // Fetch direct message rooms for the current user
+      const { data: rooms, error: roomsError } = await supabase
+        .from('chat_rooms')
+        .select(`
+          id,
+          name,
+          created_at,
+          updated_at,
+          room_type,
+          is_private,
+          chat_messages!inner (
+            message_text,
+            created_at,
+            sender_id
+          )
+        `)
+        .eq('room_type', 'direct')
+        .eq('is_private', true)
+        .or(`created_by.eq.${user?.id},name.like.%${user?.id}%`)
+        .order('updated_at', { ascending: false });
+
+      if (roomsError) {
+        console.error('Error fetching direct messages:', roomsError);
+        return;
       }
-    ];
-    
-    setDirectMessages(mockDirectMessages);
+
+      // Transform the data into the DirectMessage format
+      const directMessages: DirectMessage[] = (rooms || []).map(room => {
+        const lastMessage = room.chat_messages?.[0];
+        const otherUserName = room.name
+          .split('_')
+          .find(part => part !== user?.id?.replace(/-/g, '')) || 'Unknown User';
+        
+        return {
+          id: room.id,
+          other_user_name: otherUserName,
+          last_message: lastMessage?.message_text || 'No messages yet',
+          last_message_time: lastMessage?.created_at || room.created_at,
+          unread_count: 0, // TODO: Implement unread count logic
+          avatar: otherUserName.split(' ').map(n => n[0]).join('').toUpperCase()
+        };
+      });
+      
+      setDirectMessages(directMessages);
+    } catch (error) {
+      console.error('Error fetching direct messages:', error);
+    }
   };
 
   const handleSocialTabClick = () => {
@@ -238,11 +257,64 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
     }
   };
 
-  const openDirectMessage = (dmId: string, userName: string) => {
+  const openDirectMessage = async (dmId: string, userName: string) => {
     setCurrentChannel(dmId);
     setShowChatList(false);
-    // In a real implementation, fetch messages for this DM
     fetchMessages(dmId);
+  };
+
+  const createOrFindDirectMessageRoom = async (otherUserId: string, otherUserName: string) => {
+    try {
+      // First, try to find an existing room between these two users
+      const roomName = [user?.id, otherUserId].sort().join('_');
+      
+      const { data: existingRoom, error: findError } = await supabase
+        .from('chat_rooms')
+        .select('id')
+        .eq('room_type', 'direct')
+        .eq('is_private', true)
+        .eq('name', roomName)
+        .single();
+
+      if (findError && findError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('Error finding existing room:', findError);
+        return null;
+      }
+
+      if (existingRoom) {
+        return existingRoom.id;
+      }
+
+      // Create new room if it doesn't exist
+      const { data: newRoom, error: createError } = await supabase
+        .from('chat_rooms')
+        .insert({
+          name: roomName,
+          room_type: 'direct',
+          is_private: true,
+          created_by: user?.id,
+          district_id: null, // Direct messages are not district-specific
+          description: `Direct message between users`,
+          max_members: 2
+        })
+        .select('id')
+        .single();
+
+      if (createError) {
+        console.error('Error creating new room:', createError);
+        toast({
+          title: 'Error',
+          description: 'Failed to create chat room',
+          variant: 'destructive',
+        });
+        return null;
+      }
+
+      return newRoom.id;
+    } catch (error) {
+      console.error('Error in createOrFindDirectMessageRoom:', error);
+      return null;
+    }
   };
 
   const fetchMessages = async (channelId: string) => {
@@ -270,7 +342,56 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
         return;
       }
 
-      // For now, create mock messages since we don't have chat tables yet
+      // Check if this is a direct message room (from the social tab)
+      if (channelId.length === 36) { // UUID format
+        const { data: messages, error } = await supabase
+          .from('chat_messages')
+          .select(`
+            id,
+            message_text,
+            created_at,
+            sender_id,
+            message_type
+          `)
+          .eq('room_id', channelId)
+          .eq('is_deleted', false)
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching messages:', error);
+          return;
+        }
+
+        // Fetch profiles for all unique sender IDs
+        const senderIds = [...new Set(messages?.map(m => m.sender_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', senderIds);
+
+        // Create a map of user IDs to names
+        const profileMap = new Map(
+          profiles?.map(p => [p.id, p.full_name]) || []
+        );
+
+        const formattedMessages: ChatMessage[] = (messages || []).map(msg => ({
+          id: msg.id,
+          channel_id: channelId,
+          user_id: msg.sender_id,
+          message: msg.message_text,
+          created_at: msg.created_at,
+          updated_at: msg.created_at,
+          message_type: msg.message_type as 'text' | 'announcement' | 'alert' | 'system',
+          profiles: {
+            display_name: profileMap.get(msg.sender_id) || 'Unknown User'
+          }
+        }));
+
+        setMessages(formattedMessages);
+        return;
+      }
+
+      // For other channels (general, announcements, etc.) - keep mock data
       const mockMessages: ChatMessage[] = [
         {
           id: '1',
@@ -323,10 +444,65 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
   };
 
   const subscribeToMessages = (channelId: string) => {
-    // In a real implementation, this would set up real-time subscriptions
-    // For now, we'll just simulate it
+    // Only set up real-time subscriptions for actual chat rooms (UUID format)
+    if (channelId.length !== 36) {
+      return () => {};
+    }
+
+    const channel = supabase
+      .channel(`room_${channelId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `room_id=eq.${channelId}`
+        },
+        async (payload) => {
+          // Fetch the complete message with profile data
+          const { data: newMessage } = await supabase
+            .from('chat_messages')
+            .select(`
+              id,
+              message_text,
+              created_at,
+              sender_id,
+              message_type
+            `)
+            .eq('id', payload.new.id)
+            .single();
+
+          if (newMessage && newMessage.sender_id !== user?.id) {
+            // Get profile data separately
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', newMessage.sender_id)
+              .single();
+
+            // Only add if it's not from the current user (to avoid duplicates)
+            const formattedMessage: ChatMessage = {
+              id: newMessage.id,
+              channel_id: channelId,
+              user_id: newMessage.sender_id,
+              message: newMessage.message_text,
+              created_at: newMessage.created_at,
+              updated_at: newMessage.created_at,
+              message_type: newMessage.message_type as 'text' | 'announcement' | 'alert' | 'system',
+              profiles: {
+                display_name: profile?.full_name || 'Unknown User'
+              }
+            };
+
+            setMessages(prev => [...prev, formattedMessage]);
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
-      // Cleanup subscription
+      supabase.removeChannel(channel);
     };
   };
 
@@ -334,23 +510,86 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
     if (!newMessage.trim() || !currentChannel) return;
 
     try {
-      const messageData: ChatMessage = {
-        id: Date.now().toString(),
-        channel_id: currentChannel,
-        user_id: user?.id || '',
-        message: newMessage,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        message_type: 'text',
-        profiles: {
-          display_name: user?.display_name || 'You'
-        }
-      };
+      // For direct message rooms (UUID format), save to database
+      if (currentChannel.length === 36) {
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .insert({
+            room_id: currentChannel,
+            sender_id: user?.id,
+            message_text: newMessage,
+            message_type: 'text'
+          })
+          .select(`
+            id,
+            message_text,
+            created_at,
+            sender_id,
+            message_type
+          `)
+          .single();
 
-      setMessages(prev => [...prev, messageData]);
+        if (error) {
+          console.error('Error saving message:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to send message',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        // Get the profile data separately
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user?.id)
+          .single();
+
+        // Add the new message to the local state
+        const newMessageData: ChatMessage = {
+          id: data.id,
+          channel_id: currentChannel,
+          user_id: data.sender_id,
+          message: data.message_text,
+          created_at: data.created_at,
+          updated_at: data.created_at,
+          message_type: data.message_type as 'text' | 'announcement' | 'alert' | 'system',
+          profiles: {
+            display_name: profile?.full_name || 'You'
+          }
+        };
+
+        setMessages(prev => [...prev, newMessageData]);
+
+        // Update the room's updated_at timestamp
+        await supabase
+          .from('chat_rooms')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', currentChannel);
+
+        // Refresh direct messages list to show updated timestamp
+        fetchDirectMessages();
+      } else {
+        // For other channels, use mock behavior for now
+        const messageData: ChatMessage = {
+          id: Date.now().toString(),
+          channel_id: currentChannel,
+          user_id: user?.id || '',
+          message: newMessage,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          message_type: 'text',
+          profiles: {
+            display_name: 'You'
+          }
+        };
+
+        setMessages(prev => [...prev, messageData]);
+      }
+
       setNewMessage('');
 
-      // In a real implementation, save to database here
       toast({
         title: 'Success',
         description: language === 'en' ? 'Message sent' : 'Mesej dihantar',
