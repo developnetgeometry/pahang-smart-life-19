@@ -585,6 +585,7 @@ export type Database = {
       }
       community_groups: {
         Row: {
+          category: string | null
           contact_info: string | null
           created_at: string
           description: string | null
@@ -594,12 +595,15 @@ export type Database = {
           is_active: boolean
           leader_id: string | null
           max_members: number | null
+          meeting_frequency: string | null
           meeting_schedule: string | null
+          membership_fee: number | null
           name: string
           requires_approval: boolean
           updated_at: string
         }
         Insert: {
+          category?: string | null
           contact_info?: string | null
           created_at?: string
           description?: string | null
@@ -609,12 +613,15 @@ export type Database = {
           is_active?: boolean
           leader_id?: string | null
           max_members?: number | null
+          meeting_frequency?: string | null
           meeting_schedule?: string | null
+          membership_fee?: number | null
           name: string
           requires_approval?: boolean
           updated_at?: string
         }
         Update: {
+          category?: string | null
           contact_info?: string | null
           created_at?: string
           description?: string | null
@@ -624,7 +631,9 @@ export type Database = {
           is_active?: boolean
           leader_id?: string | null
           max_members?: number | null
+          meeting_frequency?: string | null
           meeting_schedule?: string | null
+          membership_fee?: number | null
           name?: string
           requires_approval?: boolean
           updated_at?: string
@@ -1477,6 +1486,41 @@ export type Database = {
         }
         Relationships: []
       }
+      group_memberships: {
+        Row: {
+          group_id: string | null
+          id: string
+          is_active: boolean | null
+          joined_at: string | null
+          role: string | null
+          user_id: string | null
+        }
+        Insert: {
+          group_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          group_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_memberships_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incident_reports: {
         Row: {
           assigned_to: string | null
@@ -1742,7 +1786,9 @@ export type Database = {
           district_id: string | null
           estimated_cost: number | null
           id: string
+          labor_hours: number | null
           location: string | null
+          parts_needed: string[] | null
           photos: string[] | null
           priority: Database["public"]["Enums"]["complaint_priority"] | null
           requested_by: string | null
@@ -1750,6 +1796,7 @@ export type Database = {
           status: Database["public"]["Enums"]["complaint_status"] | null
           title: string
           updated_at: string | null
+          work_order_number: string | null
         }
         Insert: {
           actual_cost?: number | null
@@ -1761,7 +1808,9 @@ export type Database = {
           district_id?: string | null
           estimated_cost?: number | null
           id?: string
+          labor_hours?: number | null
           location?: string | null
+          parts_needed?: string[] | null
           photos?: string[] | null
           priority?: Database["public"]["Enums"]["complaint_priority"] | null
           requested_by?: string | null
@@ -1769,6 +1818,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["complaint_status"] | null
           title: string
           updated_at?: string | null
+          work_order_number?: string | null
         }
         Update: {
           actual_cost?: number | null
@@ -1780,7 +1830,9 @@ export type Database = {
           district_id?: string | null
           estimated_cost?: number | null
           id?: string
+          labor_hours?: number | null
           location?: string | null
+          parts_needed?: string[] | null
           photos?: string[] | null
           priority?: Database["public"]["Enums"]["complaint_priority"] | null
           requested_by?: string | null
@@ -1788,6 +1840,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["complaint_status"] | null
           title?: string
           updated_at?: string | null
+          work_order_number?: string | null
         }
         Relationships: [
           {
@@ -1809,6 +1862,62 @@ export type Database = {
             columns: ["requested_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_items: {
+        Row: {
+          category: string
+          condition: string | null
+          created_at: string | null
+          description: string | null
+          district_id: string | null
+          id: string
+          images: string[] | null
+          is_available: boolean | null
+          location: string | null
+          price: number
+          seller_id: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          condition?: string | null
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          images?: string[] | null
+          is_available?: boolean | null
+          location?: string | null
+          price: number
+          seller_id?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          condition?: string | null
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          images?: string[] | null
+          is_available?: boolean | null
+          location?: string | null
+          price?: number
+          seller_id?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_items_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
             referencedColumns: ["id"]
           },
         ]
@@ -2189,6 +2298,47 @@ export type Database = {
         }
         Relationships: []
       }
+      performance_metrics: {
+        Row: {
+          created_at: string | null
+          district_id: string | null
+          id: string
+          measurement_date: string
+          metric_name: string
+          metric_type: string
+          metric_value: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          district_id?: string | null
+          id?: string
+          measurement_date: string
+          metric_name: string
+          metric_type: string
+          metric_value: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          district_id?: string | null
+          id?: string
+          measurement_date?: string
+          metric_name?: string
+          metric_type?: string
+          metric_value?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_metrics_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       poll_votes: {
         Row: {
           id: string
@@ -2339,6 +2489,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quality_inspections: {
+        Row: {
+          completed_date: string | null
+          created_at: string | null
+          district_id: string | null
+          findings: string | null
+          id: string
+          inspection_type: string
+          inspector_id: string | null
+          location: string
+          next_inspection_date: string | null
+          passed: boolean | null
+          recommendations: string | null
+          scheduled_date: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          completed_date?: string | null
+          created_at?: string | null
+          district_id?: string | null
+          findings?: string | null
+          id?: string
+          inspection_type: string
+          inspector_id?: string | null
+          location: string
+          next_inspection_date?: string | null
+          passed?: boolean | null
+          recommendations?: string | null
+          scheduled_date: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          completed_date?: string | null
+          created_at?: string | null
+          district_id?: string | null
+          findings?: string | null
+          id?: string
+          inspection_type?: string
+          inspector_id?: string | null
+          location?: string
+          next_inspection_date?: string | null
+          passed?: boolean | null
+          recommendations?: string | null
+          scheduled_date?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quality_inspections_district_id_fkey"
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
@@ -2660,6 +2869,59 @@ export type Database = {
           },
         ]
       }
+      security_patrols: {
+        Row: {
+          actual_end: string | null
+          actual_start: string | null
+          checkpoints_completed: string[] | null
+          created_at: string | null
+          district_id: string | null
+          id: string
+          notes: string | null
+          officer_id: string | null
+          patrol_route: string
+          scheduled_end: string
+          scheduled_start: string
+          status: string | null
+        }
+        Insert: {
+          actual_end?: string | null
+          actual_start?: string | null
+          checkpoints_completed?: string[] | null
+          created_at?: string | null
+          district_id?: string | null
+          id?: string
+          notes?: string | null
+          officer_id?: string | null
+          patrol_route: string
+          scheduled_end: string
+          scheduled_start: string
+          status?: string | null
+        }
+        Update: {
+          actual_end?: string | null
+          actual_start?: string | null
+          checkpoints_completed?: string[] | null
+          created_at?: string | null
+          district_id?: string | null
+          id?: string
+          notes?: string | null
+          officer_id?: string | null
+          patrol_route?: string
+          scheduled_end?: string
+          scheduled_start?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_patrols_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sensor_readings: {
         Row: {
           id: string
@@ -2735,6 +2997,137 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sensors_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_appointments: {
+        Row: {
+          actual_cost: number | null
+          appointment_date: string
+          appointment_time: string
+          client_id: string | null
+          created_at: string | null
+          district_id: string | null
+          duration_minutes: number | null
+          estimated_cost: number | null
+          id: string
+          notes: string | null
+          provider_id: string | null
+          service_type: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          actual_cost?: number | null
+          appointment_date: string
+          appointment_time: string
+          client_id?: string | null
+          created_at?: string | null
+          district_id?: string | null
+          duration_minutes?: number | null
+          estimated_cost?: number | null
+          id?: string
+          notes?: string | null
+          provider_id?: string | null
+          service_type: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          actual_cost?: number | null
+          appointment_date?: string
+          appointment_time?: string
+          client_id?: string | null
+          created_at?: string | null
+          district_id?: string | null
+          duration_minutes?: number | null
+          estimated_cost?: number | null
+          id?: string
+          notes?: string | null
+          provider_id?: string | null
+          service_type?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_appointments_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_appointments_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "service_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_providers: {
+        Row: {
+          business_name: string
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string | null
+          description: string | null
+          district_id: string | null
+          id: string
+          is_active: boolean | null
+          is_verified: boolean | null
+          license_number: string | null
+          operating_hours: Json | null
+          rating: number | null
+          service_areas: string[] | null
+          service_category: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          business_name: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          license_number?: string | null
+          operating_hours?: Json | null
+          rating?: number | null
+          service_areas?: string[] | null
+          service_category: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          business_name?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          license_number?: string | null
+          operating_hours?: Json | null
+          rating?: number | null
+          service_areas?: string[] | null
+          service_category?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_providers_district_id_fkey"
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
@@ -2849,6 +3242,42 @@ export type Database = {
           is_active?: boolean | null
           module_name?: string
           route_path?: string | null
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_editable: boolean | null
+          setting_key: string
+          setting_value: Json
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_editable?: boolean | null
+          setting_key: string
+          setting_value: Json
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_editable?: boolean | null
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -2985,6 +3414,63 @@ export type Database = {
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_entries: {
+        Row: {
+          approved_by: string | null
+          created_at: string | null
+          district_id: string | null
+          entry_point: string | null
+          entry_time: string | null
+          exit_time: string | null
+          id: string
+          purpose_of_visit: string | null
+          security_officer_id: string | null
+          vehicle_plate: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          approved_by?: string | null
+          created_at?: string | null
+          district_id?: string | null
+          entry_point?: string | null
+          entry_time?: string | null
+          exit_time?: string | null
+          id?: string
+          purpose_of_visit?: string | null
+          security_officer_id?: string | null
+          vehicle_plate?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          approved_by?: string | null
+          created_at?: string | null
+          district_id?: string | null
+          entry_point?: string | null
+          entry_time?: string | null
+          exit_time?: string | null
+          id?: string
+          purpose_of_visit?: string | null
+          security_officer_id?: string | null
+          vehicle_plate?: string | null
+          visitor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_entries_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_entries_visitor_id_fkey"
+            columns: ["visitor_id"]
+            isOneToOne: false
+            referencedRelation: "visitors"
             referencedColumns: ["id"]
           },
         ]
@@ -3171,7 +3657,12 @@ export type Database = {
       has_role: {
         Args:
           | { _role: Database["public"]["Enums"]["app_role"]; _user_id: string }
+          | { check_role: Database["public"]["Enums"]["app_role"] }
           | { check_role: Database["public"]["Enums"]["user_role"] }
+        Returns: boolean
+      }
+      has_role_compat: {
+        Args: { check_role: Database["public"]["Enums"]["user_role"] }
         Returns: boolean
       }
       has_role_level_or_higher: {
