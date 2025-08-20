@@ -273,154 +273,117 @@ export default function CommunityChat() {
   }
 
   return (
-    <div className="flex h-[600px] bg-card rounded-lg border">
-      {/* Sidebar - Channels */}
-      <div className="w-64 border-r border-border bg-card/50">
-        <div className="p-4 border-b border-border">
+    <div className="flex flex-col h-[600px] bg-card rounded-lg border">
+      {/* Channel Selector Header */}
+      <div className="p-4 border-b border-border bg-card/50">
+        <div className="flex justify-between items-center mb-4">
           <h3 className="font-semibold text-foreground">
             {language === 'en' ? 'Community Chat' : 'Chat Komuniti'}
           </h3>
-          <p className="text-sm text-muted-foreground">
-            {channels.length} {language === 'en' ? 'channels' : 'saluran'}
-          </p>
+          <Badge variant="secondary" className="text-xs">
+            {channels.find(c => c.id === currentChannel)?.member_count} {language === 'en' ? 'members' : 'ahli'}
+          </Badge>
         </div>
         
-        <ScrollArea className="flex-1">
-          <div className="p-2">
-            {channels.map((channel) => {
-              const IconComponent = getChannelIcon(channel.channel_type);
-              return (
-                <Button
-                  key={channel.id}
-                  variant={currentChannel === channel.id ? "secondary" : "ghost"}
-                  className="w-full justify-start mb-1"
-                  onClick={() => setCurrentChannel(channel.id)}
-                >
-                  <IconComponent className="w-4 h-4 mr-2" />
-                  <div className="flex-1 text-left">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">{channel.name}</span>
-                      <Badge variant="secondary" className="text-xs">
-                        {channel.member_count}
-                      </Badge>
-                    </div>
-                    {channel.description && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {channel.description}
-                      </p>
-                    )}
-                  </div>
-                </Button>
-              );
-            })}
-          </div>
-        </ScrollArea>
+        {/* Channel Tabs */}
+        <div className="flex flex-wrap gap-2">
+          {channels.map((channel) => {
+            const IconComponent = getChannelIcon(channel.channel_type);
+            return (
+              <Button
+                key={channel.id}
+                variant={currentChannel === channel.id ? "default" : "outline"}
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => setCurrentChannel(channel.id)}
+              >
+                <IconComponent className="w-3 h-3" />
+                <span className="text-xs">{channel.name}</span>
+                <Badge variant="secondary" className="text-xs ml-1">
+                  {channel.member_count}
+                </Badge>
+              </Button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Chat Header */}
-        <div className="p-4 border-b border-border bg-card/50">
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="font-semibold text-foreground">
-                {channels.find(c => c.id === currentChannel)?.name}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {channels.find(c => c.id === currentChannel)?.member_count} {language === 'en' ? 'members' : 'ahli'}
-              </p>
-            </div>
-            <div className="flex space-x-2">
-              <Button variant="ghost" size="sm">
-                <Phone className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Video className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="sm">
-                <MoreVertical className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Messages */}
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-4">
-            {messages.map((message, index) => (
-              <div key={message.id} className="space-y-2">
-                {index === 0 || new Date(messages[index - 1].created_at).toDateString() !== new Date(message.created_at).toDateString() && (
-                  <div className="text-center">
-                    <Separator />
-                    <Badge variant="secondary" className="px-3 py-1">
-                      {new Date(message.created_at).toLocaleDateString(language === 'en' ? 'en-US' : 'ms-MY')}
-                    </Badge>
-                  </div>
-                )}
+      {/* Messages */}
+      <ScrollArea className="flex-1 p-4">
+        <div className="space-y-4">
+          {messages.map((message, index) => (
+            <div key={message.id} className="space-y-2">
+              {index === 0 || new Date(messages[index - 1].created_at).toDateString() !== new Date(message.created_at).toDateString() && (
+                <div className="text-center">
+                  <Separator />
+                  <Badge variant="secondary" className="px-3 py-1">
+                    {new Date(message.created_at).toLocaleDateString(language === 'en' ? 'en-US' : 'ms-MY')}
+                  </Badge>
+                </div>
+              )}
+              
+              <div className={`flex items-start space-x-3 ${getMessageTypeColor(message.message_type)} p-3 rounded-lg`}>
+                <Avatar className="w-8 h-8">
+                  <AvatarFallback className="text-xs">
+                    {message.profiles?.display_name?.charAt(0) || 'U'}
+                  </AvatarFallback>
+                </Avatar>
                 
-                <div className={`flex items-start space-x-3 ${getMessageTypeColor(message.message_type)} p-3 rounded-lg`}>
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback className="text-xs">
-                      {message.profiles?.display_name?.charAt(0) || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="font-medium text-sm text-foreground">
-                        {message.profiles?.display_name}
-                      </span>
-                      {message.message_type === 'announcement' && (
-                        <Badge variant="secondary" className="text-xs">
-                          {language === 'en' ? 'Announcement' : 'Pengumuman'}
-                        </Badge>
-                      )}
-                      <span className="text-xs text-muted-foreground">
-                        {formatTime(message.created_at)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-foreground break-words">
-                      {message.message}
-                    </p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <span className="font-medium text-sm text-foreground">
+                      {message.profiles?.display_name}
+                    </span>
+                    {message.message_type === 'announcement' && (
+                      <Badge variant="secondary" className="text-xs">
+                        {language === 'en' ? 'Announcement' : 'Pengumuman'}
+                      </Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      {formatTime(message.created_at)}
+                    </span>
                   </div>
+                  <p className="text-sm text-foreground break-words">
+                    {message.message}
+                  </p>
                 </div>
               </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
-
-        {/* Message Input */}
-        <div className="p-4 border-t border-border bg-card/50">
-          <div className="flex space-x-2">
-            <Input
-              placeholder={
-                language === 'en' 
-                  ? 'Type your message...'
-                  : 'Taip mesej anda...'
-              }
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  sendMessage();
-                }
-              }}
-              className="flex-1"
-            />
-            <Button 
-              onClick={sendMessage} 
-              disabled={!newMessage.trim()}
-              className="bg-gradient-primary"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            {language === 'en' ? 'Press Enter to send, Shift+Enter for new line' : 'Tekan Enter untuk hantar, Shift+Enter untuk baris baru'}
-          </p>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
         </div>
+      </ScrollArea>
+
+      {/* Message Input */}
+      <div className="p-4 border-t border-border bg-card/50">
+        <div className="flex space-x-2">
+          <Input
+            placeholder={
+              language === 'en' 
+                ? 'Type your message...'
+                : 'Taip mesej anda...'
+            }
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+              }
+            }}
+            className="flex-1"
+          />
+          <Button 
+            onClick={sendMessage} 
+            disabled={!newMessage.trim()}
+            className="bg-gradient-primary"
+          >
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          {language === 'en' ? 'Press Enter to send, Shift+Enter for new line' : 'Tekan Enter untuk hantar, Shift+Enter untuk baris baru'}
+        </p>
       </div>
     </div>
   );
