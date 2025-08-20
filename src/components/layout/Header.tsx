@@ -1,4 +1,4 @@
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { useTranslation } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -19,10 +19,13 @@ import {
   Moon,
   Sun
 } from 'lucide-react';
+import { useState } from 'react';
 
 export function Header() {
-  const { user, profile, language, switchLanguage, theme, switchTheme, logout, roleInfo } = useEnhancedAuth();
-  const { t } = useTranslation((language as 'en' | 'ms') || 'ms');
+  const { user, logout } = useSimpleAuth();
+  const [language, setLanguage] = useState<'en' | 'ms'>('en');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const { t } = useTranslation(language);
 
   if (!user) return null;
 
@@ -30,7 +33,16 @@ export function Header() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
-  const displayName = profile?.full_name || user.email || 'User';
+  const displayName = user.user_metadata?.full_name || user.email || 'User';
+
+  const switchLanguage = (lang: 'en' | 'ms') => {
+    setLanguage(lang);
+  };
+
+  const switchTheme = (newTheme: 'light' | 'dark') => {
+    setTheme(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
@@ -102,21 +114,8 @@ export function Header() {
                   </p>
                   <div className="flex space-x-1 pt-1">
                     <Badge variant="secondary" className="text-xs">
-                      District {profile?.district_id || 'N/A'}
+                      Resident
                     </Badge>
-                    {roleInfo && (
-                      <Badge 
-                        variant="outline" 
-                        className="text-xs"
-                        style={{ 
-                          backgroundColor: roleInfo.color_code + '20',
-                          borderColor: roleInfo.color_code,
-                          color: roleInfo.color_code 
-                        }}
-                      >
-                        {roleInfo.display_name}
-                      </Badge>
-                    )}
                   </div>
                 </div>
               </DropdownMenuLabel>

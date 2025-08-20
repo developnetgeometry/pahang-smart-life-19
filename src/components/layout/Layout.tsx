@@ -1,4 +1,4 @@
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { Header } from './Header';
 import { AppSidebar } from './Sidebar';
 
@@ -7,7 +7,7 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { user, isLoading } = useEnhancedAuth();
+  const { user, isLoading } = useSimpleAuth();
 
   // Show loading spinner while authentication is being checked
   if (isLoading) {
