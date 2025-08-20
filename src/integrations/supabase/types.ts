@@ -1088,6 +1088,109 @@ export type Database = {
         }
         Relationships: []
       }
+      enhanced_audit_logs: {
+        Row: {
+          action: string
+          district_id: string | null
+          id: string
+          ip_address: unknown | null
+          module_name: string | null
+          new_values: Json | null
+          old_values: Json | null
+          resource_id: string | null
+          resource_type: string | null
+          session_id: string | null
+          timestamp: string | null
+          user_agent: string | null
+          user_id: string | null
+          user_role: Database["public"]["Enums"]["enhanced_user_role"] | null
+        }
+        Insert: {
+          action: string
+          district_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          module_name?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+          session_id?: string | null
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          user_role?: Database["public"]["Enums"]["enhanced_user_role"] | null
+        }
+        Update: {
+          action?: string
+          district_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          module_name?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+          session_id?: string | null
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          user_role?: Database["public"]["Enums"]["enhanced_user_role"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enhanced_audit_logs_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enhanced_user_roles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          district_id: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          role: Database["public"]["Enums"]["enhanced_user_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          district_id?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          role: Database["public"]["Enums"]["enhanced_user_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          district_id?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          role?: Database["public"]["Enums"]["enhanced_user_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enhanced_user_roles_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_registrations: {
         Row: {
           attendance_status: string | null
@@ -2347,6 +2450,47 @@ export type Database = {
           },
         ]
       }
+      role_change_history: {
+        Row: {
+          change_reason: string | null
+          changed_by: string | null
+          created_at: string | null
+          district_id: string | null
+          id: string
+          new_role: Database["public"]["Enums"]["enhanced_user_role"]
+          old_role: Database["public"]["Enums"]["enhanced_user_role"] | null
+          user_id: string
+        }
+        Insert: {
+          change_reason?: string | null
+          changed_by?: string | null
+          created_at?: string | null
+          district_id?: string | null
+          id?: string
+          new_role: Database["public"]["Enums"]["enhanced_user_role"]
+          old_role?: Database["public"]["Enums"]["enhanced_user_role"] | null
+          user_id: string
+        }
+        Update: {
+          change_reason?: string | null
+          changed_by?: string | null
+          created_at?: string | null
+          district_id?: string | null
+          id?: string
+          new_role?: Database["public"]["Enums"]["enhanced_user_role"]
+          old_role?: Database["public"]["Enums"]["enhanced_user_role"] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_change_history_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_change_requests: {
         Row: {
           activated_at: string | null
@@ -2429,6 +2573,83 @@ export type Database = {
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_hierarchy: {
+        Row: {
+          color_code: string | null
+          created_at: string | null
+          description: string | null
+          display_name: string
+          level: number
+          permission_level: Database["public"]["Enums"]["permission_level"]
+          role: Database["public"]["Enums"]["enhanced_user_role"]
+        }
+        Insert: {
+          color_code?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          level: number
+          permission_level: Database["public"]["Enums"]["permission_level"]
+          role: Database["public"]["Enums"]["enhanced_user_role"]
+        }
+        Update: {
+          color_code?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          level?: number
+          permission_level?: Database["public"]["Enums"]["permission_level"]
+          role?: Database["public"]["Enums"]["enhanced_user_role"]
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          can_approve: boolean | null
+          can_create: boolean | null
+          can_delete: boolean | null
+          can_read: boolean | null
+          can_update: boolean | null
+          created_at: string | null
+          id: string
+          module_id: string
+          restrictions: Json | null
+          role: Database["public"]["Enums"]["enhanced_user_role"]
+        }
+        Insert: {
+          can_approve?: boolean | null
+          can_create?: boolean | null
+          can_delete?: boolean | null
+          can_read?: boolean | null
+          can_update?: boolean | null
+          created_at?: string | null
+          id?: string
+          module_id: string
+          restrictions?: Json | null
+          role: Database["public"]["Enums"]["enhanced_user_role"]
+        }
+        Update: {
+          can_approve?: boolean | null
+          can_create?: boolean | null
+          can_delete?: boolean | null
+          can_read?: boolean | null
+          can_update?: boolean | null
+          created_at?: string | null
+          id?: string
+          module_id?: string
+          restrictions?: Json | null
+          role?: Database["public"]["Enums"]["enhanced_user_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "system_modules"
             referencedColumns: ["id"]
           },
         ]
@@ -2594,6 +2815,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_modules: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_name: string
+          id: string
+          is_active: boolean | null
+          module_name: string
+          route_path: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean | null
+          module_name: string
+          route_path?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean | null
+          module_name?: string
+          route_path?: string | null
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -2869,14 +3120,33 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_highest_role: {
+        Args: { check_user_id?: string }
+        Returns: Database["public"]["Enums"]["enhanced_user_role"]
+      }
       get_user_role: {
         Args: { district_id?: string; user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      get_user_role_level: {
+        Args: { check_user_id?: string }
+        Returns: number
+      }
+      has_enhanced_role: {
+        Args: {
+          check_role: Database["public"]["Enums"]["enhanced_user_role"]
+          check_user_id?: string
+        }
+        Returns: boolean
       }
       has_role: {
         Args:
           | { _role: Database["public"]["Enums"]["app_role"]; _user_id: string }
           | { check_role: Database["public"]["Enums"]["user_role"] }
+        Returns: boolean
+      }
+      has_role_level_or_higher: {
+        Args: { check_user_id?: string; min_level: number }
         Returns: boolean
       }
     }
@@ -2908,7 +3178,19 @@ export type Database = {
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
       complaint_priority: "low" | "medium" | "high" | "urgent"
       complaint_status: "pending" | "in_progress" | "resolved" | "closed"
+      enhanced_user_role:
+        | "state_admin"
+        | "district_coordinator"
+        | "community_admin"
+        | "facility_manager"
+        | "security_officer"
+        | "maintenance_staff"
+        | "service_provider"
+        | "community_leader"
+        | "state_service_manager"
+        | "resident"
       marketplace_condition: "new" | "excellent" | "good" | "fair" | "poor"
+      permission_level: "full_access" | "standard_access" | "limited_access"
       role_request_status:
         | "pending"
         | "under_review"
@@ -3093,7 +3375,20 @@ export const Constants = {
       booking_status: ["pending", "confirmed", "cancelled", "completed"],
       complaint_priority: ["low", "medium", "high", "urgent"],
       complaint_status: ["pending", "in_progress", "resolved", "closed"],
+      enhanced_user_role: [
+        "state_admin",
+        "district_coordinator",
+        "community_admin",
+        "facility_manager",
+        "security_officer",
+        "maintenance_staff",
+        "service_provider",
+        "community_leader",
+        "state_service_manager",
+        "resident",
+      ],
       marketplace_condition: ["new", "excellent", "good", "fair", "poor"],
+      permission_level: ["full_access", "standard_access", "limited_access"],
       role_request_status: [
         "pending",
         "under_review",
