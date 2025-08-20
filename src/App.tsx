@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SimpleAuthProvider, useSimpleAuth } from "@/hooks/useSimpleAuth";
+import { EnhancedAuthProvider, useEnhancedAuth } from "@/hooks/useEnhancedAuth";
 import React from "react";
 import { Layout } from "@/components/layout/Layout";
 import Index from "./pages/Index";
@@ -46,7 +47,7 @@ const queryClient = new QueryClient({
 });
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useSimpleAuth();
+  const { user, isLoading } = useEnhancedAuth();
   
   if (isLoading) {
     return (
@@ -60,7 +61,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useSimpleAuth();
+  const { user, isLoading } = useEnhancedAuth();
   
   if (isLoading) {
     return (
@@ -74,9 +75,9 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <SimpleAuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <EnhancedAuthProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -315,9 +316,9 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>
-        </BrowserRouter>
-      </SimpleAuthProvider>
-    </TooltipProvider>
+            </BrowserRouter>
+          </EnhancedAuthProvider>
+        </TooltipProvider>
   </QueryClientProvider>
 );
 
