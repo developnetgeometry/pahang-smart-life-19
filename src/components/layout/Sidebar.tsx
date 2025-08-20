@@ -1,4 +1,4 @@
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { useTranslation } from '@/lib/translations';
 import { NavLink, useLocation } from 'react-router-dom';
 import { EnhancedNavigation } from '@/components/enhanced/EnhancedNavigation';
@@ -6,7 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useState } from 'react';
 
 export function AppSidebar() {
-  const { user } = useSimpleAuth();
+  const { user } = useEnhancedAuth();
   const [language] = useState<'en' | 'ms'>('en');
   const { t } = useTranslation(language);
 

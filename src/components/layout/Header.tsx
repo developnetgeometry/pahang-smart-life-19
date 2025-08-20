@@ -1,4 +1,4 @@
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { useTranslation } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -22,7 +22,7 @@ import {
 import { useState } from 'react';
 
 export function Header() {
-  const { user, logout } = useSimpleAuth();
+  const { user, logout } = useEnhancedAuth();
   const [language, setLanguage] = useState<'en' | 'ms'>('en');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const { t } = useTranslation(language);
