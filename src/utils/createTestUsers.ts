@@ -31,7 +31,7 @@ const testUsers = [
   {
     email: 'admin@test.com',
     password: 'password123',
-    role: 'admin' as const,
+    role: 'community_admin' as const,
     full_name: 'Ahmad Rahman',
     phone: '013-1001004',
     unit_number: 'A-1-01',
@@ -40,7 +40,7 @@ const testUsers = [
   {
     email: 'managernorth@test.com',
     password: 'password123',
-    role: 'manager' as const,
+    role: 'facility_manager' as const,
     full_name: 'Siti Nurhaliza',
     phone: '013-1001005',
     unit_number: 'B-2-05',
@@ -58,7 +58,7 @@ const testUsers = [
   {
     email: 'securitynorth@test.com',
     password: 'password123',
-    role: 'security' as const,
+    role: 'security_officer' as const,
     full_name: 'Mohd Faizal',
     phone: '013-1001007',
     unit_number: 'Guard House A',
