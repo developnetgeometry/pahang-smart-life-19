@@ -3,9 +3,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { EnhancedAuthProvider, useEnhancedAuth } from "@/hooks/useEnhancedAuth";
 import React from "react";
 import { Layout } from "@/components/layout/Layout";
+import { RoleGuard } from "@/components/auth/RoleGuard";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import MyBookings from "./pages/MyBookings";
@@ -46,19 +47,37 @@ const queryClient = new QueryClient({
 });
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+  const { user, isLoading } = useEnhancedAuth();
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  return user ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <Navigate to="/" replace /> : <>{children}</>;
+  const { user, isLoading } = useEnhancedAuth();
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  return user ? <Navigate to="/" replace /> : <>{children}</>;
 }
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
+      <EnhancedAuthProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -86,7 +105,9 @@ const App = () => (
                 path="/my-bookings" 
                 element={
                   <ProtectedRoute>
-                    <MyBookings />
+                    <RoleGuard module="my_bookings" permission="read">
+                      <MyBookings />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -94,7 +115,9 @@ const App = () => (
                 path="/my-visitors" 
                 element={
                   <ProtectedRoute>
-                    <MyVisitors />
+                    <RoleGuard module="visitors" permission="read">
+                      <MyVisitors />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -102,7 +125,9 @@ const App = () => (
                 path="/my-complaints" 
                 element={
                   <ProtectedRoute>
-                    <MyComplaints />
+                    <RoleGuard module="complaints" permission="read">
+                      <MyComplaints />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -110,7 +135,9 @@ const App = () => (
                 path="/my-profile" 
                 element={
                   <ProtectedRoute>
-                    <MyProfile />
+                    <RoleGuard module="profile" permission="read">
+                      <MyProfile />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -118,7 +145,9 @@ const App = () => (
                 path="/role-management" 
                 element={
                   <ProtectedRoute>
-                    <RoleManagement />
+                    <RoleGuard module="role_management" permission="read">
+                      <RoleManagement />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -126,7 +155,9 @@ const App = () => (
                 path="/announcements" 
                 element={
                   <ProtectedRoute>
-                    <Announcements />
+                    <RoleGuard module="announcements" permission="read">
+                      <Announcements />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -134,7 +165,9 @@ const App = () => (
                 path="/discussions" 
                 element={
                   <ProtectedRoute>
-                    <Discussions />
+                    <RoleGuard module="discussions" permission="read">
+                      <Discussions />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -142,7 +175,9 @@ const App = () => (
                 path="/facilities" 
                 element={
                   <ProtectedRoute>
-                    <Facilities />
+                    <RoleGuard module="facilities" permission="read">
+                      <Facilities />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -150,15 +185,19 @@ const App = () => (
                 path="/marketplace" 
                 element={
                   <ProtectedRoute>
-                    <Marketplace />
+                    <RoleGuard module="marketplace" permission="read">
+                      <Marketplace />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
               <Route 
-                path="/communication" 
+                path="/communication-hub" 
                 element={
                   <ProtectedRoute>
-                    <CommunicationHub />
+                    <RoleGuard module="communication" permission="read">
+                      <CommunicationHub />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -166,7 +205,9 @@ const App = () => (
                 path="/visitor-security" 
                 element={
                   <ProtectedRoute>
-                    <VisitorSecurity />
+                    <RoleGuard module="visitor_security" permission="read" requiredLevel={6}>
+                      <VisitorSecurity />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -174,25 +215,31 @@ const App = () => (
                 path="/visitor-analytics" 
                 element={
                   <ProtectedRoute>
-                    <VisitorAnalytics />
+                    <RoleGuard module="visitor_analytics" permission="read" requiredLevel={6}>
+                      <VisitorAnalytics />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
               <Route 
-                path="/cctv-live" 
+                path="/cctv-live-feed" 
                 element={
                   <ProtectedRoute>
-                    <CCTVLiveFeed />
+                    <RoleGuard module="cctv" permission="read" requiredLevel={6}>
+                      <CCTVLiveFeed />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
 
-              {/* Professional view routes */}
+              {/* Admin routes */}
               <Route 
-                path="/admin/*" 
+                path="/admin" 
                 element={
                   <ProtectedRoute>
-                    <AdminPanel />
+                    <RoleGuard module="admin_panel" permission="read" requiredLevel={8}>
+                      <AdminPanel />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -200,7 +247,9 @@ const App = () => (
                 path="/admin/users" 
                 element={
                   <ProtectedRoute>
-                    <UserManagement />
+                    <RoleGuard requiredLevel={9}>
+                      <UserManagement />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -208,7 +257,9 @@ const App = () => (
                 path="/admin/security" 
                 element={
                   <ProtectedRoute>
-                    <SecurityDashboard />
+                    <RoleGuard requiredLevel={8}>
+                      <SecurityDashboard />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -216,7 +267,9 @@ const App = () => (
                 path="/admin/communities" 
                 element={
                   <ProtectedRoute>
-                    <CommunityManagement />
+                    <RoleGuard requiredLevel={8}>
+                      <CommunityManagement />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -224,7 +277,9 @@ const App = () => (
                 path="/admin/districts" 
                 element={
                   <ProtectedRoute>
-                    <DistrictManagement />
+                    <RoleGuard requiredLevel={9}>
+                      <DistrictManagement />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -232,7 +287,9 @@ const App = () => (
                 path="/admin/facilities" 
                 element={
                   <ProtectedRoute>
-                    <FacilitiesManagement />
+                    <RoleGuard requiredLevel={7}>
+                      <FacilitiesManagement />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -240,7 +297,9 @@ const App = () => (
                 path="/admin/maintenance" 
                 element={
                   <ProtectedRoute>
-                    <MaintenanceManagement />
+                    <RoleGuard requiredLevel={5}>
+                      <MaintenanceManagement />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -248,7 +307,9 @@ const App = () => (
                 path="/admin/complaints" 
                 element={
                   <ProtectedRoute>
-                    <ComplaintsManagement />
+                    <RoleGuard requiredLevel={8}>
+                      <ComplaintsManagement />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -256,7 +317,9 @@ const App = () => (
                 path="/admin/cctv" 
                 element={
                   <ProtectedRoute>
-                    <CCTVManagement />
+                    <RoleGuard requiredLevel={6}>
+                      <CCTVManagement />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -264,7 +327,9 @@ const App = () => (
                 path="/admin/smart-monitoring" 
                 element={
                   <ProtectedRoute>
-                    <SmartMonitoring />
+                    <RoleGuard requiredLevel={8}>
+                      <SmartMonitoring />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -272,7 +337,9 @@ const App = () => (
                 path="/admin/sensors" 
                 element={
                   <ProtectedRoute>
-                    <SensorManagement />
+                    <RoleGuard requiredLevel={8}>
+                      <SensorManagement />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -280,7 +347,9 @@ const App = () => (
                 path="/admin/announcements" 
                 element={
                   <ProtectedRoute>
-                    <AnnouncementManagement />
+                    <RoleGuard requiredLevel={8}>
+                      <AnnouncementManagement />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -288,7 +357,9 @@ const App = () => (
                 path="/admin/discussions" 
                 element={
                   <ProtectedRoute>
-                    <DiscussionManagement />
+                    <RoleGuard requiredLevel={8}>
+                      <DiscussionManagement />
+                    </RoleGuard>
                   </ProtectedRoute>
                 } 
               />
@@ -298,7 +369,7 @@ const App = () => (
             </Routes>
           </Layout>
         </BrowserRouter>
-      </AuthProvider>
+      </EnhancedAuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

@@ -114,40 +114,36 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
       // Fetch user roles
       const { data: rolesData, error: rolesError } = await supabase
         .from('enhanced_user_roles')
-        .select(`
-          role,
-          is_active,
-          role_hierarchy (
-            level,
-            permission_level,
-            display_name,
-            description,
-            color_code
-          )
-        `)
+        .select('role, is_active')
         .eq('user_id', userId)
         .eq('is_active', true);
 
       if (rolesError) throw rolesError;
 
-      const userRoles = rolesData?.map(r => r.role) || [];
+      const userRoles = rolesData?.map(r => r.role as EnhancedUserRole) || [];
       setRoles(userRoles);
 
-      // Set highest level role as current
-      if (rolesData && rolesData.length > 0) {
-        const highestRole = rolesData.reduce((prev, current) => 
-          (prev.role_hierarchy.level > current.role_hierarchy.level) ? prev : current
-        );
-        
-        setCurrentRole(highestRole.role);
-        setRoleInfo({
-          role: highestRole.role,
-          level: highestRole.role_hierarchy.level,
-          permission_level: highestRole.role_hierarchy.permission_level,
-          display_name: highestRole.role_hierarchy.display_name,
-          description: highestRole.role_hierarchy.description,
-          color_code: highestRole.role_hierarchy.color_code,
-        });
+      // Get role hierarchy info for the highest role
+      if (userRoles.length > 0) {
+        const { data: roleHierarchyData, error: roleHierarchyError } = await supabase
+          .from('role_hierarchy')
+          .select('*')
+          .in('role', userRoles)
+          .order('level', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (!roleHierarchyError && roleHierarchyData) {
+          setCurrentRole(roleHierarchyData.role as EnhancedUserRole);
+          setRoleInfo({
+            role: roleHierarchyData.role as EnhancedUserRole,
+            level: roleHierarchyData.level,
+            permission_level: roleHierarchyData.permission_level as PermissionLevel,
+            display_name: roleHierarchyData.display_name,
+            description: roleHierarchyData.description || '',
+            color_code: roleHierarchyData.color_code || '#6B7280',
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
