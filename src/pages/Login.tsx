@@ -17,6 +17,8 @@ export default function Login() {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [districtId, setDistrictId] = useState('');
+  const [location, setLocation] = useState('');
+  const [selectedRole, setSelectedRole] = useState('resident');
   const [districts, setDistricts] = useState<Array<{id: string, name: string}>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -59,6 +61,9 @@ export default function Login() {
         if (!districtId) {
           throw new Error(language === 'en' ? 'Please select a district' : 'Sila pilih daerah');
         }
+        if (!location.trim()) {
+          throw new Error(language === 'en' ? 'Location is required' : 'Lokasi diperlukan');
+        }
 
         const redirectUrl = `${window.location.origin}/`;
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -84,6 +89,7 @@ export default function Login() {
               full_name: fullName.trim(),
               phone: phone.trim() || null,
               district_id: districtId,
+              address: location.trim(),
               language: language,
               is_active: true
             });
@@ -93,12 +99,12 @@ export default function Login() {
             // Don't throw error - profile will be created by trigger if this fails
           }
 
-          // Assign default resident role
+          // Assign selected role
           const { error: roleError } = await supabase
             .from('user_roles')
             .insert({
               user_id: authData.user.id,
-              role: 'resident',
+              role: selectedRole as any,
               district_id: districtId
             });
 
@@ -120,6 +126,8 @@ export default function Login() {
           setFullName('');
           setPhone('');
           setDistrictId('');
+          setLocation('');
+          setSelectedRole('resident');
           setPassword('');
         }
       }
@@ -311,6 +319,45 @@ export default function Login() {
                               {district.name}
                             </SelectItem>
                           ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="location">
+                        {language === 'en' ? 'Specific Location/Address' : 'Lokasi/Alamat Khusus'} *
+                      </Label>
+                      <Input
+                        id="location"
+                        type="text"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        placeholder={language === 'en' ? 'e.g., Taman Sejahtera, Block A' : 'cth: Taman Sejahtera, Blok A'}
+                        required
+                        className="transition-smooth"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="role">
+                        {language === 'en' ? 'Select Role' : 'Pilih Peranan'} *
+                      </Label>
+                      <Select value={selectedRole} onValueChange={setSelectedRole} required>
+                        <SelectTrigger className="transition-smooth">
+                          <SelectValue placeholder={
+                            language === 'en' ? 'Choose your role' : 'Pilih peranan anda'
+                          } />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="resident">
+                            {language === 'en' ? 'Resident' : 'Penduduk'}
+                          </SelectItem>
+                          <SelectItem value="service_provider">
+                            {language === 'en' ? 'Service Provider' : 'Penyedia Perkhidmatan'}
+                          </SelectItem>
+                          <SelectItem value="community_leader">
+                            {language === 'en' ? 'Community Leader' : 'Ketua Komuniti'}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
