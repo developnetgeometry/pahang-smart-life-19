@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +7,7 @@ import { Building, Clock, Users, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function Facilities() {
-  const { user } = useSimpleAuth();
+  const { user } = useEnhancedAuth();
   const [facilities, setFacilities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 

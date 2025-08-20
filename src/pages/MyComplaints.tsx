@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Calendar, Plus } from 'lucide-react';
 
 export default function MyComplaints() {
-  const { user } = useSimpleAuth();
+  const { user } = useEnhancedAuth();
   const [complaints] = useState([
     {
       id: '1',

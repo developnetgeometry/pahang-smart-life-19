@@ -1,4 +1,4 @@
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { useTranslation } from '@/lib/translations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export function DashboardStats() {
-  const { user } = useSimpleAuth();
+  const { user } = useEnhancedAuth();
   const { t } = useTranslation('ms');
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);

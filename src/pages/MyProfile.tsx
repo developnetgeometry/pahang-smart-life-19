@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { User, Mail, Edit } from 'lucide-react';
 
 export default function MyProfile() {
-  const { user } = useSimpleAuth();
+  const { user } = useEnhancedAuth();
   const [isEditing, setIsEditing] = useState(false);
 
   if (!user) return null;

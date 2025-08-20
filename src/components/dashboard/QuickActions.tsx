@@ -1,4 +1,4 @@
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { useTranslation } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export function QuickActions() {
-  const { user } = useSimpleAuth();
+  const { user } = useEnhancedAuth();
   const { t } = useTranslation('ms');
   const navigate = useNavigate();
 

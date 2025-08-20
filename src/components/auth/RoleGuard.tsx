@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ShieldX } from 'lucide-react';
 
@@ -22,7 +22,7 @@ export function RoleGuard({
   fallback,
   showError = true,
 }: RoleGuardProps) {
-  const { user, isLoading } = useSimpleAuth();
+  const { user, isLoading } = useEnhancedAuth();
 
   if (isLoading) {
     return (
@@ -64,7 +64,7 @@ export function ModulePermissionChecker({
   permission,
   fallback,
 }: ModulePermissionCheckerProps) {
-  const { user } = useSimpleAuth();
+  const { user } = useEnhancedAuth();
 
   // Simplified - just show content if user is authenticated
   if (!user) {

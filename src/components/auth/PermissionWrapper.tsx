@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 
 interface PermissionWrapperProps {
   children: ReactNode;
@@ -16,7 +16,7 @@ export function PermissionWrapper({
   fallback,
   loading,
 }: PermissionWrapperProps) {
-  const { user } = useSimpleAuth();
+  const { user } = useEnhancedAuth();
 
   // Simplified permission system - just show content if user is authenticated
   if (!user) {

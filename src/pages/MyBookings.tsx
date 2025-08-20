@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, MapPin, Plus } from 'lucide-react';
 
 export default function MyBookings() {
-  const { user } = useSimpleAuth();
+  const { user } = useEnhancedAuth();
   const [bookings] = useState([
     {
       id: '1',

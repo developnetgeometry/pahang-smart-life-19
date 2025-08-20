@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { UserPlus, Calendar, Clock, Phone, Car, Plus } from 'lucide-react';
 
 export default function MyVisitors() {
-  const { user } = useSimpleAuth();
+  const { user } = useEnhancedAuth();
   const [visitors] = useState([
     {
       id: '1',

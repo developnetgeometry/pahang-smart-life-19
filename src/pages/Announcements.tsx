@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Megaphone, Calendar, Clock, Filter } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function Announcements() {
-  const { user } = useSimpleAuth();
+  const { user } = useEnhancedAuth();
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 

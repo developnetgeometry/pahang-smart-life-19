@@ -1,4 +1,4 @@
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { useTranslation } from '@/lib/translations';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { QuickActions } from '@/components/dashboard/QuickActions';
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 const Index = () => {
-  const { user } = useSimpleAuth();
+  const { user } = useEnhancedAuth();
   const { t } = useTranslation('ms');
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

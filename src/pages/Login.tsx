@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { useTranslation } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +26,7 @@ export default function Login() {
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
   const [isCreatingUsers, setIsCreatingUsers] = useState(false);
   const [language, setLanguage] = useState<'en' | 'ms'>('en');
-  const { login } = useSimpleAuth();
+  const { login } = useEnhancedAuth();
   const { t } = useTranslation(language);
   const { toast } = useToast();
 
