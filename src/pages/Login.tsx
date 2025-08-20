@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { useTranslation } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,8 +24,8 @@ export default function Login() {
   const [error, setError] = useState('');
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
   const [isCreatingUsers, setIsCreatingUsers] = useState(false);
-  const { login, language, switchLanguage } = useAuth();
-  const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
+  const { login, language, switchLanguage } = useEnhancedAuth();
+  const { t } = useTranslation((language as 'en' | 'ms') || 'ms'); // Ensure we always have a language
   const { toast } = useToast();
 
   // Load districts for registration
@@ -52,7 +52,10 @@ export default function Login() {
 
     try {
       if (mode === 'signIn') {
-        await login(email, password);
+        const result = await login(email, password);
+        if (result.error) {
+          throw result.error;
+        }
       } else {
         // Validate required fields for registration
         if (!fullName.trim()) {

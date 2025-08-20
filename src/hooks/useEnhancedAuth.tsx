@@ -96,12 +96,10 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
 
   // Fetch user profile and roles
   const fetchUserData = async (userId: string) => {
-    console.log('🔄 Starting fetchUserData for:', userId);
     try {
       // Clear permission cache when fetching new user data
       permissionCache.current.clear();
       
-      console.log('📋 Fetching profile...');
       // Fetch profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -109,11 +107,7 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .single();
 
-      if (profileError) {
-        console.error('❌ Profile error:', profileError);
-        throw profileError;
-      }
-      console.log('✅ Profile loaded:', profileData);
+      if (profileError) throw profileError;
       setProfile(profileData);
 
       if (profileData?.language_preference) {
@@ -123,7 +117,6 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
         setTheme(profileData.theme_preference);
       }
 
-      console.log('🎭 Fetching roles...');
       // Fetch user roles
       const { data: rolesData, error: rolesError } = await supabase
         .from('enhanced_user_roles')
@@ -131,18 +124,13 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
         .eq('user_id', userId)
         .eq('is_active', true);
 
-      if (rolesError) {
-        console.error('❌ Roles error:', rolesError);
-        throw rolesError;
-      }
-      console.log('✅ Roles loaded:', rolesData);
+      if (rolesError) throw rolesError;
 
       const userRoles = rolesData?.map(r => r.role as EnhancedUserRole) || [];
       setRoles(userRoles);
 
       // Get role hierarchy info for the highest role
       if (userRoles.length > 0) {
-        console.log('🏗️ Fetching role hierarchy...');
         const { data: roleHierarchyData, error: roleHierarchyError } = await supabase
           .from('role_hierarchy')
           .select('*')
@@ -152,7 +140,6 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
           .single();
 
         if (!roleHierarchyError && roleHierarchyData) {
-          console.log('✅ Role hierarchy loaded:', roleHierarchyData);
           setCurrentRole(roleHierarchyData.role as EnhancedUserRole);
           setRoleInfo({
             role: roleHierarchyData.role as EnhancedUserRole,
@@ -162,20 +149,16 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
             description: roleHierarchyData.description || '',
             color_code: roleHierarchyData.color_code || '#6B7280',
           });
-        } else if (roleHierarchyError) {
-          console.error('❌ Role hierarchy error:', roleHierarchyError);
         }
       }
-      console.log('🎉 fetchUserData completed successfully');
     } catch (error) {
-      console.error('💥 Error fetching user data:', error);
+      console.error('Error fetching user data:', error);
       toast({
         title: "Error",
         description: "Failed to load user data",
         variant: "destructive",
       });
     } finally {
-      console.log('🏁 Setting isLoading to false');
       setIsLoading(false);
     }
   };
