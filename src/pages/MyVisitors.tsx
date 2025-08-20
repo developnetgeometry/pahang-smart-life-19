@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Calendar, Clock, UserPlus, Users, Car, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { Calendar, Clock, UserPlus, Users, Car, CheckCircle, XCircle, AlertTriangle, QrCode, Edit3, Share2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface Visitor {
   id: string;
@@ -19,6 +19,7 @@ interface Visitor {
   visit_date: string;
   visit_time?: string;
   purpose?: string;
+  notes?: string;
   status: "pending" | "approved" | "denied" | "checked_in" | "checked_out";
   created_at?: string;
 }
@@ -29,6 +30,28 @@ export default function MyVisitors() {
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(true);
   const [showRegisterDialog, setShowRegisterDialog] = useState(false);
+  const [showQRDialog, setShowQRDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [selectedVisitor, setSelectedVisitor] = useState<Visitor | null>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  
+  // Form refs for register dialog
+  const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const icRef = useRef<HTMLInputElement>(null);
+  const vehicleRef = useRef<HTMLInputElement>(null);
+  const dateRef = useRef<HTMLInputElement>(null);
+  const timeRef = useRef<HTMLInputElement>(null);
+  const purposeRef = useRef<HTMLInputElement>(null);
+  
+  // Form refs for edit dialog
+  const editNameRef = useRef<HTMLInputElement>(null);
+  const editPhoneRef = useRef<HTMLInputElement>(null);
+  const editIcRef = useRef<HTMLInputElement>(null);
+  const editVehicleRef = useRef<HTMLInputElement>(null);
+  const editDateRef = useRef<HTMLInputElement>(null);
+  const editTimeRef = useRef<HTMLInputElement>(null);
+  const editPurposeRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -58,8 +81,27 @@ export default function MyVisitors() {
     }
   };
 
-  const handleRegisterVisitor = async (formData: any) => {
+  const handleRegisterVisitor = async () => {
     try {
+      const formData = {
+        name: nameRef.current?.value || '',
+        phone: phoneRef.current?.value || '',
+        ic: icRef.current?.value || '',
+        vehicle: vehicleRef.current?.value || '',
+        date: dateRef.current?.value || '',
+        time: timeRef.current?.value || '',
+        purpose: purposeRef.current?.value || ''
+      };
+
+      if (!formData.name || !formData.phone || !formData.date) {
+        toast({
+          title: 'Error',
+          description: language === 'en' ? 'Please fill in required fields' : 'Sila lengkapkan medan yang diperlukan',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('visitors')
         .insert([{
@@ -81,6 +123,15 @@ export default function MyVisitors() {
         description: language === 'en' ? 'Visitor registered successfully' : 'Pelawat berjaya didaftarkan',
       });
 
+      // Clear form
+      if (nameRef.current) nameRef.current.value = '';
+      if (phoneRef.current) phoneRef.current.value = '';
+      if (icRef.current) icRef.current.value = '';
+      if (vehicleRef.current) vehicleRef.current.value = '';
+      if (dateRef.current) dateRef.current.value = '';
+      if (timeRef.current) timeRef.current.value = '';
+      if (purposeRef.current) purposeRef.current.value = '';
+
       fetchVisitors();
       setShowRegisterDialog(false);
     } catch (error) {
@@ -90,6 +141,151 @@ export default function MyVisitors() {
         description: 'Failed to register visitor',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleShareQR = async (visitor: Visitor) => {
+    try {
+      // Generate QR code data with visitor information
+      const qrData = {
+        id: visitor.id,
+        name: visitor.visitor_name,
+        phone: visitor.visitor_phone,
+        date: visitor.visit_date,
+        time: visitor.visit_time,
+        host: user?.email
+      };
+      
+      // Create QR code URL (using qr-server.com as a simple QR generator)
+      const qrCodeData = encodeURIComponent(JSON.stringify(qrData));
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${qrCodeData}`;
+      
+      setQrCodeUrl(qrUrl);
+      setSelectedVisitor(visitor);
+      setShowQRDialog(true);
+      
+      toast({
+        title: 'Success',
+        description: language === 'en' ? 'QR code generated successfully' : 'Kod QR berjaya dijana',
+      });
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate QR code',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleEditVisitor = (visitor: Visitor) => {
+    setSelectedVisitor(visitor);
+    setShowEditDialog(true);
+    
+    // Populate edit form with current data
+    setTimeout(() => {
+      if (editNameRef.current) editNameRef.current.value = visitor.visitor_name;
+      if (editPhoneRef.current) editPhoneRef.current.value = visitor.visitor_phone;
+      if (editIcRef.current) editIcRef.current.value = visitor.visitor_ic || '';
+      if (editVehicleRef.current) editVehicleRef.current.value = visitor.vehicle_plate || '';
+      if (editDateRef.current) editDateRef.current.value = visitor.visit_date;
+      if (editTimeRef.current) editTimeRef.current.value = visitor.visit_time || '';
+      if (editPurposeRef.current) editPurposeRef.current.value = visitor.purpose || '';
+    }, 100);
+  };
+
+  const handleUpdateVisitor = async () => {
+    if (!selectedVisitor) return;
+
+    try {
+      const formData = {
+        name: editNameRef.current?.value || '',
+        phone: editPhoneRef.current?.value || '',
+        ic: editIcRef.current?.value || '',
+        vehicle: editVehicleRef.current?.value || '',
+        date: editDateRef.current?.value || '',
+        time: editTimeRef.current?.value || '',
+        purpose: editPurposeRef.current?.value || ''
+      };
+
+      if (!formData.name || !formData.phone || !formData.date) {
+        toast({
+          title: 'Error',
+          description: language === 'en' ? 'Please fill in required fields' : 'Sila lengkapkan medan yang diperlukan',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('visitors')
+        .update({
+          visitor_name: formData.name,
+          visitor_phone: formData.phone,
+          visitor_ic: formData.ic,
+          vehicle_plate: formData.vehicle,
+          visit_date: formData.date,
+          visit_time: formData.time,
+          purpose: formData.purpose
+        })
+        .eq('id', selectedVisitor.id);
+
+      if (error) throw error;
+      
+      toast({
+        title: 'Success',
+        description: language === 'en' ? 'Visitor updated successfully' : 'Pelawat berjaya dikemaskini',
+      });
+
+      fetchVisitors();
+      setShowEditDialog(false);
+      setSelectedVisitor(null);
+    } catch (error) {
+      console.error('Error updating visitor:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update visitor',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleShareQRCode = async () => {
+    if (!qrCodeUrl || !selectedVisitor) return;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: language === 'en' ? 'Visitor QR Code' : 'Kod QR Pelawat',
+          text: language === 'en' 
+            ? `QR Code for ${selectedVisitor.visitor_name}'s visit on ${selectedVisitor.visit_date}`
+            : `Kod QR untuk lawatan ${selectedVisitor.visitor_name} pada ${selectedVisitor.visit_date}`,
+          url: qrCodeUrl
+        });
+      } else {
+        // Fallback - copy to clipboard
+        await navigator.clipboard.writeText(qrCodeUrl);
+        toast({
+          title: 'Success',
+          description: language === 'en' ? 'QR code URL copied to clipboard' : 'URL kod QR disalin ke papan keratan',
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing QR code:', error);
+      // Fallback - copy to clipboard
+      try {
+        await navigator.clipboard.writeText(qrCodeUrl);
+        toast({
+          title: 'Success',
+          description: language === 'en' ? 'QR code URL copied to clipboard' : 'URL kod QR disalin ke papan keratan',
+        });
+      } catch (clipboardError) {
+        toast({
+          title: 'Error',
+          description: 'Failed to share QR code',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
@@ -186,41 +382,78 @@ export default function MyVisitors() {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="name">
-                  {language === 'en' ? 'Visitor Name' : 'Nama Pelawat'}
+                  {language === 'en' ? 'Visitor Name' : 'Nama Pelawat'} *
                 </Label>
-                <Input id="name" placeholder={language === 'en' ? 'Enter visitor name' : 'Masukkan nama pelawat'} />
+                <Input 
+                  ref={nameRef} 
+                  id="name" 
+                  placeholder={language === 'en' ? 'Enter visitor name' : 'Masukkan nama pelawat'} 
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">
-                  {language === 'en' ? 'Phone Number' : 'Nombor Telefon'}
+                  {language === 'en' ? 'Phone Number' : 'Nombor Telefon'} *
                 </Label>
-                <Input id="phone" placeholder="+60123456789" />
+                <Input 
+                  ref={phoneRef} 
+                  id="phone" 
+                  placeholder="+60123456789" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ic">
+                  {language === 'en' ? 'IC Number (Optional)' : 'Nombor IC (Pilihan)'}
+                </Label>
+                <Input 
+                  ref={icRef} 
+                  id="ic" 
+                  placeholder="880515051234" 
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="vehicle">
                   {language === 'en' ? 'Vehicle Number (Optional)' : 'Nombor Kenderaan (Pilihan)'}
                 </Label>
-                <Input id="vehicle" placeholder="ABC1234" />
+                <Input 
+                  ref={vehicleRef} 
+                  id="vehicle" 
+                  placeholder="ABC1234" 
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="date">
-                  {language === 'en' ? 'Visit Date' : 'Tarikh Lawatan'}
+                  {language === 'en' ? 'Visit Date' : 'Tarikh Lawatan'} *
                 </Label>
-                <Input id="date" type="date" />
+                <Input 
+                  ref={dateRef} 
+                  id="date" 
+                  type="date" 
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="time">
                   {language === 'en' ? 'Visit Time' : 'Masa Lawatan'}
                 </Label>
-                <Input id="time" type="time" />
+                <Input 
+                  ref={timeRef} 
+                  id="time" 
+                  type="time" 
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="purpose">
                   {language === 'en' ? 'Purpose of Visit' : 'Tujuan Lawatan'}
                 </Label>
-                <Input id="purpose" placeholder={language === 'en' ? 'e.g., Family visit' : 'cth: Lawatan keluarga'} />
+                <Input 
+                  ref={purposeRef} 
+                  id="purpose" 
+                  placeholder={language === 'en' ? 'e.g., Family visit' : 'cth: Lawatan keluarga'} 
+                />
               </div>
-              <Button className="w-full bg-gradient-primary">
+              <Button 
+                className="w-full bg-gradient-primary" 
+                onClick={handleRegisterVisitor}
+              >
                 {language === 'en' ? 'Register Visitor' : 'Daftar Pelawat'}
               </Button>
             </div>
@@ -336,11 +569,21 @@ export default function MyVisitors() {
                 </div>
                 <div className="space-x-2">
                   {visitor.status === 'pending' && (
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleShareQR(visitor)}
+                    >
+                      <QrCode className="w-3 h-3 mr-1" />
                       {language === 'en' ? 'Share QR' : 'Kongsi QR'}
                     </Button>
                   )}
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleEditVisitor(visitor)}
+                  >
+                    <Edit3 className="w-3 h-3 mr-1" />
                     {language === 'en' ? 'Edit' : 'Edit'}
                   </Button>
                 </div>
@@ -369,6 +612,166 @@ export default function MyVisitors() {
           </CardContent>
         </Card>
       )}
+
+      {/* QR Code Dialog */}
+      <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'en' ? 'Visitor QR Code' : 'Kod QR Pelawat'}
+            </DialogTitle>
+            <DialogDescription>
+              {language === 'en' 
+                ? 'Share this QR code with your visitor for faster entry'
+                : 'Kongsi kod QR ini dengan pelawat anda untuk kemasukan yang lebih pantas'
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 text-center">
+            {selectedVisitor && (
+              <div className="space-y-4">
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="font-medium">{selectedVisitor.visitor_name}</p>
+                  <p className="text-sm text-muted-foreground">{selectedVisitor.visitor_phone}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedVisitor.visit_date} at {selectedVisitor.visit_time}
+                  </p>
+                </div>
+                {qrCodeUrl && (
+                  <div className="flex justify-center">
+                    <img 
+                      src={qrCodeUrl} 
+                      alt="Visitor QR Code" 
+                      className="border rounded-lg"
+                    />
+                  </div>
+                )}
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={handleShareQRCode}
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    {language === 'en' ? 'Share QR' : 'Kongsi QR'}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => window.open(qrCodeUrl, '_blank')}
+                  >
+                    {language === 'en' ? 'Download' : 'Muat Turun'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Visitor Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'en' ? 'Edit Visitor' : 'Edit Pelawat'}
+            </DialogTitle>
+            <DialogDescription>
+              {language === 'en' 
+                ? 'Update visitor information'
+                : 'Kemaskini maklumat pelawat'
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">
+                {language === 'en' ? 'Visitor Name' : 'Nama Pelawat'} *
+              </Label>
+              <Input 
+                ref={editNameRef} 
+                id="edit-name" 
+                placeholder={language === 'en' ? 'Enter visitor name' : 'Masukkan nama pelawat'} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">
+                {language === 'en' ? 'Phone Number' : 'Nombor Telefon'} *
+              </Label>
+              <Input 
+                ref={editPhoneRef} 
+                id="edit-phone" 
+                placeholder="+60123456789" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-ic">
+                {language === 'en' ? 'IC Number (Optional)' : 'Nombor IC (Pilihan)'}
+              </Label>
+              <Input 
+                ref={editIcRef} 
+                id="edit-ic" 
+                placeholder="880515051234" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-vehicle">
+                {language === 'en' ? 'Vehicle Number (Optional)' : 'Nombor Kenderaan (Pilihan)'}
+              </Label>
+              <Input 
+                ref={editVehicleRef} 
+                id="edit-vehicle" 
+                placeholder="ABC1234" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-date">
+                {language === 'en' ? 'Visit Date' : 'Tarikh Lawatan'} *
+              </Label>
+              <Input 
+                ref={editDateRef} 
+                id="edit-date" 
+                type="date" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-time">
+                {language === 'en' ? 'Visit Time' : 'Masa Lawatan'}
+              </Label>
+              <Input 
+                ref={editTimeRef} 
+                id="edit-time" 
+                type="time" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-purpose">
+                {language === 'en' ? 'Purpose of Visit' : 'Tujuan Lawatan'}
+              </Label>
+              <Input 
+                ref={editPurposeRef} 
+                id="edit-purpose" 
+                placeholder={language === 'en' ? 'e.g., Family visit' : 'cth: Lawatan keluarga'} 
+              />
+            </div>
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => setShowEditDialog(false)}
+              >
+                {language === 'en' ? 'Cancel' : 'Batal'}
+              </Button>
+              <Button 
+                className="flex-1 bg-gradient-primary" 
+                onClick={handleUpdateVisitor}
+              >
+                {language === 'en' ? 'Update Visitor' : 'Kemaskini Pelawat'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
