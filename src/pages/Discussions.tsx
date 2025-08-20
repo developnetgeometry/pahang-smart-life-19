@@ -42,6 +42,7 @@ export default function Discussions() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedDiscussion, setSelectedDiscussion] = useState<Discussion | null>(null);
   const [newComment, setNewComment] = useState('');
+  const [comments, setComments] = useState<Record<string, Comment[]>>({});
 
   const text = {
     en: {
@@ -210,10 +211,30 @@ export default function Discussions() {
 
   const handleDiscussionClick = (discussion: Discussion) => {
     setSelectedDiscussion(discussion);
+    // Initialize comments for this discussion if not already loaded
+    if (!comments[discussion.id]) {
+      setComments(prev => ({
+        ...prev,
+        [discussion.id]: mockComments[discussion.id] || []
+      }));
+    }
   };
 
   const handlePostComment = () => {
-    if (newComment.trim()) {
+    if (newComment.trim() && selectedDiscussion) {
+      const newCommentObj: Comment = {
+        id: Date.now().toString(),
+        author: 'Current User', // This would come from auth context in real app
+        content: newComment,
+        timestamp: 'just now',
+        likes: 0
+      };
+
+      setComments(prev => ({
+        ...prev,
+        [selectedDiscussion.id]: [...(prev[selectedDiscussion.id] || []), newCommentObj]
+      }));
+
       toast({
         title: language === 'en' ? 'Comment posted successfully!' : 'Komen berjaya dihantar!',
       });
@@ -227,7 +248,7 @@ export default function Discussions() {
 
   // If a discussion is selected, show the discussion details view
   if (selectedDiscussion) {
-    const comments = mockComments[selectedDiscussion.id] || [];
+    const discussionComments = comments[selectedDiscussion.id] || [];
     
     return (
       <div className="space-y-6">
@@ -286,7 +307,7 @@ export default function Discussions() {
         <div>
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
-            {t.comments} ({comments.length})
+            {t.comments} ({discussionComments.length})
           </h2>
 
           {/* Add Comment */}
@@ -310,7 +331,7 @@ export default function Discussions() {
 
           {/* Comments List */}
           <div className="space-y-4">
-            {comments.map((comment) => (
+            {discussionComments.map((comment) => (
               <Card key={comment.id}>
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-3">
@@ -343,7 +364,7 @@ export default function Discussions() {
             ))}
           </div>
 
-          {comments.length === 0 && (
+          {discussionComments.length === 0 && (
             <Card>
               <CardContent className="flex items-center justify-center py-12">
                 <div className="text-center">
