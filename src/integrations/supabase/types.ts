@@ -2237,6 +2237,202 @@ export type Database = {
           },
         ]
       }
+      role_approval_steps: {
+        Row: {
+          approver_id: string | null
+          approver_role: Database["public"]["Enums"]["user_role"]
+          comments: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          request_id: string
+          requirement_type: Database["public"]["Enums"]["approval_requirement"]
+          status: string
+          step_order: number
+        }
+        Insert: {
+          approver_id?: string | null
+          approver_role: Database["public"]["Enums"]["user_role"]
+          comments?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          request_id: string
+          requirement_type: Database["public"]["Enums"]["approval_requirement"]
+          status?: string
+          step_order: number
+        }
+        Update: {
+          approver_id?: string | null
+          approver_role?: Database["public"]["Enums"]["user_role"]
+          comments?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          request_id?: string
+          requirement_type?: Database["public"]["Enums"]["approval_requirement"]
+          status?: string
+          step_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_approval_steps_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "role_change_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_audit_logs: {
+        Row: {
+          action: string
+          district_id: string | null
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          new_role: Database["public"]["Enums"]["user_role"] | null
+          old_role: Database["public"]["Enums"]["user_role"] | null
+          performed_by: string
+          reason: string | null
+          request_id: string | null
+          timestamp: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          district_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          new_role?: Database["public"]["Enums"]["user_role"] | null
+          old_role?: Database["public"]["Enums"]["user_role"] | null
+          performed_by: string
+          reason?: string | null
+          request_id?: string | null
+          timestamp?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          district_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          new_role?: Database["public"]["Enums"]["user_role"] | null
+          old_role?: Database["public"]["Enums"]["user_role"] | null
+          performed_by?: string
+          reason?: string | null
+          request_id?: string | null
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_audit_logs_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_audit_logs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "role_change_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_change_requests: {
+        Row: {
+          activated_at: string | null
+          approval_requirements:
+            | Database["public"]["Enums"]["approval_requirement"][]
+            | null
+          approved_at: string | null
+          approved_by: string | null
+          assigned_approver_id: string | null
+          attachments: string[] | null
+          created_at: string
+          current_user_role: Database["public"]["Enums"]["user_role"]
+          district_id: string | null
+          expires_at: string | null
+          id: string
+          justification: string | null
+          reason: string
+          rejection_reason: string | null
+          request_type: string
+          requested_user_role: Database["public"]["Enums"]["user_role"]
+          requester_id: string
+          required_approver_role: Database["public"]["Enums"]["user_role"]
+          status: Database["public"]["Enums"]["role_request_status"]
+          target_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          approval_requirements?:
+            | Database["public"]["Enums"]["approval_requirement"][]
+            | null
+          approved_at?: string | null
+          approved_by?: string | null
+          assigned_approver_id?: string | null
+          attachments?: string[] | null
+          created_at?: string
+          current_user_role: Database["public"]["Enums"]["user_role"]
+          district_id?: string | null
+          expires_at?: string | null
+          id?: string
+          justification?: string | null
+          reason: string
+          rejection_reason?: string | null
+          request_type?: string
+          requested_user_role: Database["public"]["Enums"]["user_role"]
+          requester_id: string
+          required_approver_role: Database["public"]["Enums"]["user_role"]
+          status?: Database["public"]["Enums"]["role_request_status"]
+          target_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          approval_requirements?:
+            | Database["public"]["Enums"]["approval_requirement"][]
+            | null
+          approved_at?: string | null
+          approved_by?: string | null
+          assigned_approver_id?: string | null
+          attachments?: string[] | null
+          created_at?: string
+          current_user_role?: Database["public"]["Enums"]["user_role"]
+          district_id?: string | null
+          expires_at?: string | null
+          id?: string
+          justification?: string | null
+          reason?: string
+          rejection_reason?: string | null
+          request_type?: string
+          requested_user_role?: Database["public"]["Enums"]["user_role"]
+          requester_id?: string
+          required_approver_role?: Database["public"]["Enums"]["user_role"]
+          status?: Database["public"]["Enums"]["role_request_status"]
+          target_user_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_change_requests_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sensor_readings: {
         Row: {
           id: string
@@ -2651,8 +2847,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_approval_requirements: {
+        Args: {
+          current_user_role: Database["public"]["Enums"]["user_role"]
+          requested_user_role: Database["public"]["Enums"]["user_role"]
+        }
+        Returns: Database["public"]["Enums"]["approval_requirement"][]
+      }
       get_current_user_role_safe: {
         Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      get_required_approver_role: {
+        Args: {
+          current_user_role: Database["public"]["Enums"]["user_role"]
+          requested_user_role: Database["public"]["Enums"]["user_role"]
+        }
         Returns: Database["public"]["Enums"]["user_role"]
       }
       get_user_district: {
@@ -2688,10 +2898,25 @@ export type Database = {
         | "service_provider"
         | "community_leader"
         | "state_service_manager"
+      approval_requirement:
+        | "community_voting"
+        | "business_verification"
+        | "interview_process"
+        | "background_check"
+        | "performance_evaluation"
+        | "multi_level_approval"
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
       complaint_priority: "low" | "medium" | "high" | "urgent"
       complaint_status: "pending" | "in_progress" | "resolved" | "closed"
       marketplace_condition: "new" | "excellent" | "good" | "fair" | "poor"
+      role_request_status:
+        | "pending"
+        | "under_review"
+        | "approved"
+        | "rejected"
+        | "on_probation"
+        | "active"
+        | "expired"
       user_role:
         | "admin"
         | "security"
@@ -2857,10 +3082,27 @@ export const Constants = {
         "community_leader",
         "state_service_manager",
       ],
+      approval_requirement: [
+        "community_voting",
+        "business_verification",
+        "interview_process",
+        "background_check",
+        "performance_evaluation",
+        "multi_level_approval",
+      ],
       booking_status: ["pending", "confirmed", "cancelled", "completed"],
       complaint_priority: ["low", "medium", "high", "urgent"],
       complaint_status: ["pending", "in_progress", "resolved", "closed"],
       marketplace_condition: ["new", "excellent", "good", "fair", "poor"],
+      role_request_status: [
+        "pending",
+        "under_review",
+        "approved",
+        "rejected",
+        "on_probation",
+        "active",
+        "expired",
+      ],
       user_role: [
         "admin",
         "security",
