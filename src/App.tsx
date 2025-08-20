@@ -34,6 +34,7 @@ import VisitorSecurity from "./pages/VisitorSecurity";
 import VisitorAnalytics from "./pages/VisitorAnalytics";
 import CommunicationHub from "./pages/CommunicationHub";
 import RoleManagement from "./pages/RoleManagement";
+import NotificationSettings from "@/components/notifications/NotificationSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -123,7 +124,15 @@ const App = () => (
                 } 
               />
               <Route 
-                path="/announcements" 
+                path="/notification-settings" 
+                element={
+                  <ProtectedRoute>
+                    <NotificationSettings />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/announcements"
                 element={
                   <ProtectedRoute>
                     <Announcements />
