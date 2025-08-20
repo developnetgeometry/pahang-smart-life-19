@@ -3217,27 +3217,33 @@ export type Database = {
       }
       system_modules: {
         Row: {
+          category: string
           created_at: string | null
           description: string | null
           display_name: string
+          icon_name: string | null
           id: string
           is_active: boolean | null
           module_name: string
           route_path: string | null
         }
         Insert: {
+          category?: string
           created_at?: string | null
           description?: string | null
           display_name: string
+          icon_name?: string | null
           id?: string
           is_active?: boolean | null
           module_name: string
           route_path?: string | null
         }
         Update: {
+          category?: string
           created_at?: string | null
           description?: string | null
           display_name?: string
+          icon_name?: string | null
           id?: string
           is_active?: boolean | null
           module_name?: string
