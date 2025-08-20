@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useState } from 'react';
 import { 
   MapPin, 
   Users, 
@@ -17,6 +19,7 @@ import {
 
 export function StateAdminDashboard() {
   const { language } = useAuth();
+  const [selectedDistrict, setSelectedDistrict] = useState<typeof districtPerformance[0] | null>(null);
 
   const metrics = [
     {
@@ -153,9 +156,76 @@ export function StateAdminDashboard() {
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <Progress value={district.satisfaction * 20} className="w-20" />
-                  <Button size="sm" variant="outline">
-                    {language === 'en' ? 'View Details' : 'Lihat Butiran'}
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline" onClick={() => setSelectedDistrict(district)}>
+                        {language === 'en' ? 'View Details' : 'Lihat Butiran'}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>{district.name} - {language === 'en' ? 'District Details' : 'Butiran Daerah'}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                          <Card>
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-sm flex items-center gap-2">
+                                <Users className="h-4 w-4" />
+                                {language === 'en' ? 'Total Residents' : 'Jumlah Penduduk'}
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="text-2xl font-bold">{district.residents}</div>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-sm flex items-center gap-2">
+                                <Star className="h-4 w-4" />
+                                {language === 'en' ? 'Satisfaction Rating' : 'Penilaian Kepuasan'}
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="text-2xl font-bold">{district.satisfaction}/5</div>
+                              <Progress value={district.satisfaction * 20} className="mt-2" />
+                            </CardContent>
+                          </Card>
+                        </div>
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-sm flex items-center gap-2">
+                              <AlertTriangle className="h-4 w-4" />
+                              {language === 'en' ? 'Active Issues' : 'Isu Aktif'}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold text-destructive">{district.issues}</div>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {language === 'en' ? 'Issues requiring attention' : 'Isu yang memerlukan perhatian'}
+                            </p>
+                          </CardContent>
+                        </Card>
+                        <div className="space-y-3">
+                          <h4 className="font-medium">{language === 'en' ? 'Recent Activities' : 'Aktiviti Terkini'}</h4>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                              <span className="text-sm">{language === 'en' ? 'Monthly maintenance completed' : 'Penyelenggaraan bulanan selesai'}</span>
+                              <Badge variant="secondary">{language === 'en' ? 'Completed' : 'Selesai'}</Badge>
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                              <span className="text-sm">{language === 'en' ? 'Budget allocation approved' : 'Peruntukan bajet diluluskan'}</span>
+                              <Badge variant="secondary">{language === 'en' ? 'Approved' : 'Diluluskan'}</Badge>
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                              <span className="text-sm">{language === 'en' ? 'New residents registered' : 'Penduduk baru didaftarkan'}</span>
+                              <Badge variant="outline">{language === 'en' ? 'In Progress' : 'Dalam Proses'}</Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
             ))}
