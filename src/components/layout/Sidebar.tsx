@@ -73,7 +73,7 @@ export function AppSidebar() {
         { title: t('myVisitors'), url: '/my-visitors', icon: Users },
         { title: t('myComplaints'), url: '/my-complaints', icon: FileText },
         { title: t('myProfile'), url: '/my-profile', icon: Settings },
-        { title: 'Notification Settings', url: '/notification-settings', icon: Bell }
+        { title: t('notificationSettings'), url: '/notification-settings', icon: Bell }
       ]
     });
 

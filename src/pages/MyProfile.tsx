@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { User, Phone, Mail, MapPin, Car, Shield, Settings, Camera, Edit, Save } from 'lucide-react';
+import { User, Phone, Mail, MapPin, Car, Shield, Settings, Camera, Edit, Save, Bell } from 'lucide-react';
 
 export default function MyProfile() {
   const { user, language, updateProfile } = useAuth();
@@ -360,6 +360,17 @@ export default function MyProfile() {
                     <p className="text-sm p-2 bg-muted rounded">{user.ownership_status}</p>
                   </div>
                 )}
+              </div>
+              <Separator className="my-4" />
+              <div className="space-y-3">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => navigate('/notification-settings')}
+                >
+                  <Bell className="w-4 h-4 mr-2" />
+                  {language === 'en' ? 'Notification Settings' : 'Tetapan Notifikasi'}
+                </Button>
               </div>
             </CardContent>
           </Card>
