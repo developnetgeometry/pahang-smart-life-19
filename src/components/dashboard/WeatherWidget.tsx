@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Cloud, Sun, CloudRain, CloudSnow, Wind, Droplets, Thermometer, Eye } from 'lucide-react';
@@ -15,7 +15,7 @@ interface WeatherData {
 }
 
 export function WeatherWidget() {
-  const { language } = useEnhancedAuth();
+  const { user } = useSimpleAuth();
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,7 +24,7 @@ export function WeatherWidget() {
     const mockWeather: WeatherData = {
       location: 'Kuantan, Pahang',
       temperature: 29,
-      condition: language === 'en' ? 'Partly Cloudy' : 'Separuh Mendung',
+      condition: 'Separuh Mendung',
       humidity: 78,
       windSpeed: 12,
       visibility: 10,
@@ -36,7 +36,7 @@ export function WeatherWidget() {
       setWeather(mockWeather);
       setLoading(false);
     }, 1000);
-  }, [language]);
+  }, []);
 
   const getWeatherIcon = (condition: string) => {
     switch (condition.toLowerCase()) {
@@ -62,7 +62,7 @@ export function WeatherWidget() {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Cloud className="w-5 h-5" />
-            <span>{language === 'en' ? 'Weather' : 'Cuaca'}</span>
+            <span>Cuaca</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -90,7 +90,7 @@ export function WeatherWidget() {
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Cloud className="w-5 h-5" />
-          <span>{language === 'en' ? 'Weather' : 'Cuaca'}</span>
+          <span>Cuaca</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -117,21 +117,21 @@ export function WeatherWidget() {
           <div className="text-center space-y-1">
             <Droplets className="w-4 h-4 mx-auto text-blue-500" />
             <p className="text-xs text-muted-foreground">
-              {language === 'en' ? 'Humidity' : 'Kelembapan'}
+              Kelembapan
             </p>
             <p className="text-sm font-medium">{weather.humidity}%</p>
           </div>
           <div className="text-center space-y-1">
             <Wind className="w-4 h-4 mx-auto text-green-500" />
             <p className="text-xs text-muted-foreground">
-              {language === 'en' ? 'Wind' : 'Angin'}
+              Angin
             </p>
             <p className="text-sm font-medium">{weather.windSpeed} km/h</p>
           </div>
           <div className="text-center space-y-1">
             <Eye className="w-4 h-4 mx-auto text-purple-500" />
             <p className="text-xs text-muted-foreground">
-              {language === 'en' ? 'Visibility' : 'Jarak Pandang'}
+              Jarak Pandang
             </p>
             <p className="text-sm font-medium">{weather.visibility} km</p>
           </div>
@@ -141,10 +141,10 @@ export function WeatherWidget() {
         <div className="bg-muted/50 rounded-lg p-3">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
-              {language === 'en' ? 'Air Quality' : 'Kualiti Udara'}
+              Kualiti Udara
             </span>
             <span className="text-sm font-medium text-green-600">
-              {language === 'en' ? 'Good' : 'Baik'}
+              Baik
             </span>
           </div>
           <div className="w-full bg-muted rounded-full h-2 mt-2">

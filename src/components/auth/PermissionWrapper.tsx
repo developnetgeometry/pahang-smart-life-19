@@ -1,5 +1,5 @@
-import { ReactNode, useState, useEffect } from 'react';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { ReactNode } from 'react';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 
 interface PermissionWrapperProps {
   children: ReactNode;
@@ -16,28 +16,10 @@ export function PermissionWrapper({
   fallback,
   loading,
 }: PermissionWrapperProps) {
-  const { hasModulePermission } = useEnhancedAuth();
-  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  const { user } = useSimpleAuth();
 
-  useEffect(() => {
-    const checkPermission = async () => {
-      const access = await hasModulePermission(module, permission);
-      setHasAccess(access);
-    };
-
-    checkPermission();
-  }, [module, permission, hasModulePermission]);
-
-  if (hasAccess === null) {
-    return loading || (
-      <div className="inline-flex items-center">
-        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
-        Loading...
-      </div>
-    );
-  }
-
-  if (!hasAccess) {
+  // Simplified permission system - just show content if user is authenticated
+  if (!user) {
     return fallback || null;
   }
 

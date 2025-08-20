@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +20,7 @@ interface Booking {
 }
 
 export default function MyBookings() {
-  const { language } = useEnhancedAuth();
+  const { user } = useSimpleAuth();
   const [bookings, setBookings] = useState<Booking[]>([
     {
       id: '1',

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,8 @@ interface Facility {
 }
 
 export default function Facilities() {
-  const { language, user } = useEnhancedAuth();
+  const { user } = useSimpleAuth();
+  const { t } = useTranslation('ms');
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');

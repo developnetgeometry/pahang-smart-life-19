@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ interface Announcement {
 }
 
 export default function Announcements() {
-  const { language, user } = useEnhancedAuth();
+  const { user } = useSimpleAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);

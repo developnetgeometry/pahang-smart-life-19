@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ interface Visitor {
 }
 
 export default function MyVisitors() {
-  const { language, user } = useEnhancedAuth();
+  const { user } = useSimpleAuth();
   const { toast } = useToast();
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(true);
