@@ -1,4 +1,4 @@
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { useTranslation } from '@/lib/translations';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { QuickActions } from '@/components/dashboard/QuickActions';
@@ -20,8 +20,8 @@ import {
 } from 'lucide-react';
 
 const Index = () => {
-  const { user, profile, currentRole, language, hasRole } = useEnhancedAuth();
-  const { t } = useTranslation((language as 'en' | 'ms') || 'ms');
+  const { user } = useSimpleAuth();
+  const { t } = useTranslation('ms');
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,7 +31,7 @@ const Index = () => {
     const fetchRecentActivities = async () => {
       try {
         // In demo mode, show rich sample data
-        if (user?.id.startsWith('demo-') || user?.id === '11111111-1111-1111-1111-111111111111') {
+        if (user?.id === '11111111-1111-1111-1111-111111111111') {
           const sampleActivities = [
             {
               id: 'demo-1',
@@ -136,8 +136,8 @@ const Index = () => {
           {
             id: 1,
             type: 'announcement',
-            title: language === 'en' ? 'Independence Day Celebration' : 'Sambutan Hari Kemerdekaan',
-            description: language === 'en' ? 'Join our community celebration on August 31st...' : 'Sertai sambutan komuniti pada 31 Ogos...',
+            title: 'Sambutan Hari Kemerdekaan',
+            description: 'Sertai sambutan komuniti pada 31 Ogos...',
             time: '2 jam yang lalu',
             icon: Megaphone,
             color: 'text-blue-600'
@@ -145,8 +145,8 @@ const Index = () => {
           {
             id: 2,
             type: 'discussion',
-            title: language === 'en' ? 'Security Improvement Suggestions' : 'Cadangan Peningkatan Keselamatan',
-            description: language === 'en' ? 'Additional lighting needed for parking area...' : 'Lampu tambahan diperlukan di kawasan parking...',
+            title: 'Cadangan Peningkatan Keselamatan',
+            description: 'Lampu tambahan diperlukan di kawasan parking...',
             time: '1 hari yang lalu',
             icon: MessageSquare,
             color: 'text-purple-600'
@@ -158,7 +158,7 @@ const Index = () => {
     };
 
     fetchRecentActivities();
-  }, [language]);
+  }, []);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -167,21 +167,18 @@ const Index = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">
-              {t('welcomeBack')}, {profile?.full_name || user?.email || 'User'}!
+              {t('welcomeBack')}, {user?.email || 'User'}!
             </h1>
             <p className="text-muted-foreground">
-              {language === 'en' 
-                ? `Here's what's happening in your community today.`
-                : `Berikut adalah yang berlaku di komuniti anda hari ini.`
-              }
+              Berikut adalah yang berlaku di komuniti anda hari ini.
             </p>
           </div>
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="bg-gradient-primary text-white border-none">
-              {currentRole?.replace('_', ' ') || 'resident'}
+              resident
             </Badge>
             <Badge variant="secondary">
-              {profile?.district_id || 'N/A'}
+              Pahang Prima
             </Badge>
           </div>
         </div>
@@ -243,7 +240,7 @@ const Index = () => {
                     <div className="text-center text-muted-foreground py-8">
                       <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
                       <p className="text-sm">
-                        {language === 'en' ? 'No recent activities' : 'Tiada aktiviti terkini'}
+                        Tiada aktiviti terkini
                       </p>
                     </div>
                   )}
@@ -251,7 +248,7 @@ const Index = () => {
               )}
               <div className="mt-4 pt-4 border-t">
                 <Button variant="ghost" className="w-full">
-                  {language === 'en' ? 'View all activities' : 'Lihat semua aktiviti'}
+                  Lihat semua aktiviti
                 </Button>
               </div>
             </CardContent>
@@ -268,7 +265,7 @@ const Index = () => {
               <CardTitle className="flex items-center space-x-2">
                 <TrendingUp className="w-5 h-5" />
                 <span>
-                  {language === 'en' ? 'Community Health' : 'Kesihatan Komuniti'}
+                  Kesihatan Komuniti
                 </span>
               </CardTitle>
             </CardHeader>
@@ -276,7 +273,7 @@ const Index = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    {language === 'en' ? 'Safety Score' : 'Skor Keselamatan'}
+                    Skor Keselamatan
                   </span>
                   <span className="text-sm font-medium text-green-600">9.2/10</span>
                 </div>
@@ -288,7 +285,7 @@ const Index = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    {language === 'en' ? 'Community Engagement' : 'Penglibatan Komuniti'}
+                    Penglibatan Komuniti
                   </span>
                   <span className="text-sm font-medium text-blue-600">8.7/10</span>
                 </div>
@@ -300,7 +297,7 @@ const Index = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    {language === 'en' ? 'Facility Usage' : 'Penggunaan Kemudahan'}
+                    Penggunaan Kemudahan
                   </span>
                   <span className="text-sm font-medium text-purple-600">7.8/10</span>
                 </div>
