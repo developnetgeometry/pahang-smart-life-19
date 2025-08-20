@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
-import { Loader2, FileText, AlertCircle } from "lucide-react";
+import { Loader2, FileText, AlertCircle, Upload, X } from "lucide-react";
 
 interface RoleRequestFormProps {
   onSuccess?: () => void;
@@ -49,13 +49,15 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
     approver: string;
     requirements: string[];
   } | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
 
   const form = useForm({
     defaultValues: {
       requestedRole: '',
       reason: '',
       justification: '',
-      attachments: ''
+      attachments: []
     }
   });
 
@@ -70,7 +72,7 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
       justification: "Additional Justification",
       justificationPlaceholder: "Provide additional details about your qualifications and experience...",
       attachments: "Supporting Documents",
-      attachmentsPlaceholder: "URLs to supporting documents (comma-separated)",
+      attachmentsPlaceholder: "Upload documents (PDF, DOC, DOCX, JPG, PNG)",
       approvalInfo: "Approval Information",
       approver: "Will be reviewed by",
       requirements: "Requirements",
@@ -90,7 +92,7 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
       justification: "Justifikasi Tambahan",
       justificationPlaceholder: "Berikan butiran tambahan tentang kelayakan dan pengalaman anda...",
       attachments: "Dokumen Sokongan",
-      attachmentsPlaceholder: "URL dokumen sokongan (dipisahkan dengan koma)",
+      attachmentsPlaceholder: "Muat naik dokumen (PDF, DOC, DOCX, JPG, PNG)",
       approvalInfo: "Maklumat Kelulusan",
       approver: "Akan disemak oleh",
       requirements: "Keperluan",
@@ -184,6 +186,90 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
     }
   };
 
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || !user) return [];
+
+    setUploadingFiles(true);
+    const uploadedFilePaths: string[] = [];
+
+    try {
+      for (const file of Array.from(files)) {
+        // Validate file type
+        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png', 'image/jpg'];
+        if (!allowedTypes.includes(file.type)) {
+          toast({
+            title: "Invalid file type",
+            description: `${file.name} is not a supported file type`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          toast({
+            title: "File too large",
+            description: `${file.name} is too large. Maximum size is 10MB`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('role-documents')
+          .upload(fileName, file);
+
+        if (uploadError) {
+          toast({
+            title: "Upload failed",
+            description: `Failed to upload ${file.name}`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        uploadedFilePaths.push(fileName);
+      }
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      toast({
+        title: "Upload error",
+        description: "An error occurred while uploading files",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingFiles(false);
+    }
+
+    return uploadedFilePaths;
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      
+      const filePaths = await handleFileUpload(files);
+      if (filePaths.length > 0) {
+        const currentAttachments = form.getValues('attachments') || [];
+        form.setValue('attachments', [...currentAttachments, ...filePaths]);
+      }
+    }
+  };
+
+  const removeFile = (index: number) => {
+    const newFiles = uploadedFiles.filter((_, i) => i !== index);
+    setUploadedFiles(newFiles);
+    
+    const currentAttachments = form.getValues('attachments') || [];
+    const newAttachments = currentAttachments.filter((_, i) => i !== index);
+    form.setValue('attachments', newAttachments);
+  };
+
   const onSubmit = async (values: any) => {
     if (!user || !currentUserRole) return;
 
@@ -213,7 +299,7 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
           request_type: 'user_initiated',
           reason: values.reason,
           justification: values.justification || null,
-          attachments: values.attachments ? values.attachments.split(',').map((url: string) => url.trim()) : null,
+          attachments: values.attachments && values.attachments.length > 0 ? values.attachments : null,
           required_approver_role: approverRole,
           approval_requirements: requirements || [],
           district_id: user.district
@@ -241,6 +327,7 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
 
       form.reset();
       setSelectedRoleInfo(null);
+      setUploadedFiles([]);
       onSuccess?.();
     } catch (error) {
       console.error('Error submitting role request:', error);
@@ -397,13 +484,69 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
                 <FormItem>
                   <FormLabel>{t.attachments}</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder={t.attachmentsPlaceholder}
-                      {...field} 
-                    />
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-center w-full">
+                        <label 
+                          htmlFor="file-upload" 
+                          className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/75 transition-colors"
+                        >
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
+                            <p className="mb-2 text-sm text-muted-foreground">
+                              <span className="font-semibold">Click to upload</span> or drag and drop
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              PDF, DOC, DOCX, JPG, PNG (MAX. 10MB each)
+                            </p>
+                          </div>
+                          <input
+                            id="file-upload"
+                            type="file"
+                            className="hidden"
+                            multiple
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                            onChange={handleFileChange}
+                            disabled={uploadingFiles}
+                          />
+                        </label>
+                      </div>
+                      
+                      {uploadedFiles.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">Uploaded Files:</p>
+                          {uploadedFiles.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                              <div className="flex items-center space-x-2">
+                                <FileText className="w-4 h-4" />
+                                <span className="text-sm truncate">{file.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                                </span>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeFile(index)}
+                                disabled={uploadingFiles}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {uploadingFiles && (
+                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Uploading files...</span>
+                        </div>
+                      )}
+                    </div>
                   </FormControl>
                   <FormDescription>
-                    URLs to supporting documents, certifications, or portfolios (separate multiple URLs with commas)
+                    Upload supporting documents, certifications, or portfolios. Maximum 10MB per file.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
