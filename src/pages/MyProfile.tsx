@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import { User, Phone, Mail, MapPin, Car, Shield, Settings, Camera, Edit, Save } 
 
 export default function MyProfile() {
   const { user, language, updateProfile } = useAuth();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     display_name: user?.display_name || '',
@@ -129,7 +131,7 @@ export default function MyProfile() {
                 variant="outline" 
                 size="sm" 
                 className="w-full"
-                onClick={() => window.location.href = '/role-management'}
+                onClick={() => navigate('/role-management')}
               >
                 <Shield className="w-4 h-4 mr-2" />
                 {language === 'en' ? 'Request Role Change' : 'Mohon Tukar Peranan'}
