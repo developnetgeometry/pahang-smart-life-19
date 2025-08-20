@@ -46,7 +46,21 @@ interface ChatChannel {
   member_count: number;
 }
 
-export default function CommunityChat() {
+interface MarketplaceChatInfo {
+  chatWith?: string;
+  presetMessage?: string;
+  itemInfo?: {
+    title: string;
+    price: number;
+    id: string;
+  };
+}
+
+interface CommunityChatProps {
+  marketplaceChat?: MarketplaceChatInfo | null;
+}
+
+export default function CommunityChat({ marketplaceChat }: CommunityChatProps = {}) {
   const { language, user } = useAuth();
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -55,6 +69,15 @@ export default function CommunityChat() {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Set preset message from marketplace chat
+  useEffect(() => {
+    if (marketplaceChat?.presetMessage) {
+      setNewMessage(marketplaceChat.presetMessage);
+      // Auto-switch to 'social' channel for marketplace chats
+      setCurrentChannel('social');
+    }
+  }, [marketplaceChat]);
 
   useEffect(() => {
     fetchChannels();
@@ -359,9 +382,9 @@ export default function CommunityChat() {
         <div className="flex space-x-2">
           <Input
             placeholder={
-              language === 'en' 
-                ? 'Type your message...'
-                : 'Taip mesej anda...'
+              marketplaceChat 
+                ? (language === 'en' ? 'Your message is ready to send...' : 'Mesej anda sedia untuk dihantar...')
+                : (language === 'en' ? 'Type your message...' : 'Taip mesej anda...')
             }
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}

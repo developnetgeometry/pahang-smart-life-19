@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +31,7 @@ interface MarketplaceItem {
 
 export default function Marketplace() {
   const { language } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -217,9 +219,20 @@ export default function Marketplace() {
     setIsCreateOpen(false);
   };
 
-  const handleContactSeller = () => {
-    toast({
-      title: t.contactSuccess,
+  const handleContactSeller = (item: MarketplaceItem) => {
+    // Navigate to communication hub with seller info and preset message
+    navigate('/communication', {
+      state: {
+        chatWith: item.seller,
+        presetMessage: language === 'en' 
+          ? `Hi, is this item still available? - ${item.title}`
+          : `Hai, adakah item ini masih tersedia? - ${item.title}`,
+        itemInfo: {
+          title: item.title,
+          price: item.price,
+          id: item.id
+        }
+      }
     });
   };
 
@@ -409,7 +422,7 @@ export default function Marketplace() {
                 </div>
               </div>
 
-              <Button className="w-full" onClick={handleContactSeller}>
+              <Button className="w-full" onClick={() => handleContactSeller(item)}>
                 <MessageCircle className="h-4 w-4 mr-2" />
                 {t.contact}
               </Button>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +23,19 @@ import CommunityChat from '@/components/communication/CommunityChat';
 
 export default function CommunicationHub() {
   const { language } = useAuth();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('chat');
+
+  // Check if navigated from marketplace with seller chat info
+  const marketplaceChat = location.state as {
+    chatWith?: string;
+    presetMessage?: string;
+    itemInfo?: {
+      title: string;
+      price: number;
+      id: string;
+    };
+  } | null;
 
   const communicationStats = {
     activeUsers: 34,
@@ -54,6 +67,36 @@ export default function CommunicationHub() {
           </Badge>
         </div>
       </div>
+
+      {/* Marketplace Chat Notification */}
+      {marketplaceChat && (
+        <Card className="border-blue-500/20 bg-blue-500/5">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <MessageSquare className="w-5 h-5 text-blue-600 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-blue-900 dark:text-blue-100">
+                  {language === 'en' ? 'Marketplace Chat' : 'Chat Marketplace'}
+                </h3>
+                <p className="text-sm text-blue-700 dark:text-blue-200 mb-2">
+                  {language === 'en' 
+                    ? `Starting chat with ${marketplaceChat.chatWith} about "${marketplaceChat.itemInfo?.title}"`
+                    : `Memulakan chat dengan ${marketplaceChat.chatWith} tentang "${marketplaceChat.itemInfo?.title}"`
+                  }
+                </p>
+                <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-300">
+                  <span>
+                    {language === 'en' ? 'Price:' : 'Harga:'} RM{marketplaceChat.itemInfo?.price}
+                  </span>
+                  <Badge variant="secondary" className="text-xs">
+                    {language === 'en' ? 'Marketplace Item' : 'Item Marketplace'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -158,7 +201,7 @@ export default function CommunicationHub() {
             </TabsList>
 
             <TabsContent value="chat" className="mt-6">
-              <CommunityChat />
+              <CommunityChat marketplaceChat={marketplaceChat} />
             </TabsContent>
 
             <TabsContent value="voice" className="mt-6">
