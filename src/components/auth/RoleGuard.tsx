@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useEnhancedAuth, EnhancedUserRole } from '@/hooks/useEnhancedAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ShieldX } from 'lucide-react';
@@ -110,6 +110,3 @@ function ModulePermissionChecker({
 
   return hasAccess ? onAccessGranted() : onAccessDenied();
 }
-
-// Import statements for React hooks
-import { useState, useEffect } from 'react';
