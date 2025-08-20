@@ -1,4 +1,4 @@
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { useTranslation } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,8 +17,8 @@ import {
 } from 'lucide-react';
 
 export function QuickActions() {
-  const { language, hasRole } = useAuth();
-  const { t } = useTranslation(language || 'ms');
+  const { language, hasRole } = useEnhancedAuth();
+  const { t } = useTranslation((language as 'en' | 'ms') || 'ms');
   const navigate = useNavigate();
 
   const residentActions = [
@@ -84,7 +84,7 @@ export function QuickActions() {
   ];
 
   // Show resident actions by default, professional actions for admin roles
-  const showProfessionalActions = hasRole('admin') || hasRole('manager') || hasRole('security');
+  const showProfessionalActions = hasRole('state_admin') || hasRole('community_admin') || hasRole('facility_manager') || hasRole('security_officer');
   
   const actions = showProfessionalActions ? professionalActions : residentActions;
 
