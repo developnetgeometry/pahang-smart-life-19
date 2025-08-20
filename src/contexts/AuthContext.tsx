@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export type UserRole = 
   | 'admin' 
-  | 'security' 
+  | 'security_officer' 
   | 'manager' 
   | 'resident'
   | 'state_admin'

@@ -126,7 +126,7 @@ export function DashboardStats() {
   ] : [];
 
   // Show resident stats by default, professional stats for admin roles
-  const showProfessionalStats = hasRole('admin') || hasRole('manager') || hasRole('security');
+  const showProfessionalStats = hasRole('admin') || hasRole('manager') || hasRole('security_officer');
   
   const displayStats = showProfessionalStats ? professionalStats : residentStats;
 

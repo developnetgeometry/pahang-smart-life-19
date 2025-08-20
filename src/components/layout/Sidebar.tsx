@@ -126,7 +126,7 @@ export function AppSidebar() {
 
     // Security & Monitoring - for security, admin, and manager roles
     const securityItems = [];
-    if (hasRole('security') || hasRole('admin') || hasRole('manager')) {
+    if (hasRole('security_officer') || hasRole('admin') || hasRole('manager')) {
       securityItems.push(
         { title: t('visitorSecurity'), url: '/visitor-security', icon: Shield, requiredRoles: ['security', 'admin', 'manager'] },
         { title: t('cctvManagement'), url: '/admin/cctv', icon: Camera, requiredRoles: ['security', 'admin', 'manager'] }
