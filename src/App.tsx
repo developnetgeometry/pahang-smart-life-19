@@ -197,14 +197,6 @@ const App = () => (
                 } 
               />
               <Route 
-                path="/modules" 
-                element={
-                  <ProtectedRoute>
-                    <ModulesPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
                 path="/my-payments" 
                 element={
                   <ProtectedRoute>
