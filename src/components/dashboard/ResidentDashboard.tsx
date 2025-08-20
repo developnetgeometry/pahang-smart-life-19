@@ -18,7 +18,7 @@ import {
   CheckCircle,
   Clock,
   Building,
-  Grid3X3
+  Activity
 } from 'lucide-react';
 
 export function ResidentDashboard() {
@@ -343,6 +343,21 @@ export function ResidentDashboard() {
                 </a>
               </Button>
             ))}
+            <Button
+              variant="outline"
+              className="h-auto p-4 flex flex-col items-start gap-2 hover:shadow-md transition-shadow"
+              asChild
+            >
+              <a href="/modules">
+                <div className="flex items-center gap-2 w-full">
+                  <Activity className="h-5 w-5 text-primary" />
+                  <span className="font-medium">{language === 'en' ? 'All Modules' : 'Semua Modul'}</span>
+                </div>
+                <p className="text-xs text-muted-foreground text-left">
+                  {language === 'en' ? 'Access all system modules' : 'Akses semua modul sistem'}
+                </p>
+              </a>
+            </Button>
           </div>
         </CardContent>
       </Card>
