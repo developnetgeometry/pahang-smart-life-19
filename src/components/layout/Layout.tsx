@@ -1,4 +1,4 @@
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Header } from './Header';
 import { AppSidebar } from './Sidebar';
 
@@ -7,19 +7,9 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { user, isLoading } = useEnhancedAuth();
+  const { isAuthenticated } = useAuth();
 
-  // Show loading spinner while authentication is being checked
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // If user is not authenticated, render children (likely login page)
-  if (!user) {
+  if (!isAuthenticated) {
     return <>{children}</>;
   }
 

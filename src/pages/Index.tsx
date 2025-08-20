@@ -1,4 +1,4 @@
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { QuickActions } from '@/components/dashboard/QuickActions';
@@ -20,8 +20,8 @@ import {
 } from 'lucide-react';
 
 const Index = () => {
-  const { user } = useEnhancedAuth();
-  const { t } = useTranslation('ms');
+  const { user, language, hasRole } = useAuth();
+  const { t } = useTranslation(language || 'ms');
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,7 +31,7 @@ const Index = () => {
     const fetchRecentActivities = async () => {
       try {
         // In demo mode, show rich sample data
-        if (user?.id === '11111111-1111-1111-1111-111111111111') {
+        if (user?.id.startsWith('demo-') || user?.id === '11111111-1111-1111-1111-111111111111') {
           const sampleActivities = [
             {
               id: 'demo-1',
@@ -136,8 +136,8 @@ const Index = () => {
           {
             id: 1,
             type: 'announcement',
-            title: 'Sambutan Hari Kemerdekaan',
-            description: 'Sertai sambutan komuniti pada 31 Ogos...',
+            title: language === 'en' ? 'Independence Day Celebration' : 'Sambutan Hari Kemerdekaan',
+            description: language === 'en' ? 'Join our community celebration on August 31st...' : 'Sertai sambutan komuniti pada 31 Ogos...',
             time: '2 jam yang lalu',
             icon: Megaphone,
             color: 'text-blue-600'
@@ -145,8 +145,8 @@ const Index = () => {
           {
             id: 2,
             type: 'discussion',
-            title: 'Cadangan Peningkatan Keselamatan',
-            description: 'Lampu tambahan diperlukan di kawasan parking...',
+            title: language === 'en' ? 'Security Improvement Suggestions' : 'Cadangan Peningkatan Keselamatan',
+            description: language === 'en' ? 'Additional lighting needed for parking area...' : 'Lampu tambahan diperlukan di kawasan parking...',
             time: '1 hari yang lalu',
             icon: MessageSquare,
             color: 'text-purple-600'
@@ -158,7 +158,7 @@ const Index = () => {
     };
 
     fetchRecentActivities();
-  }, []);
+  }, [language]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -167,18 +167,21 @@ const Index = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">
-              {t('welcomeBack')}, {user?.email || 'User'}!
+              {t('welcomeBack')}, {user.display_name}!
             </h1>
             <p className="text-muted-foreground">
-              Berikut adalah yang berlaku di komuniti anda hari ini.
+              {language === 'en' 
+                ? `Here's what's happening in your community today.`
+                : `Berikut adalah yang berlaku di komuniti anda hari ini.`
+              }
             </p>
           </div>
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="bg-gradient-primary text-white border-none">
-              resident
+              {user.user_role.replace('_', ' ')}
             </Badge>
             <Badge variant="secondary">
-              Pahang Prima
+              {user.district}
             </Badge>
           </div>
         </div>
@@ -240,7 +243,7 @@ const Index = () => {
                     <div className="text-center text-muted-foreground py-8">
                       <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
                       <p className="text-sm">
-                        Tiada aktiviti terkini
+                        {language === 'en' ? 'No recent activities' : 'Tiada aktiviti terkini'}
                       </p>
                     </div>
                   )}
@@ -248,7 +251,7 @@ const Index = () => {
               )}
               <div className="mt-4 pt-4 border-t">
                 <Button variant="ghost" className="w-full">
-                  Lihat semua aktiviti
+                  {language === 'en' ? 'View all activities' : 'Lihat semua aktiviti'}
                 </Button>
               </div>
             </CardContent>
@@ -265,7 +268,7 @@ const Index = () => {
               <CardTitle className="flex items-center space-x-2">
                 <TrendingUp className="w-5 h-5" />
                 <span>
-                  Kesihatan Komuniti
+                  {language === 'en' ? 'Community Health' : 'Kesihatan Komuniti'}
                 </span>
               </CardTitle>
             </CardHeader>
@@ -273,7 +276,7 @@ const Index = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    Skor Keselamatan
+                    {language === 'en' ? 'Safety Score' : 'Skor Keselamatan'}
                   </span>
                   <span className="text-sm font-medium text-green-600">9.2/10</span>
                 </div>
@@ -285,7 +288,7 @@ const Index = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    Penglibatan Komuniti
+                    {language === 'en' ? 'Community Engagement' : 'Penglibatan Komuniti'}
                   </span>
                   <span className="text-sm font-medium text-blue-600">8.7/10</span>
                 </div>
@@ -297,7 +300,7 @@ const Index = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    Penggunaan Kemudahan
+                    {language === 'en' ? 'Facility Usage' : 'Penggunaan Kemudahan'}
                   </span>
                   <span className="text-sm font-medium text-purple-600">7.8/10</span>
                 </div>

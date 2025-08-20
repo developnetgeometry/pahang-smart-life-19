@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,6 @@ import { Loader2, MapPin, Shield, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { createTestUsers } from '@/utils/createTestUsers';
-
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,14 +24,9 @@ export default function Login() {
   const [error, setError] = useState('');
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
   const [isCreatingUsers, setIsCreatingUsers] = useState(false);
-  const [language, setLanguage] = useState<'en' | 'ms'>('en');
-  const { login } = useEnhancedAuth();
-  const { t } = useTranslation(language);
+  const { login, language, switchLanguage } = useAuth();
+  const { t } = useTranslation(language || 'ms'); // Ensure we always have a language
   const { toast } = useToast();
-
-  const switchLanguage = (lang: 'en' | 'ms') => {
-    setLanguage(lang);
-  };
 
   // Load districts for registration
   useEffect(() => {
@@ -58,10 +52,7 @@ export default function Login() {
 
     try {
       if (mode === 'signIn') {
-        const result = await login(email, password);
-        if (result.error) {
-          throw result.error;
-        }
+        await login(email, password);
       } else {
         // Validate required fields for registration
         if (!fullName.trim()) {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,52 +28,135 @@ interface MarketplaceItem {
 }
 
 export default function Marketplace() {
-  const { user } = useEnhancedAuth();
+  const { language } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedCondition, setSelectedCondition] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
+  const text = {
+    en: {
+      title: 'Community Marketplace',
+      subtitle: 'Buy and sell items within your community',
+      newListing: 'New Listing',
+      search: 'Search items...',
+      category: 'Category',
+      condition: 'Condition',
+      allCategories: 'All Categories',
+      allConditions: 'All Conditions',
+      electronics: 'Electronics',
+      furniture: 'Furniture',
+      clothing: 'Clothing',
+      books: 'Books',
+      sports: 'Sports & Recreation',
+      others: 'Others',
+      new: 'New',
+      likeNew: 'Like New',
+      good: 'Good',
+      fair: 'Fair',
+      price: 'Price',
+      seller: 'Seller',
+      rating: 'Rating',
+      location: 'Location',
+      postedOn: 'Posted on',
+      contact: 'Contact Seller',
+      favorite: 'Add to Favorites',
+      createTitle: 'Create New Listing',
+      createSubtitle: 'Sell your items to the community',
+      itemTitle: 'Item Title',
+      itemDescription: 'Description',
+      itemPrice: 'Price (RM)',
+      selectCategory: 'Select Category',
+      selectCondition: 'Select Condition',
+      contactInfo: 'Contact Information',
+      create: 'Create Listing',
+      cancel: 'Cancel',
+      createSuccess: 'Listing created successfully!',
+      contactSuccess: 'Contact request sent!'
+    },
+    ms: {
+      title: 'Pasar Komuniti',
+      subtitle: 'Beli dan jual barang dalam komuniti anda',
+      newListing: 'Senarai Baru',
+      search: 'Cari barang...',
+      category: 'Kategori',
+      condition: 'Keadaan',
+      allCategories: 'Semua Kategori',
+      allConditions: 'Semua Keadaan',
+      electronics: 'Elektronik',
+      furniture: 'Perabot',
+      clothing: 'Pakaian',
+      books: 'Buku',
+      sports: 'Sukan & Rekreasi',
+      others: 'Lain-lain',
+      new: 'Baru',
+      likeNew: 'Seperti Baru',
+      good: 'Baik',
+      fair: 'Sederhana',
+      price: 'Harga',
+      seller: 'Penjual',
+      rating: 'Penilaian',
+      location: 'Lokasi',
+      postedOn: 'Disiarkan pada',
+      contact: 'Hubungi Penjual',
+      favorite: 'Tambah ke Kegemaran',
+      createTitle: 'Cipta Senarai Baru',
+      createSubtitle: 'Jual barang anda kepada komuniti',
+      itemTitle: 'Tajuk Barang',
+      itemDescription: 'Penerangan',
+      itemPrice: 'Harga (RM)',
+      selectCategory: 'Pilih Kategori',
+      selectCondition: 'Pilih Keadaan',
+      contactInfo: 'Maklumat Hubungan',
+      create: 'Cipta Senarai',
+      cancel: 'Batal',
+      createSuccess: 'Senarai berjaya dicipta!',
+      contactSuccess: 'Permintaan hubungan dihantar!'
+    }
+  };
+
+  const t = text[language];
+
   const mockItems: MarketplaceItem[] = [
     {
       id: '1',
-      title: 'iPhone 13 Pro Max',
-      description: 'Keadaan sangat baik, disertakan dengan kotak asal dan pengecas',
+      title: language === 'en' ? 'iPhone 13 Pro Max' : 'iPhone 13 Pro Max',
+      description: language === 'en' ? 'Excellent condition, comes with original box and charger' : 'Keadaan sangat baik, disertakan dengan kotak asal dan pengecas',
       price: 3500,
       category: 'electronics',
       condition: 'like-new',
-      seller: 'Ahmad Ali',
+      seller: 'John Doe',
       sellerRating: 4.8,
-      location: 'Blok A, Unit 15-2',
+      location: 'Block A, Unit 15-2',
       postedDate: '2024-01-15',
       images: ['/phone.jpg'],
       isFavorite: false
     },
     {
       id: '2',
-      title: 'Set Meja Makan IKEA',
-      description: 'Meja makan 6 tempat duduk dengan kerusi, keadaan baik',
+      title: language === 'en' ? 'IKEA Dining Table Set' : 'Set Meja Makan IKEA',
+      description: language === 'en' ? '6-seater dining table with chairs, good condition' : 'Meja makan 6 tempat duduk dengan kerusi, keadaan baik',
       price: 800,
       category: 'furniture',
       condition: 'good',
-      seller: 'Siti Sarah',
+      seller: 'Sarah Chen',
       sellerRating: 4.5,
-      location: 'Blok B, Unit 8-1',
+      location: 'Block B, Unit 8-1',
       postedDate: '2024-01-12',
       images: ['/table.jpg'],
       isFavorite: true
     },
     {
       id: '3',
-      title: 'Koleksi Buku Pengaturcaraan',
-      description: 'Pelbagai buku pengaturcaraan, sesuai untuk pelajar',
+      title: language === 'en' ? 'Programming Books Collection' : 'Koleksi Buku Pengaturcaraan',
+      description: language === 'en' ? 'Various programming books, perfect for students' : 'Pelbagai buku pengaturcaraan, sesuai untuk pelajar',
       price: 150,
       category: 'books',
       condition: 'good',
-      seller: 'Muhammad Wong',
+      seller: 'Mike Wong',
       sellerRating: 4.9,
-      location: 'Blok C, Unit 12-5',
+      location: 'Block C, Unit 12-5',
       postedDate: '2024-01-10',
       images: ['/books.jpg'],
       isFavorite: false
@@ -81,21 +164,21 @@ export default function Marketplace() {
   ];
 
   const categories = [
-    { value: 'all', label: 'Semua Kategori' },
-    { value: 'electronics', label: 'Elektronik' },
-    { value: 'furniture', label: 'Perabot' },
-    { value: 'clothing', label: 'Pakaian' },
-    { value: 'books', label: 'Buku' },
-    { value: 'sports', label: 'Sukan & Rekreasi' },
-    { value: 'others', label: 'Lain-lain' }
+    { value: 'all', label: t.allCategories },
+    { value: 'electronics', label: t.electronics },
+    { value: 'furniture', label: t.furniture },
+    { value: 'clothing', label: t.clothing },
+    { value: 'books', label: t.books },
+    { value: 'sports', label: t.sports },
+    { value: 'others', label: t.others }
   ];
 
   const conditions = [
-    { value: 'all', label: 'Semua Keadaan' },
-    { value: 'new', label: 'Baru' },
-    { value: 'like-new', label: 'Seperti Baru' },
-    { value: 'good', label: 'Baik' },
-    { value: 'fair', label: 'Sederhana' }
+    { value: 'all', label: t.allConditions },
+    { value: 'new', label: t.new },
+    { value: 'like-new', label: t.likeNew },
+    { value: 'good', label: t.good },
+    { value: 'fair', label: t.fair }
   ];
 
   const getConditionColor = (condition: string) => {
@@ -110,10 +193,10 @@ export default function Marketplace() {
 
   const getConditionText = (condition: string) => {
     switch (condition) {
-      case 'new': return 'Baru';
-      case 'like-new': return 'Seperti Baru';
-      case 'good': return 'Baik';
-      case 'fair': return 'Sederhana';
+      case 'new': return t.new;
+      case 'like-new': return t.likeNew;
+      case 'good': return t.good;
+      case 'fair': return t.fair;
       default: return condition;
     }
   };
@@ -128,49 +211,47 @@ export default function Marketplace() {
 
   const handleCreateListing = () => {
     toast({
-      title: 'Senarai berjaya dicipta!',
+      title: t.createSuccess,
     });
     setIsCreateOpen(false);
   };
 
   const handleContactSeller = () => {
     toast({
-      title: 'Permintaan hubungan dihantar!',
+      title: t.contactSuccess,
     });
   };
-
-  if (!user) return null;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Pasar Komuniti</h1>
-          <p className="text-muted-foreground">Beli dan jual barang dalam komuniti anda</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
+          <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Senarai Baru
+              {t.newListing}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[525px]">
             <DialogHeader>
-              <DialogTitle>Cipta Senarai Baru</DialogTitle>
-              <DialogDescription>Jual barang anda kepada komuniti</DialogDescription>
+              <DialogTitle>{t.createTitle}</DialogTitle>
+              <DialogDescription>{t.createSubtitle}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Tajuk Barang</Label>
-                <Input id="title" placeholder="Tajuk Barang" />
+                <Label htmlFor="title">{t.itemTitle}</Label>
+                <Input id="title" placeholder={t.itemTitle} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="category">Kategori</Label>
+                  <Label htmlFor="category">{t.category}</Label>
                   <Select>
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih Kategori" />
+                      <SelectValue placeholder={t.selectCategory} />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.slice(1).map((category) => (
@@ -182,10 +263,10 @@ export default function Marketplace() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="condition">Keadaan</Label>
+                  <Label htmlFor="condition">{t.condition}</Label>
                   <Select>
                     <SelectTrigger>
-                      <SelectValue placeholder="Pilih Keadaan" />
+                      <SelectValue placeholder={t.selectCondition} />
                     </SelectTrigger>
                     <SelectContent>
                       {conditions.slice(1).map((condition) => (
@@ -198,19 +279,19 @@ export default function Marketplace() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="price">Harga (RM)</Label>
+                <Label htmlFor="price">{t.itemPrice}</Label>
                 <Input id="price" type="number" placeholder="0" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="description">Penerangan</Label>
+                <Label htmlFor="description">{t.itemDescription}</Label>
                 <Textarea 
                   id="description" 
-                  placeholder="Penerangan"
+                  placeholder={t.itemDescription}
                   rows={3}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="image">Gambar Barang</Label>
+                <Label htmlFor="image">Item Image</Label>
                 <Input 
                   id="image" 
                   type="file" 
@@ -219,15 +300,15 @@ export default function Marketplace() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="contact">Maklumat Hubungan</Label>
-                <Input id="contact" placeholder="Nombor telefon atau emel" />
+                <Label htmlFor="contact">{t.contactInfo}</Label>
+                <Input id="contact" placeholder="Phone number or email" />
               </div>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
-                  Batal
+                  {t.cancel}
                 </Button>
                 <Button onClick={handleCreateListing}>
-                  Cipta Senarai
+                  {t.create}
                 </Button>
               </div>
             </div>
@@ -239,7 +320,7 @@ export default function Marketplace() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Cari barang..."
+            placeholder={t.search}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -322,13 +403,13 @@ export default function Marketplace() {
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  <span>Disiarkan pada {item.postedDate}</span>
+                  <span>{t.postedOn} {item.postedDate}</span>
                 </div>
               </div>
 
               <Button className="w-full" onClick={handleContactSeller}>
                 <MessageCircle className="h-4 w-4 mr-2" />
-                Hubungi Penjual
+                {t.contact}
               </Button>
             </CardContent>
           </Card>
@@ -341,7 +422,7 @@ export default function Marketplace() {
             <div className="text-center">
               <ShoppingBag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">
-                Tiada barang dijumpai
+                {language === 'en' ? 'No items found' : 'Tiada barang dijumpai'}
               </p>
             </div>
           </CardContent>

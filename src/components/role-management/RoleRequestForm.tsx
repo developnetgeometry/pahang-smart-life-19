@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useEnhancedAuth } from "@/hooks/useEnhancedAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,7 +40,7 @@ const APPROVAL_REQUIREMENTS = {
 };
 
 export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) => {
-  const { user, language, profile } = useEnhancedAuth();
+  const { user, language } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<UserRole | null>(null);
@@ -302,7 +302,7 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
           attachments: values.attachments && values.attachments.length > 0 ? values.attachments : null,
           required_approver_role: approverRole,
           approval_requirements: requirements || [],
-          district_id: profile?.district_id
+          district_id: user.district
         });
 
       if (requestError) throw requestError;
@@ -317,7 +317,7 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
           new_role: values.requestedRole,
           performed_by: user.id,
           reason: values.reason,
-          district_id: profile?.district_id
+          district_id: user.district
         });
 
       toast({

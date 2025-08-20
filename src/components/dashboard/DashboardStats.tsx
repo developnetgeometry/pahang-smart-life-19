@@ -1,4 +1,4 @@
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,8 +7,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export function DashboardStats() {
-  const { user } = useEnhancedAuth();
-  const { t } = useTranslation('ms');
+  const { language, hasRole, user } = useAuth();
+  const { t } = useTranslation(language);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -18,7 +18,7 @@ export function DashboardStats() {
       
       try {
         // In demo mode, show sample stats without user filtering
-        if (user.id === '11111111-1111-1111-1111-111111111111') {
+        if (user.id.startsWith('demo-') || user.id === '11111111-1111-1111-1111-111111111111') {
           // Show realistic demo data
           setStats({
             bookings: 3, // Active bookings for demo user
@@ -57,41 +57,78 @@ export function DashboardStats() {
 
   const residentStats = stats ? [
     {
-      title: 'Tempahan Aktif',
+      title: language === 'en' ? 'Active Bookings' : 'Tempahan Aktif',
       value: stats.bookings.toString(),
       icon: Calendar,
-      description: 'Bulan ini',
-      trend: 'Tempahan peribadi',
+      description: language === 'en' ? 'This month' : 'Bulan ini',
+      trend: language === 'en' ? 'Personal bookings' : 'Tempahan peribadi',
       color: 'bg-gradient-primary'
     },
     {
-      title: 'Aduan Pending',
+      title: language === 'en' ? 'Pending Complaints' : 'Aduan Pending',
       value: stats.pendingComplaints.toString(),
       icon: AlertTriangle,
-      description: 'Menunggu respons',
-      trend: 'Aduan anda',
+      description: language === 'en' ? 'Awaiting response' : 'Menunggu respons',
+      trend: language === 'en' ? 'Your complaints' : 'Aduan anda',
       color: 'bg-gradient-sunset'
     },
     {
-      title: 'Skor Komuniti',
+      title: language === 'en' ? 'Community Score' : 'Skor Komuniti',
       value: '8.5',
       icon: TrendingUp,
-      description: 'Keselamatan & kepuasan',
-      trend: '+0.3 bulan ini',
+      description: language === 'en' ? 'Safety & satisfaction' : 'Keselamatan & kepuasan',
+      trend: '+0.3 this month',
       color: 'bg-gradient-community'
     },
     {
-      title: 'Pengumuman',
+      title: language === 'en' ? 'Announcements' : 'Pengumuman',
       value: stats.announcements.toString(),
       icon: Users,
-      description: 'Jumlah diterbitkan',
-      trend: 'Kemas kini komuniti',
+      description: language === 'en' ? 'Total published' : 'Jumlah diterbitkan',
+      trend: language === 'en' ? 'Community updates' : 'Kemas kini komuniti',
       color: 'bg-primary'
     }
   ] : [];
 
-  const displayStats = residentStats;
+  const professionalStats = stats ? [
+    {
+      title: language === 'en' ? 'Total Residents' : 'Jumlah Penduduk',
+      value: stats.totalProfiles.toString(),
+      icon: Users,
+      description: language === 'en' ? 'Active users' : 'Pengguna aktif',
+      trend: language === 'en' ? 'Registered profiles' : 'Profil berdaftar',
+      color: 'bg-gradient-primary'
+    },
+    {
+      title: language === 'en' ? 'Available Facilities' : 'Kemudahan Tersedia',
+      value: stats.facilities.toString(),
+      icon: Building,
+      description: language === 'en' ? 'Community facilities' : 'Kemudahan komuniti',
+      trend: language === 'en' ? 'Ready for booking' : 'Sedia untuk tempahan',
+      color: 'bg-gradient-sunset'
+    },
+    {
+      title: language === 'en' ? 'Total Announcements' : 'Jumlah Pengumuman',
+      value: stats.announcements.toString(),
+      icon: Activity,
+      description: language === 'en' ? 'Published notices' : 'Notis diterbitkan',
+      trend: language === 'en' ? 'Community updates' : 'Kemas kini komuniti',
+      color: 'bg-gradient-community'
+    },
+    {
+      title: language === 'en' ? 'System Health' : 'Kesihatan Sistem',
+      value: '98%',
+      icon: Shield,
+      description: language === 'en' ? 'All systems operational' : 'Semua sistem beroperasi',
+      trend: language === 'en' ? 'Excellent status' : 'Status cemerlang',
+      color: 'bg-primary'
+    }
+  ] : [];
 
+  // Show resident stats by default, professional stats for admin roles
+  const showProfessionalStats = hasRole('admin') || hasRole('manager') || hasRole('security');
+  
+  const displayStats = showProfessionalStats ? professionalStats : residentStats;
 
   if (loading) {
     return (

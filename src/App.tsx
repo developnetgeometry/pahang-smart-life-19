@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { EnhancedAuthProvider, useEnhancedAuth } from "@/hooks/useEnhancedAuth";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import React from "react";
 import { Layout } from "@/components/layout/Layout";
 import Index from "./pages/Index";
@@ -46,37 +46,19 @@ const queryClient = new QueryClient({
 });
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useEnhancedAuth();
-  
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-  
-  return user ? <>{children}</> : <Navigate to="/login" replace />;
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useEnhancedAuth();
-  
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-  
-  return user ? <Navigate to="/" replace /> : <>{children}</>;
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <Navigate to="/" replace /> : <>{children}</>;
 }
 
 const App = () => (
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <EnhancedAuthProvider>
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <AuthProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -100,7 +82,7 @@ const App = () => (
               />
               
               {/* Resident modules */}
-               <Route 
+              <Route 
                 path="/my-bookings" 
                 element={
                   <ProtectedRoute>
@@ -173,7 +155,7 @@ const App = () => (
                 } 
               />
               <Route 
-                path="/communication-hub" 
+                path="/communication" 
                 element={
                   <ProtectedRoute>
                     <CommunicationHub />
@@ -197,7 +179,7 @@ const App = () => (
                 } 
               />
               <Route 
-                path="/cctv-live-feed" 
+                path="/cctv-live" 
                 element={
                   <ProtectedRoute>
                     <CCTVLiveFeed />
@@ -205,9 +187,9 @@ const App = () => (
                 } 
               />
 
-              {/* Admin routes */}
+              {/* Professional view routes */}
               <Route 
-                path="/admin" 
+                path="/admin/*" 
                 element={
                   <ProtectedRoute>
                     <AdminPanel />
@@ -315,9 +297,9 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>
-            </BrowserRouter>
-          </EnhancedAuthProvider>
-        </TooltipProvider>
+        </BrowserRouter>
+      </AuthProvider>
+    </TooltipProvider>
   </QueryClientProvider>
 );
 

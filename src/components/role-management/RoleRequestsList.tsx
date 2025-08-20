@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -76,7 +76,7 @@ const ROLE_LABELS = {
 };
 
 export const RoleRequestsList: React.FC = () => {
-  const { user, language, hasRole } = useEnhancedAuth();
+  const { user, language, hasRole } = useAuth();
   const { toast } = useToast();
   const [requests, setRequests] = useState<RoleRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -326,7 +326,7 @@ export const RoleRequestsList: React.FC = () => {
         <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="my-requests">{t.myRequests}</TabsTrigger>
-            {(hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin')) && (
+            {(hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin') || hasRole('admin')) && (
               <TabsTrigger value="pending-approval">{t.pendingApproval}</TabsTrigger>
             )}
           </TabsList>

@@ -2287,11 +2287,9 @@ export type Database = {
           id: string
           is_active: boolean | null
           language: string | null
-          language_preference: string | null
           phone: string | null
           primary_role: Database["public"]["Enums"]["app_role"] | null
           theme: string | null
-          theme_preference: string | null
           unit_number: string | null
           updated_at: string | null
           vehicle_plate_number: string | null
@@ -2307,11 +2305,9 @@ export type Database = {
           id: string
           is_active?: boolean | null
           language?: string | null
-          language_preference?: string | null
           phone?: string | null
           primary_role?: Database["public"]["Enums"]["app_role"] | null
           theme?: string | null
-          theme_preference?: string | null
           unit_number?: string | null
           updated_at?: string | null
           vehicle_plate_number?: string | null
@@ -2327,11 +2323,9 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           language?: string | null
-          language_preference?: string | null
           phone?: string | null
           primary_role?: Database["public"]["Enums"]["app_role"] | null
           theme?: string | null
-          theme_preference?: string | null
           unit_number?: string | null
           updated_at?: string | null
           vehicle_plate_number?: string | null

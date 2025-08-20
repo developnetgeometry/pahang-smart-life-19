@@ -1,4 +1,4 @@
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -19,29 +19,15 @@ import {
   Moon,
   Sun
 } from 'lucide-react';
-import { useState } from 'react';
 
 export function Header() {
-  const { user, logout } = useEnhancedAuth();
-  const [language, setLanguage] = useState<'en' | 'ms'>('en');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const { t } = useTranslation(language);
+  const { user, language, switchLanguage, theme, switchTheme, logout } = useAuth();
+  const { t } = useTranslation(language || 'ms');
 
   if (!user) return null;
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
-  };
-
-  const displayName = user.user_metadata?.full_name || user.email || 'User';
-
-  const switchLanguage = (lang: 'en' | 'ms') => {
-    setLanguage(lang);
-  };
-
-  const switchTheme = (newTheme: 'light' | 'dark') => {
-    setTheme(newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
   };
 
   return (
@@ -100,7 +86,7 @@ export function Header() {
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar className="h-10 w-10">
                   <AvatarFallback className="bg-gradient-primary text-primary-foreground">
-                    {getInitials(displayName)}
+                    {getInitials(user.display_name)}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -108,13 +94,16 @@ export function Header() {
             <DropdownMenuContent className="w-56 z-50" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{displayName}</p>
+                  <p className="text-sm font-medium leading-none">{user.display_name}</p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user.email}
                   </p>
                   <div className="flex space-x-1 pt-1">
                     <Badge variant="secondary" className="text-xs">
-                      Resident
+                      {user.district}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {user.user_role}
                     </Badge>
                   </div>
                 </div>

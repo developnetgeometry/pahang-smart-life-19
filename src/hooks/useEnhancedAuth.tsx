@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -89,17 +89,11 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState('en');
   const [theme, setTheme] = useState('light');
   
-  // Cache for permission results
-  const permissionCache = useRef<Map<string, boolean>>(new Map());
-  
   const { toast } = useToast();
 
   // Fetch user profile and roles
   const fetchUserData = async (userId: string) => {
     try {
-      // Clear permission cache when fetching new user data
-      permissionCache.current.clear();
-      
       // Fetch profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -120,36 +114,40 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
       // Fetch user roles
       const { data: rolesData, error: rolesError } = await supabase
         .from('enhanced_user_roles')
-        .select('role, is_active')
+        .select(`
+          role,
+          is_active,
+          role_hierarchy (
+            level,
+            permission_level,
+            display_name,
+            description,
+            color_code
+          )
+        `)
         .eq('user_id', userId)
         .eq('is_active', true);
 
       if (rolesError) throw rolesError;
 
-      const userRoles = rolesData?.map(r => r.role as EnhancedUserRole) || [];
+      const userRoles = rolesData?.map(r => r.role) || [];
       setRoles(userRoles);
 
-      // Get role hierarchy info for the highest role
-      if (userRoles.length > 0) {
-        const { data: roleHierarchyData, error: roleHierarchyError } = await supabase
-          .from('role_hierarchy')
-          .select('*')
-          .in('role', userRoles)
-          .order('level', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (!roleHierarchyError && roleHierarchyData) {
-          setCurrentRole(roleHierarchyData.role as EnhancedUserRole);
-          setRoleInfo({
-            role: roleHierarchyData.role as EnhancedUserRole,
-            level: roleHierarchyData.level,
-            permission_level: roleHierarchyData.permission_level as PermissionLevel,
-            display_name: roleHierarchyData.display_name,
-            description: roleHierarchyData.description || '',
-            color_code: roleHierarchyData.color_code || '#6B7280',
-          });
-        }
+      // Set highest level role as current
+      if (rolesData && rolesData.length > 0) {
+        const highestRole = rolesData.reduce((prev, current) => 
+          (prev.role_hierarchy.level > current.role_hierarchy.level) ? prev : current
+        );
+        
+        setCurrentRole(highestRole.role);
+        setRoleInfo({
+          role: highestRole.role,
+          level: highestRole.role_hierarchy.level,
+          permission_level: highestRole.role_hierarchy.permission_level,
+          display_name: highestRole.role_hierarchy.display_name,
+          description: highestRole.role_hierarchy.description,
+          color_code: highestRole.role_hierarchy.color_code,
+        });
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -173,23 +171,14 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    try {
-      // Try to log the action, but don't let it block logout
-      await logAction('logout').catch(() => {});
-      
-      // Force logout even if signOut fails due to token issues
-      await supabase.auth.signOut({ scope: 'local' });
-    } catch (error) {
-      console.log('Logout error (will clear local state anyway):', error);
-    } finally {
-      // Always clear local state regardless of API call success
-      setUser(null);
-      setSession(null);
-      setProfile(null);
-      setRoleInfo(null);
-      setRoles([]);
-      setCurrentRole(null);
-    }
+    await logAction('logout');
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    setRoleInfo(null);
+    setRoles([]);
+    setCurrentRole(null);
   };
 
   // Role checking methods
@@ -204,18 +193,6 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
   const hasModulePermission = async (moduleName: string, permissionType: string): Promise<boolean> => {
     if (!user) return false;
 
-    // Basic modules that all authenticated users can access
-    const basicModules = ['dashboard', 'profile', 'my_bookings', 'complaints', 'visitors', 'announcements', 'discussions', 'communication', 'facilities', 'marketplace'];
-    if (basicModules.includes(moduleName) && permissionType === 'read') {
-      return true;
-    }
-
-    // Check cache first
-    const cacheKey = `${user.id}-${moduleName}-${permissionType}`;
-    if (permissionCache.current.has(cacheKey)) {
-      return permissionCache.current.get(cacheKey)!;
-    }
-
     try {
       const { data, error } = await supabase.rpc('has_module_permission', {
         module_name: moduleName,
@@ -228,10 +205,7 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      const result = data === true;
-      // Cache the result
-      permissionCache.current.set(cacheKey, result);
-      return result;
+      return data === true;
     } catch (error) {
       console.error('Permission check failed:', error);
       return false;
@@ -248,9 +222,6 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Clear permission cache when switching roles
-    permissionCache.current.clear();
-    
     setCurrentRole(role);
     await logAction('role_switch', 'system', 'role', undefined, { from: currentRole }, { to: role });
 

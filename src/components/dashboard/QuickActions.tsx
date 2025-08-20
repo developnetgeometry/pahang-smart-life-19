@@ -1,4 +1,4 @@
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,45 +17,83 @@ import {
 } from 'lucide-react';
 
 export function QuickActions() {
-  const { user } = useEnhancedAuth();
-  const { t } = useTranslation('ms');
+  const { language, hasRole } = useAuth();
+  const { t } = useTranslation(language || 'ms');
   const navigate = useNavigate();
 
-  const actions = [
+  const residentActions = [
     {
-      title: 'Tempah Kemudahan',
-      description: 'Tempah kemudahan komuniti',
+      title: language === 'en' ? 'Book Facility' : 'Tempah Kemudahan',
+      description: language === 'en' ? 'Reserve community facilities' : 'Tempah kemudahan komuniti',
       icon: Calendar,
       color: 'bg-gradient-primary',
       href: '/facilities'
     },
     {
-      title: 'Lapor Masalah',
-      description: 'Hantar permintaan penyelenggaraan',
+      title: language === 'en' ? 'Report Issue' : 'Lapor Masalah',
+      description: language === 'en' ? 'Submit maintenance request' : 'Hantar permintaan penyelenggaraan',
       icon: FileText,
       color: 'bg-gradient-sunset',
       href: '/my-complaints'
     },
     {
-      title: 'Daftar Pelawat',
-      description: 'Pra-daftar tetamu anda',
+      title: language === 'en' ? 'Register Visitor' : 'Daftar Pelawat',
+      description: language === 'en' ? 'Pre-register your guests' : 'Pra-daftar tetamu anda',
       icon: UserPlus,
       color: 'bg-gradient-community',
       href: '/my-visitors'
     },
     {
-      title: 'Amaran Kecemasan',
-      description: 'Akses pantas kepada bantuan',
+      title: language === 'en' ? 'Emergency Alert' : 'Amaran Kecemasan',
+      description: language === 'en' ? 'Quick access to help' : 'Akses pantas kepada bantuan',
       icon: AlertTriangle,
       color: 'bg-destructive',
       href: '#emergency'
     }
   ];
 
+  const professionalActions = [
+    {
+      title: language === 'en' ? 'Create Announcement' : 'Cipta Pengumuman',
+      description: language === 'en' ? 'Broadcast to community' : 'Siarkan kepada komuniti',
+      icon: Megaphone,
+      color: 'bg-gradient-primary',
+      href: '/admin/announcements'
+    },
+    {
+      title: language === 'en' ? 'Manage Facilities' : 'Urus Kemudahan',
+      description: language === 'en' ? 'Update facility status' : 'Kemas kini status kemudahan',
+      icon: Building,
+      color: 'bg-gradient-community',
+      href: '/admin/facilities'
+    },
+    {
+      title: language === 'en' ? 'Security Dashboard' : 'Papan Pemuka Keselamatan',
+      description: language === 'en' ? 'Monitor CCTV & alerts' : 'Pantau CCTV & amaran',
+      icon: Shield,
+      color: 'bg-gradient-sunset',
+      href: '/admin/security'
+    },
+    {
+      title: language === 'en' ? 'System Settings' : 'Tetapan Sistem',
+      description: language === 'en' ? 'Configure platform' : 'Konfigur platform',
+      icon: Settings,
+      color: 'bg-primary',
+      href: '/admin/settings'
+    }
+  ];
+
+  // Show resident actions by default, professional actions for admin roles
+  const showProfessionalActions = hasRole('admin') || hasRole('manager') || hasRole('security');
+  
+  const actions = showProfessionalActions ? professionalActions : residentActions;
 
   const handleEmergencyAlert = () => {
     // In a real app, this would trigger emergency protocols
-    alert('Amaran kecemasan dihantar! Kakitangan keselamatan telah dimaklumkan.');
+    alert(language === 'en' 
+      ? 'Emergency alert sent! Security personnel have been notified.' 
+      : 'Amaran kecemasan dihantar! Kakitangan keselamatan telah dimaklumkan.'
+    );
   };
 
   const handleActionClick = (action: any) => {

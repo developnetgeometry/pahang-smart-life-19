@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +20,7 @@ import VoiceAnnouncement from '@/components/communication/VoiceAnnouncement';
 import CommunityChat from '@/components/communication/CommunityChat';
 
 export default function CommunicationHub() {
-  const { language } = useEnhancedAuth();
+  const { language } = useAuth();
   const [activeTab, setActiveTab] = useState('chat');
 
   const communicationStats = {
