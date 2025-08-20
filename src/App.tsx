@@ -34,7 +34,7 @@ import VisitorSecurity from "./pages/VisitorSecurity";
 import VisitorAnalytics from "./pages/VisitorAnalytics";
 import CommunicationHub from "./pages/CommunicationHub";
 import RoleManagement from "./pages/RoleManagement";
-import NotificationSettings from "@/components/notifications/NotificationSettings";
+import NotificationSettings from "./pages/NotificationSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
