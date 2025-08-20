@@ -139,55 +139,37 @@ export function AppSidebar() {
 
   const canAccessModule = (module: SystemModule) => {
     const category = module.category;
-    const moduleName = module.module_name;
-    
-    console.log(`Checking access for module: ${module.display_name}, category: ${category}, user roles:`, user);
     
     // Role-based access control with detailed permissions
     switch (category) {
       case 'admin':
-        const hasAdminAccess = hasRole('admin') || hasRole('state_admin');
-        console.log(`Admin module ${module.display_name}: hasAdminAccess = ${hasAdminAccess}`);
-        return hasAdminAccess;
+        return hasRole('admin') || hasRole('state_admin');
         
       case 'security':
-        const hasSecurityAccess = hasRole('security_officer') || hasRole('admin') || hasRole('state_admin') || hasRole('district_coordinator');
-        console.log(`Security module ${module.display_name}: hasSecurityAccess = ${hasSecurityAccess}`);
-        return hasSecurityAccess;
+        return hasRole('security_officer') || hasRole('admin') || hasRole('state_admin') || hasRole('district_coordinator');
         
       case 'maintenance':
-        const hasMaintenanceAccess = hasRole('maintenance_staff') || hasRole('facility_manager') || hasRole('admin') || hasRole('state_admin') || hasRole('district_coordinator');
-        console.log(`Maintenance module ${module.display_name}: hasMaintenanceAccess = ${hasMaintenanceAccess}`);
-        return hasMaintenanceAccess;
+        return hasRole('maintenance_staff') || hasRole('facility_manager') || hasRole('admin') || hasRole('state_admin') || hasRole('district_coordinator');
         
       case 'service':
-        const hasServiceAccess = hasRole('service_provider') || hasRole('admin') || hasRole('state_admin');
-        console.log(`Service module ${module.display_name}: hasServiceAccess = ${hasServiceAccess}`);
-        return hasServiceAccess;
+        return hasRole('service_provider') || hasRole('admin') || hasRole('state_admin');
         
       case 'analytics':
-        const hasAnalyticsAccess = hasRole('admin') || hasRole('state_admin') || hasRole('district_coordinator') || hasRole('community_admin');
-        console.log(`Analytics module ${module.display_name}: hasAnalyticsAccess = ${hasAnalyticsAccess}`);
-        return hasAnalyticsAccess;
+        return hasRole('admin') || hasRole('state_admin') || hasRole('district_coordinator') || hasRole('community_admin');
         
       case 'management':
-        const hasManagementAccess = hasRole('admin') || hasRole('state_admin') || hasRole('district_coordinator') || hasRole('community_admin') || hasRole('facility_manager');
-        console.log(`Management module ${module.display_name}: hasManagementAccess = ${hasManagementAccess}`);
-        return hasManagementAccess;
+        return hasRole('admin') || hasRole('state_admin') || hasRole('district_coordinator') || hasRole('community_admin') || hasRole('facility_manager');
         
       case 'core':
         // Core modules accessible to all authenticated users
-        console.log(`Core module ${module.display_name}: allowing access`);
         return true;
         
       case 'resident':
         // Resident services accessible to all users
-        console.log(`Resident module ${module.display_name}: allowing access`);
         return true;
         
       default:
         // Default to resident access for uncategorized modules
-        console.log(`Uncategorized module ${module.display_name}: allowing access by default`);
         return true;
     }
   };
