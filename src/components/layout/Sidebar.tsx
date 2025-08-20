@@ -138,38 +138,133 @@ export function AppSidebar() {
   };
 
   const canAccessModule = (module: SystemModule) => {
-    // Basic role-based access control
     const category = module.category;
+    const moduleName = module.module_name;
     
+    // Role-based access control with detailed permissions
     switch (category) {
       case 'admin':
         return hasRole('admin') || hasRole('state_admin');
+        
       case 'security':
-        return hasRole('security_officer') || hasRole('admin') || hasRole('manager');
+        return hasRole('security_officer') || hasRole('admin') || hasRole('state_admin') || hasRole('district_coordinator');
+        
       case 'maintenance':
-        return hasRole('maintenance_staff') || hasRole('facility_manager') || hasRole('admin') || hasRole('manager');
+        return hasRole('maintenance_staff') || hasRole('facility_manager') || hasRole('admin') || hasRole('state_admin') || hasRole('district_coordinator');
+        
       case 'service':
-        return hasRole('service_provider') || hasRole('admin') || hasRole('manager');
+        return hasRole('service_provider') || hasRole('admin') || hasRole('state_admin');
+        
       case 'analytics':
-        return hasRole('admin') || hasRole('manager') || hasRole('state_admin');
+        return hasRole('admin') || hasRole('state_admin') || hasRole('district_coordinator') || hasRole('community_admin');
+        
       case 'management':
-        return hasRole('admin') || hasRole('manager') || hasRole('community_admin') || hasRole('district_coordinator');
+        return hasRole('admin') || hasRole('state_admin') || hasRole('district_coordinator') || hasRole('community_admin') || hasRole('facility_manager');
+        
       case 'core':
+        // Core modules accessible to all authenticated users
+        return true;
+        
       case 'resident':
+        // Resident services accessible to all users
+        return true;
+        
       default:
-        return true; // Core and resident modules accessible to all
+        // Default to resident access for uncategorized modules
+        return true;
     }
   };
 
   const filteredModules = modules.filter(canAccessModule);
   
-  const modulesByCategory = filteredModules.reduce((acc, module) => {
-    if (!acc[module.category]) {
-      acc[module.category] = [];
+  // Group modules by category with proper role-based sections
+  const getModuleSections = () => {
+    const sections: { title: string; modules: SystemModule[]; priority: number }[] = [];
+    
+    // Core section - always first
+    const coreModules = filteredModules.filter(m => m.category === 'core');
+    if (coreModules.length > 0) {
+      sections.push({
+        title: language === 'en' ? 'Core Features' : 'Ciri Utama',
+        modules: coreModules,
+        priority: 1
+      });
     }
-    acc[module.category].push(module);
-    return acc;
-  }, {} as Record<string, SystemModule[]>);
+    
+    // Resident Services - for all users
+    const residentModules = filteredModules.filter(m => m.category === 'resident');
+    if (residentModules.length > 0) {
+      sections.push({
+        title: language === 'en' ? 'My Services' : 'Perkhidmatan Saya',
+        modules: residentModules,
+        priority: 2
+      });
+    }
+    
+    // Management section - for management roles
+    const managementModules = filteredModules.filter(m => m.category === 'management');
+    if (managementModules.length > 0) {
+      sections.push({
+        title: language === 'en' ? 'Management' : 'Pengurusan',
+        modules: managementModules,
+        priority: 3
+      });
+    }
+    
+    // Security section - for security roles
+    const securityModules = filteredModules.filter(m => m.category === 'security');
+    if (securityModules.length > 0) {
+      sections.push({
+        title: language === 'en' ? 'Security & Monitoring' : 'Keselamatan & Pemantauan',
+        modules: securityModules,
+        priority: 4
+      });
+    }
+    
+    // Maintenance section - for maintenance roles
+    const maintenanceModules = filteredModules.filter(m => m.category === 'maintenance');
+    if (maintenanceModules.length > 0) {
+      sections.push({
+        title: language === 'en' ? 'Maintenance & Assets' : 'Penyelenggaraan & Aset',
+        modules: maintenanceModules,
+        priority: 5
+      });
+    }
+    
+    // Service Provider section - for service providers
+    const serviceModules = filteredModules.filter(m => m.category === 'service');
+    if (serviceModules.length > 0) {
+      sections.push({
+        title: language === 'en' ? 'Service Operations' : 'Operasi Perkhidmatan',
+        modules: serviceModules,
+        priority: 6
+      });
+    }
+    
+    // Analytics section - for analytics roles
+    const analyticsModules = filteredModules.filter(m => m.category === 'analytics');
+    if (analyticsModules.length > 0) {
+      sections.push({
+        title: language === 'en' ? 'Analytics & Reports' : 'Analitik & Laporan',
+        modules: analyticsModules,
+        priority: 7
+      });
+    }
+    
+    // Administration section - for admin roles
+    const adminModules = filteredModules.filter(m => m.category === 'admin');
+    if (adminModules.length > 0) {
+      sections.push({
+        title: language === 'en' ? 'System Administration' : 'Pentadbiran Sistem',
+        modules: adminModules,
+        priority: 8
+      });
+    }
+    
+    return sections.sort((a, b) => a.priority - b.priority);
+  };
+
+  const moduleSections = getModuleSections();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -212,13 +307,16 @@ export function AppSidebar() {
       {/* Navigation */}
       <ScrollArea className="flex-1 px-3">
         <div className="space-y-4 py-4">
-          {Object.entries(modulesByCategory).map(([category, categoryModules], groupIndex) => (
-            <div key={category} className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground px-3 py-2">
-                {categoryLabels[category as keyof typeof categoryLabels] || category}
+          {moduleSections.map((section, sectionIndex) => (
+            <div key={section.title} className="space-y-2">
+              <h4 className="text-sm font-medium text-muted-foreground px-3 py-2 uppercase tracking-wider">
+                {section.title}
+                <span className="ml-2 text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">
+                  {section.modules.length}
+                </span>
               </h4>
               <div className="space-y-1">
-                {categoryModules.map((module) => {
+                {section.modules.map((module) => {
                   const IconComponent = iconMap[module.icon_name || 'FileText'] || FileText;
                   const route = getModuleRoute(module);
                   
@@ -229,22 +327,41 @@ export function AppSidebar() {
                       className={({ isActive }) =>
                         `flex items-center space-x-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                           isActive
-                            ? 'bg-primary text-primary-foreground'
+                            ? 'bg-primary text-primary-foreground shadow-sm'
                             : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                         }`
                       }
                     >
-                      <IconComponent className="h-4 w-4" />
-                      <span>{module.display_name}</span>
+                      <IconComponent className="h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">{module.display_name}</span>
                     </NavLink>
                   );
                 })}
               </div>
-              {groupIndex < Object.entries(modulesByCategory).length - 1 && (
+              {sectionIndex < moduleSections.length - 1 && (
                 <Separator className="my-2" />
               )}
             </div>
           ))}
+          
+          {/* Show user role info at bottom */}
+          {user && (
+            <div className="mt-6 pt-4 border-t border-border">
+              <div className="px-3 py-2">
+                <div className="text-xs text-muted-foreground mb-2">Current User:</div>
+                <div className="flex flex-wrap gap-1">
+                  <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded">
+                    {user.display_name}
+                  </span>
+                  {user.user_role && (
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                      {user.user_role.replace('_', ' ')}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </ScrollArea>
     </div>
