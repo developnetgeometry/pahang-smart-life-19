@@ -1,253 +1,195 @@
 import { supabase } from '@/integrations/supabase/client';
 
+// Define test users with the new 10-role hierarchical system
 const testUsers = [
   {
     email: 'stateadmin@test.com',
     password: 'password123',
     role: 'state_admin' as const,
-    full_name: 'Dato Ahmad Rashid',
-    phone: '013-1001001',
-    unit_number: 'State Office',
-    district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
+    full_name: 'State Administrator',
+    phone: '+60123456789',
+    unit_number: 'N/A',
+    district_id: null // State admin has access to all districts
   },
   {
-    email: 'districtcoord@test.com',
+    email: 'district@test.com', 
     password: 'password123',
     role: 'district_coordinator' as const,
-    full_name: 'Hajjah Siti Aminah',
-    phone: '013-1001002',
-    unit_number: 'District Office A',
-    district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
+    full_name: 'District Coordinator',
+    phone: '+60123456790',
+    unit_number: 'DC-001',
+    district_id: '550e8400-e29b-41d4-a716-446655440001'
   },
   {
     email: 'communityadmin@test.com',
     password: 'password123',
     role: 'community_admin' as const,
-    full_name: 'Encik Lim Chee Kong',
-    phone: '013-1001003',
-    unit_number: 'Community Center',
-    district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
+    full_name: 'Community Administrator',
+    phone: '+60123456791',
+    unit_number: 'CA-001',
+    district_id: '550e8400-e29b-41d4-a716-446655440001'
   },
   {
-    email: 'admin@test.com',
-    password: 'password123',
-    role: 'admin' as const,
-    full_name: 'Ahmad Rahman',
-    phone: '013-1001004',
-    unit_number: 'A-1-01',
-    district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
-  },
-  {
-    email: 'managernorth@test.com',
-    password: 'password123',
-    role: 'manager' as const,
-    full_name: 'Siti Nurhaliza',
-    phone: '013-1001005',
-    unit_number: 'B-2-05',
-    district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
-  },
-  {
-    email: 'facilitymanager@test.com',
-    password: 'password123',
+    email: 'facility@test.com',
+    password: 'password123', 
     role: 'facility_manager' as const,
-    full_name: 'Kumar Selvam',
-    phone: '013-1001006',
-    unit_number: 'Facility Office',
-    district_id: '2384b1ce-dbb1-4449-8e78-136d11dbc28e', // Pahang Prima South
+    full_name: 'Facility Manager',
+    phone: '+60123456792',
+    unit_number: 'FM-001',
+    district_id: '550e8400-e29b-41d4-a716-446655440001'
   },
   {
     email: 'securitynorth@test.com',
     password: 'password123',
-    role: 'security' as const,
+    role: 'security_officer' as const,
     full_name: 'Mohd Faizal',
-    phone: '013-1001007',
-    unit_number: 'Guard House A',
-    district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
+    phone: '+60123456793',
+    unit_number: 'SEC-001', 
+    district_id: '550e8400-e29b-41d4-a716-446655440001'
   },
   {
-    email: 'maintenancestaff@test.com',
+    email: 'maintenance@test.com',
     password: 'password123',
     role: 'maintenance_staff' as const,
-    full_name: 'Raj Kumar',
-    phone: '013-1001008',
-    unit_number: 'Maintenance Office',
-    district_id: '0a1c51a3-55dd-46b2-b894-c39c6d75557c', // Pahang Prima East
+    full_name: 'Maintenance Technician',
+    phone: '+60123456794',
+    unit_number: 'MT-001',
+    district_id: '550e8400-e29b-41d4-a716-446655440001'
   },
   {
     email: 'resident@test.com',
     password: 'password123',
     role: 'resident' as const,
-    full_name: 'Ali bin Hassan',
-    phone: '013-1001009',
-    unit_number: 'A-5-12',
-    district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
+    full_name: 'Ahmad Resident',
+    phone: '+60123456795',
+    unit_number: 'A-12-03',
+    district_id: '550e8400-e29b-41d4-a716-446655440001'
   },
   {
     email: 'serviceprovider@test.com',
     password: 'password123',
     role: 'service_provider' as const,
-    full_name: 'Mary Tan',
-    phone: '013-1001010',
-    unit_number: 'Service Center',
-    district_id: '2384b1ce-dbb1-4449-8e78-136d11dbc28e', // Pahang Prima South
+    full_name: 'Service Provider',
+    phone: '+60123456796',
+    unit_number: 'SP-001',
+    district_id: '550e8400-e29b-41d4-a716-446655440001'
   },
   {
-    email: 'communityleader@test.com',
+    email: 'leader@test.com',
     password: 'password123',
     role: 'community_leader' as const,
-    full_name: 'Fatimah binti Ahmad',
-    phone: '013-1001011',
-    unit_number: 'D-6-09',
-    district_id: '64a08b8c-820d-40e6-910c-0fc03c45ffe5', // Pahang Prima West
+    full_name: 'Community Leader',
+    phone: '+60123456797',
+    unit_number: 'CL-001',
+    district_id: '550e8400-e29b-41d4-a716-446655440001'
   },
   {
-    email: 'stateservicemgr@test.com',
+    email: 'servicemanager@test.com',
     password: 'password123',
     role: 'state_service_manager' as const,
-    full_name: 'David Wong',
-    phone: '013-1001012',
-    unit_number: 'State Service Office',
-    district_id: 'f44ef553-d0af-40e0-a9fd-aa741b5fd2fc', // Pahang Prima North (different district)
-  },
+    full_name: 'State Service Manager',
+    phone: '+60123456798', 
+    unit_number: 'SSM-001',
+    district_id: null // State-wide access
+  }
 ];
 
 // Helper function to add delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export async function createTestUsers() {
-  console.log('🔧 createTestUsers function called');
-  console.log('👥 Total users to create:', testUsers.length);
-  
+export const createTestUsers = async () => {
   const results = [];
-
-  for (let i = 0; i < testUsers.length; i++) {
-    const user = testUsers[i];
-    console.log(`🔨 Creating user ${i + 1}/${testUsers.length}: ${user.email} (${user.role})`);
-    
+  
+  for (const testUser of testUsers) {
     try {
-      // Add delay between requests to avoid rate limiting (except for first user)
-      if (i > 0) {
-        console.log('⏳ Waiting 3 seconds to avoid rate limiting...');
-        await delay(3000);
-      }
-
-      // Create auth user with retry logic
-      console.log(`📝 Attempting signUp for: ${user.email}`);
-      let signUpError = null;
-      let authData = null;
+      console.log(`Creating user: ${testUser.email}`);
       
-      // Try up to 3 times with exponential backoff
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        const result = await supabase.auth.signUp({
-          email: user.email,
-          password: user.password,
+      // Create authentication user with retry for rate limiting
+      let signUpResult;
+      let retries = 3;
+      
+      while (retries > 0) {
+        const redirectUrl = `${window.location.origin}/`;
+        
+        signUpResult = await supabase.auth.signUp({
+          email: testUser.email,
+          password: testUser.password,
           options: {
+            emailRedirectTo: redirectUrl,
             data: {
-              full_name: user.full_name,
+              full_name: testUser.full_name,
             }
           }
         });
         
-        authData = result.data;
-        signUpError = result.error;
-        
-        if (!signUpError || signUpError.message !== 'email rate limit exceeded') {
-          break; // Success or non-rate-limit error
-        }
-        
-        if (attempt < 3) {
-          const waitTime = attempt * 2000; // 2s, 4s
-          console.log(`⚠️ Rate limited, waiting ${waitTime/1000}s before retry ${attempt + 1}...`);
-          await delay(waitTime);
+        if (signUpResult.error?.message?.includes('rate limit')) {
+          console.log(`Rate limited, waiting 60 seconds... (${retries} retries left)`);
+          await delay(60000); // Wait 1 minute
+          retries--;
+        } else {
+          break;
         }
       }
-
-      if (signUpError) {
-        console.error(`❌ SignUp failed for ${user.email}:`, signUpError);
-        results.push({
-          email: user.email,
-          role: user.role,
-          success: false,
-          error: signUpError.message
-        });
-        continue;
-      }
-
-      const userId = authData.user?.id;
-      console.log(`🆔 User ID for ${user.email}:`, userId);
       
-      if (!userId) {
-        console.error(`❌ No user ID returned for ${user.email}`);
-        results.push({
-          email: user.email,
-          role: user.role,
-          success: false,
-          error: 'No user ID returned'
-        });
+      if (signUpResult?.error) {
+        console.error(`Failed to create auth user ${testUser.email}:`, signUpResult.error);
+        results.push({ email: testUser.email, success: false, error: signUpResult.error.message });
         continue;
       }
 
-      // Update profile with user-specific details  
-      console.log(`👤 Updating profile for ${user.email}`);
-      const { error: profileError } = await supabase
+      if (!signUpResult.data.user) {
+        console.error(`No user returned for ${testUser.email}`);
+        results.push({ email: testUser.email, success: false, error: 'No user returned' });
+        continue;
+      }
+
+      const userId = signUpResult.data.user.id;
+      console.log(`Auth user created with ID: ${userId}`);
+
+      // Update the profiles table
+      const profileUpdate = await supabase
         .from('profiles')
         .update({
-          district_id: user.district_id,
-          full_name: user.full_name,
-          phone: user.phone,
-          unit_number: user.unit_number,
+          full_name: testUser.full_name,
+          district_id: testUser.district_id,
+          primary_role: testUser.role
         })
         .eq('id', userId);
 
-      if (profileError) {
-        console.error(`❌ Profile update failed for ${user.email}:`, profileError);
-      } else {
-        console.log(`✅ Profile updated for ${user.email}`);
+      if (profileUpdate.error) {
+        console.error(`Failed to update profile for ${testUser.email}:`, profileUpdate.error);
       }
 
-      // Assign role
-      console.log(`🏷️ Assigning role ${user.role} to ${user.email}`);
-      const { error: roleError } = await supabase
+      // Insert user role
+      const roleInsert = await supabase
         .from('user_roles')
         .insert({
           user_id: userId,
-          role: user.role,
-          district_id: user.district_id,
+          role: testUser.role,
+          district_id: testUser.district_id
         });
 
-      if (roleError) {
-        console.error(`❌ Role assignment failed for ${user.email}:`, roleError);
-        results.push({
-          email: user.email,
-          role: user.role,
-          success: false,
-          error: roleError.message
-        });
-        continue;
+      if (roleInsert.error) {
+        console.error(`Failed to insert role for ${testUser.email}:`, roleInsert.error);
       }
 
-      console.log(`✅ Role assigned for ${user.email}`);
-      
-      results.push({
-        email: user.email,
-        role: user.role,
-        success: true,
-        userId: userId
+      results.push({ 
+        email: testUser.email, 
+        success: true, 
+        userId: userId,
+        role: testUser.role
       });
-
-      console.log(`✅ Created ${user.role}: ${user.email}`);
+      
+      console.log(`Successfully created: ${testUser.email}`);
+      
+      // Small delay between users
+      await delay(1000);
 
     } catch (error) {
-      console.error(`💥 Unexpected error creating ${user.role} (${user.email}):`, error);
-      results.push({
-        email: user.email,
-        role: user.role,
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      console.error(`Error creating user ${testUser.email}:`, error);
+      results.push({ email: testUser.email, success: false, error: String(error) });
     }
   }
 
-  console.log('📋 Final results:', results);
   return results;
-}
+};

@@ -1,4 +1,4 @@
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, UserRole } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -87,14 +87,14 @@ export function AppSidebar() {
 
     // Administration - only for admin and manager roles
     const adminItems = [];
-    if (hasRole('admin') || hasRole('manager')) {
+    if (hasRole(UserRole.STATE_ADMIN) || hasRole(UserRole.DISTRICT_COORDINATOR)) {
       adminItems.push(
-        { title: t('userManagement'), url: '/admin/users', icon: UserPlus, requiredRoles: ['admin', 'manager'] },
-        { title: t('communityManagement'), url: '/admin/communities', icon: Home, requiredRoles: ['admin', 'manager'] }
+        { title: t('userManagement'), url: '/admin/users', icon: UserPlus, requiredRoles: [UserRole.STATE_ADMIN, UserRole.DISTRICT_COORDINATOR] },
+        { title: t('communityManagement'), url: '/admin/communities', icon: Home, requiredRoles: [UserRole.STATE_ADMIN, UserRole.DISTRICT_COORDINATOR] }
       );
     }
     
-    if (hasRole('admin')) {
+    if (hasRole(UserRole.STATE_ADMIN)) {
       adminItems.push(
         { title: t('districtManagement'), url: '/admin/districts', icon: Settings, requiredRoles: ['admin'] }
       );
@@ -109,7 +109,7 @@ export function AppSidebar() {
 
     // Operations Management - for admin and manager roles
     const operationsItems = [];
-    if (hasRole('admin') || hasRole('manager')) {
+    if (hasRole(UserRole.STATE_ADMIN) || hasRole(UserRole.DISTRICT_COORDINATOR)) {
       operationsItems.push(
         { title: t('facilitiesManagement'), url: '/admin/facilities', icon: Building, requiredRoles: ['admin', 'manager'] },
         { title: t('maintenanceManagement'), url: '/admin/maintenance', icon: Wrench, requiredRoles: ['admin', 'manager'] },
@@ -126,14 +126,14 @@ export function AppSidebar() {
 
     // Security & Monitoring - for security, admin, and manager roles
     const securityItems = [];
-    if (hasRole('security') || hasRole('admin') || hasRole('manager')) {
+    if (hasRole(UserRole.SECURITY_OFFICER) || hasRole(UserRole.STATE_ADMIN) || hasRole(UserRole.DISTRICT_COORDINATOR)) {
       securityItems.push(
         { title: t('visitorSecurity'), url: '/visitor-security', icon: Shield, requiredRoles: ['security', 'admin', 'manager'] },
         { title: t('cctvManagement'), url: '/admin/cctv', icon: Camera, requiredRoles: ['security', 'admin', 'manager'] }
       );
     }
     
-    if (hasRole('admin') || hasRole('manager')) {
+    if (hasRole(UserRole.STATE_ADMIN) || hasRole(UserRole.DISTRICT_COORDINATOR)) {
       securityItems.push(
         { title: t('visitorAnalytics'), url: '/visitor-analytics', icon: Activity, requiredRoles: ['admin', 'manager'] },
         { title: t('smartMonitoring'), url: '/admin/smart-monitoring', icon: Monitor, requiredRoles: ['admin', 'manager'] },
@@ -150,7 +150,7 @@ export function AppSidebar() {
 
     // Communication Management - for admin and manager roles
     const commMgmtItems = [];
-    if (hasRole('admin') || hasRole('manager')) {
+    if (hasRole(UserRole.STATE_ADMIN) || hasRole(UserRole.DISTRICT_COORDINATOR)) {
       commMgmtItems.push(
         { title: t('announcementManagement'), url: '/admin/announcements', icon: Megaphone, requiredRoles: ['admin', 'manager'] },
         { title: t('discussionManagement'), url: '/admin/discussions', icon: MessageSquare, requiredRoles: ['admin', 'manager'] }

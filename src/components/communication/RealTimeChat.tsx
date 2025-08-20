@@ -95,7 +95,7 @@ export function RealTimeChat({ selectedChannel }: Props) {
           await channel.track({
             user_id: user?.id,
             display_name: user?.display_name,
-            role: user?.user_role,
+            role: user?.primary_role || 'resident',
             online_at: new Date().toISOString()
           });
         }
@@ -113,7 +113,7 @@ export function RealTimeChat({ selectedChannel }: Props) {
       id: Date.now().toString(),
       content: newMessage,
       sender_name: user.display_name,
-      sender_role: user.user_role,
+      sender_role: user.primary_role,
       created_at: new Date().toISOString(),
       channel: selectedChannel
     };
@@ -246,8 +246,8 @@ export function RealTimeChat({ selectedChannel }: Props) {
                 <p className="text-sm font-medium truncate">
                   {user?.display_name} (You)
                 </p>
-                <Badge className={getRoleColor(user?.user_role || 'resident')}>
-                  {user?.user_role}
+                <Badge className={getRoleColor(user?.primary_role || 'resident')}>
+                  {user?.primary_role?.replace('_', ' ')}
                 </Badge>
               </div>
               <div className="w-2 h-2 bg-green-500 rounded-full" />

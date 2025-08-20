@@ -100,10 +100,10 @@ export function Header() {
                   </p>
                   <div className="flex space-x-1 pt-1">
                     <Badge variant="secondary" className="text-xs">
-                      {user.district}
+                      {user.district_name}
                     </Badge>
                     <Badge variant="outline" className="text-xs">
-                      {user.user_role}
+                      {user.primary_role?.replace('_', ' ')}
                     </Badge>
                   </div>
                 </div>
