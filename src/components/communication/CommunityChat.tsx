@@ -70,18 +70,41 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Set preset message from marketplace chat
   useEffect(() => {
     if (marketplaceChat?.presetMessage) {
       setNewMessage(marketplaceChat.presetMessage);
-      // Auto-switch to 'social' channel for marketplace chats
-      setCurrentChannel('social');
+      // Create a private chat channel for this conversation
+      const privateChannelId = `dm_${user?.id}_${marketplaceChat.chatWith?.replace(/\s+/g, '_')}`;
+      setCurrentChannel(privateChannelId);
+      
+      // Add private channel to channels if not exists
+      setChannels(prev => {
+        const existingChannel = prev.find(c => c.id === privateChannelId);
+        if (!existingChannel) {
+          const privateChannel: ChatChannel = {
+            id: privateChannelId,
+            name: `${marketplaceChat.chatWith}`,
+            description: language === 'en' ? 'Private conversation' : 'Perbualan peribadi',
+            channel_type: 'general', // Using general type but it's private
+            is_private: true,
+            created_by: user?.id || '',
+            district_id: 'private',
+            member_count: 2
+          };
+          return [privateChannel, ...prev];
+        }
+        return prev;
+      });
+    } else {
+      fetchChannels();
     }
-  }, [marketplaceChat]);
+  }, [marketplaceChat, user, language]);
 
   useEffect(() => {
-    fetchChannels();
-  }, []);
+    if (!marketplaceChat) {
+      fetchChannels();
+    }
+  }, [marketplaceChat]);
 
   useEffect(() => {
     if (currentChannel) {
@@ -162,6 +185,29 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
 
   const fetchMessages = async (channelId: string) => {
     try {
+      // Check if this is a private marketplace chat
+      if (channelId.startsWith('dm_') && marketplaceChat) {
+        // Create mock private messages for marketplace chat
+        const mockPrivateMessages: ChatMessage[] = [
+          {
+            id: 'welcome',
+            channel_id: channelId,
+            user_id: 'system',
+            message: language === 'en' 
+              ? `You are now chatting privately with ${marketplaceChat.chatWith} about "${marketplaceChat.itemInfo?.title}".`
+              : `Anda kini berbual secara peribadi dengan ${marketplaceChat.chatWith} tentang "${marketplaceChat.itemInfo?.title}".`,
+            created_at: new Date(Date.now() - 60000).toISOString(),
+            updated_at: new Date(Date.now() - 60000).toISOString(),
+            message_type: 'system',
+            profiles: {
+              display_name: 'System'
+            }
+          }
+        ];
+        setMessages(mockPrivateMessages);
+        return;
+      }
+
       // For now, create mock messages since we don't have chat tables yet
       const mockMessages: ChatMessage[] = [
         {
@@ -297,39 +343,70 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
 
   return (
     <div className="flex flex-col h-[600px] bg-card rounded-lg border">
-      {/* Channel Selector Header */}
-      <div className="p-4 border-b border-border bg-card/50">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-semibold text-foreground">
-            {language === 'en' ? 'Community Chat' : 'Chat Komuniti'}
-          </h3>
-          <Badge variant="secondary" className="text-xs">
-            {channels.find(c => c.id === currentChannel)?.member_count} {language === 'en' ? 'members' : 'ahli'}
-          </Badge>
+      {/* Private Chat Header for Marketplace */}
+      {marketplaceChat && currentChannel.startsWith('dm_') ? (
+        <div className="p-4 border-b border-border bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                <MessageCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-blue-900 dark:text-blue-100">
+                  {marketplaceChat.chatWith}
+                </h3>
+                <p className="text-xs text-blue-600 dark:text-blue-300">
+                  {language === 'en' ? 'Private conversation about:' : 'Perbualan peribadi tentang:'} {marketplaceChat.itemInfo?.title}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                {language === 'en' ? 'Private' : 'Peribadi'}
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                RM{marketplaceChat.itemInfo?.price}
+              </Badge>
+            </div>
+          </div>
         </div>
-        
-        {/* Channel Tabs */}
-        <div className="flex flex-wrap gap-2">
-          {channels.map((channel) => {
-            const IconComponent = getChannelIcon(channel.channel_type);
-            return (
-              <Button
-                key={channel.id}
-                variant={currentChannel === channel.id ? "default" : "outline"}
-                size="sm"
-                className="flex items-center gap-2"
-                onClick={() => setCurrentChannel(channel.id)}
-              >
-                <IconComponent className="w-3 h-3" />
-                <span className="text-xs">{channel.name}</span>
-                <Badge variant="secondary" className="text-xs ml-1">
-                  {channel.member_count}
-                </Badge>
-              </Button>
-            );
-          })}
+      ) : (
+        // Regular Channel Header
+        <div className="p-4 border-b border-border bg-card/50">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold text-foreground">
+              {language === 'en' ? 'Community Chat' : 'Chat Komuniti'}
+            </h3>
+            <Badge variant="secondary" className="text-xs">
+              {channels.find(c => c.id === currentChannel)?.member_count} {language === 'en' ? 'members' : 'ahli'}
+            </Badge>
+          </div>
+          
+          {/* Channel Tabs */}
+          <div className="flex flex-wrap gap-2">
+            {channels.map((channel) => {
+              const IconComponent = getChannelIcon(channel.channel_type);
+              return (
+                <Button
+                  key={channel.id}
+                  variant={currentChannel === channel.id ? "default" : "outline"}
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => setCurrentChannel(channel.id)}
+                >
+                  <IconComponent className="w-3 h-3" />
+                  <span className="text-xs">{channel.name}</span>
+                  {!channel.is_private && (
+                    <Badge variant="secondary" className="text-xs ml-1">
+                      {channel.member_count}
+                    </Badge>
+                  )}
+                </Button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Messages */}
       <ScrollArea className="flex-1 p-4">
@@ -379,10 +456,20 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
 
       {/* Message Input */}
       <div className="p-4 border-t border-border bg-card/50">
+        {marketplaceChat && currentChannel.startsWith('dm_') && (
+          <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+            <p className="text-xs text-blue-700 dark:text-blue-300">
+              {language === 'en' 
+                ? `💬 This is a private conversation with ${marketplaceChat.chatWith} about your marketplace inquiry.`
+                : `💬 Ini adalah perbualan peribadi dengan ${marketplaceChat.chatWith} tentang pertanyaan marketplace anda.`
+              }
+            </p>
+          </div>
+        )}
         <div className="flex space-x-2">
           <Input
             placeholder={
-              marketplaceChat 
+              marketplaceChat && currentChannel.startsWith('dm_')
                 ? (language === 'en' ? 'Your message is ready to send...' : 'Mesej anda sedia untuk dihantar...')
                 : (language === 'en' ? 'Type your message...' : 'Taip mesej anda...')
             }
