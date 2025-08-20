@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { useTranslation } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { Loader2, MapPin, Shield, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { createTestUsers } from '@/utils/createTestUsers';
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,9 +25,14 @@ export default function Login() {
   const [error, setError] = useState('');
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
   const [isCreatingUsers, setIsCreatingUsers] = useState(false);
-  const { login, language, switchLanguage } = useEnhancedAuth();
-  const { t } = useTranslation((language as 'en' | 'ms') || 'ms'); // Ensure we always have a language
+  const [language, setLanguage] = useState<'en' | 'ms'>('en');
+  const { login } = useSimpleAuth();
+  const { t } = useTranslation(language);
   const { toast } = useToast();
+
+  const switchLanguage = (lang: 'en' | 'ms') => {
+    setLanguage(lang);
+  };
 
   // Load districts for registration
   useEffect(() => {
