@@ -35,6 +35,16 @@ import VisitorAnalytics from "./pages/VisitorAnalytics";
 import CommunicationHub from "./pages/CommunicationHub";
 import RoleManagement from "./pages/RoleManagement";
 import NotFound from "./pages/NotFound";
+import ModulesPage from "./pages/ModulesPage";
+import MyPayments from "./pages/MyPayments";
+import Documents from "./pages/Documents";
+import Notifications from "./pages/Notifications";
+import SecurityDashboardPage from "./pages/security/SecurityDashboard";
+import ServiceDashboardPage from "./pages/service/ServiceDashboard";
+import WorkOrders from "./pages/maintenance/WorkOrders";
+import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
+import SystemSettings from "./pages/admin/SystemSettings";
+import AuditLogs from "./pages/admin/AuditLogs";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -186,8 +196,64 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
+              <Route 
+                path="/modules" 
+                element={
+                  <ProtectedRoute>
+                    <ModulesPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/my-payments" 
+                element={
+                  <ProtectedRoute>
+                    <MyPayments />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/documents" 
+                element={
+                  <ProtectedRoute>
+                    <Documents />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/notifications" 
+                element={
+                  <ProtectedRoute>
+                    <Notifications />
+                  </ProtectedRoute>
+                } 
+              />
 
               {/* Professional view routes */}
+              <Route 
+                path="/security/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <SecurityDashboardPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/service/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <ServiceDashboardPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/maintenance/work-orders" 
+                element={
+                  <ProtectedRoute>
+                    <WorkOrders />
+                  </ProtectedRoute>
+                } 
+              />
               <Route 
                 path="/admin/*" 
                 element={
@@ -289,6 +355,30 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <DiscussionManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/analytics" 
+                element={
+                  <ProtectedRoute>
+                    <AnalyticsDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/settings" 
+                element={
+                  <ProtectedRoute>
+                    <SystemSettings />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/audit" 
+                element={
+                  <ProtectedRoute>
+                    <AuditLogs />
                   </ProtectedRoute>
                 } 
               />
