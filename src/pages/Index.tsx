@@ -1,4 +1,4 @@
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { useTranslation } from '@/lib/translations';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { QuickActions } from '@/components/dashboard/QuickActions';
@@ -20,8 +20,8 @@ import {
 } from 'lucide-react';
 
 const Index = () => {
-  const { user, language, hasRole } = useAuth();
-  const { t } = useTranslation(language || 'ms');
+  const { user, profile, currentRole, language, hasRole } = useEnhancedAuth();
+  const { t } = useTranslation((language as 'en' | 'ms') || 'ms');
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -167,7 +167,7 @@ const Index = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">
-              {t('welcomeBack')}, {user.display_name}!
+              {t('welcomeBack')}, {profile?.full_name || user?.email || 'User'}!
             </h1>
             <p className="text-muted-foreground">
               {language === 'en' 
@@ -178,10 +178,10 @@ const Index = () => {
           </div>
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="bg-gradient-primary text-white border-none">
-              {user.user_role.replace('_', ' ')}
+              {currentRole?.replace('_', ' ') || 'resident'}
             </Badge>
             <Badge variant="secondary">
-              {user.district}
+              {profile?.district_id || 'N/A'}
             </Badge>
           </div>
         </div>
