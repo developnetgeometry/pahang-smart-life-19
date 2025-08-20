@@ -3109,6 +3109,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      get_module_id: {
+        Args: { module_name: string }
+        Returns: string
+      }
       get_required_approver_role: {
         Args: {
           current_user_role: Database["public"]["Enums"]["user_role"]
@@ -3128,6 +3132,17 @@ export type Database = {
         Args: { district_id?: string; user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      get_user_role_info: {
+        Args: { check_user_id?: string }
+        Returns: {
+          color_code: string
+          description: string
+          display_name: string
+          level: number
+          permission_level: Database["public"]["Enums"]["permission_level"]
+          role: Database["public"]["Enums"]["enhanced_user_role"]
+        }[]
+      }
       get_user_role_level: {
         Args: { check_user_id?: string }
         Returns: number
@@ -3136,6 +3151,14 @@ export type Database = {
         Args: {
           check_role: Database["public"]["Enums"]["enhanced_user_role"]
           check_user_id?: string
+        }
+        Returns: boolean
+      }
+      has_module_permission: {
+        Args: {
+          check_user_id?: string
+          module_name: string
+          permission_type: string
         }
         Returns: boolean
       }
