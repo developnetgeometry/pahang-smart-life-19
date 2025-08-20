@@ -350,217 +350,212 @@ export default function NotificationSettings() {
         </Card>
       )}
 
-      {/* Additional Settings - Only show when push notifications are enabled */}
-      {isSubscribed && (
-        <>
-          {/* Email Notifications */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                {t.emailNotifications}
-              </CardTitle>
-              <CardDescription>
-                Choose which notifications to receive via email
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {Object.entries({
-                announcements: t.announcements,
-                bookings: t.bookings,
-                complaints: t.complaints,
-                events: t.events,
-                maintenance: t.maintenance,
-                security: t.security,
-              }).map(([key, label]) => (
-                <div key={key} className="flex items-center justify-between">
-                  <Label htmlFor={`email-${key}`} className="text-base font-medium cursor-pointer">
-                    {label}
-                  </Label>
-                  <Switch
-                    id={`email-${key}`}
-                    checked={emailNotifications[key as keyof typeof emailNotifications]}
-                    onCheckedChange={(checked) => 
-                      setEmailNotifications(prev => ({ ...prev, [key]: checked }))
-                    }
-                  />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+      {/* Email Notifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            {t.emailNotifications}
+          </CardTitle>
+          <CardDescription>
+            Choose which notifications to receive via email
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {Object.entries({
+            announcements: t.announcements,
+            bookings: t.bookings,
+            complaints: t.complaints,
+            events: t.events,
+            maintenance: t.maintenance,
+            security: t.security,
+          }).map(([key, label]) => (
+            <div key={key} className="flex items-center justify-between">
+              <Label htmlFor={`email-${key}`} className="text-base font-medium cursor-pointer">
+                {label}
+              </Label>
+              <Switch
+                id={`email-${key}`}
+                checked={emailNotifications[key as keyof typeof emailNotifications]}
+                onCheckedChange={(checked) => 
+                  setEmailNotifications(prev => ({ ...prev, [key]: checked }))
+                }
+              />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
-          {/* SMS Notifications */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Phone className="h-5 w-5" />
-                {t.smsNotifications}
-              </CardTitle>
-              <CardDescription>
-                Critical notifications sent via SMS
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {Object.entries({
-                emergency: t.emergency,
-                security: t.security,
-                maintenance: t.maintenance,
-              }).map(([key, label]) => (
-                <div key={key} className="flex items-center justify-between">
-                  <Label htmlFor={`sms-${key}`} className="text-base font-medium cursor-pointer">
-                    {label}
-                  </Label>
-                  <Switch
-                    id={`sms-${key}`}
-                    checked={smsNotifications[key as keyof typeof smsNotifications]}
-                    onCheckedChange={(checked) => 
-                      setSmsNotifications(prev => ({ ...prev, [key]: checked }))
-                    }
-                  />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+      {/* SMS Notifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Phone className="h-5 w-5" />
+            {t.smsNotifications}
+          </CardTitle>
+          <CardDescription>
+            Critical notifications sent via SMS
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {Object.entries({
+            emergency: t.emergency,
+            security: t.security,
+            maintenance: t.maintenance,
+          }).map(([key, label]) => (
+            <div key={key} className="flex items-center justify-between">
+              <Label htmlFor={`sms-${key}`} className="text-base font-medium cursor-pointer">
+                {label}
+              </Label>
+              <Switch
+                id={`sms-${key}`}
+                checked={smsNotifications[key as keyof typeof smsNotifications]}
+                onCheckedChange={(checked) => 
+                  setSmsNotifications(prev => ({ ...prev, [key]: checked }))
+                }
+              />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
-          {/* Quiet Hours */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Moon className="h-5 w-5" />
-                {t.quietHours}
-              </CardTitle>
-              <CardDescription>
-                {t.quietHoursDesc}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="quiet-hours" className="text-base font-medium cursor-pointer">
-                  Enable Quiet Hours
-                </Label>
-                <Switch
-                  id="quiet-hours"
-                  checked={quietHours.enabled}
-                  onCheckedChange={(checked) => 
-                    setQuietHours(prev => ({ ...prev, enabled: checked }))
-                  }
-                />
+      {/* Quiet Hours */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Moon className="h-5 w-5" />
+            {t.quietHours}
+          </CardTitle>
+          <CardDescription>
+            {t.quietHoursDesc}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="quiet-hours" className="text-base font-medium cursor-pointer">
+              Enable Quiet Hours
+            </Label>
+            <Switch
+              id="quiet-hours"
+              checked={quietHours.enabled}
+              onCheckedChange={(checked) => 
+                setQuietHours(prev => ({ ...prev, enabled: checked }))
+              }
+            />
+          </div>
+          
+          {quietHours.enabled && (
+            <>
+              <Separator />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="start-time">{t.quietHoursFrom}</Label>
+                  <Select 
+                    value={quietHours.startTime} 
+                    onValueChange={(value) => setQuietHours(prev => ({ ...prev, startTime: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 24 }, (_, i) => {
+                        const hour = i.toString().padStart(2, '0');
+                        return (
+                          <SelectItem key={hour} value={`${hour}:00`}>
+                            {hour}:00
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="end-time">{t.quietHoursTo}</Label>
+                  <Select 
+                    value={quietHours.endTime} 
+                    onValueChange={(value) => setQuietHours(prev => ({ ...prev, endTime: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 24 }, (_, i) => {
+                        const hour = i.toString().padStart(2, '0');
+                        return (
+                          <SelectItem key={hour} value={`${hour}:00`}>
+                            {hour}:00
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              
-              {quietHours.enabled && (
-                <>
-                  <Separator />
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="start-time">{t.quietHoursFrom}</Label>
-                      <Select 
-                        value={quietHours.startTime} 
-                        onValueChange={(value) => setQuietHours(prev => ({ ...prev, startTime: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 24 }, (_, i) => {
-                            const hour = i.toString().padStart(2, '0');
-                            return (
-                              <SelectItem key={hour} value={`${hour}:00`}>
-                                {hour}:00
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="end-time">{t.quietHoursTo}</Label>
-                      <Select 
-                        value={quietHours.endTime} 
-                        onValueChange={(value) => setQuietHours(prev => ({ ...prev, endTime: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 24 }, (_, i) => {
-                            const hour = i.toString().padStart(2, '0');
-                            return (
-                              <SelectItem key={hour} value={`${hour}:00`}>
-                                {hour}:00
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
-          {/* Notification Sound */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Volume2 className="h-5 w-5" />
-                {t.notificationSound}
-              </CardTitle>
-              <CardDescription>
-                Choose the sound for push notifications
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="notification-sound">Sound</Label>
-                <Select value={notificationSound} onValueChange={setNotificationSound}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="default">{t.soundDefault}</SelectItem>
-                    <SelectItem value="chime">{t.soundChime}</SelectItem>
-                    <SelectItem value="bell">{t.soundBell}</SelectItem>
-                    <SelectItem value="none">{t.soundNone}</SelectItem>
-                  </SelectContent>
-                </Select>
+      {/* Notification Sound */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Volume2 className="h-5 w-5" />
+            {t.notificationSound}
+          </CardTitle>
+          <CardDescription>
+            Choose the sound for push notifications
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label htmlFor="notification-sound">Sound</Label>
+            <Select value={notificationSound} onValueChange={setNotificationSound}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">{t.soundDefault}</SelectItem>
+                <SelectItem value="chime">{t.soundChime}</SelectItem>
+                <SelectItem value="bell">{t.soundBell}</SelectItem>
+                <SelectItem value="none">{t.soundNone}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notification History */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" />
+            {t.notificationHistory}
+          </CardTitle>
+          <CardDescription>
+            View your recent notification history
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowHistory(!showHistory)}
+            className="flex items-center gap-2"
+          >
+            <History className="h-4 w-4" />
+            {t.viewHistory}
+          </Button>
+          
+          {showHistory && (
+            <div className="mt-4 space-y-2">
+              <Separator />
+              <div className="text-sm text-muted-foreground">
+                No recent notifications to display
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Notification History */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <History className="h-5 w-5" />
-                {t.notificationHistory}
-              </CardTitle>
-              <CardDescription>
-                View your recent notification history
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                variant="outline" 
-                onClick={() => setShowHistory(!showHistory)}
-                className="flex items-center gap-2"
-              >
-                <History className="h-4 w-4" />
-                {t.viewHistory}
-              </Button>
-              
-              {showHistory && (
-                <div className="mt-4 space-y-2">
-                  <Separator />
-                  <div className="text-sm text-muted-foreground">
-                    No recent notifications to display
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </>
-      )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
