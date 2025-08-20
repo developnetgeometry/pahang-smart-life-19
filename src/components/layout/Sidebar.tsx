@@ -139,6 +139,7 @@ export function AppSidebar() {
     const securityItems = [];
     if (hasRole('security_officer') || hasRole('admin') || hasRole('manager')) {
       securityItems.push(
+        { title: t('panicAlerts'), url: '/panic-alerts', icon: AlertTriangle, requiredRoles: ['security_officer', 'admin', 'manager'] },
         { title: t('visitorSecurity'), url: '/visitor-security', icon: Shield, requiredRoles: ['security', 'admin', 'manager'] },
         { title: t('cctvManagement'), url: '/admin/cctv', icon: Camera, requiredRoles: ['security', 'admin', 'manager'] }
       );
