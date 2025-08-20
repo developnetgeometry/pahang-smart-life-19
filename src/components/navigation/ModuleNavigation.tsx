@@ -45,8 +45,20 @@ const categoryLabels = {
   admin: 'System Administration'
 };
 
+// Define which roles can access which module categories
+const categoryRoleMap = {
+  core: ['resident', 'admin', 'manager', 'security_officer', 'maintenance_staff', 'service_provider', 'community_leader', 'community_admin', 'district_coordinator', 'state_admin', 'state_service_manager', 'facility_manager'],
+  resident: ['resident', 'admin', 'manager', 'community_leader', 'community_admin', 'district_coordinator', 'state_admin'],
+  management: ['admin', 'manager', 'community_admin', 'district_coordinator', 'state_admin', 'facility_manager'],
+  security: ['security_officer', 'admin', 'manager'],
+  maintenance: ['maintenance_staff', 'admin', 'manager', 'facility_manager'],
+  service: ['service_provider', 'admin', 'manager', 'state_service_manager'],
+  analytics: ['admin', 'manager', 'district_coordinator', 'state_admin'],
+  admin: ['admin', 'state_admin']
+};
+
 export function ModuleNavigation() {
-  const { user, language } = useAuth();
+  const { user, language, hasRole } = useAuth();
   const location = useLocation();
   const [modules, setModules] = useState<SystemModule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,11 +88,18 @@ export function ModuleNavigation() {
     }
   };
 
+  // Filter modules based on user role and search/category
+  const canAccessModule = (module: SystemModule) => {
+    const requiredRoles = categoryRoleMap[module.category as keyof typeof categoryRoleMap] || [];
+    return requiredRoles.some(role => hasRole?.(role as any));
+  };
+
   const filteredModules = modules.filter(module => {
     const matchesSearch = module.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          module.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || module.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const hasAccess = canAccessModule(module);
+    return matchesSearch && matchesCategory && hasAccess;
   });
 
   const modulesByCategory = filteredModules.reduce((acc, module) => {
