@@ -2172,6 +2172,59 @@ export type Database = {
         }
         Relationships: []
       }
+      panic_alerts: {
+        Row: {
+          alert_status: string
+          created_at: string
+          district_id: string | null
+          id: string
+          location_address: string | null
+          location_latitude: number | null
+          location_longitude: number | null
+          notes: string | null
+          responded_by: string | null
+          response_time: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_status?: string
+          created_at?: string
+          district_id?: string | null
+          id?: string
+          location_address?: string | null
+          location_latitude?: number | null
+          location_longitude?: number | null
+          notes?: string | null
+          responded_by?: string | null
+          response_time?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_status?: string
+          created_at?: string
+          district_id?: string | null
+          id?: string
+          location_address?: string | null
+          location_latitude?: number | null
+          location_longitude?: number | null
+          notes?: string | null
+          responded_by?: string | null
+          response_time?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "panic_alerts_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parking_slots: {
         Row: {
           assigned_user_id: string | null

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import PanicButton from '@/components/emergency/PanicButton';
 import { 
   DollarSign, 
   Calendar, 
@@ -345,6 +346,9 @@ export function ResidentDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Emergency Panic Button */}
+      <PanicButton />
     </div>
   );
 }
