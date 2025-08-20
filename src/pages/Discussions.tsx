@@ -35,7 +35,7 @@ interface Comment {
 }
 
 export default function Discussions() {
-  const { language } = useAuth();
+  const { language, user } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -224,7 +224,7 @@ export default function Discussions() {
     if (newComment.trim() && selectedDiscussion) {
       const newCommentObj: Comment = {
         id: Date.now().toString(),
-        author: 'Current User', // This would come from auth context in real app
+        author: user?.display_name || user?.email || 'Anonymous User',
         content: newComment,
         timestamp: 'just now',
         likes: 0
