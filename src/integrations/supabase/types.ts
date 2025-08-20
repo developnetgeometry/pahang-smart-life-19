@@ -2185,6 +2185,7 @@ export type Database = {
           is_active: boolean | null
           language: string | null
           phone: string | null
+          primary_role: Database["public"]["Enums"]["app_role"] | null
           theme: string | null
           unit_number: string | null
           updated_at: string | null
@@ -2202,6 +2203,7 @@ export type Database = {
           is_active?: boolean | null
           language?: string | null
           phone?: string | null
+          primary_role?: Database["public"]["Enums"]["app_role"] | null
           theme?: string | null
           unit_number?: string | null
           updated_at?: string | null
@@ -2219,6 +2221,7 @@ export type Database = {
           is_active?: boolean | null
           language?: string | null
           phone?: string | null
+          primary_role?: Database["public"]["Enums"]["app_role"] | null
           theme?: string | null
           unit_number?: string | null
           updated_at?: string | null
@@ -2398,52 +2401,33 @@ export type Database = {
       }
       user_roles: {
         Row: {
-          assigned_at: string | null
-          assigned_by: string | null
+          community_id: string | null
+          created_at: string | null
           district_id: string | null
           id: string
-          role: Database["public"]["Enums"]["user_role"]
-          user_id: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+          user_id: string
         }
         Insert: {
-          assigned_at?: string | null
-          assigned_by?: string | null
+          community_id?: string | null
+          created_at?: string | null
           district_id?: string | null
           id?: string
-          role: Database["public"]["Enums"]["user_role"]
-          user_id?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id: string
         }
         Update: {
-          assigned_at?: string | null
-          assigned_by?: string | null
+          community_id?: string | null
+          created_at?: string | null
           district_id?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["user_role"]
-          user_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_assigned_by_fkey"
-            columns: ["assigned_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_roles_district_id_fkey"
-            columns: ["district_id"]
-            isOneToOne: false
-            referencedRelation: "districts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_roles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       utility_readings: {
         Row: {
@@ -2680,7 +2664,9 @@ export type Database = {
         Returns: Database["public"]["Enums"]["user_role"]
       }
       has_role: {
-        Args: { check_role: Database["public"]["Enums"]["user_role"] }
+        Args:
+          | { _role: Database["public"]["Enums"]["app_role"]; _user_id: string }
+          | { check_role: Database["public"]["Enums"]["user_role"] }
         Returns: boolean
       }
     }
@@ -2691,6 +2677,17 @@ export type Database = {
         | "security"
         | "event"
         | "emergency"
+      app_role:
+        | "state_admin"
+        | "district_coordinator"
+        | "community_admin"
+        | "facility_manager"
+        | "security_officer"
+        | "maintenance_staff"
+        | "resident"
+        | "service_provider"
+        | "community_leader"
+        | "state_service_manager"
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
       complaint_priority: "low" | "medium" | "high" | "urgent"
       complaint_status: "pending" | "in_progress" | "resolved" | "closed"
@@ -2847,6 +2844,18 @@ export const Constants = {
         "security",
         "event",
         "emergency",
+      ],
+      app_role: [
+        "state_admin",
+        "district_coordinator",
+        "community_admin",
+        "facility_manager",
+        "security_officer",
+        "maintenance_staff",
+        "resident",
+        "service_provider",
+        "community_leader",
+        "state_service_manager",
       ],
       booking_status: ["pending", "confirmed", "cancelled", "completed"],
       complaint_priority: ["low", "medium", "high", "urgent"],
