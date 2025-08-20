@@ -95,16 +95,16 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
         }
         return prev;
       });
+      setLoading(false); // Set loading to false for marketplace chat
     } else {
       fetchChannels();
     }
   }, [marketplaceChat, user, language]);
 
   useEffect(() => {
-    if (!marketplaceChat) {
-      fetchChannels();
-    }
-  }, [marketplaceChat]);
+    // Always fetch channels on component mount, regardless of marketplace chat
+    fetchChannels();
+  }, []);
 
   useEffect(() => {
     if (currentChannel) {
