@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,7 +42,7 @@ interface CCTVRecording {
 }
 
 export default function CCTVLiveFeed() {
-  const { language, user, hasRole } = useAuth();
+  const { language, user, hasRole } = useEnhancedAuth();
   const [selectedCamera, setSelectedCamera] = useState('all');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [motionDetectionEnabled, setMotionDetectionEnabled] = useState(false);
@@ -333,16 +333,12 @@ export default function CCTVLiveFeed() {
   // Remove the requiredRoles restriction for CCTV - now available to all residents
   const accessibleCameras = mockCameras.filter(camera => {
     // Admin roles see all cameras
-    if (hasRole('admin') || hasRole('security') || hasRole('manager')) {
+    if (hasRole('admin' as any) || hasRole('security' as any) || hasRole('manager' as any)) {
       return true;
     }
     
-    // Residents see public cameras and cameras in their building/area
-    const userBuilding = user?.address?.includes('Block A') ? 'Block A' : 
-                        user?.address?.includes('Block B') ? 'Block B' : 'Block A'; // Default to Block A
-    
-    return camera.accessLevel === 'public' || 
-           (camera.accessLevel === 'resident' && camera.building === userBuilding);
+    // Residents see public cameras and cameras accessible to their role
+    return camera.accessLevel === 'public' || camera.accessLevel === 'resident';
   });
 
   const getStatusColor = (status: string) => {
