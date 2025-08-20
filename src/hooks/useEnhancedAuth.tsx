@@ -167,14 +167,23 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await logAction('logout');
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    setProfile(null);
-    setRoleInfo(null);
-    setRoles([]);
-    setCurrentRole(null);
+    try {
+      // Try to log the action, but don't let it block logout
+      await logAction('logout').catch(() => {});
+      
+      // Force logout even if signOut fails due to token issues
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch (error) {
+      console.log('Logout error (will clear local state anyway):', error);
+    } finally {
+      // Always clear local state regardless of API call success
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      setRoleInfo(null);
+      setRoles([]);
+      setCurrentRole(null);
+    }
   };
 
   // Role checking methods
