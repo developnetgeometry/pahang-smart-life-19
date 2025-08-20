@@ -3226,6 +3226,7 @@ export type Database = {
           is_active: boolean | null
           module_name: string
           route_path: string | null
+          sort_order: number | null
         }
         Insert: {
           category?: string
@@ -3237,6 +3238,7 @@ export type Database = {
           is_active?: boolean | null
           module_name: string
           route_path?: string | null
+          sort_order?: number | null
         }
         Update: {
           category?: string
@@ -3248,6 +3250,7 @@ export type Database = {
           is_active?: boolean | null
           module_name?: string
           route_path?: string | null
+          sort_order?: number | null
         }
         Relationships: []
       }

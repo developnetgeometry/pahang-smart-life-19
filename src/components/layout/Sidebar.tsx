@@ -50,7 +50,8 @@ export function AppSidebar() {
     nav.push({
       label: t('dashboard'),
       items: [
-        { title: t('dashboard'), url: '/', icon: LayoutDashboard }
+        { title: t('dashboard'), url: '/', icon: LayoutDashboard },
+        { title: language === 'en' ? 'All Modules' : 'Semua Modul', url: '/modules', icon: Activity }
       ]
     });
 
