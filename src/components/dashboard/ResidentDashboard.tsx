@@ -18,7 +18,7 @@ import {
   CheckCircle,
   Clock,
   Building,
-  Activity
+  Grid3X3
 } from 'lucide-react';
 
 export function ResidentDashboard() {
@@ -350,7 +350,7 @@ export function ResidentDashboard() {
             >
               <a href="/modules">
                 <div className="flex items-center gap-2 w-full">
-                  <Activity className="h-5 w-5 text-primary" />
+                  <Grid3X3 className="h-5 w-5 text-primary" />
                   <span className="font-medium">{language === 'en' ? 'All Modules' : 'Semua Modul'}</span>
                 </div>
                 <p className="text-xs text-muted-foreground text-left">

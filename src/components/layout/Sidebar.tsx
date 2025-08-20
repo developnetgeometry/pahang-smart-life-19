@@ -22,7 +22,7 @@ import {
   Megaphone,
   FileText,
   Home,
-  Activity
+  BarChart3
 } from 'lucide-react';
 
 interface NavigationItem {
@@ -51,7 +51,7 @@ export function AppSidebar() {
       label: t('dashboard'),
       items: [
         { title: t('dashboard'), url: '/', icon: LayoutDashboard },
-        { title: language === 'en' ? 'All Modules' : 'Semua Modul', url: '/modules', icon: Activity }
+        { title: language === 'en' ? 'All Modules' : 'Semua Modul', url: '/modules', icon: LayoutDashboard }
       ]
     });
 
@@ -136,7 +136,7 @@ export function AppSidebar() {
     
     if (hasRole('admin') || hasRole('manager')) {
       securityItems.push(
-        { title: t('visitorAnalytics'), url: '/visitor-analytics', icon: Activity, requiredRoles: ['admin', 'manager'] },
+        { title: t('visitorAnalytics'), url: '/visitor-analytics', icon: BarChart3, requiredRoles: ['admin', 'manager'] },
         { title: t('smartMonitoring'), url: '/admin/smart-monitoring', icon: Monitor, requiredRoles: ['admin', 'manager'] },
         { title: t('sensorManagement'), url: '/admin/sensors', icon: Radio, requiredRoles: ['admin', 'manager'] }
       );
