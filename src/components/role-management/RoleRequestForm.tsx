@@ -124,12 +124,16 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      setCurrentUserRole(data.role as UserRole);
+      
+      // If no user role found, set as 'resident' by default
+      setCurrentUserRole(data?.role as UserRole || 'resident');
     } catch (error) {
       console.error('Error fetching user role:', error);
+      // Fallback to resident role if there's an error
+      setCurrentUserRole('resident');
     }
   };
 
