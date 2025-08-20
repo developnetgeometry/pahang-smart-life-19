@@ -49,22 +49,6 @@ export function SecurityOfficerDashboard() {
     }
   ];
 
-  const liveAlerts = [
-    {
-      type: 'warning',
-      message: language === 'en' ? 'Tailgate detected at Main Gate' : 'Tailgate dikesan di Pintu Utama',
-      time: '2:15 PM',
-      location: 'Main Gate',
-      priority: 'medium'
-    },
-    {
-      type: 'info',
-      message: language === 'en' ? 'All clear - Patrol round completed' : 'Semua selamat - Rondaan selesai',
-      time: '1:45 PM',
-      location: 'Building A',
-      priority: 'low'
-    }
-  ];
 
   const cctvFeeds = [
     { name: 'Main Gate', status: 'online', location: 'Entrance' },
@@ -105,13 +89,6 @@ export function SecurityOfficerDashboard() {
     { time: '6:00 PM', area: 'Perimeter Check', status: 'upcoming' }
   ];
 
-  const getAlertVariant = (type: string) => {
-    switch (type) {
-      case 'warning': return 'destructive';
-      case 'info': return 'default';
-      default: return 'default';
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -167,38 +144,6 @@ export function SecurityOfficerDashboard() {
         ))}
       </div>
 
-      {/* Live Alerts */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            {language === 'en' ? 'Live Security Alerts' : 'Amaran Keselamatan Langsung'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {liveAlerts.map((alert, index) => (
-            <Alert key={index} variant={getAlertVariant(alert.type) as any}>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="font-medium">{alert.message}</p>
-                    <div className="flex items-center gap-2 text-xs mt-1">
-                      <Clock className="h-3 w-3" />
-                      {alert.time}
-                      <span>•</span>
-                      {alert.location}
-                    </div>
-                  </div>
-                  <Button size="sm" variant="outline">
-                    {language === 'en' ? 'Respond' : 'Bertindak'}
-                  </Button>
-                </div>
-              </AlertDescription>
-            </Alert>
-          ))}
-        </CardContent>
-      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* CCTV Camera Status */}
