@@ -250,9 +250,11 @@ export function EnhancedNavigation({ className }: { className?: string }) {
 
         return (
           <div key={section.title} className="space-y-2">
-            <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {section.title}
-            </h3>
+            <div className="mx-2 px-3 py-2 bg-muted/50 rounded-md border border-border/50">
+              <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                {section.title}
+              </h3>
+            </div>
             <div className="space-y-1">
               {section.items.map(renderNavigationItem)}
             </div>
