@@ -63,8 +63,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Layout>
-            <Routes>
+          <Routes>
               <Route 
                 path="/login" 
                 element={
@@ -304,8 +303,7 @@ const App = () => (
               
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
+          </Routes>
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>
