@@ -61,7 +61,8 @@ export function AppSidebar() {
         { title: t('myBookings'), url: '/my-bookings', icon: Calendar },
         { title: t('myVisitors'), url: '/my-visitors', icon: Users },
         { title: t('myComplaints'), url: '/my-complaints', icon: FileText },
-        { title: t('myProfile'), url: '/my-profile', icon: Settings }
+        { title: t('myProfile'), url: '/my-profile', icon: Settings },
+        { title: language === 'en' ? 'Role Requests' : 'Permohonan Peranan', url: '/role-management', icon: UserPlus }
       ]
     });
 

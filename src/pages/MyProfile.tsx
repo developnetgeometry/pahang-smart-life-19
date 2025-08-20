@@ -125,6 +125,15 @@ export default function MyProfile() {
                 </Label>
                 <p className="text-sm text-muted-foreground capitalize">{user.user_role.replace('_', ' ')}</p>
               </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full"
+                onClick={() => window.location.href = '/role-management'}
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                {language === 'en' ? 'Request Role Change' : 'Mohon Tukar Peranan'}
+              </Button>
             </CardContent>
           </Card>
         </div>
