@@ -230,7 +230,8 @@ export default function ActivePanicAlerts() {
                 <AlertTriangle className="w-5 h-5 text-red-600" />
                 <div>
                   <p className="font-semibold text-sm">
-                    {alert.profiles?.full_name || alert.profiles?.email || 'Unknown User'}
+                    {language === 'en' ? 'Alert from: ' : 'Amaran daripada: '}
+                    {alert.profiles?.full_name || alert.profiles?.email || `User ID: ${alert.user_id}`}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {formatTime(alert.created_at)}
