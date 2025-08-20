@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ interface Props {
 }
 
 export function RealTimeChat({ selectedChannel }: Props) {
-  const { user, language } = useAuth();
+  const { user, language, currentRole, profile } = useEnhancedAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
@@ -94,8 +94,8 @@ export function RealTimeChat({ selectedChannel }: Props) {
           // Track user presence
           await channel.track({
             user_id: user?.id,
-            display_name: user?.display_name,
-            role: user?.user_role,
+            display_name: profile?.full_name || user?.email?.split('@')[0] || 'User',
+            role: currentRole || 'resident',
             online_at: new Date().toISOString()
           });
         }
@@ -112,8 +112,8 @@ export function RealTimeChat({ selectedChannel }: Props) {
     const message: Message = {
       id: Date.now().toString(),
       content: newMessage,
-      sender_name: user.display_name,
-      sender_role: user.user_role,
+      sender_name: profile?.full_name || user?.email?.split('@')[0] || 'User',
+      sender_role: currentRole || 'resident',
       created_at: new Date().toISOString(),
       channel: selectedChannel
     };
@@ -240,14 +240,14 @@ export function RealTimeChat({ selectedChannel }: Props) {
             {/* Current User */}
             <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
               <div className="w-6 h-6 rounded-full bg-gradient-primary flex items-center justify-center text-white text-xs font-medium">
-                {user?.display_name?.charAt(0).toUpperCase()}
+                {(profile?.full_name || user?.email?.split('@')[0] || 'User')?.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">
-                  {user?.display_name} (You)
+                  {profile?.full_name || user?.email?.split('@')[0] || 'User'} (You)
                 </p>
-                <Badge className={getRoleColor(user?.user_role || 'resident')}>
-                  {user?.user_role}
+                <Badge className={getRoleColor(currentRole || 'resident')}>
+                  {currentRole || 'resident'}
                 </Badge>
               </div>
               <div className="w-2 h-2 bg-green-500 rounded-full" />

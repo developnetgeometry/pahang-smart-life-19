@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useEnhancedAuth } from "@/hooks/useEnhancedAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ interface Booking {
 }
 
 export default function FacilitiesManagement() {
-  const { language } = useAuth();
+  const { language } = useEnhancedAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("facilities");
   const [searchTerm, setSearchTerm] = useState("");

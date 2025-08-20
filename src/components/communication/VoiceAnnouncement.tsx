@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,7 +38,7 @@ const MODELS = [
 ];
 
 export default function VoiceAnnouncement() {
-  const { language } = useAuth();
+  const { language } = useEnhancedAuth();
   const { toast } = useToast();
   const [announcementText, setAnnouncementText] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);

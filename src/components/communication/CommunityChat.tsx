@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,7 +47,7 @@ interface ChatChannel {
 }
 
 export default function CommunityChat() {
-  const { language, user } = useAuth();
+  const { language, user, profile } = useEnhancedAuth();
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [channels, setChannels] = useState<ChatChannel[]>([]);
@@ -212,7 +212,7 @@ export default function CommunityChat() {
         updated_at: new Date().toISOString(),
         message_type: 'text',
         profiles: {
-          display_name: user?.display_name || 'You'
+          display_name: profile?.full_name || user?.email?.split('@')[0] || 'You'
         }
       };
 

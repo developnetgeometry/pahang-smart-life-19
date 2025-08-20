@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +30,7 @@ interface Announcement {
 }
 
 export default function AnnouncementManagement() {
-  const { language } = useAuth();
+  const { language } = useEnhancedAuth();
   const [announcements, setAnnouncements] = useState<Announcement[]>([
     {
       id: '1',

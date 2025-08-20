@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,7 +37,7 @@ interface SystemStatus {
 }
 
 export default function SecurityDashboard() {
-  const { language } = useAuth();
+  const { language } = useEnhancedAuth();
   const [activeTab, setActiveTab] = useState('overview');
 
   const text = {

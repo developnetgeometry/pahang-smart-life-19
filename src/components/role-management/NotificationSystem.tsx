@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ interface RoleRequestNotification {
 }
 
 export function NotificationSystem() {
-  const { user, language } = useAuth();
+  const { user, language } = useEnhancedAuth();
   const { toast } = useToast();
   const [notifications, setNotifications] = useState<RoleRequestNotification[]>([]);
   const [loading, setLoading] = useState(true);
