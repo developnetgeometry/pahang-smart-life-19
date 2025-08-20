@@ -1,6 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useTranslation } from '@/lib/translations';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,7 @@ import {
 export function Header() {
   const { user, language, switchLanguage, theme, switchTheme, logout } = useAuth();
   const { t } = useTranslation(language || 'ms');
+  const navigate = useNavigate();
 
   if (!user) return null;
 
@@ -93,11 +95,11 @@ export function Header() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate('/my-profile')}>
             <User className="mr-2 h-4 w-4" />
             <span>{t('profileTitle')}</span>
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate('/notification-settings')}>
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
           </DropdownMenuItem>
