@@ -1,9 +1,17 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from '@/components/ui/sidebar';
 import {
   LayoutDashboard,
   Calendar,
@@ -41,6 +49,8 @@ export function AppSidebar() {
   const { language, hasRole } = useAuth();
   const { t } = useTranslation(language);
   const location = useLocation();
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   // Role-based navigation groups - enhanced filtering
   const getNavigationForUser = () => {
@@ -168,61 +178,62 @@ export function AppSidebar() {
   };
 
   const navigation = getNavigationForUser();
-
-  const isActive = (path: string) => location.pathname === path;
   const canSee = (item: NavigationItem) => !item.requiredRoles || item.requiredRoles.some(r => hasRole?.(r as any));
   const filteredNavigation = navigation
     .map((group) => ({ ...group, items: group.items.filter(canSee) }))
     .filter((group) => group.items.length > 0);
 
   return (
-    <div className="flex h-full w-full flex-col bg-card border-r border-border">
+    <Sidebar collapsible="icon">
       {/* Logo section */}
       <div className="flex h-16 items-center border-b border-border px-4">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
             <span className="text-sm font-bold text-primary-foreground">SC</span>
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-foreground">Smart Community</span>
-            <span className="text-xs text-muted-foreground">Pahang</span>
-          </div>
+          {!isCollapsed && (
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-foreground">Smart Community</span>
+              <span className="text-xs text-muted-foreground">Pahang</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Navigation */}
-      <ScrollArea className="flex-1 px-3">
-        <div className="space-y-4 py-4">
-          {filteredNavigation.map((group, groupIndex) => (
-            <div key={groupIndex} className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground px-3 py-2">
+      <SidebarContent>
+        {filteredNavigation.map((group, groupIndex) => (
+          <SidebarGroup key={groupIndex}>
+            {!isCollapsed && (
+              <SidebarGroupLabel className="text-muted-foreground">
                 {group.label}
-              </h4>
-              <div className="space-y-1">
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
                 {group.items.map((item) => (
-                  <NavLink
-                    key={item.url}
-                    to={item.url}
-                    className={({ isActive }) =>
-                      `flex items-center space-x-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-                        isActive
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                      }`
-                    }
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
-                  </NavLink>
+                  <SidebarMenuItem key={item.url}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        className={({ isActive }) =>
+                          `flex items-center space-x-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                            isActive
+                              ? 'bg-primary text-primary-foreground'
+                              : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                          }`
+                        }
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 ))}
-              </div>
-              {groupIndex < filteredNavigation.length - 1 && (
-                <Separator className="my-2" />
-              )}
-            </div>
-          ))}
-        </div>
-      </ScrollArea>
-    </div>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
+    </Sidebar>
   );
 }

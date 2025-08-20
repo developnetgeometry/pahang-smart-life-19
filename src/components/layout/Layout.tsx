@@ -1,6 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from './Header';
 import { AppSidebar } from './Sidebar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,19 +15,20 @@ export function Layout({ children }: LayoutProps) {
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <div className="hidden md:flex md:w-64 md:flex-col">
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
+        
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <header className="flex h-16 items-center border-b border-border px-4">
+            <SidebarTrigger className="mr-4" />
+            <Header />
+          </header>
+          <main className="flex-1 overflow-y-auto p-6">
+            {children}
+          </main>
+        </div>
       </div>
-      
-      {/* Main content */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
-      </div>
-    </div>
+    </SidebarProvider>
   );
 }
