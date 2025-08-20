@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -89,11 +89,17 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState('en');
   const [theme, setTheme] = useState('light');
   
+  // Cache for permission results
+  const permissionCache = useRef<Map<string, boolean>>(new Map());
+  
   const { toast } = useToast();
 
   // Fetch user profile and roles
   const fetchUserData = async (userId: string) => {
     try {
+      // Clear permission cache when fetching new user data
+      permissionCache.current.clear();
+      
       // Fetch profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -198,6 +204,18 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
   const hasModulePermission = async (moduleName: string, permissionType: string): Promise<boolean> => {
     if (!user) return false;
 
+    // Basic modules that all authenticated users can access
+    const basicModules = ['dashboard', 'profile', 'my_bookings', 'complaints', 'visitors', 'announcements', 'discussions', 'communication', 'facilities', 'marketplace'];
+    if (basicModules.includes(moduleName) && permissionType === 'read') {
+      return true;
+    }
+
+    // Check cache first
+    const cacheKey = `${user.id}-${moduleName}-${permissionType}`;
+    if (permissionCache.current.has(cacheKey)) {
+      return permissionCache.current.get(cacheKey)!;
+    }
+
     try {
       const { data, error } = await supabase.rpc('has_module_permission', {
         module_name: moduleName,
@@ -210,7 +228,10 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      return data === true;
+      const result = data === true;
+      // Cache the result
+      permissionCache.current.set(cacheKey, result);
+      return result;
     } catch (error) {
       console.error('Permission check failed:', error);
       return false;
@@ -227,6 +248,9 @@ export function EnhancedAuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Clear permission cache when switching roles
+    permissionCache.current.clear();
+    
     setCurrentRole(role);
     await logAction('role_switch', 'system', 'role', undefined, { from: currentRole }, { to: role });
 
