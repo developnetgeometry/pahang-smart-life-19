@@ -35,6 +35,7 @@ import VisitorAnalytics from "./pages/VisitorAnalytics";
 import CommunicationHub from "./pages/CommunicationHub";
 import RoleManagement from "./pages/RoleManagement";
 import NotificationSettings from "./pages/NotificationSettings";
+import PanicAlerts from "./pages/PanicAlerts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -292,16 +293,26 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
-              <Route 
-                path="/admin/discussions" 
-                element={
-                  <ProtectedRoute>
-                    <DiscussionManagement />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Catch-all route */}
+               <Route 
+                 path="/admin/discussions" 
+                 element={
+                   <ProtectedRoute>
+                     <DiscussionManagement />
+                   </ProtectedRoute>
+                 } 
+               />
+               
+               {/* Security modules */}
+               <Route 
+                 path="/panic-alerts" 
+                 element={
+                   <ProtectedRoute>
+                     <PanicAlerts />
+                   </ProtectedRoute>
+                 } 
+               />
+               
+               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

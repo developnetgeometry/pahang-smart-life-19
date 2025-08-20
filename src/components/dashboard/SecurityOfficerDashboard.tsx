@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import PanicAlertManager from '@/components/emergency/PanicAlertManager';
+import ActivePanicAlerts from '@/components/emergency/ActivePanicAlerts';
 import { 
   Camera, 
   Shield, 
@@ -147,7 +147,7 @@ export function SecurityOfficerDashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <PanicAlertManager />
+          <ActivePanicAlerts />
         </CardContent>
       </Card>
 
