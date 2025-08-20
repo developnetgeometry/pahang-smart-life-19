@@ -39,7 +39,7 @@ serve(async (req) => {
         user_id,
         role
       `)
-      .in('role', ['security', 'admin', 'state_admin', 'district_coordinator', 'community_admin']);
+      .in('role', ['security_officer', 'admin', 'state_admin', 'district_coordinator', 'community_admin']);
 
     if (securityError) {
       console.error('Error fetching security users:', securityError);
