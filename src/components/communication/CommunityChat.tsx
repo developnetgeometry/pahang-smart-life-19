@@ -46,6 +46,15 @@ interface ChatChannel {
   member_count: number;
 }
 
+interface DirectMessage {
+  id: string;
+  other_user_name: string;
+  last_message: string;
+  last_message_time: string;
+  unread_count: number;
+  avatar?: string;
+}
+
 interface MarketplaceChatInfo {
   chatWith?: string;
   presetMessage?: string;
@@ -68,6 +77,8 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
   const [currentChannel, setCurrentChannel] = useState<string>('');
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [directMessages, setDirectMessages] = useState<DirectMessage[]>([]);
+  const [showChatList, setShowChatList] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -171,6 +182,9 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
       if (!currentChannel && mockChannels.length > 0) {
         setCurrentChannel(mockChannels[0].id);
       }
+      
+      // Fetch direct messages for the social tab
+      fetchDirectMessages();
     } catch (error) {
       console.error('Error fetching channels:', error);
       toast({
@@ -181,6 +195,54 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchDirectMessages = async () => {
+    // Mock direct messages data
+    const mockDirectMessages: DirectMessage[] = [
+      {
+        id: 'dm_sarah_123',
+        other_user_name: 'Sarah Lee',
+        last_message: 'Thanks for helping with the pool booking!',
+        last_message_time: new Date(Date.now() - 60000 * 15).toISOString(),
+        unread_count: 2,
+        avatar: 'SL'
+      },
+      {
+        id: 'dm_ahmad_456',
+        other_user_name: 'Ahmad Rahman',
+        last_message: 'The maintenance is scheduled for tomorrow',
+        last_message_time: new Date(Date.now() - 60000 * 45).toISOString(),
+        unread_count: 0,
+        avatar: 'AR'
+      },
+      {
+        id: 'dm_maria_789',
+        other_user_name: 'Maria Santos',
+        last_message: 'Let me know when you\'re free to chat',
+        last_message_time: new Date(Date.now() - 60000 * 120).toISOString(),
+        unread_count: 1,
+        avatar: 'MS'
+      }
+    ];
+    
+    setDirectMessages(mockDirectMessages);
+  };
+
+  const handleSocialTabClick = () => {
+    if (currentChannel === 'social') {
+      setShowChatList(!showChatList);
+    } else {
+      setCurrentChannel('social');
+      setShowChatList(true);
+    }
+  };
+
+  const openDirectMessage = (dmId: string, userName: string) => {
+    setCurrentChannel(dmId);
+    setShowChatList(false);
+    // In a real implementation, fetch messages for this DM
+    fetchMessages(dmId);
   };
 
   const fetchMessages = async (channelId: string) => {
@@ -387,13 +449,13 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
             {channels.map((channel) => {
               const IconComponent = getChannelIcon(channel.channel_type);
               return (
-                <Button
-                  key={channel.id}
-                  variant={currentChannel === channel.id ? "default" : "outline"}
-                  size="sm"
-                  className="flex items-center gap-2"
-                  onClick={() => setCurrentChannel(channel.id)}
-                >
+                 <Button
+                   key={channel.id}
+                   variant={currentChannel === channel.id ? "default" : "outline"}
+                   size="sm"
+                   className="flex items-center gap-2"
+                   onClick={() => channel.id === 'social' ? handleSocialTabClick() : setCurrentChannel(channel.id)}
+                 >
                   <IconComponent className="w-3 h-3" />
                   <span className="text-xs">{channel.name}</span>
                   {!channel.is_private && (
@@ -408,51 +470,99 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
         </div>
       )}
 
-      {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
-          {messages.map((message, index) => (
-            <div key={message.id} className="space-y-2">
-              {index === 0 || new Date(messages[index - 1].created_at).toDateString() !== new Date(message.created_at).toDateString() && (
-                <div className="text-center">
-                  <Separator />
-                  <Badge variant="secondary" className="px-3 py-1">
-                    {new Date(message.created_at).toLocaleDateString(language === 'en' ? 'en-US' : 'ms-MY')}
-                  </Badge>
-                </div>
-              )}
-              
-              <div className={`flex items-start space-x-3 ${getMessageTypeColor(message.message_type)} p-3 rounded-lg`}>
-                <Avatar className="w-8 h-8">
-                  <AvatarFallback className="text-xs">
-                    {message.profiles?.display_name?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className="font-medium text-sm text-foreground">
-                      {message.profiles?.display_name}
-                    </span>
-                    {message.message_type === 'announcement' && (
-                      <Badge variant="secondary" className="text-xs">
-                        {language === 'en' ? 'Announcement' : 'Pengumuman'}
-                      </Badge>
-                    )}
-                    <span className="text-xs text-muted-foreground">
-                      {formatTime(message.created_at)}
-                    </span>
+      {/* Messages or Chat List */}
+      {currentChannel === 'social' && showChatList ? (
+        // WhatsApp-style chat list
+        <ScrollArea className="flex-1">
+          <div className="p-4">
+            <h4 className="text-sm font-medium text-muted-foreground mb-4">
+              {language === 'en' ? 'Your Conversations' : 'Perbualan Anda'}
+            </h4>
+            <div className="space-y-2">
+              {directMessages.map((dm) => (
+                <div
+                  key={dm.id}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => openDirectMessage(dm.id, dm.other_user_name)}
+                >
+                  <Avatar className="w-12 h-12">
+                    <AvatarFallback className="text-sm">
+                      {dm.avatar || dm.other_user_name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium text-sm text-foreground truncate">
+                        {dm.other_user_name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatTime(dm.last_message_time)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground truncate">
+                        {dm.last_message}
+                      </p>
+                      {dm.unread_count > 0 && (
+                        <Badge variant="default" className="text-xs min-w-[20px] h-5 rounded-full">
+                          {dm.unread_count}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm text-foreground break-words">
-                    {message.message}
-                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </ScrollArea>
+      ) : (
+        // Regular Messages
+        <ScrollArea className="flex-1 p-4">
+          <div className="space-y-4">
+            {messages.map((message, index) => (
+              <div key={message.id} className="space-y-2">
+                {index === 0 || new Date(messages[index - 1].created_at).toDateString() !== new Date(message.created_at).toDateString() && (
+                  <div className="text-center">
+                    <Separator />
+                    <Badge variant="secondary" className="px-3 py-1">
+                      {new Date(message.created_at).toLocaleDateString(language === 'en' ? 'en-US' : 'ms-MY')}
+                    </Badge>
+                  </div>
+                )}
+                
+                <div className={`flex items-start space-x-3 ${getMessageTypeColor(message.message_type)} p-3 rounded-lg`}>
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback className="text-xs">
+                      {message.profiles?.display_name?.charAt(0) || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <span className="font-medium text-sm text-foreground">
+                        {message.profiles?.display_name}
+                      </span>
+                      {message.message_type === 'announcement' && (
+                        <Badge variant="secondary" className="text-xs">
+                          {language === 'en' ? 'Announcement' : 'Pengumuman'}
+                        </Badge>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {formatTime(message.created_at)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-foreground break-words">
+                      {message.message}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
-      </ScrollArea>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
+      )}
 
       {/* Message Input */}
       <div className="p-4 border-t border-border bg-card/50">
