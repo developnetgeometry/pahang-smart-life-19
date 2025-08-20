@@ -178,10 +178,10 @@ const Index = () => {
           </div>
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="bg-gradient-primary text-white border-none">
-              {user.primary_role?.replace('_', ' ')}
+              {user.user_role.replace('_', ' ')}
             </Badge>
             <Badge variant="secondary">
-              {user.district_name}
+              {user.district}
             </Badge>
           </div>
         </div>

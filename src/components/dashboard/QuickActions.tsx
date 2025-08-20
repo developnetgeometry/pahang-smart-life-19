@@ -1,4 +1,4 @@
-import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -84,7 +84,7 @@ export function QuickActions() {
   ];
 
   // Show resident actions by default, professional actions for admin roles
-  const showProfessionalActions = hasRole(UserRole.STATE_ADMIN) || hasRole(UserRole.DISTRICT_COORDINATOR) || hasRole(UserRole.SECURITY_OFFICER);
+  const showProfessionalActions = hasRole('admin') || hasRole('manager') || hasRole('security');
   
   const actions = showProfessionalActions ? professionalActions : residentActions;
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -333,7 +333,7 @@ export default function CCTVLiveFeed() {
   // Remove the requiredRoles restriction for CCTV - now available to all residents
   const accessibleCameras = mockCameras.filter(camera => {
     // Admin roles see all cameras
-    if (hasRole(UserRole.STATE_ADMIN) || hasRole(UserRole.SECURITY_OFFICER) || hasRole(UserRole.DISTRICT_COORDINATOR)) {
+    if (hasRole('admin') || hasRole('security') || hasRole('manager')) {
       return true;
     }
     

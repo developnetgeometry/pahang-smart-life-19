@@ -11,7 +11,6 @@ import Login from "./pages/Login";
 import MyBookings from "./pages/MyBookings";
 import MyVisitors from "./pages/MyVisitors";
 import MyComplaints from "./pages/MyComplaints";
-import { RoleBasedRouter } from '@/components/routing/RoleBasedRouter';
 import MyProfile from "./pages/MyProfile";
 import Announcements from "./pages/Announcements";
 import Discussions from "./pages/Discussions";
@@ -72,8 +71,14 @@ const App = () => (
                   </PublicRoute>
                 } 
               />
-            {/* Role-based home page - each role gets their own dashboard */}
-            <Route path="/" element={<ProtectedRoute><RoleBasedRouter /></ProtectedRoute>} />
+              <Route 
+                path="/" 
+                element={
+                  <ProtectedRoute>
+                    <Index />
+                  </ProtectedRoute>
+                } 
+              />
               
               {/* Resident modules */}
               <Route 

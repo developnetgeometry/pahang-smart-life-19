@@ -1,19 +1,21 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-export enum UserRole {
-  STATE_ADMIN = 'state_admin',
-  DISTRICT_COORDINATOR = 'district_coordinator',
-  COMMUNITY_ADMIN = 'community_admin',
-  FACILITY_MANAGER = 'facility_manager',
-  SECURITY_OFFICER = 'security_officer',
-  MAINTENANCE_STAFF = 'maintenance_staff',
-  RESIDENT = 'resident',
-  SERVICE_PROVIDER = 'service_provider',
-  COMMUNITY_LEADER = 'community_leader',
-  STATE_SERVICE_MANAGER = 'state_service_manager'
-}
+export type UserRole = 
+  | 'admin' 
+  | 'security' 
+  | 'manager' 
+  | 'resident'
+  | 'state_admin'
+  | 'district_coordinator'
+  | 'community_admin'
+  | 'community_leader'
+  | 'facility_manager'
+  | 'maintenance_staff'
+  | 'service_provider'
+  | 'state_service_manager';
 
+// ViewRole removed - using role-based navigation instead
 export type Language = 'en' | 'ms';
 export type Theme = 'light' | 'dark';
 
@@ -21,14 +23,21 @@ export interface User {
   id: string;
   display_name: string;
   email: string;
-  primary_role: UserRole;
+  associated_community_ids: string[];
+  active_community_id: string;
+  district: string;
+  user_role: UserRole; // primary role for display
   available_roles: UserRole[];
-  district_id?: string;
-  district_name?: string;
-  phone?: string;
-  address?: string;
+  // current_view_role removed - using role-based navigation
+  phone: string;
+  address: string;
   language_preference: Language;
   theme_preference: Theme;
+  unit_type?: string;
+  ownership_status?: string;
+  vehicle_registration_numbers: string[];
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
 }
 
 interface AuthContextType {
@@ -38,7 +47,6 @@ interface AuthContextType {
   theme: Theme;
   roles: UserRole[];
   hasRole: (role: UserRole) => boolean;
-  getPrimaryRole: () => UserRole | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   switchLanguage: (lang: Language) => void;
@@ -60,9 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     else document.documentElement.classList.remove('dark');
   }, [theme]);
 
+
   const hasRole = useMemo(() => (role: UserRole) => roles.includes(role), [roles]);
-  
-  const getPrimaryRole = () => user?.primary_role || null;
 
   // Load profile + roles for a given user id
   const loadProfileAndRoles = async (userId: string) => {
@@ -70,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const [{ data: profile }, { data: roleRows }] = await Promise.all([
         supabase
           .from('profiles')
-          .select('full_name, email, district_id, primary_role')
+          .select('full_name, email, district_id')
           .eq('id', userId)
           .maybeSingle(),
         supabase
@@ -90,20 +97,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const roleList: UserRole[] = (roleRows || []).map(r => r.role as UserRole);
-      const primaryRole: UserRole = (profile?.primary_role as UserRole) || roleList[0] || UserRole.RESIDENT;
+      const primaryRole: UserRole = roleList[0] || 'resident';
 
       const userObj: User = {
         id: userId,
         display_name: profile?.full_name || profile?.email || '',
         email: profile?.email || '',
-        primary_role: primaryRole,
-        available_roles: roleList.length ? roleList : [UserRole.RESIDENT],
-        district_id: profile?.district_id,
-        district_name: districtName,
+        associated_community_ids: [],
+        active_community_id: '',
+        district: districtName,
+        user_role: primaryRole,
+        available_roles: roleList.length ? roleList : ['resident'],
         phone: '',
         address: '',
         language_preference: language,
         theme_preference: theme,
+        unit_type: undefined,
+        ownership_status: undefined,
+        vehicle_registration_numbers: [],
+        emergency_contact_name: undefined,
+        emergency_contact_phone: undefined,
       };
 
       setUser(userObj);
@@ -168,7 +181,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     theme,
     roles,
     hasRole,
-    getPrimaryRole,
     login,
     logout,
     switchLanguage,

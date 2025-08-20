@@ -1,4 +1,4 @@
-import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -126,7 +126,7 @@ export function DashboardStats() {
   ] : [];
 
   // Show resident stats by default, professional stats for admin roles
-  const showProfessionalStats = hasRole(UserRole.STATE_ADMIN) || hasRole(UserRole.DISTRICT_COORDINATOR) || hasRole(UserRole.SECURITY_OFFICER);
+  const showProfessionalStats = hasRole('admin') || hasRole('manager') || hasRole('security');
   
   const displayStats = showProfessionalStats ? professionalStats : residentStats;
 
