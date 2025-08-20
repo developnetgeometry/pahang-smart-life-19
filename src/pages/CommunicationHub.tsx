@@ -8,17 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   MessageSquare, 
-  Volume2, 
   Bell, 
   Users, 
   Phone, 
   Video,
-  Megaphone,
-  Shield,
-  Settings,
   Activity
 } from 'lucide-react';
-import VoiceAnnouncement from '@/components/communication/VoiceAnnouncement';
 import CommunityChat from '@/components/communication/CommunityChat';
 
 export default function CommunicationHub() {
@@ -152,7 +147,7 @@ export default function CommunicationHub() {
           <CardContent className="p-6">
             <div className="flex items-center">
               <div className="p-2 bg-orange-500/10 rounded-lg">
-                <Volume2 className="w-6 h-6 text-orange-600" />
+                <Bell className="w-6 h-6 text-orange-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm text-muted-foreground">
@@ -181,31 +176,19 @@ export default function CommunicationHub() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="chat" className="flex items-center space-x-2">
                 <MessageSquare className="w-4 h-4" />
                 <span>{language === 'en' ? 'Chat' : 'Chat'}</span>
-              </TabsTrigger>
-              <TabsTrigger value="voice" className="flex items-center space-x-2">
-                <Volume2 className="w-4 h-4" />
-                <span>{language === 'en' ? 'Voice' : 'Suara'}</span>
               </TabsTrigger>
               <TabsTrigger value="video" className="flex items-center space-x-2">
                 <Video className="w-4 h-4" />
                 <span>{language === 'en' ? 'Video' : 'Video'}</span>
               </TabsTrigger>
-              <TabsTrigger value="broadcast" className="flex items-center space-x-2">
-                <Megaphone className="w-4 h-4" />
-                <span>{language === 'en' ? 'Broadcast' : 'Siaran'}</span>
-              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="chat" className="mt-6">
               <CommunityChat marketplaceChat={marketplaceChat} />
-            </TabsContent>
-
-            <TabsContent value="voice" className="mt-6">
-              <VoiceAnnouncement />
             </TabsContent>
 
             <TabsContent value="video" className="mt-6">
@@ -232,74 +215,12 @@ export default function CommunicationHub() {
                 </div>
               </div>
             </TabsContent>
-
-            <TabsContent value="broadcast" className="mt-6">
-              <div className="space-y-6">
-                {/* Emergency Broadcast */}
-                <Card className="border-red-500/20 bg-red-500/5">
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-red-700">
-                      <Shield className="w-5 h-5 mr-2" />
-                      {language === 'en' ? 'Emergency Broadcast' : 'Siaran Kecemasan'}
-                    </CardTitle>
-                    <CardDescription>
-                      {language === 'en' 
-                        ? 'Send urgent notifications to all residents'
-                        : 'Hantar notifikasi segera kepada semua penduduk'
-                      }
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button variant="destructive" className="w-full">
-                      <Shield className="w-4 h-4 mr-2" />
-                      {language === 'en' ? 'Send Emergency Alert' : 'Hantar Amaran Kecemasan'}
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* General Announcements */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Megaphone className="w-5 h-5 mr-2" />
-                      {language === 'en' ? 'Community Announcements' : 'Pengumuman Komuniti'}
-                    </CardTitle>
-                    <CardDescription>
-                      {language === 'en' 
-                        ? 'Broadcast messages to specific groups or all residents'
-                        : 'Siarkan mesej kepada kumpulan tertentu atau semua penduduk'
-                      }
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Button variant="outline" className="justify-start">
-                        <Users className="w-4 h-4 mr-2" />
-                        {language === 'en' ? 'All Residents' : 'Semua Penduduk'}
-                      </Button>
-                      <Button variant="outline" className="justify-start">
-                        <Shield className="w-4 h-4 mr-2" />
-                        {language === 'en' ? 'Security Team' : 'Pasukan Keselamatan'}
-                      </Button>
-                      <Button variant="outline" className="justify-start">
-                        <Settings className="w-4 h-4 mr-2" />
-                        {language === 'en' ? 'Maintenance' : 'Penyelenggaraan'}
-                      </Button>
-                      <Button variant="outline" className="justify-start">
-                        <Users className="w-4 h-4 mr-2" />
-                        {language === 'en' ? 'Management' : 'Pengurusan'}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="cursor-pointer hover:shadow-md transition-shadow">
           <CardContent className="p-6 text-center">
             <MessageSquare className="w-12 h-12 mx-auto text-primary mb-4" />
@@ -310,21 +231,6 @@ export default function CommunicationHub() {
               {language === 'en' 
                 ? 'Create a new chat room for specific topics'
                 : 'Cipta bilik chat baru untuk topik tertentu'
-              }
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="cursor-pointer hover:shadow-md transition-shadow">
-          <CardContent className="p-6 text-center">
-            <Volume2 className="w-12 h-12 mx-auto text-primary mb-4" />
-            <h3 className="font-semibold mb-2">
-              {language === 'en' ? 'Record Announcement' : 'Rakam Pengumuman'}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {language === 'en' 
-                ? 'Record a voice message for the community'
-                : 'Rakam mesej suara untuk komuniti'
               }
             </p>
           </CardContent>
