@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
+import NotificationBell from '@/components/notifications/NotificationBell';
 import { useTranslation } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -59,6 +60,9 @@ export function Header() {
       >
         {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
       </Button>
+
+      {/* Notifications */}
+      <NotificationBell />
 
       {/* User Menu */}
       <DropdownMenu>

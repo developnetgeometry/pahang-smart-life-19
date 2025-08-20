@@ -2064,6 +2064,45 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          announcements: boolean | null
+          bookings: boolean | null
+          complaints: boolean | null
+          created_at: string | null
+          events: boolean | null
+          id: string
+          maintenance: boolean | null
+          security: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          announcements?: boolean | null
+          bookings?: boolean | null
+          complaints?: boolean | null
+          created_at?: string | null
+          events?: boolean | null
+          id?: string
+          maintenance?: boolean | null
+          security?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          announcements?: boolean | null
+          bookings?: boolean | null
+          complaints?: boolean | null
+          created_at?: string | null
+          events?: boolean | null
+          id?: string
+          maintenance?: boolean | null
+          security?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           category: string | null
@@ -2495,6 +2534,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth_key: string
+          created_at: string | null
+          device_type: string | null
+          endpoint: string
+          id: string
+          is_active: boolean | null
+          p256dh_key: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auth_key: string
+          created_at?: string | null
+          device_type?: string | null
+          endpoint: string
+          id?: string
+          is_active?: boolean | null
+          p256dh_key: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auth_key?: string
+          created_at?: string | null
+          device_type?: string | null
+          endpoint?: string
+          id?: string
+          is_active?: boolean | null
+          p256dh_key?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       quality_inspections: {
         Row: {

@@ -1,0 +1,329 @@
+import { supabase } from '@/integrations/supabase/client';
+
+// Base64 URL encode function
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+export class NotificationService {
+  private static instance: NotificationService;
+  private registration: ServiceWorkerRegistration | null = null;
+  private subscription: PushSubscription | null = null;
+
+  private constructor() {}
+
+  static getInstance(): NotificationService {
+    if (!NotificationService.instance) {
+      NotificationService.instance = new NotificationService();
+    }
+    return NotificationService.instance;
+  }
+
+  // Initialize the service worker and push notifications
+  async initialize(): Promise<boolean> {
+    try {
+      // Check if service workers are supported
+      if (!('serviceWorker' in navigator)) {
+        console.warn('Service workers not supported');
+        return false;
+      }
+
+      // Check if push messaging is supported
+      if (!('PushManager' in window)) {
+        console.warn('Push messaging not supported');
+        return false;
+      }
+
+      // Register service worker
+      this.registration = await navigator.serviceWorker.register('/sw.js');
+      console.log('Service Worker registered:', this.registration);
+
+      // Wait for the service worker to be ready
+      await navigator.serviceWorker.ready;
+
+      return true;
+    } catch (error) {
+      console.error('Failed to initialize notification service:', error);
+      return false;
+    }
+  }
+
+  // Request notification permission
+  async requestPermission(): Promise<NotificationPermission> {
+    if (!('Notification' in window)) {
+      console.warn('Notifications not supported');
+      return 'denied';
+    }
+
+    if (Notification.permission === 'default') {
+      return await Notification.requestPermission();
+    }
+
+    return Notification.permission;
+  }
+
+  // Subscribe to push notifications
+  async subscribe(): Promise<boolean> {
+    try {
+      if (!this.registration) {
+        await this.initialize();
+      }
+
+      if (!this.registration) {
+        throw new Error('Service worker not registered');
+      }
+
+      // Check permission
+      const permission = await this.requestPermission();
+      if (permission !== 'granted') {
+        console.warn('Notification permission not granted');
+        return false;
+      }
+
+      // Get VAPID public key from environment or config
+      const vapidPublicKey = 'BH7wKdB8R8X8Lz5b9k3W7v2c4P6m1s9x8V3n2Q0e1R7t4Y6h5F8g2L9d3K6j5B1m8S0c7X4z2V5n9A3s6F2r8T1q4W7y3E6u0I9p2M5k8B4v7C0z3X6s9L2d5H8f1G4j7N0o3R6t9Y2e5W8a1S4f7J0m3P6l9C2x5A8d1G4k7O0r3U6y9B2f5I8c1L4n7Q0t3V6z9F2i5K8e1N4q7S0v3Y6b9E2h5M8g1O4r7U0x3A6d9G2k5H8f1J4m7P0s3V6z9C2l5I8n1Q4t7W0y3B6e9H2i5L8o1R4u7X0a3D6g9J2m5P8s1V4y7B0e3H6k9N2q5T8w1Z4c7F0i3L6o9R2u5X8a1D4g7J0m3P6s9V2y5B8e1H4k7N0q3T6w9Z2c5F8i1L4o7R0u3X6a9D2g5J8m1P4s7V0y3B6e9H2';
+
+      // Convert VAPID key to Uint8Array
+      const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+
+      // Subscribe to push notifications
+      this.subscription = await this.registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: applicationServerKey,
+      });
+
+      console.log('Push subscription created:', this.subscription);
+
+      // Save subscription to Supabase
+      await this.saveSubscription(this.subscription);
+
+      return true;
+    } catch (error) {
+      console.error('Failed to subscribe to push notifications:', error);
+      return false;
+    }
+  }
+
+  // Unsubscribe from push notifications
+  async unsubscribe(): Promise<boolean> {
+    try {
+      if (this.subscription) {
+        await this.subscription.unsubscribe();
+        await this.removeSubscription(this.subscription);
+        this.subscription = null;
+        console.log('Unsubscribed from push notifications');
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to unsubscribe from push notifications:', error);
+      return false;
+    }
+  }
+
+  // Check if user is subscribed
+  async isSubscribed(): Promise<boolean> {
+    try {
+      if (!this.registration) {
+        return false;
+      }
+
+      this.subscription = await this.registration.pushManager.getSubscription();
+      return !!this.subscription;
+    } catch (error) {
+      console.error('Failed to check subscription status:', error);
+      return false;
+    }
+  }
+
+  // Save subscription to Supabase
+  private async saveSubscription(subscription: PushSubscription): Promise<void> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const subscriptionData = subscription.toJSON();
+      const keys = subscriptionData.keys;
+
+      if (!keys || !keys.p256dh || !keys.auth) {
+        throw new Error('Invalid subscription keys');
+      }
+
+      const { error } = await supabase
+        .from('push_subscriptions')
+        .upsert({
+          user_id: user.id,
+          endpoint: subscription.endpoint,
+          p256dh_key: keys.p256dh,
+          auth_key: keys.auth,
+          device_type: 'web',
+          is_active: true,
+        }, {
+          onConflict: 'user_id,endpoint'
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('Subscription saved to database');
+    } catch (error) {
+      console.error('Failed to save subscription:', error);
+      throw error;
+    }
+  }
+
+  // Remove subscription from Supabase
+  private async removeSubscription(subscription: PushSubscription): Promise<void> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const { error } = await supabase
+        .from('push_subscriptions')
+        .update({ is_active: false })
+        .eq('user_id', user.id)
+        .eq('endpoint', subscription.endpoint);
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('Subscription removed from database');
+    } catch (error) {
+      console.error('Failed to remove subscription:', error);
+      throw error;
+    }
+  }
+
+  // Send a test notification
+  async sendTestNotification(): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-push-notification', {
+        body: {
+          title: 'Test Notification',
+          body: 'This is a test notification from Pahang Smart Life',
+          url: '/',
+          notificationType: 'test'
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('Test notification sent:', data);
+      return true;
+    } catch (error) {
+      console.error('Failed to send test notification:', error);
+      return false;
+    }
+  }
+
+  // Get notification preferences
+  async getPreferences(): Promise<any> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const { data, error } = await supabase
+        .from('notification_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      return data || {
+        announcements: true,
+        bookings: true,
+        complaints: true,
+        events: true,
+        maintenance: true,
+        security: true,
+      };
+    } catch (error) {
+      console.error('Failed to get preferences:', error);
+      return null;
+    }
+  }
+
+  // Update notification preferences
+  async updatePreferences(preferences: any): Promise<boolean> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const { error } = await supabase
+        .from('notification_preferences')
+        .upsert({
+          user_id: user.id,
+          ...preferences,
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('Preferences updated');
+      return true;
+    } catch (error) {
+      console.error('Failed to update preferences:', error);
+      return false;
+    }
+  }
+
+  // Send a notification (admin only)
+  async sendNotification(title: string, message: string, options?: {
+    url?: string;
+    notificationType?: string;
+    userIds?: string[];
+    districtId?: string;
+  }): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-push-notification', {
+        body: {
+          title,
+          body: message, // Edge function expects 'body' property
+          url: options?.url,
+          notificationType: options?.notificationType || 'general',
+          userIds: options?.userIds,
+          districtId: options?.districtId
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('Notification sent:', data);
+      return true;
+    } catch (error) {
+      console.error('Failed to send notification:', error);
+      return false;
+    }
+  }
+}
