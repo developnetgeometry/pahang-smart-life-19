@@ -46,10 +46,10 @@ export default function CommunicationHub() {
     <Layout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center bg-gradient-to-r from-blue-500/10 to-purple-500/10 p-6 rounded-lg border-2 border-blue-500/20">
+        <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-4xl font-bold text-foreground animate-pulse">
-              🚀 {language === 'en' ? 'Communication Hub - UPDATED!' : 'Pusat Komunikasi - DIKEMASKINI!'}
+            <h1 className="text-3xl font-bold text-foreground">
+              {language === 'en' ? 'Communication Hub' : 'Pusat Komunikasi'}
             </h1>
             <p className="text-muted-foreground">
               {language === 'en' 
