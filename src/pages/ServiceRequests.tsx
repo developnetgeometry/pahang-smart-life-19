@@ -249,8 +249,8 @@ export default function ServiceRequests() {
   const filteredRequests = requests.filter(request => {
     const matchesSearch = request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          request.request_number.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !statusFilter || request.status === statusFilter;
-    const matchesPriority = !priorityFilter || request.priority === priorityFilter;
+    const matchesStatus = statusFilter === 'all' || !statusFilter || request.status === statusFilter;
+    const matchesPriority = priorityFilter === 'all' || !priorityFilter || request.priority === priorityFilter;
     
     return matchesSearch && matchesStatus && matchesPriority;
   });
@@ -485,7 +485,7 @@ export default function ServiceRequests() {
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 {statusOptions.map(status => (
                   <SelectItem key={status.value} value={status.value}>
                     {status.label}
@@ -498,7 +498,7 @@ export default function ServiceRequests() {
                 <SelectValue placeholder="Filter by priority" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Priorities</SelectItem>
+                <SelectItem value="all">All Priorities</SelectItem>
                 {priorityOptions.map(priority => (
                   <SelectItem key={priority.value} value={priority.value}>
                     {priority.label}
