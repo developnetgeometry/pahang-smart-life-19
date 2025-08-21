@@ -18,7 +18,8 @@ import {
 import CommunityChat from '@/components/communication/CommunityChat';
 import { useCommunicationStats } from '@/hooks/use-communication-stats';
 import { useUserPresence } from '@/hooks/use-user-presence';
-import VideoCallInterface from '@/components/communication/VideoCallInterface';
+import VideoCallRoom from '@/components/communication/VideoCallRoom';
+import SmartNotifications from '@/components/communication/SmartNotifications';
 import NotificationCenter from '@/components/communication/NotificationCenter';
 
 export default function CommunicationHub() {
@@ -109,11 +110,11 @@ export default function CommunicationHub() {
           <Card>
             <CardHeader>
               <CardTitle>
-                {language === 'en' ? 'Notification Settings' : 'Tetapan Notifikasi'}
+                {language === 'en' ? 'Smart Notifications' : 'Notifikasi Pintar'}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <NotificationCenter />
+              <SmartNotifications />
             </CardContent>
           </Card>
         )}
@@ -223,7 +224,12 @@ export default function CommunicationHub() {
               </TabsContent>
 
               <TabsContent value="video" className="mt-6">
-                <VideoCallInterface />
+                <VideoCallRoom 
+                  roomId="community-video-call"
+                  isHost={true}
+                  onLeave={() => setActiveTab('chat')}
+                  onToggleChat={() => setActiveTab('chat')}
+                />
               </TabsContent>
             </Tabs>
           </CardContent>

@@ -18,9 +18,18 @@ import {
   Settings,
   Phone,
   Video,
-  MoreVertical
+  MoreVertical,
+  Paperclip,
+  Smile,
+  Reply,
+  Edit,
+  Trash
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { useRealtimeMessaging } from '@/hooks/use-realtime-messaging';
+import FileUpload from '@/components/communication/FileUpload';
+import MessageReactions from '@/components/communication/MessageReactions';
+import TypingIndicator from '@/components/communication/TypingIndicator';
 
 interface ChatMessage {
   id: string;
@@ -79,7 +88,23 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
   const [loading, setLoading] = useState(true);
   const [directMessages, setDirectMessages] = useState<DirectMessage[]>([]);
   const [showChatList, setShowChatList] = useState(false);
+  const [showFileUpload, setShowFileUpload] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [replyToMessageId, setReplyToMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Enhanced real-time messaging
+  const {
+    messages: realtimeMessages,
+    typingUsers,
+    sendMessage: sendRealtimeMessage,
+    editMessage,
+    deleteMessage,
+    reactToMessage,
+    startTyping,
+    stopTyping,
+    isLoading: messagesLoading
+  } = useRealtimeMessaging(currentChannel);
 
   useEffect(() => {
     if (marketplaceChat?.presetMessage) {
@@ -725,6 +750,23 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
     }
   };
 
+  // Enhanced send message function
+  const handleEnhancedSendMessage = async () => {
+    if (!newMessage.trim()) return;
+
+    if (currentChannel.length === 36) {
+      // Use enhanced hook for real-time messaging
+      await sendRealtimeMessage(newMessage, 'text', undefined, replyToMessageId || undefined);
+    } else {
+      // Use original function for mock channels
+      await sendMessage();
+    }
+    
+    setNewMessage('');
+    setReplyToMessageId(null);
+    stopTyping();
+  };
+
   const getChannelIcon = (type: string) => {
     switch (type) {
       case 'announcements': return MessageCircle;
@@ -876,12 +918,12 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
           </div>
         </ScrollArea>
       ) : (
-        // Regular Messages
+        // Regular Messages with Enhanced Features
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
-            {messages.map((message, index) => (
+            {(realtimeMessages.length > 0 ? realtimeMessages : messages).map((message, index) => (
               <div key={message.id} className="space-y-2">
-                {index === 0 || new Date(messages[index - 1].created_at).toDateString() !== new Date(message.created_at).toDateString() && (
+                {index === 0 || new Date((realtimeMessages.length > 0 ? realtimeMessages : messages)[index - 1].created_at).toDateString() !== new Date(message.created_at).toDateString() && (
                   <div className="text-center">
                     <Separator />
                     <Badge variant="secondary" className="px-3 py-1">
@@ -890,40 +932,142 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
                   </div>
                 )}
                 
-                <div className={`flex items-start space-x-3 ${getMessageTypeColor(message.message_type)} p-3 rounded-lg`}>
+                <div className={`group relative flex items-start space-x-3 ${getMessageTypeColor(message.message_type || 'text')} p-3 rounded-lg hover:bg-muted/30 transition-colors`}>
                   <Avatar className="w-8 h-8">
                     <AvatarFallback className="text-xs">
-                      {message.profiles?.display_name?.charAt(0) || 'U'}
+                      {message.sender_profile?.full_name?.charAt(0) || message.profiles?.display_name?.charAt(0) || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2 mb-1">
                       <span className="font-medium text-sm text-foreground">
-                        {message.profiles?.display_name}
+                        {message.sender_profile?.full_name || message.profiles?.display_name}
                       </span>
                       {message.message_type === 'announcement' && (
                         <Badge variant="secondary" className="text-xs">
                           {language === 'en' ? 'Announcement' : 'Pengumuman'}
                         </Badge>
                       )}
+                      {message.is_edited && (
+                        <Badge variant="outline" className="text-xs opacity-60">
+                          {language === 'en' ? 'edited' : 'diedit'}
+                        </Badge>
+                      )}
                       <span className="text-xs text-muted-foreground">
                         {formatTime(message.created_at)}
                       </span>
                     </div>
-                    <p className="text-sm text-foreground break-words">
-                      {message.message}
-                    </p>
+
+                    {replyToMessageId === message.id && (
+                      <div className="mb-2 p-2 bg-muted/50 rounded border-l-2 border-primary">
+                        <span className="text-xs text-muted-foreground">
+                          {language === 'en' ? 'Replying to' : 'Membalas kepada'}: {message.sender_profile?.full_name}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {editingMessageId === message.id ? (
+                      <div className="space-y-2">
+                        <Input
+                          defaultValue={message.message_text || (message as any).message}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              const newText = (e.target as HTMLInputElement).value;
+                              editMessage(message.id, newText);
+                              setEditingMessageId(null);
+                            }
+                            if (e.key === 'Escape') {
+                              setEditingMessageId(null);
+                            }
+                          }}
+                          className="text-sm"
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => setEditingMessageId(null)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-sm text-foreground break-words">
+                          {message.message_text || (message as any).message}
+                        </p>
+                        
+                        {message.file_url && (
+                          <div className="p-2 border rounded bg-muted/20">
+                            <p className="text-xs text-muted-foreground mb-1">
+                              {language === 'en' ? 'File attachment' : 'Lampiran fail'}
+                            </p>
+                            <a 
+                              href={message.file_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-sm text-primary hover:underline"
+                            >
+                              {message.file_name || 'Download file'}
+                            </a>
+                          </div>
+                        )}
+
+                        <MessageReactions 
+                          messageId={message.id}
+                          reactions={message.reactions || []}
+                          onReact={(emoji) => reactToMessage(message.id, emoji)}
+                        />
+                      </div>
+                    )}
                   </div>
+
+                  {/* Message Actions */}
+                  {message.sender_id === user?.id && (
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setReplyToMessageId(message.id)}
+                        className="h-6 w-6 p-0"
+                      >
+                        <Reply className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setEditingMessageId(message.id)}
+                        className="h-6 w-6 p-0"
+                      >
+                        <Edit className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteMessage(message.id)}
+                        className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                      >
+                        <Trash className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => reactToMessage(message.id, '👍')}
+                        className="h-6 w-6 p-0"
+                      >
+                        <Smile className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
+            
+            <TypingIndicator typingUsers={typingUsers} />
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
       )}
 
-      {/* Message Input */}
+      {/* Enhanced Message Input */}
       <div className="p-4 border-t border-border bg-card/50">
         {marketplaceChat && currentChannel.startsWith('dm_') && (
           <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
@@ -935,7 +1079,53 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
             </p>
           </div>
         )}
+
+        {replyToMessageId && (
+          <div className="mb-2 p-2 bg-muted/50 rounded border-l-2 border-primary">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                {language === 'en' ? 'Replying to message' : 'Membalas mesej'}
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setReplyToMessageId(null)}
+                className="h-4 w-4 p-0"
+              >
+                ×
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {showFileUpload && (
+          <div className="mb-3">
+            <FileUpload
+              onFileUploaded={(uploadedFile) => {
+                // Send file message using enhanced hook
+                sendRealtimeMessage(`📎 ${uploadedFile.name}`, 'file', {
+                  url: uploadedFile.url,
+                  name: uploadedFile.name,
+                  type: uploadedFile.type
+                }, replyToMessageId || undefined);
+                setReplyToMessageId(null);
+                setShowFileUpload(false);
+              }}
+              className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4"
+            />
+          </div>
+        )}
+        
         <div className="flex space-x-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowFileUpload(!showFileUpload)}
+            className="flex items-center gap-1"
+          >
+            <Paperclip className="w-4 h-4" />
+          </Button>
+          
           <Input
             placeholder={
               marketplaceChat && currentChannel.startsWith('dm_')
@@ -943,17 +1133,21 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
                 : (language === 'en' ? 'Type your message...' : 'Taip mesej anda...')
             }
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={(e) => {
+              setNewMessage(e.target.value);
+              startTyping();
+            }}
+            onBlur={stopTyping}
             onKeyPress={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                sendMessage();
+                handleEnhancedSendMessage();
               }
             }}
             className="flex-1"
           />
           <Button 
-            onClick={sendMessage} 
+            onClick={handleEnhancedSendMessage} 
             disabled={!newMessage.trim()}
             className="bg-gradient-primary"
           >
