@@ -11,6 +11,8 @@ import { ServiceManagement } from '@/components/services/ServiceManagement';
 import { QuickServicesWidget } from './QuickServicesWidget';
 import { UpcomingEventsWidget } from './UpcomingEventsWidget';
 import { WeatherWidget } from './WeatherWidget';
+import { CommunityDirectoryWidget } from './CommunityDirectoryWidget';
+import { MaintenanceTrackerWidget } from './MaintenanceTrackerWidget';
 import { MapPin } from 'lucide-react';
 import { 
   Calendar, 
@@ -25,7 +27,8 @@ import {
   CheckCircle,
   Clock,
   Building,
-  Shield
+  Shield,
+  Activity
 } from 'lucide-react';
 
 interface Location {
@@ -522,10 +525,58 @@ export function ResidentDashboard() {
       </Card>
 
       {/* Additional Widgets */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <QuickServicesWidget language={language} />
         <UpcomingEventsWidget language={language} />
         <WeatherWidget />
+        <CommunityDirectoryWidget language={language} />
+      </div>
+
+      {/* More Widgets Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <MaintenanceTrackerWidget language={language} />
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                {language === 'en' ? 'Community Highlights' : 'Sorotan Komuniti'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span>{language === 'en' ? 'This Month\'s Events' : 'Acara Bulan Ini'}</span>
+                    <Badge variant="secondary">5</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{language === 'en' ? 'Active Discussions' : 'Perbincangan Aktif'}</span>
+                    <Badge variant="secondary">12</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{language === 'en' ? 'Community Rating' : 'Penilaian Komuniti'}</span>
+                    <Badge variant="secondary">4.2/5</Badge>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span>{language === 'en' ? 'Maintenance Requests' : 'Permintaan Penyelenggaraan'}</span>
+                    <Badge variant="secondary">3 {language === 'en' ? 'active' : 'aktif'}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{language === 'en' ? 'Facility Bookings' : 'Tempahan Kemudahan'}</span>
+                    <Badge variant="secondary">8 {language === 'en' ? 'this week' : 'minggu ini'}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{language === 'en' ? 'New Residents' : 'Penduduk Baru'}</span>
+                    <Badge variant="secondary">2 {language === 'en' ? 'this month' : 'bulan ini'}</Badge>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
