@@ -28,7 +28,7 @@ export function SecurityOfficerDashboard() {
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'cameras':
-        navigate('/cctv-live-feed');
+        navigate('/cctv-live');
         break;
       case 'visitors':
         navigate('/visitor-security');
