@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { WeatherWidget } from './WeatherWidget';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, 
@@ -24,6 +25,7 @@ import {
 
 export function CommunityAdminDashboard() {
   const { language, user } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState({
     totalResidents: 0,
@@ -564,15 +566,26 @@ export function CommunityAdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button className="flex items-center gap-2 h-12">
+            <Button 
+              className="flex items-center gap-2 h-12"
+              onClick={() => navigate('/admin/announcement-management')}
+            >
               <Megaphone className="h-4 w-4" />
               {language === 'en' ? 'Create Announcement' : 'Cipta Pengumuman'}
             </Button>
-            <Button className="flex items-center gap-2 h-12" variant="outline">
+            <Button 
+              className="flex items-center gap-2 h-12" 
+              variant="outline"
+              onClick={() => navigate('/admin/complaints-management')}
+            >
               <AlertTriangle className="h-4 w-4" />
               {language === 'en' ? 'Manage Complaints' : 'Urus Aduan'}
             </Button>
-            <Button className="flex items-center gap-2 h-12" variant="outline">
+            <Button 
+              className="flex items-center gap-2 h-12" 
+              variant="outline"
+              onClick={() => navigate('/admin/user-management')}
+            >
               <MessageSquare className="h-4 w-4" />
               {language === 'en' ? 'View Reports' : 'Lihat Laporan'}
             </Button>
