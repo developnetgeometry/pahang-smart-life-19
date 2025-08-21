@@ -4117,6 +4117,14 @@ export type Database = {
         Args: { p_room_id?: string; p_status: string; p_user_id: string }
         Returns: undefined
       }
+      user_is_room_admin: {
+        Args: { check_room_id: string; check_user_id?: string }
+        Returns: boolean
+      }
+      user_is_room_member: {
+        Args: { check_room_id: string; check_user_id?: string }
+        Returns: boolean
+      }
     }
     Enums: {
       announcement_type:
