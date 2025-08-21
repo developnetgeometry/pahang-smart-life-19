@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRoles } from '@/hooks/use-user-roles';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ interface MarketplaceItem {
 
 export default function Marketplace() {
   const { language, user } = useAuth();
+  const { hasRole } = useUserRoles();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createGroupChat } = useChatRooms();
@@ -48,6 +50,9 @@ export default function Marketplace() {
   const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Check if user is a service provider
+  const isServiceProvider = hasRole('service_provider');
   
   // Form state for new listing
   const [formData, setFormData] = useState({
@@ -300,6 +305,16 @@ export default function Marketplace() {
       return;
     }
 
+    // Check if user is a service provider
+    if (!isServiceProvider) {
+      toast({
+        title: language === 'en' ? 'Access Denied' : 'Akses Ditolak',
+        description: language === 'en' ? 'Only service providers can create listings' : 'Hanya penyedia perkhidmatan boleh mencipta senarai',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     // Validate required fields
     if (!formData.title || !formData.category || !formData.condition || !formData.price) {
       toast({
@@ -465,116 +480,118 @@ export default function Marketplace() {
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              {t.newListing}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[525px]">
-            <DialogHeader>
-              <DialogTitle>{t.createTitle}</DialogTitle>
-              <DialogDescription>{t.createSubtitle}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">{t.itemTitle}*</Label>
-                <Input 
-                  id="title" 
-                  placeholder={t.itemTitle}
-                  value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+        {isServiceProvider && (
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                {t.newListing}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[525px]">
+              <DialogHeader>
+                <DialogTitle>{t.createTitle}</DialogTitle>
+                <DialogDescription>{t.createSubtitle}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="category">{t.category}*</Label>
-                  <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t.selectCategory} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.slice(1).map((category) => (
-                        <SelectItem key={category.value} value={category.value}>
-                          {category.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="title">{t.itemTitle}*</Label>
+                  <Input 
+                    id="title" 
+                    placeholder={t.itemTitle}
+                    value={formData.title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="category">{t.category}*</Label>
+                    <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t.selectCategory} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.slice(1).map((category) => (
+                          <SelectItem key={category.value} value={category.value}>
+                            {category.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="condition">{t.condition}*</Label>
+                    <Select value={formData.condition} onValueChange={(value) => setFormData(prev => ({ ...prev, condition: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t.selectCondition} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {conditions.slice(1).map((condition) => (
+                          <SelectItem key={condition.value} value={condition.value}>
+                            {condition.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="condition">{t.condition}*</Label>
-                  <Select value={formData.condition} onValueChange={(value) => setFormData(prev => ({ ...prev, condition: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t.selectCondition} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {conditions.slice(1).map((condition) => (
-                        <SelectItem key={condition.value} value={condition.value}>
-                          {condition.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="price">{t.itemPrice}*</Label>
+                  <Input 
+                    id="price" 
+                    type="number" 
+                    placeholder="0"
+                    value={formData.price}
+                    onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">{t.itemDescription}</Label>
+                  <Textarea 
+                    id="description" 
+                    placeholder={t.itemDescription}
+                    rows={3}
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input 
+                    id="location" 
+                    placeholder="e.g., Block A, Unit 10-2"
+                    value={formData.location}
+                    onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contact">{t.contactInfo}</Label>
+                  <Input 
+                    id="contact" 
+                    placeholder="Phone number or email"
+                    value={formData.contact}
+                    onChange={(e) => setFormData(prev => ({ ...prev, contact: e.target.value }))}
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>
+                    {t.cancel}
+                  </Button>
+                  <Button onClick={handleCreateListing} disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        {language === 'en' ? 'Creating...' : 'Mencipta...'}
+                      </>
+                    ) : (
+                      t.create
+                    )}
+                  </Button>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="price">{t.itemPrice}*</Label>
-                <Input 
-                  id="price" 
-                  type="number" 
-                  placeholder="0"
-                  value={formData.price}
-                  onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">{t.itemDescription}</Label>
-                <Textarea 
-                  id="description" 
-                  placeholder={t.itemDescription}
-                  rows={3}
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input 
-                  id="location" 
-                  placeholder="e.g., Block A, Unit 10-2"
-                  value={formData.location}
-                  onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="contact">{t.contactInfo}</Label>
-                <Input 
-                  id="contact" 
-                  placeholder="Phone number or email"
-                  value={formData.contact}
-                  onChange={(e) => setFormData(prev => ({ ...prev, contact: e.target.value }))}
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>
-                  {t.cancel}
-                </Button>
-                <Button onClick={handleCreateListing} disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {language === 'en' ? 'Creating...' : 'Mencipta...'}
-                    </>
-                  ) : (
-                    t.create
-                  )}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
