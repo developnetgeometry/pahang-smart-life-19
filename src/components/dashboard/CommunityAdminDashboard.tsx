@@ -36,6 +36,9 @@ export function CommunityAdminDashboard() {
     facilityUsage: [] as any[]
   });
   const [pendingRoleRequests, setPendingRoleRequests] = useState<any[]>([]);
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const [facilityUsage, setFacilityUsage] = useState<any[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -85,6 +88,13 @@ export function CommunityAdminDashboard() {
         });
 
         setPendingRoleRequests(roleRequests || []);
+
+        // Fetch additional dashboard sections
+        await Promise.all([
+          fetchRecentActivities(districtId),
+          fetchFacilityUsage(districtId),
+          fetchUpcomingEvents(districtId)
+        ]);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -150,54 +160,118 @@ export function CommunityAdminDashboard() {
     }
   };
 
-  const recentActivities = [
-    {
-      type: 'Maintenance',
-      message: language === 'en' ? '3 new maintenance requests submitted' : '3 permohonan penyelenggaraan baharu dikemukakan',
-      time: '2 hours ago',
-      icon: FileText
-    },
-    {
-      type: 'Event',
-      message: language === 'en' ? 'Community event planning: CNY celebration' : 'Perancangan acara komuniti: sambutan CNY',
-      time: '4 hours ago',
-      icon: Calendar
-    },
-    {
-      type: 'Bookings',
-      message: language === 'en' ? '12 facility bookings this week' : '12 tempahan kemudahan minggu ini',
-      time: '1 day ago',
-      icon: Building
-    },
-    {
-      type: 'Residents',
-      message: language === 'en' ? '2 new resident registrations' : '2 pendaftaran penduduk baharu',
-      time: '2 days ago',
-      icon: Users
-    }
-  ];
+  const fetchRecentActivities = async (districtId: string) => {
+    try {
+      // Fetch recent complaints, bookings, and announcements
+      const [complaintsData, bookingsData, announcementsData] = await Promise.all([
+        supabase.from('complaints').select('*').eq('district_id', districtId).order('created_at', { ascending: false }).limit(2),
+        supabase.from('bookings').select('*').eq('created_at', new Date().toISOString().split('T')[0]).order('created_at', { ascending: false }).limit(2),
+        supabase.from('announcements').select('*').eq('district_id', districtId).eq('is_published', true).order('created_at', { ascending: false }).limit(2)
+      ]);
 
-  const facilityUsage = [
-    { name: 'Community Hall', bookings: 28, utilization: 85 },
-    { name: 'Swimming Pool', bookings: 45, utilization: 72 },
-    { name: 'Gym', bookings: 32, utilization: 68 },
-    { name: 'Playground', bookings: 15, utilization: 45 }
-  ];
+      const activities = [];
 
-  const upcomingEvents = [
-    {
-      title: language === 'en' ? 'Chinese New Year Celebration' : 'Sambutan Tahun Baru Cina',
-      date: 'Feb 12, 2024',
-      attendees: 89,
-      status: 'confirmed'
-    },
-    {
-      title: language === 'en' ? 'Community Clean-up Day' : 'Hari Gotong-royong Komuniti',
-      date: 'Feb 18, 2024',
-      attendees: 45,
-      status: 'planning'
+      // Add complaints as activities
+      if (complaintsData.data) {
+        complaintsData.data.forEach(complaint => {
+          activities.push({
+            type: 'Complaint',
+            message: language === 'en' ? `New complaint: ${complaint.title}` : `Aduan baru: ${complaint.title}`,
+            time: new Date(complaint.created_at).toLocaleString(),
+            icon: AlertTriangle
+          });
+        });
+      }
+
+      // Add bookings as activities
+      if (bookingsData.data) {
+        bookingsData.data.forEach(booking => {
+          activities.push({
+            type: 'Booking',
+            message: language === 'en' ? 'New facility booking received' : 'Tempahan kemudahan baharu diterima',
+            time: new Date(booking.created_at).toLocaleString(),
+            icon: Building
+          });
+        });
+      }
+
+      // Add announcements as activities
+      if (announcementsData.data) {
+        announcementsData.data.forEach(announcement => {
+          activities.push({
+            type: 'Announcement',
+            message: language === 'en' ? `New announcement: ${announcement.title}` : `Pengumuman baru: ${announcement.title}`,
+            time: new Date(announcement.created_at).toLocaleString(),
+            icon: Megaphone
+          });
+        });
+      }
+
+      // Sort by time and take the most recent
+      activities.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+      setRecentActivities(activities.slice(0, 4));
+    } catch (error) {
+      console.error('Error fetching activities:', error);
     }
-  ];
+  };
+
+  const fetchFacilityUsage = async (districtId: string) => {
+    try {
+      const { data: facilities } = await supabase
+        .from('facilities')
+        .select(`
+          *,
+          bookings(id, booking_date)
+        `)
+        .eq('district_id', districtId);
+
+      if (facilities) {
+        const usage = facilities.map(facility => {
+          const bookingsCount = facility.bookings?.length || 0;
+          const maxBookings = 50; // Assume max capacity
+          const utilization = Math.min((bookingsCount / maxBookings) * 100, 100);
+          
+          return {
+            name: facility.name,
+            bookings: bookingsCount,
+            utilization: Math.round(utilization)
+          };
+        });
+
+        setFacilityUsage(usage);
+      }
+    } catch (error) {
+      console.error('Error fetching facility usage:', error);
+    }
+  };
+
+  const fetchUpcomingEvents = async (districtId: string) => {
+    try {
+      const { data: events } = await supabase
+        .from('events')
+        .select('*')
+        .eq('district_id', districtId)
+        .gte('start_date', new Date().toISOString().split('T')[0])
+        .eq('status', 'scheduled')
+        .order('start_date', { ascending: true })
+        .limit(3);
+
+      if (events) {
+        const formattedEvents = events.map(event => ({
+          id: event.id,
+          title: event.title,
+          date: new Date(event.start_date).toLocaleDateString(),
+          attendees: 0, // Could be enhanced with registration count
+          status: event.status
+        }));
+
+        setUpcomingEvents(formattedEvents);
+      }
+    } catch (error) {
+      console.error('Error fetching upcoming events:', error);
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -278,20 +352,38 @@ export function CommunityAdminDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {recentActivities.map((activity, index) => (
-              <div key={index} className="flex items-start gap-3 p-3 border rounded-lg">
-                <activity.icon className="h-4 w-4 text-muted-foreground mt-0.5" />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge variant="secondary" className="text-xs">
-                      {activity.type}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">{activity.time}</span>
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-start gap-3 p-3 border rounded-lg animate-pulse">
+                    <div className="w-4 h-4 bg-muted rounded mt-0.5" />
+                    <div className="flex-1">
+                      <div className="h-4 bg-muted rounded mb-1 w-3/4" />
+                      <div className="h-3 bg-muted rounded w-1/2" />
+                    </div>
                   </div>
-                  <p className="text-sm">{activity.message}</p>
-                </div>
+                ))}
               </div>
-            ))}
+            ) : recentActivities.length > 0 ? (
+              recentActivities.map((activity, index) => (
+                <div key={index} className="flex items-start gap-3 p-3 border rounded-lg">
+                  <activity.icon className="h-4 w-4 text-muted-foreground mt-0.5" />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="secondary" className="text-xs">
+                        {activity.type}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">{activity.time}</span>
+                    </div>
+                    <p className="text-sm">{activity.message}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">
+                {language === 'en' ? 'No recent activities' : 'Tiada aktiviti terkini'}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -304,22 +396,40 @@ export function CommunityAdminDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {facilityUsage.map((facility, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{facility.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {facility.bookings} {language === 'en' ? 'bookings' : 'tempahan'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Progress value={facility.utilization} className="flex-1" />
-                  <span className="text-xs text-muted-foreground w-12">
-                    {facility.utilization}%
-                  </span>
-                </div>
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="space-y-2 animate-pulse">
+                    <div className="flex items-center justify-between">
+                      <div className="h-4 bg-muted rounded w-1/3" />
+                      <div className="h-3 bg-muted rounded w-16" />
+                    </div>
+                    <div className="h-2 bg-muted rounded" />
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : facilityUsage.length > 0 ? (
+              facilityUsage.map((facility, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{facility.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {facility.bookings} {language === 'en' ? 'bookings' : 'tempahan'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Progress value={facility.utilization} className="flex-1" />
+                    <span className="text-xs text-muted-foreground w-12">
+                      {facility.utilization}%
+                    </span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">
+                {language === 'en' ? 'No facility data available' : 'Tiada data kemudahan tersedia'}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -334,26 +444,44 @@ export function CommunityAdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {upcomingEvents.map((event, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <h4 className="font-medium">{event.title}</h4>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                    <span>{event.date}</span>
-                    <span className="flex items-center gap-1">
-                      <Users className="h-3 w-3" />
-                      {event.attendees} {language === 'en' ? 'registered' : 'berdaftar'}
-                    </span>
-                    <Badge variant={event.status === 'confirmed' ? 'default' : 'secondary'}>
-                      {event.status}
-                    </Badge>
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2].map((i) => (
+                  <div key={i} className="flex items-center justify-between p-4 border rounded-lg animate-pulse">
+                    <div className="flex-1">
+                      <div className="h-4 bg-muted rounded mb-2 w-3/4" />
+                      <div className="h-3 bg-muted rounded w-1/2" />
+                    </div>
+                    <div className="h-8 bg-muted rounded w-16" />
                   </div>
-                </div>
-                <Button size="sm" variant="outline">
-                  {language === 'en' ? 'Manage' : 'Urus'}
-                </Button>
+                ))}
               </div>
-            ))}
+            ) : upcomingEvents.length > 0 ? (
+              upcomingEvents.map((event, index) => (
+                <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">{event.title}</h4>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                      <span>{event.date}</span>
+                      <Badge variant={event.status === 'scheduled' ? 'default' : 'secondary'}>
+                        {event.status === 'scheduled' 
+                          ? (language === 'en' ? 'Scheduled' : 'Dijadualkan')
+                          : event.status
+                        }
+                      </Badge>
+                    </div>
+                  </div>
+                  <Button size="sm" variant="outline">
+                    {language === 'en' ? 'Manage' : 'Urus'}
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>{language === 'en' ? 'No upcoming events' : 'Tiada acara akan datang'}</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
