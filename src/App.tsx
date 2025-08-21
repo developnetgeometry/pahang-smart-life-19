@@ -38,6 +38,7 @@ import RoleManagement from "./pages/RoleManagement";
 import NotificationSettings from "./pages/NotificationSettings";
 import NotificationPage from "./pages/NotificationPage";
 import PanicAlerts from "./pages/PanicAlerts";
+import Directory from "./pages/Directory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -178,6 +179,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <CommunicationHub />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/directory"
+              element={
+                <ProtectedRoute>
+                  <Directory />
                 </ProtectedRoute>
               }
             />
