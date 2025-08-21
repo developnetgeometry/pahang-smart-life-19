@@ -1,8 +1,10 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, MapPin, Users, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UpcomingEventsWidgetProps {
   language: 'en' | 'ms';
@@ -11,41 +13,58 @@ interface UpcomingEventsWidgetProps {
 export function UpcomingEventsWidget({ language }: UpcomingEventsWidgetProps) {
   const navigate = useNavigate();
 
-  const upcomingEvents = [
-    {
-      id: 1,
-      title: language === 'en' ? 'Community Gotong-Royong' : 'Gotong-Royong Komuniti',
-      date: '2024-01-25',
-      time: '08:00 AM',
-      location: language === 'en' ? 'Community Hall' : 'Dewan Komuniti',
-      attendees: 45,
-      maxAttendees: 60,
-      category: language === 'en' ? 'Community Service' : 'Khidmat Komuniti',
-      status: 'upcoming'
-    },
-    {
-      id: 2,
-      title: language === 'en' ? 'Children\'s Playground Opening' : 'Pembukaan Taman Permainan Kanak-kanak',
-      date: '2024-01-28',
-      time: '10:00 AM',
-      location: language === 'en' ? 'Block A Playground' : 'Taman Permainan Blok A',
-      attendees: 23,
-      maxAttendees: 40,
-      category: language === 'en' ? 'Celebration' : 'Perasmian',
-      status: 'upcoming'
-    },
-    {
-      id: 3,
-      title: language === 'en' ? 'Monthly Residents Meeting' : 'Mesyuarat Bulanan Penduduk',
-      date: '2024-01-30',
-      time: '07:30 PM',
-      location: language === 'en' ? 'Management Office' : 'Pejabat Pengurusan',
-      attendees: 12,
-      maxAttendees: 30,
-      category: language === 'en' ? 'Meeting' : 'Mesyuarat',
-      status: 'upcoming'
-    }
-  ];
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .gte('start_date', new Date().toISOString().split('T')[0])
+          .eq('status', 'scheduled')
+          .order('start_date', { ascending: true })
+          .limit(3);
+
+        if (error) throw error;
+
+        const transformedEvents = (data || []).map(event => ({
+          id: event.id,
+          title: event.title,
+          date: event.start_date,
+          time: event.start_time || '08:00',
+          location: event.location || 'Community Hall',
+          attendees: 0, // Could be enhanced with registration count
+          maxAttendees: event.max_participants || 50,
+          category: event.event_type || 'General',
+          status: 'upcoming'
+        }));
+
+        setEvents(transformedEvents);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+        // Fallback to demo data
+        setEvents([
+          {
+            id: 1,
+            title: language === 'en' ? 'Community Gotong-Royong' : 'Gotong-Royong Komuniti',
+            date: '2024-01-25',
+            time: '08:00 AM',
+            location: language === 'en' ? 'Community Hall' : 'Dewan Komuniti',
+            attendees: 45,
+            maxAttendees: 60,
+            category: language === 'en' ? 'Community Service' : 'Khidmat Komuniti',
+            status: 'upcoming'
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, [language]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -74,14 +93,24 @@ export function UpcomingEventsWidget({ language }: UpcomingEventsWidgetProps) {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => navigate('/announcements')}
+          onClick={() => navigate('/events')}
           >
             <ArrowRight className="w-4 h-4" />
           </Button>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {upcomingEvents.map((event) => (
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-3 bg-muted/30 rounded-lg animate-pulse">
+                <div className="h-4 bg-muted rounded mb-2" />
+                <div className="h-3 bg-muted rounded w-3/4" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          events.map((event) => (
           <div key={event.id} className="p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
             <div className="flex justify-between items-start mb-2">
               <div>
@@ -115,13 +144,14 @@ export function UpcomingEventsWidget({ language }: UpcomingEventsWidgetProps) {
               </Badge>
             </div>
           </div>
-        ))}
+        ))
+        )}
         
-        <Button 
+        <Button
           variant="outline" 
           size="sm" 
           className="w-full mt-3"
-          onClick={() => navigate('/announcements')}
+          onClick={() => navigate('/events')}
         >
           {language === 'en' ? 'View All Events' : 'Lihat Semua Acara'}
         </Button>

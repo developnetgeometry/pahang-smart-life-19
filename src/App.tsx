@@ -13,6 +13,7 @@ import MyVisitors from "./pages/MyVisitors";
 import MyComplaints from "./pages/MyComplaints";
 import MyProfile from "./pages/MyProfile";
 import Announcements from "./pages/Announcements";
+import Events from "./pages/Events";
 import Discussions from "./pages/Discussions";
 import Facilities from "./pages/Facilities";
 import Marketplace from "./pages/Marketplace";
@@ -147,6 +148,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Announcements />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/events"
+              element={
+                <ProtectedRoute>
+                  <Events />
                 </ProtectedRoute>
               }
             />
