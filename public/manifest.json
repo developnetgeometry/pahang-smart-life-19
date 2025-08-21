@@ -1,0 +1,66 @@
+{
+  "name": "Prima Pahang Smart Life",
+  "short_name": "Smart Life",
+  "description": "Smart community management system for Prima Pahang residents",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["productivity", "utilities", "lifestyle"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/lovable-uploads/8b5530a7-fe2b-4d5c-bcf6-5f679ad0e912.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/lovable-uploads/8b5530a7-fe2b-4d5c-bcf6-5f679ad0e912.png", 
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Go to main dashboard",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/lovable-uploads/8b5530a7-fe2b-4d5c-bcf6-5f679ad0e912.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Panic Alert",
+      "short_name": "Emergency",
+      "description": "Emergency panic button",
+      "url": "/panic-alerts",
+      "icons": [
+        {
+          "src": "/lovable-uploads/8b5530a7-fe2b-4d5c-bcf6-5f679ad0e912.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Communication",
+      "short_name": "Chat",
+      "description": "Community communication hub",
+      "url": "/communication-hub",
+      "icons": [
+        {
+          "src": "/lovable-uploads/8b5530a7-fe2b-4d5c-bcf6-5f679ad0e912.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}
