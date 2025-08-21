@@ -143,7 +143,7 @@ export default function Facilities() {
           capacity: facility.capacity || 0,
           availability: facility.is_available ? 'available' : 'maintenance',
           amenities: facility.amenities || [],
-          image: facility.images?.[0] || getFallbackImage(facility.name),
+          image: facility.image || facility.images?.[0] || getFallbackImage(facility.name),
           hourlyRate: facility.hourly_rate ? Number(facility.hourly_rate) : undefined
         }));
 
@@ -386,7 +386,12 @@ export default function Facilities() {
             <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
               {facility.image && facility.image !== '/placeholder.svg' ? (
                 <img 
-                  src={facility.image} 
+                  src={facility.image.startsWith('http') ? facility.image : 
+                       facility.image === 'community-gym.jpg' ? communityGymImage :
+                       facility.image === 'swimming-pool.jpg' ? swimmingPoolImage :
+                       facility.image === 'function-hall.jpg' ? functionHallImage :
+                       facility.image
+                  } 
                   alt={facility.name}
                   className="w-full h-full object-cover"
                 />
