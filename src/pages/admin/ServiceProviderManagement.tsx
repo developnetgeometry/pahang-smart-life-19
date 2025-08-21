@@ -200,7 +200,7 @@ export default function ServiceProviderManagement() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full py-8">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -209,8 +209,8 @@ export default function ServiceProviderManagement() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
+    <div className="w-full py-8">
+      <div className="mb-8 px-4">
         <div className="flex items-center gap-3 mb-4">
           <Building className="h-8 w-8 text-primary" />
           <div>
@@ -273,7 +273,7 @@ export default function ServiceProviderManagement() {
         </div>
       </div>
 
-      <Tabs defaultValue="applications" className="w-full">
+      <Tabs defaultValue="applications" className="w-full px-4">
         <TabsList>
           <TabsTrigger value="applications">Applications</TabsTrigger>
           <TabsTrigger value="providers">Active Providers</TabsTrigger>
