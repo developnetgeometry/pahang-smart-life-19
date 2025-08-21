@@ -299,18 +299,6 @@ export function ResidentDashboard() {
       action: '/my-complaints'
     },
     {
-      title: language === 'en' ? 'Community Chat' : 'Sembang Komuniti',
-      description: language === 'en' ? 'Connect with neighbors' : 'Berhubung dengan jiran',
-      icon: MessageSquare,
-      action: '/communication'
-    },
-    {
-      title: language === 'en' ? 'View Announcements' : 'Lihat Pengumuman',
-      description: language === 'en' ? 'Stay updated with community news' : 'Kekal terkini dengan berita komuniti',
-      icon: Megaphone,
-      action: '/announcements'
-    },
-    {
       title: language === 'en' ? 'Emergency Alert' : 'Amaran Kecemasan',
       description: language === 'en' ? 'Send emergency alert to security' : 'Hantar amaran kecemasan kepada keselamatan',
       icon: Shield,
