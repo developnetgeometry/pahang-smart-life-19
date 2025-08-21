@@ -595,7 +595,10 @@ export function ResidentDashboard() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {selectedUpdate && getUpdateIcon(selectedUpdate.type)({ className: "w-5 h-5" })}
+              {selectedUpdate && (() => {
+                const IconComponent = getUpdateIcon(selectedUpdate.type);
+                return <IconComponent className="w-5 h-5" />;
+              })()}
               {selectedUpdate?.title}
             </DialogTitle>
           </DialogHeader>
