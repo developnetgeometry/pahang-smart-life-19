@@ -16,10 +16,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useChatRooms } from '@/hooks/use-chat-rooms';
 import { supabase } from '@/integrations/supabase/client';
 
-// Import marketplace images
-import iphoneImage from '@/assets/iphone-marketplace.jpg';
-import diningTableImage from '@/assets/dining-table-marketplace.jpg';
-import programmingBooksImage from '@/assets/programming-books-marketplace.jpg';
+// Import marketplace product images
+import iphoneMarketplaceImage from '@/assets/iphone-marketplace.jpg';
+import diningTableMarketplaceImage from '@/assets/dining-table-marketplace.jpg';
+import programmingBooksMarketplaceImage from '@/assets/programming-books-marketplace.jpg';
 
 interface MarketplaceItem {
   id: string;
@@ -146,9 +146,9 @@ export default function Marketplace() {
         // Helper function to get fallback image based on category/title
         const getFallbackImage = (title: string, category: string) => {
           const titleLower = title.toLowerCase();
-          if (titleLower.includes('iphone') || category === 'electronics') return iphoneImage;
-          if (titleLower.includes('table') || titleLower.includes('dining') || category === 'furniture') return diningTableImage;
-          if (titleLower.includes('book') || category === 'books') return programmingBooksImage;
+          if (titleLower.includes('iphone') || category === 'electronics') return iphoneMarketplaceImage;
+          if (titleLower.includes('table') || titleLower.includes('dining') || category === 'furniture') return diningTableMarketplaceImage;
+          if (titleLower.includes('book') || category === 'books') return programmingBooksMarketplaceImage;
           return '/placeholder.svg';
         };
 
@@ -166,9 +166,9 @@ export default function Marketplace() {
           postedDate: new Date(item.created_at).toISOString().split('T')[0],
           images: item.image ? [
             item.image.startsWith('http') ? item.image : 
-            item.image === 'iphone-marketplace.jpg' ? iphoneImage :
-            item.image === 'dining-table-marketplace.jpg' ? diningTableImage :
-            item.image === 'programming-books-marketplace.jpg' ? programmingBooksImage :
+            item.image === 'iphone-marketplace.jpg' ? iphoneMarketplaceImage :
+            item.image === 'dining-table-marketplace.jpg' ? diningTableMarketplaceImage :
+            item.image === 'programming-books-marketplace.jpg' ? programmingBooksMarketplaceImage :
             getFallbackImage(item.title, item.category)
           ] : [getFallbackImage(item.title, item.category)],
           isFavorite: false
@@ -199,7 +199,7 @@ export default function Marketplace() {
       sellerRating: 4.8,
       location: 'Block A, Unit 15-2',
       postedDate: '2024-01-15',
-      images: [iphoneImage],
+      images: [iphoneMarketplaceImage],
       isFavorite: false
     },
     {
@@ -213,7 +213,7 @@ export default function Marketplace() {
       sellerRating: 4.5,
       location: 'Block B, Unit 8-1',
       postedDate: '2024-01-12',
-      images: [diningTableImage],
+      images: [diningTableMarketplaceImage],
       isFavorite: true
     },
     {
@@ -227,7 +227,7 @@ export default function Marketplace() {
       sellerRating: 4.9,
       location: 'Block C, Unit 12-5',
       postedDate: '2024-01-10',
-      images: [programmingBooksImage],
+      images: [programmingBooksMarketplaceImage],
       isFavorite: false
     }
   ];
@@ -563,6 +563,6 @@ export default function Marketplace() {
           </CardContent>
         </Card>
       )}
-      </div>
+    </div>
   );
 }
