@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { ShoppingBag, Plus, Search, Heart, MessageCircle, Star, MapPin, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useChatRooms } from '@/hooks/use-chat-rooms';
 
 interface MarketplaceItem {
   id: string;
@@ -34,7 +33,6 @@ export default function Marketplace() {
   const { language } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { createDirectChat } = useChatRooms();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedCondition, setSelectedCondition] = useState('all');
@@ -221,59 +219,24 @@ export default function Marketplace() {
     setIsCreateOpen(false);
   };
 
-  // Mock seller user IDs mapping (in a real app, this would come from the database)
-  const sellerIdMap: { [key: string]: string } = {
-    'John Doe': 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
-    'Sarah Chen': 'f47ac10b-58cc-4372-a567-0e02b2c3d480', 
-    'Mike Wong': 'f47ac10b-58cc-4372-a567-0e02b2c3d481'
-  };
+  const handleContactSeller = (item: MarketplaceItem) => {
+    // For demo purposes, show a message about contacting the seller
+    // In a real app, this would integrate with the actual user system
+    toast({
+      title: language === 'en' ? 'Contact Seller' : 'Hubungi Penjual',
+      description: language === 'en' 
+        ? `In a real marketplace, this would start a chat with ${item.seller} about "${item.title}"`
+        : `Dalam pasaran sebenar, ini akan memulakan sembang dengan ${item.seller} tentang "${item.title}"`,
+    });
 
-  const handleContactSeller = async (item: MarketplaceItem) => {
-    try {
-      const sellerId = sellerIdMap[item.seller];
-      if (!sellerId) {
-        toast({
-          title: language === 'en' ? 'Error' : 'Ralat',
-          description: language === 'en' ? 'Seller not found' : 'Penjual tidak dijumpai',
-          variant: 'destructive'
-        });
-        return;
+    // Navigate to communication hub for demo purposes
+    navigate('/communication', {
+      state: {
+        demoMessage: language === 'en' 
+          ? `Demo: Contact ${item.seller} about ${item.title} (RM${item.price.toLocaleString()})`
+          : `Demo: Hubungi ${item.seller} tentang ${item.title} (RM${item.price.toLocaleString()})`
       }
-
-      // Create direct chat with the seller
-      const roomId = await createDirectChat(sellerId);
-      
-      // Navigate to communication hub with the created room
-      navigate('/communication', {
-        state: {
-          roomId,
-          presetMessage: language === 'en' 
-            ? `Hi, is this item still available? - ${item.title} (RM${item.price.toLocaleString()})`
-            : `Hai, adakah item ini masih tersedia? - ${item.title} (RM${item.price.toLocaleString()})`,
-          itemInfo: {
-            title: item.title,
-            price: item.price,
-            id: item.id
-          }
-        }
-      });
-
-      toast({
-        title: t.contactSuccess,
-        description: language === 'en' 
-          ? `Chat started with ${item.seller}` 
-          : `Sembang bermula dengan ${item.seller}`
-      });
-    } catch (error) {
-      console.error('Error creating chat:', error);
-      toast({
-        title: language === 'en' ? 'Error' : 'Ralat',
-        description: language === 'en' 
-          ? 'Failed to start chat with seller' 
-          : 'Gagal memulakan sembang dengan penjual',
-        variant: 'destructive'
-      });
-    }
+    });
   };
 
   return (
