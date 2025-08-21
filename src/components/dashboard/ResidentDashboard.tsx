@@ -8,7 +8,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ServiceManagement } from '@/components/services/ServiceManagement';
-import { CommunityStats } from './CommunityStats';
 import { QuickServicesWidget } from './QuickServicesWidget';
 import { UpcomingEventsWidget } from './UpcomingEventsWidget';
 import { WeatherWidget } from './WeatherWidget';
@@ -523,8 +522,7 @@ export function ResidentDashboard() {
       </Card>
 
       {/* Additional Widgets */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <CommunityStats language={language} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <QuickServicesWidget language={language} />
         <UpcomingEventsWidget language={language} />
         <WeatherWidget />
