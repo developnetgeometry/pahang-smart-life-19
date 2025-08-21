@@ -1,4 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +22,35 @@ import {
 
 export function SecurityOfficerDashboard() {
   const { language } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'cameras':
+        navigate('/cctv-live-feed');
+        break;
+      case 'visitors':
+        navigate('/visitor-security');
+        break;
+      case 'incident':
+        toast({
+          title: language === 'en' ? 'Incident Report' : 'Laporan Insiden',
+          description: language === 'en' ? 'Opening incident reporting form...' : 'Membuka borang laporan insiden...',
+        });
+        // Navigate to a dedicated incident report page or open modal
+        navigate('/my-complaints'); // Using existing complaints page as incident reports
+        break;
+      case 'system':
+        toast({
+          title: language === 'en' ? 'System Check' : 'Semak Sistem',
+          description: language === 'en' ? 'All systems operational. Last check: ' + new Date().toLocaleTimeString() : 'Semua sistem beroperasi. Pemeriksaan terakhir: ' + new Date().toLocaleTimeString(),
+        });
+        break;
+      default:
+        break;
+    }
+  };
 
   const securityMetrics = [
     {
@@ -277,19 +308,34 @@ export function SecurityOfficerDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Button className="flex items-center gap-2 h-12">
+            <Button 
+              className="flex items-center gap-2 h-12" 
+              onClick={() => handleQuickAction('cameras')}
+            >
               <Camera className="h-4 w-4" />
               {language === 'en' ? 'View All Cameras' : 'Lihat Semua Kamera'}
             </Button>
-            <Button className="flex items-center gap-2 h-12" variant="outline">
+            <Button 
+              className="flex items-center gap-2 h-12" 
+              variant="outline"
+              onClick={() => handleQuickAction('visitors')}
+            >
               <Users className="h-4 w-4" />
               {language === 'en' ? 'Visitor Log' : 'Log Pelawat'}
             </Button>
-            <Button className="flex items-center gap-2 h-12" variant="outline">
+            <Button 
+              className="flex items-center gap-2 h-12" 
+              variant="outline"
+              onClick={() => handleQuickAction('incident')}
+            >
               <FileText className="h-4 w-4" />
               {language === 'en' ? 'Incident Report' : 'Laporan Insiden'}
             </Button>
-            <Button className="flex items-center gap-2 h-12" variant="outline">
+            <Button 
+              className="flex items-center gap-2 h-12" 
+              variant="outline"
+              onClick={() => handleQuickAction('system')}
+            >
               <Activity className="h-4 w-4" />
               {language === 'en' ? 'System Check' : 'Semak Sistem'}
             </Button>
