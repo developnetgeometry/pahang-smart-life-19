@@ -24,7 +24,7 @@ export function Layout({ children }: LayoutProps) {
             <SidebarTrigger className="mr-4" />
             <Header />
           </header>
-          <main className="flex-1 overflow-y-auto p-6">
+          <main className="flex-1 overflow-y-auto p-0">
             {children}
           </main>
         </div>
