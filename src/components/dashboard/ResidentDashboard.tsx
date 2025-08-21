@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ServiceManagement } from '@/components/services/ServiceManagement';
 import { QuickServicesWidget } from './QuickServicesWidget';
@@ -40,6 +41,7 @@ interface Location {
 export function ResidentDashboard() {
   const { language, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isPressed, setIsPressed] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isTriggering, setIsTriggering] = useState(false);
@@ -202,6 +204,22 @@ export function ResidentDashboard() {
       });
     } finally {
       setIsTriggering(false);
+    }
+  };
+
+  // Handle quick action clicks
+  const handleQuickAction = (action: any) => {
+    if (action.isPanic) {
+      // Panic button is handled separately with hold gesture
+      return;
+    }
+    
+    // Navigate to the appropriate page
+    if (action.action.startsWith('/')) {
+      navigate(action.action);
+    } else {
+      // Handle other action types if needed
+      console.log('Action triggered:', action.action);
     }
   };
 
@@ -467,18 +485,16 @@ export function ResidentDashboard() {
                     <Button
                       key={index}
                       variant="outline"
-                      className="min-h-[100px] p-4 flex flex-col items-start gap-2 hover:shadow-md transition-shadow"
-                      asChild
+                      className="min-h-[100px] p-4 flex flex-col items-start gap-2 hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => handleQuickAction(action)}
                     >
-                      <a href={action.action}>
-                        <div className="flex items-center gap-2 w-full">
-                          <action.icon className="h-5 w-5 text-primary" />
-                          <span className="font-medium">{action.title}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground text-left">
-                          {action.description}
-                        </p>
-                      </a>
+                      <div className="flex items-center gap-2 w-full">
+                        <action.icon className="h-5 w-5 text-primary" />
+                        <span className="font-medium">{action.title}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground text-left">
+                        {action.description}
+                      </p>
                     </Button>
                   )
                 ))}
