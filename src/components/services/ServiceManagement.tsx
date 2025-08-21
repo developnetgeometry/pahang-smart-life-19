@@ -107,19 +107,32 @@ export const ServiceManagement: React.FC = () => {
   };
 
   const onSubmit = async (data: ServiceFormData) => {
-    if (!user) return;
+    console.log('Form submitted with data:', data);
+    
+    if (!user) {
+      console.error('No user found');
+      toast.error('You must be logged in to add services');
+      return;
+    }
 
+    console.log('User found:', user.id);
     setIsLoading(true);
+    
     try {
       if (editingService) {
+        console.log('Updating existing service:', editingService.id);
         const { error } = await supabase
           .from('user_services')
           .update({ ...data, updated_at: new Date().toISOString() })
           .eq('id', editingService.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
         toast.success('Service updated successfully');
       } else {
+        console.log('Creating new service');
         const insertData = {
           user_id: user.id,
           service_name: data.service_name,
@@ -134,11 +147,19 @@ export const ServiceManagement: React.FC = () => {
           is_active: data.is_active,
         };
 
-        const { error } = await supabase
-          .from('user_services')
-          .insert([insertData]);
+        console.log('Insert data:', insertData);
 
-        if (error) throw error;
+        const { error, data: insertedData } = await supabase
+          .from('user_services')
+          .insert([insertData])
+          .select();
+
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
+        
+        console.log('Service created successfully:', insertedData);
         toast.success('Service added successfully');
       }
 
@@ -148,7 +169,7 @@ export const ServiceManagement: React.FC = () => {
       fetchServices();
     } catch (error) {
       console.error('Error saving service:', error);
-      toast.error('Failed to save service');
+      toast.error(`Failed to save service: ${error.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
