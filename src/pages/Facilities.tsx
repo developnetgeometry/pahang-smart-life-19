@@ -13,6 +13,11 @@ import { Calendar, MapPin, Users, Clock, Plus, Search, Car, Dumbbell, Waves, Tre
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
+// Import facility images
+import communityGymImage from '@/assets/community-gym.jpg';
+import swimmingPoolImage from '@/assets/swimming-pool.jpg';
+import functionHallImage from '@/assets/function-hall.jpg';
+
 interface Facility {
   id: string;
   name: string;
@@ -146,7 +151,7 @@ export default function Facilities() {
             capacity: 20,
             availability: 'available',
             amenities: ['Treadmills', 'Weight Training', 'Air Conditioning', 'Lockers'],
-            image: '/placeholder.svg',
+            image: communityGymImage,
             hourlyRate: 10
           },
           {
@@ -157,7 +162,7 @@ export default function Facilities() {
             capacity: 50,
             availability: 'available',
             amenities: ['Lifeguard', 'Changing Rooms', 'Pool Equipment', 'Shower'],
-            image: '/placeholder.svg'
+            image: swimmingPoolImage
           },
           {
             id: '3',
@@ -167,7 +172,7 @@ export default function Facilities() {
             capacity: 100,
             availability: 'available',
             amenities: ['Sound System', 'Projector', 'Tables & Chairs', 'Kitchen Access'],
-            image: '/placeholder.svg',
+            image: functionHallImage,
             hourlyRate: 50
           }
         ]);
@@ -331,8 +336,16 @@ export default function Facilities() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredFacilities.map((facility) => (
           <Card key={facility.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="aspect-video bg-muted flex items-center justify-center">
-              {getIcon(facility.name)}
+            <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
+              {facility.image && facility.image !== '/placeholder.svg' ? (
+                <img 
+                  src={facility.image} 
+                  alt={facility.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                getIcon(facility.name)
+              )}
             </div>
             <CardHeader>
               <div className="flex items-start justify-between">
