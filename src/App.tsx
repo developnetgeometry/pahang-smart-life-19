@@ -286,16 +286,6 @@ const App = () => (
 
             {/* Professional view routes */}
             <Route
-              path="/admin/*"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <AdminPanel />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/admin/users"
               element={
                 <ProtectedRoute>
