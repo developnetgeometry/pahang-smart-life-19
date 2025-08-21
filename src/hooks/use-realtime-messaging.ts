@@ -68,7 +68,11 @@ export const useRealtimeMessaging = (roomId?: string) => {
           is_edited,
           is_deleted,
           reply_to_id,
-          file_url
+          file_url,
+          profiles:sender_id (
+            full_name,
+            avatar_url
+          )
         `)
         .eq('room_id', roomId)
         .eq('is_deleted', false)
@@ -80,7 +84,10 @@ export const useRealtimeMessaging = (roomId?: string) => {
       const enhancedMessages: EnhancedMessage[] = (data || []).map(msg => ({
         ...msg,
         message_type: msg.message_type as 'text' | 'image' | 'file' | 'voice' | 'system',
-        sender_profile: { full_name: 'Demo User' },
+        sender_profile: {
+          full_name: msg.profiles?.full_name || 'Unknown User',
+          avatar_url: msg.profiles?.avatar_url
+        },
         reactions: [],
         read_by: [],
         thread_count: 0
@@ -104,6 +111,49 @@ export const useRealtimeMessaging = (roomId?: string) => {
       setIsLoading(false);
     }
   }, [roomId, user, toast]);
+
+  // Typing indicators
+  const stopTyping = useCallback(async () => {
+    if (!roomId || !user) return;
+
+    try {
+      await supabase
+        .from('typing_indicators')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('room_id', roomId);
+
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    } catch (error) {
+      console.error('Error stopping typing indicator:', error);
+    }
+  }, [roomId, user]);
+
+  const startTyping = useCallback(async () => {
+    if (!roomId || !user) return;
+
+    try {
+      await supabase
+        .from('typing_indicators')
+        .upsert({
+          user_id: user.id,
+          room_id: roomId,
+          started_at: new Date().toISOString(),
+        });
+
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      // Auto-stop typing after 3 seconds of inactivity
+      typingTimeoutRef.current = setTimeout(stopTyping, 3000);
+    } catch (error) {
+      console.error('Error starting typing indicator:', error);
+    }
+  }, [roomId, user, stopTyping]);
 
   // Send message
   const sendMessage = useCallback(async (
@@ -140,6 +190,21 @@ export const useRealtimeMessaging = (roomId?: string) => {
 
       if (error) throw error;
 
+      // Add the message to local state immediately for better UX
+      const enhancedMessage: EnhancedMessage = {
+        ...data,
+        message_type: data.message_type as 'text' | 'image' | 'file' | 'voice' | 'system',
+        sender_profile: {
+          full_name: data.profiles?.full_name || user.email || 'You',
+          avatar_url: data.profiles?.avatar_url
+        },
+        reactions: [],
+        read_by: [],
+        thread_count: 0
+      };
+
+      setMessages(prev => [...prev, enhancedMessage]);
+
       // Stop typing indicator
       stopTyping();
 
@@ -152,7 +217,7 @@ export const useRealtimeMessaging = (roomId?: string) => {
         variant: 'destructive',
       });
     }
-  }, [roomId, user, toast]);
+  }, [roomId, user, toast, stopTyping]);
 
   // Edit message
   const editMessage = useCallback(async (messageId: string, newText: string) => {
@@ -215,49 +280,6 @@ export const useRealtimeMessaging = (roomId?: string) => {
     console.log('Reacting to message:', messageId, 'with:', emoji);
   }, [user]);
 
-  // Typing indicators
-  const startTyping = useCallback(async () => {
-    if (!roomId || !user) return;
-
-    try {
-      await supabase
-        .from('typing_indicators')
-        .upsert({
-          user_id: user.id,
-          room_id: roomId,
-          started_at: new Date().toISOString(),
-        });
-
-      // Clear existing timeout
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-
-      // Auto-stop typing after 3 seconds of inactivity
-      typingTimeoutRef.current = setTimeout(stopTyping, 3000);
-    } catch (error) {
-      console.error('Error starting typing indicator:', error);
-    }
-  }, [roomId, user]);
-
-  const stopTyping = useCallback(async () => {
-    if (!roomId || !user) return;
-
-    try {
-      await supabase
-        .from('typing_indicators')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('room_id', roomId);
-
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-    } catch (error) {
-      console.error('Error stopping typing indicator:', error);
-    }
-  }, [roomId, user]);
-
   // Mark messages as read (simplified for demo)
   const markAsRead = useCallback(async (messageIds: string[]) => {
     if (!user || messageIds.length === 0) return;
@@ -280,10 +302,39 @@ export const useRealtimeMessaging = (roomId?: string) => {
           table: 'chat_messages',
           filter: `room_id=eq.${roomId}`,
         },
-        (payload) => {
-          const newMessage = payload.new as EnhancedMessage;
+        async (payload) => {
+          const newMessage = payload.new as any;
+          
+          // Only add messages from other users (our own messages are added immediately in sendMessage)
           if (newMessage.sender_id !== user?.id) {
-            setMessages(prev => [...prev, newMessage]);
+            // Fetch the complete message with profile info
+            const { data: messageWithProfile } = await supabase
+              .from('chat_messages')
+              .select(`
+                *,
+                profiles:sender_id (
+                  full_name,
+                  avatar_url
+                )
+              `)
+              .eq('id', newMessage.id)
+              .single();
+
+            if (messageWithProfile) {
+              const enhancedMessage: EnhancedMessage = {
+                ...messageWithProfile,
+                message_type: messageWithProfile.message_type as 'text' | 'image' | 'file' | 'voice' | 'system',
+                sender_profile: {
+                  full_name: messageWithProfile.profiles?.full_name || 'Unknown User',
+                  avatar_url: messageWithProfile.profiles?.avatar_url
+                },
+                reactions: [],
+                read_by: [],
+                thread_count: 0
+              };
+
+              setMessages(prev => [...prev, enhancedMessage]);
+            }
           }
         }
       )
