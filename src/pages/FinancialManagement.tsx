@@ -282,8 +282,8 @@ export default function FinancialManagement() {
   const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.transaction_code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = !typeFilter || transaction.transaction_type === typeFilter;
-    const matchesStatus = !statusFilter || transaction.status === statusFilter;
+    const matchesType = !typeFilter || typeFilter === 'all' || transaction.transaction_type === typeFilter;
+    const matchesStatus = !statusFilter || statusFilter === 'all' || transaction.status === statusFilter;
     
     return matchesSearch && matchesType && matchesStatus;
   });
@@ -420,7 +420,7 @@ export default function FinancialManagement() {
                   <SelectValue placeholder="Filter by type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
+                  <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="credit">Income</SelectItem>
                   <SelectItem value="debit">Expense</SelectItem>
                 </SelectContent>
@@ -430,7 +430,7 @@ export default function FinancialManagement() {
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Status</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
                   {statusOptions.map(status => (
                     <SelectItem key={status.value} value={status.value}>
                       {status.label}
