@@ -19,7 +19,7 @@ const assetSchema = z.object({
   asset_code: z.string().min(1, 'Asset code is required'),
   name: z.string().min(1, 'Asset name is required'),
   description: z.string().optional(),
-  category: z.string().min(1, 'Category is required'),
+  asset_type: z.string().min(1, 'Asset type is required'),
   subcategory: z.string().optional(),
   brand: z.string().optional(),
   model: z.string().optional(),
@@ -35,10 +35,9 @@ const assetSchema = z.object({
 
 type Asset = {
   id: string;
-  asset_code: string;
   name: string;
   description?: string;
-  category: string;
+  asset_type: string;
   subcategory?: string;
   brand?: string;
   model?: string;
@@ -69,7 +68,7 @@ export default function AssetManagement() {
       asset_code: '',
       name: '',
       description: '',
-      category: '',
+      asset_type: '',
       subcategory: '',
       brand: '',
       model: '',
@@ -124,10 +123,18 @@ export default function AssetManagement() {
   const onSubmit = async (values: z.infer<typeof assetSchema>) => {
     try {
       const assetData = {
-        ...values,
+        name: values.name,
+        description: values.description || null,
+        asset_type: values.asset_type,
+        brand: values.brand || null,
+        model: values.model || null,
+        serial_number: values.serial_number || null,
         purchase_price: values.purchase_price ? parseFloat(values.purchase_price) : null,
         current_value: values.current_value ? parseFloat(values.current_value) : null,
+        condition_status: values.condition_status || null,
+        location: values.location,
         warranty_expiry: values.warranty_expiry || null,
+        maintenance_schedule: values.maintenance_schedule || null,
         district_id: null, // Will be set based on user's district
       };
 
@@ -171,10 +178,9 @@ export default function AssetManagement() {
   const handleEdit = (asset: Asset) => {
     setEditingAsset(asset);
     form.reset({
-      asset_code: asset.asset_code,
       name: asset.name,
       description: asset.description || '',
-      category: asset.category,
+      asset_type: asset.asset_type,
       subcategory: asset.subcategory || '',
       brand: asset.brand || '',
       model: asset.model || '',
@@ -190,8 +196,8 @@ export default function AssetManagement() {
 
   const filteredAssets = assets.filter(asset => {
     const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         asset.asset_code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !categoryFilter || asset.category === categoryFilter;
+                         (asset.asset_code && asset.asset_code.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesCategory = !categoryFilter || asset.asset_type === categoryFilter;
     const matchesCondition = !conditionFilter || asset.condition_status === conditionFilter;
     
     return matchesSearch && matchesCategory && matchesCondition;
@@ -264,35 +270,19 @@ export default function AssetManagement() {
 
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="asset_code"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Asset Code</FormLabel>
-                          <FormControl>
-                            <Input placeholder="AST-001" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Asset Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Conference Table" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Asset Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Conference Table" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={form.control}
@@ -311,14 +301,14 @@ export default function AssetManagement() {
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="category"
+                      name="asset_type"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Category</FormLabel>
+                          <FormLabel>Asset Type</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select category" />
+                                <SelectValue placeholder="Select asset type" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -515,7 +505,7 @@ export default function AssetManagement() {
                 <div>
                   <CardTitle className="text-lg">{asset.name}</CardTitle>
                   <CardDescription className="text-sm text-muted-foreground">
-                    {asset.asset_code}
+                    ID: {asset.id}
                   </CardDescription>
                 </div>
                 <div className="flex space-x-1">
@@ -533,9 +523,9 @@ export default function AssetManagement() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Category:</span>
+                <span className="text-sm font-medium">Asset Type:</span>
                 <Badge variant="outline">
-                  {asset.category.charAt(0).toUpperCase() + asset.category.slice(1)}
+                  {asset.asset_type.charAt(0).toUpperCase() + asset.asset_type.slice(1)}
                 </Badge>
               </div>
               

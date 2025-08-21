@@ -194,14 +194,22 @@ export default function InventoryManagement() {
           *,
           inventory_items (
             name,
-            item_code
+            item_code,
+            unit_of_measure
           )
         `)
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      setTransactions(data || []);
+      
+      // Type assertion to handle the string transaction_type from database
+      const typedData = (data || []).map(transaction => ({
+        ...transaction,
+        transaction_type: transaction.transaction_type as 'stock_in' | 'stock_out' | 'adjustment' | 'transfer'
+      }));
+      
+      setTransactions(typedData);
     } catch (error) {
       console.error('Error fetching transactions:', error);
     }
@@ -224,12 +232,18 @@ export default function InventoryManagement() {
   const onSubmitItem = async (values: z.infer<typeof itemSchema>) => {
     try {
       const itemData = {
-        ...values,
-        item_code: values.item_code || generateItemCode(),
+        name: values.name,
+        description: values.description || null,
+        item_code: values.item_code,
+        category_id: values.category_id,
+        unit_of_measure: values.unit_of_measure,
         unit_cost: values.unit_cost ? parseFloat(values.unit_cost) : null,
         minimum_stock: parseInt(values.minimum_stock || '0'),
         maximum_stock: values.maximum_stock ? parseInt(values.maximum_stock) : null,
         reorder_level: parseInt(values.reorder_level || '0'),
+        supplier_name: values.supplier_name || null,
+        supplier_contact: values.supplier_contact || null,
+        storage_location: values.storage_location || null,
         district_id: null, // Will be set based on user's district
       };
 
@@ -263,13 +277,17 @@ export default function InventoryManagement() {
       const unitCost = values.unit_cost ? parseFloat(values.unit_cost) : null;
       
       const transactionData = {
-        ...values,
+        item_id: values.item_id,
         transaction_code: generateTransactionCode(),
+        transaction_type: values.transaction_type,
         quantity,
         unit_cost: unitCost,
         total_cost: unitCost ? quantity * unitCost : null,
-        performed_by: user?.id,
+        performed_by: user?.id || '',
+        reference_type: values.reference_type || null,
+        notes: values.notes || null,
         expiry_date: values.expiry_date || null,
+        batch_number: values.batch_number || null,
       };
 
       const { error } = await supabase

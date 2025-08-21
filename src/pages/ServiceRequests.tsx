@@ -105,7 +105,14 @@ export default function ServiceRequests() {
         .order('name');
 
       if (error) throw error;
-      setCategories(data || []);
+      
+      // Type assertion to handle potential type mismatches
+      const typedData = (data || []).map(category => ({
+        ...category,
+        estimated_response_time: category.estimated_response_time as string
+      }));
+      
+      setCategories(typedData);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
@@ -134,7 +141,15 @@ export default function ServiceRequests() {
       const { data, error } = await query;
 
       if (error) throw error;
-      setRequests(data || []);
+      
+      // Type assertion to handle potential type mismatches
+      const typedData = (data || []).map(request => ({
+        ...request,
+        priority: request.priority as 'low' | 'medium' | 'high' | 'urgent',
+        status: request.status as 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled' | 'on_hold'
+      }));
+      
+      setRequests(typedData);
     } catch (error) {
       console.error('Error fetching service requests:', error);
       toast({
@@ -159,11 +174,15 @@ export default function ServiceRequests() {
   const onSubmit = async (values: z.infer<typeof serviceRequestSchema>) => {
     try {
       const requestData = {
-        ...values,
-        request_number: generateRequestNumber(),
-        requester_id: user?.id,
+        title: values.title,
+        description: values.description,
+        category_id: values.category_id,
+        priority: values.priority,
+        location: values.location || null,
         preferred_date: values.preferred_date || null,
         preferred_time: values.preferred_time || null,
+        request_number: generateRequestNumber(),
+        requester_id: user?.id || '',
         district_id: null, // Will be set based on user's district
       };
 

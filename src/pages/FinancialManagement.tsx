@@ -175,10 +175,16 @@ export default function FinancialManagement() {
   const onSubmitTransaction = async (values: z.infer<typeof transactionSchema>) => {
     try {
       const transactionData = {
-        ...values,
-        transaction_code: generateTransactionCode(),
+        account_id: values.account_id,
+        description: values.description,
         amount: parseFloat(values.amount),
+        transaction_type: values.transaction_type,
+        transaction_code: generateTransactionCode(),
         transaction_date: new Date().toISOString().split('T')[0],
+        reference_type: values.reference_type || null,
+        receipt_number: values.receipt_number || null,
+        payment_method: values.payment_method || null,
+        notes: values.notes || null,
         processed_by: null, // Will be set based on current user
         district_id: null, // Will be set based on user's district
       };
@@ -209,12 +215,17 @@ export default function FinancialManagement() {
 
   const onSubmitAccount = async (values: z.infer<typeof accountSchema>) => {
     try {
+      const accountData = {
+        account_name: values.account_name,
+        account_type: values.account_type,
+        account_code: values.account_code,
+        description: values.description || null,
+        district_id: null, // Will be set based on user's district
+      };
+
       const { error } = await supabase
         .from('financial_accounts')
-        .insert([{
-          ...values,
-          district_id: null, // Will be set based on user's district
-        }]);
+        .insert([accountData]);
 
       if (error) throw error;
 
