@@ -147,7 +147,12 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
   // Event handlers
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedRoomId) return;
+    if (!newMessage.trim() || !selectedRoomId) {
+      console.log('Cannot send message:', { message: newMessage.trim(), roomId: selectedRoomId });
+      return;
+    }
+
+    console.log('Sending message:', { message: newMessage.trim(), roomId: selectedRoomId });
 
     try {
       if (editingMessageId) {
@@ -163,6 +168,7 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
         setReplyToMessageId(null);
       }
       setNewMessage('');
+      console.log('Message sent successfully');
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error('Failed to send message');

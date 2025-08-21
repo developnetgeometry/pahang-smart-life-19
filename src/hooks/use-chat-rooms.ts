@@ -36,7 +36,12 @@ export const useChatRooms = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchRooms = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      console.log('No user ID for fetching rooms');
+      return;
+    }
+
+    console.log('Fetching rooms for user:', user.id);
 
     try {
       const { data: roomsData, error } = await supabase
@@ -55,7 +60,12 @@ export const useChatRooms = () => {
         .eq('is_active', true)
         .order('updated_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching rooms:', error);
+        throw error;
+      }
+
+      console.log('Fetched rooms data:', roomsData);
 
       const processedRooms = roomsData?.map(room => ({
         ...room,
@@ -67,11 +77,76 @@ export const useChatRooms = () => {
         } : undefined
       })) || [];
 
+      console.log('Processed rooms:', processedRooms);
+      
+      // If no rooms exist, create a default general room
+      if (processedRooms.length === 0) {
+        console.log('No rooms found, creating default general room');
+        await createDefaultGeneralRoom();
+        return; // fetchRooms will be called again after room creation
+      }
+      
       setRooms(processedRooms);
     } catch (error) {
       console.error('Error fetching rooms:', error);
+      
+      // If error is due to no rooms existing, try creating a default room
+      if (error.message?.includes('infinite recursion') || error.code === 'PGRST116') {
+        console.log('Creating default room due to error');
+        await createDefaultGeneralRoom();
+        return;
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createDefaultGeneralRoom = async () => {
+    try {
+      console.log('Creating default general room');
+      
+      // Create a general community room
+      const { data: roomData, error: roomError } = await supabase
+        .from('chat_rooms')
+        .insert({
+          name: 'General',
+          description: 'General community chat',
+          room_type: 'group',
+          is_private: false,
+          created_by: user?.id,
+          max_members: 1000
+        })
+        .select()
+        .single();
+
+      if (roomError) {
+        console.error('Error creating default room:', roomError);
+        return;
+      }
+
+      console.log('Created default room:', roomData);
+
+      // Add the current user as an admin member
+      const { error: memberError } = await supabase
+        .from('chat_room_members')
+        .insert({
+          room_id: roomData.id,
+          user_id: user?.id,
+          is_admin: true
+        });
+
+      if (memberError) {
+        console.error('Error adding user to default room:', memberError);
+        return;
+      }
+
+      console.log('Added user to default room');
+      
+      // Refresh rooms after creating default room
+      setTimeout(() => fetchRooms(), 500);
+      
+    } catch (error) {
+      console.error('Error creating default general room:', error);
     }
   };
 
