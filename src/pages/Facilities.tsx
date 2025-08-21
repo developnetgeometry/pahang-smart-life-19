@@ -125,6 +125,15 @@ export default function Facilities() {
 
         if (error) throw error;
 
+        // Helper function to get fallback image based on facility name/type
+        const getFallbackImage = (facilityName: string) => {
+          const name = facilityName.toLowerCase();
+          if (name.includes('gym') || name.includes('gim')) return communityGymImage;
+          if (name.includes('pool') || name.includes('kolam')) return swimmingPoolImage;
+          if (name.includes('hall') || name.includes('dewan')) return functionHallImage;
+          return '/placeholder.svg';
+        };
+
         // Transform Supabase data to match our interface
         const transformedFacilities: Facility[] = (data || []).map(facility => ({
           id: facility.id,
@@ -134,11 +143,49 @@ export default function Facilities() {
           capacity: facility.capacity || 0,
           availability: facility.is_available ? 'available' : 'maintenance',
           amenities: facility.amenities || [],
-          image: facility.images?.[0] || '/placeholder.svg',
+          image: facility.images?.[0] || getFallbackImage(facility.name),
           hourlyRate: facility.hourly_rate ? Number(facility.hourly_rate) : undefined
         }));
 
-        setFacilities(transformedFacilities);
+        // Use demo data if database is empty, otherwise use transformed data
+        if (transformedFacilities.length === 0) {
+          setFacilities([
+            {
+              id: '1',
+              name: language === 'en' ? 'Community Gym' : 'Gim Komuniti',
+              description: language === 'en' ? 'Fully equipped fitness center with modern equipment' : 'Pusat kecergasan lengkap dengan peralatan moden',
+              location: 'Block A, Ground Floor',
+              capacity: 20,
+              availability: 'available',
+              amenities: ['Treadmills', 'Weight Training', 'Air Conditioning', 'Lockers'],
+              image: communityGymImage,
+              hourlyRate: 10
+            },
+            {
+              id: '2',
+              name: language === 'en' ? 'Swimming Pool' : 'Kolam Renang',
+              description: language === 'en' ? 'Olympic-size swimming pool with children\'s area' : 'Kolam renang saiz olimpik dengan kawasan kanak-kanak',
+              location: 'Recreation Area',
+              capacity: 50,
+              availability: 'available',
+              amenities: ['Lifeguard', 'Changing Rooms', 'Pool Equipment', 'Shower'],
+              image: swimmingPoolImage
+            },
+            {
+              id: '3',
+              name: language === 'en' ? 'Function Hall A' : 'Dewan Majlis A',
+              description: language === 'en' ? 'Large multipurpose hall for events and gatherings' : 'Dewan serbaguna besar untuk acara dan perhimpunan',
+              location: 'Block B, Level 2',
+              capacity: 100,
+              availability: 'available',
+              amenities: ['Sound System', 'Projector', 'Tables & Chairs', 'Kitchen Access'],
+              image: functionHallImage,
+              hourlyRate: 50
+            }
+          ]);
+        } else {
+          setFacilities(transformedFacilities);
+        }
       } catch (error) {
         console.error('Error fetching facilities:', error);
         // Fallback to demo data
