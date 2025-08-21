@@ -218,6 +218,20 @@ export function ResidentDashboard() {
       value: '2',
       icon: Users,
       trend: 'Expected arrivals'
+    },
+    {
+      title: language === 'en' ? 'Active Complaints' : 'Aduan Aktif',
+      value: '0',
+      icon: FileText,
+      trend: 'All resolved',
+      status: 'positive'
+    },
+    {
+      title: language === 'en' ? 'Upcoming Events' : 'Acara Akan Datang',
+      value: '3',
+      icon: PartyPopper,
+      trend: 'This month',
+      status: 'active'
     }
   ];
 
