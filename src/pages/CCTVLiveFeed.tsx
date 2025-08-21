@@ -1,15 +1,62 @@
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Layout } from '@/components/layout/Layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Video, VideoOff, Maximize, RotateCcw, Settings, Eye, EyeOff, Signal, SignalHigh, SignalLow, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Home, Play, Square, Wifi, WifiOff, Activity, Calendar, Clock, Download, X } from 'lucide-react';
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Layout } from "@/components/layout/Layout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Video,
+  VideoOff,
+  Maximize,
+  RotateCcw,
+  Settings,
+  Eye,
+  EyeOff,
+  Signal,
+  SignalHigh,
+  SignalLow,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ZoomIn,
+  ZoomOut,
+  Home,
+  Play,
+  Square,
+  Wifi,
+  WifiOff,
+  Activity,
+  Calendar,
+  Clock,
+  Download,
+  X,
+} from "lucide-react";
+import StreamPlayer from "../components/cctv/StreamPlayer";
 
 interface CCTVCamera {
   id: string;
@@ -18,9 +65,9 @@ interface CCTVCamera {
   building?: string;
   floor?: string;
   area?: string;
-  accessLevel: 'public' | 'resident' | 'admin';
-  status: 'online' | 'offline' | 'maintenance';
-  signal: 'high' | 'medium' | 'low';
+  accessLevel: "public" | "resident" | "admin";
+  status: "online" | "offline" | "maintenance";
+  signal: "high" | "medium" | "low";
   isRecording: boolean;
   lastUpdate: string;
   rtspUrl?: string;
@@ -32,7 +79,7 @@ interface CCTVRecording {
   id: string;
   cameraId: string;
   cameraName: string;
-  eventType: 'motion' | 'manual' | 'scheduled' | 'alarm';
+  eventType: "motion" | "manual" | "scheduled" | "alarm";
   startTime: string;
   endTime: string;
   duration: string;
@@ -44,126 +91,130 @@ interface CCTVRecording {
 
 export default function CCTVLiveFeed() {
   const { language, user, hasRole } = useAuth();
-  const [selectedCamera, setSelectedCamera] = useState('all');
+  const [selectedCamera, setSelectedCamera] = useState("all");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [motionDetectionEnabled, setMotionDetectionEnabled] = useState(false);
   const [motionSensitivity, setMotionSensitivity] = useState([30]);
-  const [motionEvents] = useState<Array<{ id: string; timestamp: string; camera: string }>>([]);
-  const [selectedRecording, setSelectedRecording] = useState<CCTVRecording | null>(null);
+  const [motionEvents] = useState<
+    Array<{ id: string; timestamp: string; camera: string }>
+  >([]);
+  const [selectedRecording, setSelectedRecording] =
+    useState<CCTVRecording | null>(null);
 
   const text = {
     en: {
-      title: 'CCTV Live Feed',
-      subtitle: 'Monitor community security cameras',
-      selectCamera: 'Select Camera',
-      allCameras: 'All Cameras',
-      status: 'Status',
-      online: 'Online',
-      offline: 'Offline',
-      maintenance: 'Maintenance',
-      recording: 'Recording',
-      notRecording: 'Not Recording',
-      signalStrength: 'Signal Strength',
-      high: 'High',
-      medium: 'Medium',
-      low: 'Low',
-      lastUpdate: 'Last Update',
-      fullscreen: 'Fullscreen',
-      refresh: 'Refresh',
-      settings: 'Settings',
-      liveFeed: 'Live Feed',
-      noSignal: 'No Signal',
-      connecting: 'Connecting...',
-      cameraOffline: 'Camera is currently offline',
-      ptzControls: 'PTZ Controls',
-      pan: 'Pan',
-      tilt: 'Tilt',
-      zoom: 'Zoom',
-      presets: 'Presets',
-      home: 'Home',
-      rtspConnection: 'RTSP Connection',
-      connected: 'Connected',
-      disconnected: 'Disconnected',
-      connect: 'Connect',
-      disconnect: 'Disconnect',
-      motionDetection: 'Motion Detection',
-      enableMotionDetection: 'Enable Motion Detection',
-      sensitivity: 'Sensitivity',
-      recentEvents: 'Recent Events',
-      noMotionEvents: 'No motion events detected',
-      recordings: 'Recordings',
-      eventType: 'Event Type',
-      motion: 'Motion',
-      manual: 'Manual',
-      scheduled: 'Scheduled',
-      alarm: 'Alarm',
-      duration: 'Duration',
-      fileSize: 'File Size',
-      download: 'Download',
-      play: 'Play',
-      noRecordings: 'No recordings available',
-      recordingsSubtitle: 'View recorded events from security cameras',
-      playRecording: 'Play Recording',
-      closePlayer: 'Close Player',
-      loading: 'Loading...',
-      recordingPlayer: 'Recording Player'
+      title: "CCTV Live Feed",
+      subtitle: "Monitor community security cameras",
+      selectCamera: "Select Camera",
+      allCameras: "All Cameras",
+      status: "Status",
+      online: "Online",
+      offline: "Offline",
+      maintenance: "Maintenance",
+      recording: "Recording",
+      notRecording: "Not Recording",
+      signalStrength: "Signal Strength",
+      high: "High",
+      medium: "Medium",
+      low: "Low",
+      lastUpdate: "Last Update",
+      fullscreen: "Fullscreen",
+      refresh: "Refresh",
+      settings: "Settings",
+      liveFeed: "Live Feed",
+      noSignal: "No Signal",
+      connecting: "Connecting...",
+      cameraOffline: "Camera is currently offline",
+      ptzControls: "PTZ Controls",
+      pan: "Pan",
+      tilt: "Tilt",
+      zoom: "Zoom",
+      presets: "Presets",
+      home: "Home",
+      rtspConnection: "RTSP Connection",
+      connected: "Connected",
+      disconnected: "Disconnected",
+      connect: "Connect",
+      disconnect: "Disconnect",
+      motionDetection: "Motion Detection",
+      enableMotionDetection: "Enable Motion Detection",
+      sensitivity: "Sensitivity",
+      recentEvents: "Recent Events",
+      noMotionEvents: "No motion events detected",
+      recordings: "Recordings",
+      eventType: "Event Type",
+      motion: "Motion",
+      manual: "Manual",
+      scheduled: "Scheduled",
+      alarm: "Alarm",
+      duration: "Duration",
+      fileSize: "File Size",
+      download: "Download",
+      play: "Play",
+      noRecordings: "No recordings available",
+      recordingsSubtitle: "View recorded events from security cameras",
+      playRecording: "Play Recording",
+      closePlayer: "Close Player",
+      loading: "Loading...",
+      recordingPlayer: "Recording Player",
     },
     ms: {
-      title: 'Suapan Langsung CCTV',
-      subtitle: 'Pantau kamera keselamatan komuniti',
-      selectCamera: 'Pilih Kamera',
-      allCameras: 'Semua Kamera',
-      status: 'Status',
-      online: 'Dalam Talian',
-      offline: 'Luar Talian',
-      maintenance: 'Penyelenggaraan',
-      recording: 'Merakam',
-      notRecording: 'Tidak Merakam',
-      signalStrength: 'Kekuatan Isyarat',
-      high: 'Tinggi',
-      medium: 'Sederhana',
-      low: 'Rendah',
-      lastUpdate: 'Kemaskini Terakhir',
-      fullscreen: 'Skrin Penuh',
-      refresh: 'Muat Semula',
-      settings: 'Tetapan',
-      liveFeed: 'Suapan Langsung',
-      noSignal: 'Tiada Isyarat',
-      connecting: 'Menyambung...',
-      cameraOffline: 'Kamera sedang luar talian',
-      ptzControls: 'Kawalan PTZ',
-      pan: 'Pan',
-      tilt: 'Tilt',
-      zoom: 'Zum',
-      presets: 'Pratetap',
-      home: 'Rumah',
-      rtspConnection: 'Sambungan RTSP',
-      connected: 'Disambung',
-      disconnected: 'Terputus',
-      connect: 'Sambung',
-      disconnect: 'Putus',
-      motionDetection: 'Pengesanan Pergerakan',
-      enableMotionDetection: 'Aktifkan Pengesanan Pergerakan',
-      sensitivity: 'Kepekaan',
-      recentEvents: 'Acara Terkini',
-      noMotionEvents: 'Tiada acara pergerakan dikesan',
-      recordings: 'Rakaman',
-      eventType: 'Jenis Acara',
-      motion: 'Pergerakan',
-      manual: 'Manual',
-      scheduled: 'Berjadual',
-      alarm: 'Penggera',
-      duration: 'Tempoh',
-      fileSize: 'Saiz Fail',
-      download: 'Muat Turun',
-      play: 'Main',
-      noRecordings: 'Tiada rakaman tersedia',
-      recordingsSubtitle: 'Lihat acara yang dirakam daripada kamera keselamatan',
-      playRecording: 'Main Rakaman',
-      closePlayer: 'Tutup Pemain',
-      loading: 'Memuatkan...',
-      recordingPlayer: 'Pemain Rakaman'
-    }
+      title: "Suapan Langsung CCTV",
+      subtitle: "Pantau kamera keselamatan komuniti",
+      selectCamera: "Pilih Kamera",
+      allCameras: "Semua Kamera",
+      status: "Status",
+      online: "Dalam Talian",
+      offline: "Luar Talian",
+      maintenance: "Penyelenggaraan",
+      recording: "Merakam",
+      notRecording: "Tidak Merakam",
+      signalStrength: "Kekuatan Isyarat",
+      high: "Tinggi",
+      medium: "Sederhana",
+      low: "Rendah",
+      lastUpdate: "Kemaskini Terakhir",
+      fullscreen: "Skrin Penuh",
+      refresh: "Muat Semula",
+      settings: "Tetapan",
+      liveFeed: "Suapan Langsung",
+      noSignal: "Tiada Isyarat",
+      connecting: "Menyambung...",
+      cameraOffline: "Kamera sedang luar talian",
+      ptzControls: "Kawalan PTZ",
+      pan: "Pan",
+      tilt: "Tilt",
+      zoom: "Zum",
+      presets: "Pratetap",
+      home: "Rumah",
+      rtspConnection: "Sambungan RTSP",
+      connected: "Disambung",
+      disconnected: "Terputus",
+      connect: "Sambung",
+      disconnect: "Putus",
+      motionDetection: "Pengesanan Pergerakan",
+      enableMotionDetection: "Aktifkan Pengesanan Pergerakan",
+      sensitivity: "Kepekaan",
+      recentEvents: "Acara Terkini",
+      noMotionEvents: "Tiada acara pergerakan dikesan",
+      recordings: "Rakaman",
+      eventType: "Jenis Acara",
+      motion: "Pergerakan",
+      manual: "Manual",
+      scheduled: "Berjadual",
+      alarm: "Penggera",
+      duration: "Tempoh",
+      fileSize: "Saiz Fail",
+      download: "Muat Turun",
+      play: "Main",
+      noRecordings: "Tiada rakaman tersedia",
+      recordingsSubtitle:
+        "Lihat acara yang dirakam daripada kamera keselamatan",
+      playRecording: "Main Rakaman",
+      closePlayer: "Tutup Pemain",
+      loading: "Memuatkan...",
+      recordingPlayer: "Pemain Rakaman",
+    },
   };
 
   const t = text[language];
@@ -173,234 +224,275 @@ export default function CCTVLiveFeed() {
 
   const mockCameras: CCTVCamera[] = [
     {
-      id: '1',
-      name: language === 'en' ? 'Main Entrance' : 'Pintu Masuk Utama',
-      location: 'Ground Floor Lobby',
-      building: 'Block A',
-      floor: 'Ground Floor',
-      area: 'Main Lobby',
-      accessLevel: 'public',
-      status: 'online',
-      signal: 'high',
+      id: "1",
+      name: language === "en" ? "Main Entrance" : "Pintu Masuk Utama",
+      location: "Ground Floor Lobby",
+      building: "Block A",
+      floor: "Ground Floor",
+      area: "Main Lobby",
+      accessLevel: "public",
+      status: "online",
+      signal: "high",
       isRecording: true,
-      lastUpdate: '2 minutes ago',
-      rtspUrl: 'rtsp://192.168.1.100:554/stream1',
+      lastUpdate: "2 minutes ago",
+      rtspUrl: "rtsp://192.168.1.100:554/stream1",
       hasPtz: true,
-      presets: ['Home', 'Entrance', 'Exit']
+      presets: ["Home", "Entrance", "Exit"],
     },
     {
-      id: '2',
-      name: language === 'en' ? 'Parking Area A' : 'Kawasan Parkir A',
-      location: 'Basement Level 1',
-      building: 'Block A',
-      floor: 'Basement Level 1',
-      area: 'Parking',
-      accessLevel: 'resident',
-      status: 'online',
-      signal: 'medium',
+      id: "2",
+      name: language === "en" ? "Parking Area A" : "Kawasan Parkir A",
+      location: "Basement Level 1",
+      building: "Block A",
+      floor: "Basement Level 1",
+      area: "Parking",
+      accessLevel: "resident",
+      status: "online",
+      signal: "medium",
       isRecording: true,
-      lastUpdate: '1 minute ago',
-      rtspUrl: 'rtsp://192.168.1.101:554/stream1',
+      lastUpdate: "1 minute ago",
+      rtspUrl: "rtsp://192.168.1.101:554/stream1",
       hasPtz: true,
-      presets: ['Overview', 'Lane 1', 'Lane 2']
+      presets: ["Overview", "Lane 1", "Lane 2"],
     },
     {
-      id: '3',
-      name: language === 'en' ? 'Swimming Pool' : 'Kolam Renang',
-      location: 'Recreation Area',
-      building: 'Block A',
-      floor: 'Ground Floor',
-      area: 'Recreation',
-      accessLevel: 'resident',
-      status: 'online',
-      signal: 'high',
+      id: "3",
+      name: language === "en" ? "Swimming Pool" : "Kolam Renang",
+      location: "Recreation Area",
+      building: "Block A",
+      floor: "Ground Floor",
+      area: "Recreation",
+      accessLevel: "resident",
+      status: "online",
+      signal: "high",
       isRecording: false,
-      lastUpdate: '3 minutes ago',
-      rtspUrl: 'rtsp://192.168.1.102:554/stream1',
-      hasPtz: false
+      lastUpdate: "3 minutes ago",
+      rtspUrl: "rtsp://192.168.1.102:554/stream1",
+      hasPtz: false,
     },
     {
-      id: '4',
-      name: language === 'en' ? 'Playground' : 'Taman Permainan',
-      location: 'Central Garden',
-      building: 'Common Area',
-      floor: 'Ground Level',
-      area: 'Garden',
-      accessLevel: 'public',
-      status: 'offline',
-      signal: 'low',
+      id: "4",
+      name: language === "en" ? "Playground" : "Taman Permainan",
+      location: "Central Garden",
+      building: "Common Area",
+      floor: "Ground Level",
+      area: "Garden",
+      accessLevel: "public",
+      status: "offline",
+      signal: "low",
       isRecording: false,
-      lastUpdate: '15 minutes ago',
-      rtspUrl: 'rtsp://192.168.1.103:554/stream1',
+      lastUpdate: "15 minutes ago",
+      rtspUrl: "rtsp://192.168.1.103:554/stream1",
       hasPtz: true,
-      presets: ['Swings', 'Slide', 'Sandbox']
+      presets: ["Swings", "Slide", "Sandbox"],
     },
     {
-      id: '5',
-      name: language === 'en' ? 'Emergency Exit Level 5' : 'Pintu Kecemasan Tingkat 5',
-      location: 'Block A, Level 5',
-      building: 'Block A',
-      floor: 'Level 5',
-      area: 'Emergency Exit',
-      accessLevel: 'resident',
-      status: 'maintenance',
-      signal: 'medium',
+      id: "5",
+      name:
+        language === "en"
+          ? "Emergency Exit Level 5"
+          : "Pintu Kecemasan Tingkat 5",
+      location: "Block A, Level 5",
+      building: "Block A",
+      floor: "Level 5",
+      area: "Emergency Exit",
+      accessLevel: "resident",
+      status: "maintenance",
+      signal: "medium",
       isRecording: false,
-      lastUpdate: '1 hour ago',
-      rtspUrl: 'rtsp://192.168.1.104:554/stream1',
-      hasPtz: false
+      lastUpdate: "1 hour ago",
+      rtspUrl: "rtsp://192.168.1.104:554/stream1",
+      hasPtz: false,
     },
     {
-      id: '6',
-      name: language === 'en' ? 'Gym Area' : 'Kawasan Gim',
-      location: 'Block A, Ground Floor',
-      building: 'Block A',
-      floor: 'Ground Floor',
-      area: 'Gym',
-      accessLevel: 'resident',
-      status: 'online',
-      signal: 'high',
+      id: "6",
+      name: language === "en" ? "Gym Area" : "Kawasan Gim",
+      location: "Block A, Ground Floor",
+      building: "Block A",
+      floor: "Ground Floor",
+      area: "Gym",
+      accessLevel: "resident",
+      status: "online",
+      signal: "high",
       isRecording: true,
-      lastUpdate: '30 seconds ago',
-      rtspUrl: 'rtsp://192.168.1.105:554/stream1',
+      lastUpdate: "30 seconds ago",
+      rtspUrl: "rtsp://192.168.1.105:554/stream1",
       hasPtz: true,
-      presets: ['Entrance', 'Equipment Area', 'Cardio Zone']
-    }
+      presets: ["Entrance", "Equipment Area", "Cardio Zone"],
+    },
   ];
 
   const mockRecordings: CCTVRecording[] = [
     {
-      id: '1',
-      cameraId: '1',
-      cameraName: language === 'en' ? 'Main Entrance' : 'Pintu Masuk Utama',
-      eventType: 'motion',
-      startTime: '2024-01-18 14:30:15',
-      endTime: '2024-01-18 14:32:45',
-      duration: '2m 30s',
-      fileSize: '125 MB',
-      filePath: '/recordings/camera1_20240118_143015.mp4',
-      description: language === 'en' ? 'Motion detected in main entrance area' : 'Pergerakan dikesan di kawasan pintu masuk utama'
+      id: "1",
+      cameraId: "1",
+      cameraName: language === "en" ? "Main Entrance" : "Pintu Masuk Utama",
+      eventType: "motion",
+      startTime: "2024-01-18 14:30:15",
+      endTime: "2024-01-18 14:32:45",
+      duration: "2m 30s",
+      fileSize: "125 MB",
+      filePath: "/recordings/camera1_20240118_143015.mp4",
+      description:
+        language === "en"
+          ? "Motion detected in main entrance area"
+          : "Pergerakan dikesan di kawasan pintu masuk utama",
     },
     {
-      id: '2',
-      cameraId: '2',
-      cameraName: language === 'en' ? 'Parking Area A' : 'Kawasan Parkir A',
-      eventType: 'alarm',
-      startTime: '2024-01-18 12:15:00',
-      endTime: '2024-01-18 12:20:30',
-      duration: '5m 30s',
-      fileSize: '280 MB',
-      filePath: '/recordings/camera2_20240118_121500.mp4',
-      description: language === 'en' ? 'Alarm triggered in parking area' : 'Penggera dicetuskan di kawasan parkir'
+      id: "2",
+      cameraId: "2",
+      cameraName: language === "en" ? "Parking Area A" : "Kawasan Parkir A",
+      eventType: "alarm",
+      startTime: "2024-01-18 12:15:00",
+      endTime: "2024-01-18 12:20:30",
+      duration: "5m 30s",
+      fileSize: "280 MB",
+      filePath: "/recordings/camera2_20240118_121500.mp4",
+      description:
+        language === "en"
+          ? "Alarm triggered in parking area"
+          : "Penggera dicetuskan di kawasan parkir",
     },
     {
-      id: '3',
-      cameraId: '1',
-      cameraName: language === 'en' ? 'Main Entrance' : 'Pintu Masuk Utama',
-      eventType: 'motion',
-      startTime: '2024-01-18 09:45:22',
-      endTime: '2024-01-18 09:47:18',
-      duration: '1m 56s',
-      fileSize: '98 MB',
-      filePath: '/recordings/camera1_20240118_094522.mp4',
-      description: language === 'en' ? 'Person detected at entrance' : 'Seseorang dikesan di pintu masuk'
+      id: "3",
+      cameraId: "1",
+      cameraName: language === "en" ? "Main Entrance" : "Pintu Masuk Utama",
+      eventType: "motion",
+      startTime: "2024-01-18 09:45:22",
+      endTime: "2024-01-18 09:47:18",
+      duration: "1m 56s",
+      fileSize: "98 MB",
+      filePath: "/recordings/camera1_20240118_094522.mp4",
+      description:
+        language === "en"
+          ? "Person detected at entrance"
+          : "Seseorang dikesan di pintu masuk",
     },
     {
-      id: '4',
-      cameraId: '6',
-      cameraName: language === 'en' ? 'Gym Area' : 'Kawasan Gim',
-      eventType: 'manual',
-      startTime: '2024-01-17 18:00:00',
-      endTime: '2024-01-17 20:00:00',
-      duration: '2h 00m',
-      fileSize: '1.2 GB',
-      filePath: '/recordings/camera6_20240117_180000.mp4',
-      description: language === 'en' ? 'Manual recording during gym hours' : 'Rakaman manual semasa waktu gim'
+      id: "4",
+      cameraId: "6",
+      cameraName: language === "en" ? "Gym Area" : "Kawasan Gim",
+      eventType: "manual",
+      startTime: "2024-01-17 18:00:00",
+      endTime: "2024-01-17 20:00:00",
+      duration: "2h 00m",
+      fileSize: "1.2 GB",
+      filePath: "/recordings/camera6_20240117_180000.mp4",
+      description:
+        language === "en"
+          ? "Manual recording during gym hours"
+          : "Rakaman manual semasa waktu gim",
     },
     {
-      id: '5',
-      cameraId: '3',
-      cameraName: language === 'en' ? 'Swimming Pool' : 'Kolam Renang',
-      eventType: 'scheduled',
-      startTime: '2024-01-17 06:00:00',
-      endTime: '2024-01-17 06:30:00',
-      duration: '30m 00s',
-      fileSize: '340 MB',
-      filePath: '/recordings/camera3_20240117_060000.mp4',
-      description: language === 'en' ? 'Scheduled monitoring of pool area' : 'Pemantauan berjadual kawasan kolam'
-    }
+      id: "5",
+      cameraId: "3",
+      cameraName: language === "en" ? "Swimming Pool" : "Kolam Renang",
+      eventType: "scheduled",
+      startTime: "2024-01-17 06:00:00",
+      endTime: "2024-01-17 06:30:00",
+      duration: "30m 00s",
+      fileSize: "340 MB",
+      filePath: "/recordings/camera3_20240117_060000.mp4",
+      description:
+        language === "en"
+          ? "Scheduled monitoring of pool area"
+          : "Pemantauan berjadual kawasan kolam",
+    },
   ];
 
   // Remove the requiredRoles restriction for CCTV - now available to all residents
-  const accessibleCameras = mockCameras.filter(camera => {
+  const accessibleCameras = mockCameras.filter((camera) => {
     // Admin roles see all cameras
-    if (hasRole('admin') || hasRole('security_officer') || hasRole('manager')) {
+    if (hasRole("admin") || hasRole("security_officer") || hasRole("manager")) {
       return true;
     }
-    
+
     // Residents see public cameras and cameras in their building/area
-    const userBuilding = user?.address?.includes('Block A') ? 'Block A' : 
-                        user?.address?.includes('Block B') ? 'Block B' : 'Block A'; // Default to Block A
-    
-    return camera.accessLevel === 'public' || 
-           (camera.accessLevel === 'resident' && camera.building === userBuilding);
+    const userBuilding = user?.address?.includes("Block A")
+      ? "Block A"
+      : user?.address?.includes("Block B")
+      ? "Block B"
+      : "Block A"; // Default to Block A
+
+    return (
+      camera.accessLevel === "public" ||
+      (camera.accessLevel === "resident" && camera.building === userBuilding)
+    );
   });
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'online': return 'bg-green-100 text-green-800';
-      case 'offline': return 'bg-red-100 text-red-800';
-      case 'maintenance': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "online":
+        return "bg-green-100 text-green-800";
+      case "offline":
+        return "bg-red-100 text-red-800";
+      case "maintenance":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'online': return t.online;
-      case 'offline': return t.offline;
-      case 'maintenance': return t.maintenance;
-      default: return status;
+      case "online":
+        return t.online;
+      case "offline":
+        return t.offline;
+      case "maintenance":
+        return t.maintenance;
+      default:
+        return status;
     }
   };
 
   const getSignalIcon = (signal: string) => {
     switch (signal) {
-      case 'high': return <SignalHigh className="h-4 w-4 text-green-600" />;
-      case 'medium': return <Signal className="h-4 w-4 text-yellow-600" />;
-      case 'low': return <SignalLow className="h-4 w-4 text-red-600" />;
-      default: return <Signal className="h-4 w-4 text-gray-400" />;
+      case "high":
+        return <SignalHigh className="h-4 w-4 text-green-600" />;
+      case "medium":
+        return <Signal className="h-4 w-4 text-yellow-600" />;
+      case "low":
+        return <SignalLow className="h-4 w-4 text-red-600" />;
+      default:
+        return <Signal className="h-4 w-4 text-gray-400" />;
     }
   };
 
   const getSignalText = (signal: string) => {
     switch (signal) {
-      case 'high': return t.high;
-      case 'medium': return t.medium;
-      case 'low': return t.low;
-      default: return signal;
+      case "high":
+        return t.high;
+      case "medium":
+        return t.medium;
+      case "low":
+        return t.low;
+      default:
+        return signal;
     }
   };
 
-  const filteredCameras = selectedCamera === 'all' 
-    ? accessibleCameras 
-    : accessibleCameras.filter(camera => camera.id === selectedCamera);
+  const filteredCameras =
+    selectedCamera === "all"
+      ? accessibleCameras
+      : accessibleCameras.filter((camera) => camera.id === selectedCamera);
 
-  const mainCamera = selectedCamera !== 'all' 
-    ? accessibleCameras.find(camera => camera.id === selectedCamera)
-    : accessibleCameras[0];
+  const mainCamera =
+    selectedCamera !== "all"
+      ? accessibleCameras.find((camera) => camera.id === selectedCamera)
+      : accessibleCameras[0];
 
   const handlePtzControl = (direction: string) => {
     const speed = 5;
-    setPtzPosition(prev => {
+    setPtzPosition((prev) => {
       switch (direction) {
-        case 'up':
+        case "up":
           return { ...prev, tilt: Math.min(prev.tilt + speed, 90) };
-        case 'down':
+        case "down":
           return { ...prev, tilt: Math.max(prev.tilt - speed, -90) };
-        case 'left':
+        case "left":
           return { ...prev, pan: Math.max(prev.pan - speed, -180) };
-        case 'right':
+        case "right":
           return { ...prev, pan: Math.min(prev.pan + speed, 180) };
         default:
           return prev;
@@ -408,12 +500,13 @@ export default function CCTVLiveFeed() {
     });
   };
 
-  const handleZoom = (direction: 'in' | 'out') => {
-    setPtzPosition(prev => ({
+  const handleZoom = (direction: "in" | "out") => {
+    setPtzPosition((prev) => ({
       ...prev,
-      zoom: direction === 'in' 
-        ? Math.min(prev.zoom + 0.1, 10) 
-        : Math.max(prev.zoom - 0.1, 1)
+      zoom:
+        direction === "in"
+          ? Math.min(prev.zoom + 0.1, 10)
+          : Math.max(prev.zoom - 0.1, 1),
     }));
   };
 
@@ -430,449 +523,627 @@ export default function CCTVLiveFeed() {
   return (
     <Layout>
       <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
-          <p className="text-muted-foreground">{t.subtitle}</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
+            <p className="text-muted-foreground">{t.subtitle}</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm">
+              <RotateCcw className="h-4 w-4 mr-2" />
+              {t.refresh}
+            </Button>
+            <Button variant="outline" size="sm">
+              <Settings className="h-4 w-4 mr-2" />
+              {t.settings}
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <RotateCcw className="h-4 w-4 mr-2" />
-            {t.refresh}
-          </Button>
-          <Button variant="outline" size="sm">
-            <Settings className="h-4 w-4 mr-2" />
-            {t.settings}
-          </Button>
-        </div>
-      </div>
 
-      <Tabs defaultValue="live" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="live">{t.liveFeed}</TabsTrigger>
-          <TabsTrigger value="recordings">{t.recordings}</TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="live" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="live">{t.liveFeed}</TabsTrigger>
+            <TabsTrigger value="recordings">{t.recordings}</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="live" className="mt-6">
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Main Feed */}
-            <div className="flex-1">
-              <Card className="overflow-hidden">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">
-                        {mainCamera?.name || t.liveFeed}
-                      </CardTitle>
-                      <CardDescription>
-                        {mainCamera?.location}
-                      </CardDescription>
+          <TabsContent value="live" className="mt-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Main Feed */}
+              <div className="flex-1">
+                <Card className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">
+                          {mainCamera?.name || t.liveFeed}
+                        </CardTitle>
+                        <CardDescription>
+                          {mainCamera?.location}
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {mainCamera?.status === "online" && (
+                          <Badge variant="outline" className="text-green-600">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse" />
+                            {t.liveFeed}
+                          </Badge>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsFullscreen(!isFullscreen)}
+                        >
+                          <Maximize className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {mainCamera?.status === 'online' && (
-                        <Badge variant="outline" className="text-green-600">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse" />
-                          {t.liveFeed}
-                        </Badge>
-                      )}
-                      <Button variant="outline" size="sm" onClick={() => setIsFullscreen(!isFullscreen)}>
-                        <Maximize className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className={`bg-black relative ${isFullscreen ? 'h-screen' : 'aspect-video'}`}>
-                    {/* Main Video Feed */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      {mainCamera?.status === 'online' ? (
-                        <div className="text-white text-center">
-                          <Video className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                          <p className="text-lg mb-2">{t.liveFeed}</p>
-                          <p className="text-sm opacity-75">{mainCamera.name}</p>
-                        </div>
-                      ) : (
-                        <div className="text-white text-center">
-                          <VideoOff className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                          <p className="text-lg mb-2">{t.cameraOffline}</p>
-                          <p className="text-sm opacity-75">{mainCamera?.name}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* PTZ Controls Overlay */}
-                    {mainCamera?.hasPtz && (
-                      <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-sm rounded-lg p-3 text-white">
-                        <div className="text-xs font-medium mb-2">{t.ptzControls}</div>
-                        
-                        {/* Pan/Tilt */}
-                        <div className="mb-3">
-                          <div className="text-xs mb-1">{t.pan} / {t.tilt}</div>
-                          <div className="grid grid-cols-3 gap-1 w-20">
-                            <div></div>
-                            <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handlePtzControl('up')}>
-                              <ChevronUp className="h-3 w-3" />
-                            </Button>
-                            <div></div>
-                            <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handlePtzControl('left')}>
-                              <ChevronLeft className="h-3 w-3" />
-                            </Button>
-                            <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handlePtzControl('home')}>
-                              <Home className="h-3 w-3" />
-                            </Button>
-                            <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handlePtzControl('right')}>
-                              <ChevronRight className="h-3 w-3" />
-                            </Button>
-                            <div></div>
-                            <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handlePtzControl('down')}>
-                              <ChevronDown className="h-3 w-3" />
-                            </Button>
-                            <div></div>
-                          </div>
-                        </div>
-
-                        {/* Zoom */}
-                        <div className="mb-3">
-                          <div className="text-xs mb-1">{t.zoom}</div>
-                          <div className="flex gap-1 justify-center">
-                            <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handleZoom('out')}>
-                              <ZoomOut className="h-3 w-3" />
-                            </Button>
-                            <Button size="sm" variant="outline" className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30" onClick={() => handleZoom('in')}>
-                              <ZoomIn className="h-3 w-3" />
-                            </Button>
-                          </div>
-                          <div className="text-xs text-center mt-1">
-                            {ptzPosition.zoom.toFixed(1)}x
-                          </div>
-                        </div>
-
-                        {/* Position */}
-                        <div className="text-xs space-y-1 mb-3">
-                          <div>{t.pan}: {ptzPosition.pan}°</div>
-                          <div>{t.tilt}: {ptzPosition.tilt}°</div>
-                        </div>
-
-                        {/* Presets */}
-                        {mainCamera.presets && mainCamera.presets.length > 0 && (
-                          <div>
-                            <div className="text-xs mb-1">{t.presets}</div>
-                            <div className="flex flex-wrap gap-1">
-                              {mainCamera.presets.map((preset) => (
-                                <Button
-                                  key={preset}
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-xs h-5 px-2 bg-white/20 border-white/30 text-white hover:bg-white/30"
-                                  onClick={() => handlePreset(preset)}
-                                >
-                                  {preset}
-                                </Button>
-                              ))}
-                            </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div
+                      className={`bg-black relative ${
+                        isFullscreen ? "h-screen" : "aspect-video"
+                      }`}
+                    >
+                      {/* Main Video Feed */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        {mainCamera?.status === "online" &&
+                        mainCamera?.rtspUrl ? (
+                          <StreamPlayer
+                            src={mainCamera.rtspUrl}
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <div className="text-white text-center">
+                            <VideoOff className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                            <p className="text-lg mb-2">{t.cameraOffline}</p>
+                            <p className="text-sm opacity-75">
+                              {mainCamera?.name}
+                            </p>
                           </div>
                         )}
                       </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
 
-              {/* Camera Controls */}
-              <div className="mt-4 space-y-4">
-                <Select value={selectedCamera} onValueChange={setSelectedCamera}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t.selectCamera} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t.allCameras}</SelectItem>
-                    {accessibleCameras.map((camera) => (
-                      <SelectItem key={camera.id} value={camera.id}>
-                        {camera.name} - {camera.location}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      {/* PTZ Controls Overlay */}
+                      {mainCamera?.hasPtz && (
+                        <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-sm rounded-lg p-3 text-white">
+                          <div className="text-xs font-medium mb-2">
+                            {t.ptzControls}
+                          </div>
 
-                {/* RTSP Connection */}
-                {mainCamera && (
+                          {/* Pan/Tilt */}
+                          <div className="mb-3">
+                            <div className="text-xs mb-1">
+                              {t.pan} / {t.tilt}
+                            </div>
+                            <div className="grid grid-cols-3 gap-1 w-20">
+                              <div></div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                                onClick={() => handlePtzControl("up")}
+                              >
+                                <ChevronUp className="h-3 w-3" />
+                              </Button>
+                              <div></div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                                onClick={() => handlePtzControl("left")}
+                              >
+                                <ChevronLeft className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                                onClick={() => handlePtzControl("home")}
+                              >
+                                <Home className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                                onClick={() => handlePtzControl("right")}
+                              >
+                                <ChevronRight className="h-3 w-3" />
+                              </Button>
+                              <div></div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                                onClick={() => handlePtzControl("down")}
+                              >
+                                <ChevronDown className="h-3 w-3" />
+                              </Button>
+                              <div></div>
+                            </div>
+                          </div>
+
+                          {/* Zoom */}
+                          <div className="mb-3">
+                            <div className="text-xs mb-1">{t.zoom}</div>
+                            <div className="flex gap-1 justify-center">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                                onClick={() => handleZoom("out")}
+                              >
+                                <ZoomOut className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                                onClick={() => handleZoom("in")}
+                              >
+                                <ZoomIn className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            <div className="text-xs text-center mt-1">
+                              {ptzPosition.zoom.toFixed(1)}x
+                            </div>
+                          </div>
+
+                          {/* Position */}
+                          <div className="text-xs space-y-1 mb-3">
+                            <div>
+                              {t.pan}: {ptzPosition.pan}°
+                            </div>
+                            <div>
+                              {t.tilt}: {ptzPosition.tilt}°
+                            </div>
+                          </div>
+
+                          {/* Presets */}
+                          {mainCamera.presets &&
+                            mainCamera.presets.length > 0 && (
+                              <div>
+                                <div className="text-xs mb-1">{t.presets}</div>
+                                <div className="flex flex-wrap gap-1">
+                                  {mainCamera.presets.map((preset) => (
+                                    <Button
+                                      key={preset}
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-xs h-5 px-2 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                                      onClick={() => handlePreset(preset)}
+                                    >
+                                      {preset}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Camera Controls */}
+                <div className="mt-4 space-y-4">
+                  <Select
+                    value={selectedCamera}
+                    onValueChange={setSelectedCamera}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t.selectCamera} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t.allCameras}</SelectItem>
+                      {accessibleCameras.map((camera) => (
+                        <SelectItem key={camera.id} value={camera.id}>
+                          {camera.name} - {camera.location}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* RTSP Connection */}
+                  {mainCamera && (
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          {rtspConnected ? (
+                            <Wifi className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <WifiOff className="h-4 w-4 text-red-500" />
+                          )}
+                          {t.rtspConnection}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="text-xs">
+                          <span className="text-muted-foreground">URL: </span>
+                          <span className="font-mono text-xs break-all">
+                            {mainCamera.rtspUrl}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Badge
+                            variant={rtspConnected ? "default" : "secondary"}
+                          >
+                            {rtspConnected ? t.connected : t.disconnected}
+                          </Badge>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleRtspConnection}
+                          >
+                            {rtspConnected ? t.disconnect : t.connect}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Motion Detection */}
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm flex items-center gap-2">
-                        {rtspConnected ? <Wifi className="h-4 w-4 text-green-500" /> : <WifiOff className="h-4 w-4 text-red-500" />}
-                        {t.rtspConnection}
+                        <Activity className="h-4 w-4" />
+                        {t.motionDetection}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="text-xs">
-                        <span className="text-muted-foreground">URL: </span>
-                        <span className="font-mono text-xs break-all">{mainCamera.rtspUrl}</span>
-                      </div>
+                    <CardContent className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <Badge variant={rtspConnected ? 'default' : 'secondary'}>
-                          {rtspConnected ? t.connected : t.disconnected}
-                        </Badge>
-                        <Button size="sm" variant="outline" onClick={handleRtspConnection}>
-                          {rtspConnected ? t.disconnect : t.connect}
-                        </Button>
+                        <span className="text-sm">
+                          {t.enableMotionDetection}
+                        </span>
+                        <Switch
+                          checked={motionDetectionEnabled}
+                          onCheckedChange={setMotionDetectionEnabled}
+                        />
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
 
-                {/* Motion Detection */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Activity className="h-4 w-4" />
-                      {t.motionDetection}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">{t.enableMotionDetection}</span>
-                      <Switch
-                        checked={motionDetectionEnabled}
-                        onCheckedChange={setMotionDetectionEnabled}
-                      />
-                    </div>
+                      {motionDetectionEnabled && (
+                        <>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm">
+                                {t.sensitivity}: {motionSensitivity[0]}
+                              </span>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span>Low</span>
+                                <span>High</span>
+                              </div>
+                            </div>
+                            <Slider
+                              value={motionSensitivity}
+                              onValueChange={setMotionSensitivity}
+                              max={100}
+                              min={1}
+                              step={1}
+                              className="w-full"
+                            />
+                          </div>
 
-                    {motionDetectionEnabled && (
-                      <>
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">{t.sensitivity}: {motionSensitivity[0]}</span>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>Low</span>
-                              <span>High</span>
+                          <div className="space-y-2">
+                            <div className="text-sm font-medium">
+                              {t.recentEvents}
+                            </div>
+                            <div className="p-3 border rounded-lg bg-muted/30">
+                              {motionEvents.length > 0 ? (
+                                <div className="space-y-2">
+                                  {motionEvents.map((event) => (
+                                    <div
+                                      key={event.id}
+                                      className="text-xs p-2 bg-background rounded border"
+                                    >
+                                      <div className="font-medium">
+                                        {event.camera}
+                                      </div>
+                                      <div className="text-muted-foreground">
+                                        {event.timestamp}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-sm text-muted-foreground text-center py-2">
+                                  {t.noMotionEvents}
+                                </div>
+                              )}
                             </div>
                           </div>
-                          <Slider
-                            value={motionSensitivity}
-                            onValueChange={setMotionSensitivity}
-                            max={100}
-                            min={1}
-                            step={1}
-                            className="w-full"
-                          />
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Camera List */}
+              <div className="w-full lg:w-80">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{t.allCameras}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {accessibleCameras.map((camera) => (
+                      <div
+                        key={camera.id}
+                        className={`p-3 border rounded-lg cursor-pointer transition-colors hover:bg-muted ${
+                          selectedCamera === camera.id
+                            ? "border-primary bg-muted"
+                            : ""
+                        }`}
+                        onClick={() => setSelectedCamera(camera.id)}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-sm">
+                              {camera.name}
+                            </h4>
+                            <p className="text-xs text-muted-foreground">
+                              {camera.location}
+                            </p>
+                          </div>
+                          <Badge
+                            className={getStatusColor(camera.status)}
+                            variant="secondary"
+                          >
+                            {getStatusText(camera.status)}
+                          </Badge>
                         </div>
 
-                        <div className="space-y-2">
-                          <div className="text-sm font-medium">{t.recentEvents}</div>
-                          <div className="p-3 border rounded-lg bg-muted/30">
-                            {motionEvents.length > 0 ? (
-                              <div className="space-y-2">
-                                {motionEvents.map((event) => (
-                                  <div key={event.id} className="text-xs p-2 bg-background rounded border">
-                                    <div className="font-medium">{event.camera}</div>
-                                    <div className="text-muted-foreground">{event.timestamp}</div>
-                                  </div>
-                                ))}
-                              </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            {getSignalIcon(camera.signal)}
+                            <span>{getSignalText(camera.signal)}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {camera.isRecording ? (
+                              <Eye className="h-3 w-3 text-red-500" />
                             ) : (
-                              <div className="text-sm text-muted-foreground text-center py-2">
-                                {t.noMotionEvents}
-                              </div>
+                              <EyeOff className="h-3 w-3 text-gray-400" />
                             )}
+                            <span
+                              className={
+                                camera.isRecording
+                                  ? "text-red-500"
+                                  : "text-gray-400"
+                              }
+                            >
+                              {camera.isRecording
+                                ? t.recording
+                                : t.notRecording}
+                            </span>
                           </div>
                         </div>
-                      </>
-                    )}
+
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          {t.lastUpdate}: {camera.lastUpdate}
+                        </div>
+                      </div>
+                    ))}
                   </CardContent>
                 </Card>
               </div>
             </div>
+          </TabsContent>
 
-            {/* Camera List */}
-            <div className="w-full lg:w-80">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">{t.allCameras}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {accessibleCameras.map((camera) => (
-                    <div 
-                      key={camera.id}
-                      className={`p-3 border rounded-lg cursor-pointer transition-colors hover:bg-muted ${
-                        selectedCamera === camera.id ? 'border-primary bg-muted' : ''
-                      }`}
-                      onClick={() => setSelectedCamera(camera.id)}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-sm">{camera.name}</h4>
-                          <p className="text-xs text-muted-foreground">{camera.location}</p>
-                        </div>
-                        <Badge className={getStatusColor(camera.status)} variant="secondary">
-                          {getStatusText(camera.status)}
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                          {getSignalIcon(camera.signal)}
-                          <span>{getSignalText(camera.signal)}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {camera.isRecording ? (
-                            <Eye className="h-3 w-3 text-red-500" />
-                          ) : (
-                            <EyeOff className="h-3 w-3 text-gray-400" />
-                          )}
-                          <span className={camera.isRecording ? 'text-red-500' : 'text-gray-400'}>
-                            {camera.isRecording ? t.recording : t.notRecording}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        {t.lastUpdate}: {camera.lastUpdate}
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
+          <TabsContent value="recordings" className="mt-6">
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-semibold mb-2">{t.recordings}</h2>
+                <p className="text-muted-foreground">{t.recordingsSubtitle}</p>
+              </div>
 
-        <TabsContent value="recordings" className="mt-6">
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-semibold mb-2">{t.recordings}</h2>
-              <p className="text-muted-foreground">{t.recordingsSubtitle}</p>
-            </div>
-            
-            {mockRecordings.length > 0 ? (
-              <div className="grid gap-4">
-                {mockRecordings.map((recording) => (
-                  <Card key={recording.id} className="overflow-hidden">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 space-y-3">
-                          <div className="flex items-center gap-2">
-                            <Badge 
-                              variant={recording.eventType === 'alarm' ? 'destructive' : 'secondary'}
-                              className="capitalize"
-                            >
-                              {t[recording.eventType as keyof typeof t] || recording.eventType}
-                            </Badge>
-                            <span className="text-sm font-medium">{recording.cameraName}</span>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <div className="text-sm">
-                              <span className="text-muted-foreground">{t.eventType}: </span>
-                              <span className="capitalize">{t[recording.eventType as keyof typeof t] || recording.eventType}</span>
+              {mockRecordings.length > 0 ? (
+                <div className="grid gap-4">
+                  {mockRecordings.map((recording) => (
+                    <Card key={recording.id} className="overflow-hidden">
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 space-y-3">
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant={
+                                  recording.eventType === "alarm"
+                                    ? "destructive"
+                                    : "secondary"
+                                }
+                                className="capitalize"
+                              >
+                                {t[recording.eventType as keyof typeof t] ||
+                                  recording.eventType}
+                              </Badge>
+                              <span className="text-sm font-medium">
+                                {recording.cameraName}
+                              </span>
                             </div>
-                            
-                            <div className="text-sm">
-                              <span className="text-muted-foreground">{language === 'en' ? 'Start Time' : 'Masa Mula'}: </span>
-                              <span className="font-mono">{recording.startTime}</span>
-                            </div>
-                            
-                            <div className="text-sm">
-                              <span className="text-muted-foreground">{language === 'en' ? 'End Time' : 'Masa Tamat'}: </span>
-                              <span className="font-mono">{recording.endTime}</span>
-                            </div>
-                            
-                            <div className="flex items-center gap-4 text-sm">
-                              <div>
-                                <span className="text-muted-foreground">{t.duration}: </span>
-                                <span>{recording.duration}</span>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">{t.fileSize}: </span>
-                                <span>{recording.fileSize}</span>
-                              </div>
-                            </div>
-                            
-                            {recording.description && (
+
+                            <div className="space-y-2">
                               <div className="text-sm">
-                                <span className="text-muted-foreground">{language === 'en' ? 'Description' : 'Keterangan'}: </span>
-                                <span>{recording.description}</span>
+                                <span className="text-muted-foreground">
+                                  {t.eventType}:{" "}
+                                </span>
+                                <span className="capitalize">
+                                  {t[recording.eventType as keyof typeof t] ||
+                                    recording.eventType}
+                                </span>
                               </div>
-                            )}
+
+                              <div className="text-sm">
+                                <span className="text-muted-foreground">
+                                  {language === "en"
+                                    ? "Start Time"
+                                    : "Masa Mula"}
+                                  :{" "}
+                                </span>
+                                <span className="font-mono">
+                                  {recording.startTime}
+                                </span>
+                              </div>
+
+                              <div className="text-sm">
+                                <span className="text-muted-foreground">
+                                  {language === "en"
+                                    ? "End Time"
+                                    : "Masa Tamat"}
+                                  :{" "}
+                                </span>
+                                <span className="font-mono">
+                                  {recording.endTime}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-4 text-sm">
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    {t.duration}:{" "}
+                                  </span>
+                                  <span>{recording.duration}</span>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">
+                                    {t.fileSize}:{" "}
+                                  </span>
+                                  <span>{recording.fileSize}</span>
+                                </div>
+                              </div>
+
+                              {recording.description && (
+                                <div className="text-sm">
+                                  <span className="text-muted-foreground">
+                                    {language === "en"
+                                      ? "Description"
+                                      : "Keterangan"}
+                                    :{" "}
+                                  </span>
+                                  <span>{recording.description}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        
-                        <div className="flex flex-col gap-2">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button size="sm" className="flex items-center gap-2" onClick={() => setSelectedRecording(recording)}>
-                                <Play className="h-4 w-4" />
-                                {t.play}
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-4xl w-full p-0">
-                              <DialogHeader className="p-6 pb-0">
-                                <DialogTitle>{t.recordingPlayer}</DialogTitle>
-                                <DialogDescription>
-                                  {selectedRecording?.cameraName} - {selectedRecording?.startTime}
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="p-6 pt-0">
-                                <div className="bg-black rounded-lg overflow-hidden mb-4">
-                                  <div className="aspect-video relative">
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                      <div className="text-white text-center">
-                                        <Video className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                                        <p className="text-lg mb-2">{t.recordingPlayer}</p>
-                                        <p className="text-sm opacity-75">{selectedRecording?.cameraName}</p>
-                                        <div className="mt-4 p-2 bg-white/10 rounded">
-                                          <p className="text-xs">{t.loading}</p>
-                                          <p className="text-xs mt-1 font-mono">{selectedRecording?.filePath}</p>
+
+                          <div className="flex flex-col gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  className="flex items-center gap-2"
+                                  onClick={() =>
+                                    setSelectedRecording(recording)
+                                  }
+                                >
+                                  <Play className="h-4 w-4" />
+                                  {t.play}
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl w-full p-0">
+                                <DialogHeader className="p-6 pb-0">
+                                  <DialogTitle>{t.recordingPlayer}</DialogTitle>
+                                  <DialogDescription>
+                                    {selectedRecording?.cameraName} -{" "}
+                                    {selectedRecording?.startTime}
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="p-6 pt-0">
+                                  <div className="bg-black rounded-lg overflow-hidden mb-4">
+                                    <div className="aspect-video relative">
+                                      <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="text-white text-center">
+                                          <Video className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                                          <p className="text-lg mb-2">
+                                            {t.recordingPlayer}
+                                          </p>
+                                          <p className="text-sm opacity-75">
+                                            {selectedRecording?.cameraName}
+                                          </p>
+                                          <div className="mt-4 p-2 bg-white/10 rounded">
+                                            <p className="text-xs">
+                                              {t.loading}
+                                            </p>
+                                            <p className="text-xs mt-1 font-mono">
+                                              {selectedRecording?.filePath}
+                                            </p>
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
                                   </div>
+
+                                  {selectedRecording && (
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                      <div>
+                                        <span className="text-muted-foreground">
+                                          {t.eventType}:{" "}
+                                        </span>
+                                        <span className="capitalize">
+                                          {t[
+                                            selectedRecording.eventType as keyof typeof t
+                                          ] || selectedRecording.eventType}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <span className="text-muted-foreground">
+                                          {t.duration}:{" "}
+                                        </span>
+                                        <span>
+                                          {selectedRecording.duration}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <span className="text-muted-foreground">
+                                          {language === "en"
+                                            ? "Start Time"
+                                            : "Masa Mula"}
+                                          :{" "}
+                                        </span>
+                                        <span className="font-mono">
+                                          {selectedRecording.startTime}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <span className="text-muted-foreground">
+                                          {t.fileSize}:{" "}
+                                        </span>
+                                        <span>
+                                          {selectedRecording.fileSize}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
-                                
-                                {selectedRecording && (
-                                  <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                      <span className="text-muted-foreground">{t.eventType}: </span>
-                                      <span className="capitalize">{t[selectedRecording.eventType as keyof typeof t] || selectedRecording.eventType}</span>
-                                    </div>
-                                    <div>
-                                      <span className="text-muted-foreground">{t.duration}: </span>
-                                      <span>{selectedRecording.duration}</span>
-                                    </div>
-                                    <div>
-                                      <span className="text-muted-foreground">{language === 'en' ? 'Start Time' : 'Masa Mula'}: </span>
-                                      <span className="font-mono">{selectedRecording.startTime}</span>
-                                    </div>
-                                    <div>
-                                      <span className="text-muted-foreground">{t.fileSize}: </span>
-                                      <span>{selectedRecording.fileSize}</span>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                          <Button size="sm" variant="outline" className="flex items-center gap-2">
-                            <Download className="h-4 w-4" />
-                            {t.download}
-                          </Button>
+                              </DialogContent>
+                            </Dialog>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex items-center gap-2"
+                            >
+                              <Download className="h-4 w-4" />
+                              {t.download}
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card className="p-8">
-                <div className="text-center text-muted-foreground">
-                  <Video className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg mb-2">{t.noRecordings}</p>
-                  <p className="text-sm">{language === 'en' ? 'Recorded events will appear here when available' : 'Acara yang dirakam akan muncul di sini apabila tersedia'}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              </Card>
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
+              ) : (
+                <Card className="p-8">
+                  <div className="text-center text-muted-foreground">
+                    <Video className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg mb-2">{t.noRecordings}</p>
+                    <p className="text-sm">
+                      {language === "en"
+                        ? "Recorded events will appear here when available"
+                        : "Acara yang dirakam akan muncul di sini apabila tersedia"}
+                    </p>
+                  </div>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );

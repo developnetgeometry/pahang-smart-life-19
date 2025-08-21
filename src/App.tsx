@@ -25,6 +25,7 @@ import DistrictManagement from "./pages/admin/DistrictManagement";
 import MaintenanceManagement from "./pages/admin/MaintenanceManagement";
 import ComplaintsManagement from "./pages/admin/ComplaintsManagement";
 import CCTVManagement from "./pages/admin/CCTVManagement";
+import RequireRoles from "@/components/routing/RequireRoles";
 import SmartMonitoring from "./pages/admin/SmartMonitoring";
 import SensorManagement from "./pages/admin/SensorManagement";
 import AnnouncementManagement from "./pages/admin/AnnouncementManagement";
@@ -65,255 +66,259 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-              <Route 
-                path="/login" 
-                element={
-                  <PublicRoute>
-                    <Login />
-                  </PublicRoute>
-                } 
-              />
-              <Route 
-                path="/" 
-                element={
-                  <ProtectedRoute>
-                    <Index />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Resident modules */}
-              <Route 
-                path="/my-bookings" 
-                element={
-                  <ProtectedRoute>
-                    <MyBookings />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/my-visitors" 
-                element={
-                  <ProtectedRoute>
-                    <MyVisitors />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/my-complaints" 
-                element={
-                  <ProtectedRoute>
-                    <MyComplaints />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/my-profile" 
-                element={
-                  <ProtectedRoute>
-                    <MyProfile />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/role-management" 
-                element={
-                  <ProtectedRoute>
-                    <RoleManagement />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/notification-settings" 
-                element={
-                  <ProtectedRoute>
-                    <NotificationSettings />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/announcements"
-                element={
-                  <ProtectedRoute>
-                    <Announcements />
-                  </ProtectedRoute>
-                } 
-              />
-               <Route 
-                path="/discussions" 
-                element={
-                  <ProtectedRoute>
-                    <Discussions />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/facilities" 
-                element={
-                  <ProtectedRoute>
-                    <Facilities />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/marketplace" 
-                element={
-                  <ProtectedRoute>
-                    <Marketplace />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/communication" 
-                element={
-                  <ProtectedRoute>
-                    <CommunicationHub />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/visitor-security" 
-                element={
-                  <ProtectedRoute>
-                    <VisitorSecurity />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/visitor-analytics" 
-                element={
-                  <ProtectedRoute>
-                    <VisitorAnalytics />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/cctv-live" 
-                element={
-                  <ProtectedRoute>
-                    <CCTVLiveFeed />
-                  </ProtectedRoute>
-                } 
-              />
+            <Route
+              path="/login"
+              element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Index />
+                </ProtectedRoute>
+              }
+            />
 
-              {/* Professional view routes */}
-              <Route 
-                path="/admin/*" 
-                element={
-                  <ProtectedRoute>
-                    <AdminPanel />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/users" 
-                element={
-                  <ProtectedRoute>
-                    <UserManagement />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/security" 
-                element={
-                  <ProtectedRoute>
-                    <SecurityDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/communities" 
-                element={
-                  <ProtectedRoute>
-                    <CommunityManagement />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/districts" 
-                element={
-                  <ProtectedRoute>
-                    <DistrictManagement />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/facilities" 
-                element={
-                  <ProtectedRoute>
-                    <FacilitiesManagement />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/maintenance" 
-                element={
-                  <ProtectedRoute>
-                    <MaintenanceManagement />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/complaints" 
-                element={
-                  <ProtectedRoute>
-                    <ComplaintsManagement />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/cctv" 
-                element={
-                  <ProtectedRoute>
+            {/* Resident modules */}
+            <Route
+              path="/my-bookings"
+              element={
+                <ProtectedRoute>
+                  <MyBookings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-visitors"
+              element={
+                <ProtectedRoute>
+                  <MyVisitors />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-complaints"
+              element={
+                <ProtectedRoute>
+                  <MyComplaints />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-profile"
+              element={
+                <ProtectedRoute>
+                  <MyProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/role-management"
+              element={
+                <ProtectedRoute>
+                  <RoleManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notification-settings"
+              element={
+                <ProtectedRoute>
+                  <NotificationSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/announcements"
+              element={
+                <ProtectedRoute>
+                  <Announcements />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/discussions"
+              element={
+                <ProtectedRoute>
+                  <Discussions />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/facilities"
+              element={
+                <ProtectedRoute>
+                  <Facilities />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/marketplace"
+              element={
+                <ProtectedRoute>
+                  <Marketplace />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/communication"
+              element={
+                <ProtectedRoute>
+                  <CommunicationHub />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/visitor-security"
+              element={
+                <ProtectedRoute>
+                  <VisitorSecurity />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/visitor-analytics"
+              element={
+                <ProtectedRoute>
+                  <VisitorAnalytics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cctv-live"
+              element={
+                <ProtectedRoute>
+                  <CCTVLiveFeed />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Professional view routes */}
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoute>
+                  <AdminPanel />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute>
+                  <UserManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/security"
+              element={
+                <ProtectedRoute>
+                  <SecurityDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/communities"
+              element={
+                <ProtectedRoute>
+                  <CommunityManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/districts"
+              element={
+                <ProtectedRoute>
+                  <DistrictManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/facilities"
+              element={
+                <ProtectedRoute>
+                  <FacilitiesManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/maintenance"
+              element={
+                <ProtectedRoute>
+                  <MaintenanceManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/complaints"
+              element={
+                <ProtectedRoute>
+                  <ComplaintsManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/cctv"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles
+                    roles={["admin", "manager", "security_officer"]}
+                  >
                     <CCTVManagement />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/smart-monitoring" 
-                element={
-                  <ProtectedRoute>
-                    <SmartMonitoring />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/sensors" 
-                element={
-                  <ProtectedRoute>
-                    <SensorManagement />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/announcements" 
-                element={
-                  <ProtectedRoute>
-                    <AnnouncementManagement />
-                  </ProtectedRoute>
-                } 
-              />
-               <Route 
-                 path="/admin/discussions" 
-                 element={
-                   <ProtectedRoute>
-                     <DiscussionManagement />
-                   </ProtectedRoute>
-                 } 
-               />
-               
-               {/* Security modules */}
-               <Route 
-                 path="/panic-alerts" 
-                 element={
-                   <ProtectedRoute>
-                     <PanicAlerts />
-                   </ProtectedRoute>
-                 } 
-               />
-               
-               {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/smart-monitoring"
+              element={
+                <ProtectedRoute>
+                  <SmartMonitoring />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/sensors"
+              element={
+                <ProtectedRoute>
+                  <SensorManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/announcements"
+              element={
+                <ProtectedRoute>
+                  <AnnouncementManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/discussions"
+              element={
+                <ProtectedRoute>
+                  <DiscussionManagement />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Security modules */}
+            <Route
+              path="/panic-alerts"
+              element={
+                <ProtectedRoute>
+                  <PanicAlerts />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Catch-all route */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
