@@ -202,8 +202,16 @@ export default function PanicAlertManager() {
 
   const openMaps = (alert: PanicAlert) => {
     if (alert.location_latitude && alert.location_longitude) {
-      const url = `https://www.google.com/maps/search/?api=1&query=${alert.location_latitude},${alert.location_longitude}`;
-      window.open(url, '_blank', 'noopener,noreferrer');
+      // Try OpenStreetMap first (works better in development)
+      const osmUrl = `https://www.openstreetmap.org/?mlat=${alert.location_latitude}&mlon=${alert.location_longitude}&zoom=16&layers=M`;
+      
+      try {
+        window.open(osmUrl, '_blank', 'noopener,noreferrer');
+      } catch (error) {
+        // Fallback to Apple Maps
+        const appleUrl = `https://maps.apple.com/?ll=${alert.location_latitude},${alert.location_longitude}&z=16`;
+        window.open(appleUrl, '_blank', 'noopener,noreferrer');
+      }
     }
   };
 
