@@ -79,7 +79,7 @@ export function AppSidebar() {
       items: [
         {
           title: t("communication"),
-          url: "/communication",
+          url: "/communication-hub",
           icon: MessageSquare,
         },
         { title: t("announcements"), url: "/announcements", icon: Megaphone },
