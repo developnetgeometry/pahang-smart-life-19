@@ -413,8 +413,57 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
         return;
       }
 
-      // Check if this is a direct message room (from the social tab)
-      if (channelId.length === 36) { // UUID format
+      // Check if this is a direct message room (from the social tab or demo)
+      if (channelId.length === 36 || channelId.startsWith('demo_')) { 
+        // Handle demo direct messages
+        if (channelId.startsWith('demo_')) {
+          const userName = directMessages.find(dm => dm.id === channelId)?.other_user_name || 'Unknown User';
+          const mockDirectMessages: ChatMessage[] = [
+            {
+              id: 'dm_welcome',
+              channel_id: channelId,
+              user_id: 'system',
+              message: language === 'en' 
+                ? `You are now chatting with ${userName}. This is a private conversation.`
+                : `Anda kini berbual dengan ${userName}. Ini adalah perbualan peribadi.`,
+              created_at: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
+              updated_at: new Date(Date.now() - 300000).toISOString(),
+              message_type: 'system',
+              profiles: {
+                display_name: 'System'
+              }
+            },
+            {
+              id: 'dm_1',
+              channel_id: channelId,
+              user_id: 'other_user',
+              message: directMessages.find(dm => dm.id === channelId)?.last_message || 
+                (language === 'en' ? 'Hello! How are you?' : 'Helo! Apa khabar?'),
+              created_at: new Date(Date.now() - 180000).toISOString(), // 3 minutes ago
+              updated_at: new Date(Date.now() - 180000).toISOString(),
+              message_type: 'text',
+              profiles: {
+                display_name: userName
+              }
+            },
+            {
+              id: 'dm_2',
+              channel_id: channelId,
+              user_id: user?.id || 'current_user',
+              message: language === 'en' ? 'Hi there! I\'m doing well, thanks for asking!' : 'Hai! Saya sihat, terima kasih kerana bertanya!',
+              created_at: new Date(Date.now() - 60000).toISOString(), // 1 minute ago
+              updated_at: new Date(Date.now() - 60000).toISOString(),
+              message_type: 'text',
+              profiles: {
+                display_name: 'You'
+              }
+            }
+          ];
+          setMessages(mockDirectMessages);
+          return;
+        }
+
+        // Handle real UUID direct message rooms
         const { data: messages, error } = await supabase
           .from('chat_messages')
           .select(`
