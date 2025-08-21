@@ -40,6 +40,10 @@ import NotificationSettings from "./pages/NotificationSettings";
 import NotificationPage from "./pages/NotificationPage";
 import PanicAlerts from "./pages/PanicAlerts";
 import Directory from "./pages/Directory";
+import ServiceProviderApplication from "./pages/ServiceProviderApplication";
+import ServiceProviderManagement from "./pages/admin/ServiceProviderManagement";
+import ServiceProviderReview from "./pages/admin/ServiceProviderReview";
+import MyApplications from "./pages/MyApplications";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -81,7 +85,9 @@ const App = () => (
               path="/"
               element={
                 <ProtectedRoute>
-                  <Index />
+                  <Layout>
+                    <Index />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -91,7 +97,9 @@ const App = () => (
               path="/my-bookings"
               element={
                 <ProtectedRoute>
-                  <MyBookings />
+                  <Layout>
+                    <MyBookings />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -99,7 +107,9 @@ const App = () => (
               path="/my-visitors"
               element={
                 <ProtectedRoute>
-                  <MyVisitors />
+                  <Layout>
+                    <MyVisitors />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -107,7 +117,29 @@ const App = () => (
               path="/my-complaints"
               element={
                 <ProtectedRoute>
-                  <MyComplaints />
+                  <Layout>
+                    <MyComplaints />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-applications"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <MyApplications />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/service-provider-application"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ServiceProviderApplication />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -115,7 +147,9 @@ const App = () => (
               path="/my-profile"
               element={
                 <ProtectedRoute>
-                  <MyProfile />
+                  <Layout>
+                    <MyProfile />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -123,7 +157,9 @@ const App = () => (
               path="/role-management"
               element={
                 <ProtectedRoute>
-                  <RoleManagement />
+                  <Layout>
+                    <RoleManagement />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -131,7 +167,9 @@ const App = () => (
               path="/notifications"
               element={
                 <ProtectedRoute>
-                  <NotificationPage />
+                  <Layout>
+                    <NotificationPage />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -139,7 +177,9 @@ const App = () => (
               path="/notification-settings"
               element={
                 <ProtectedRoute>
-                  <NotificationSettings />
+                  <Layout>
+                    <NotificationSettings />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -147,7 +187,9 @@ const App = () => (
               path="/announcements"
               element={
                 <ProtectedRoute>
-                  <Announcements />
+                  <Layout>
+                    <Announcements />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -155,7 +197,9 @@ const App = () => (
               path="/events"
               element={
                 <ProtectedRoute>
-                  <Events />
+                  <Layout>
+                    <Events />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -163,7 +207,9 @@ const App = () => (
               path="/discussions"
               element={
                 <ProtectedRoute>
-                  <Discussions />
+                  <Layout>
+                    <Discussions />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -171,7 +217,9 @@ const App = () => (
               path="/facilities"
               element={
                 <ProtectedRoute>
-                  <Facilities />
+                  <Layout>
+                    <Facilities />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -179,7 +227,9 @@ const App = () => (
               path="/marketplace"
               element={
                 <ProtectedRoute>
-                  <Marketplace />
+                  <Layout>
+                    <Marketplace />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -187,7 +237,9 @@ const App = () => (
               path="/communication-hub"
               element={
                 <ProtectedRoute>
-                  <CommunicationHub />
+                  <Layout>
+                    <CommunicationHub />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -195,7 +247,9 @@ const App = () => (
               path="/directory"
               element={
                 <ProtectedRoute>
-                  <Directory />
+                  <Layout>
+                    <Directory />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -203,7 +257,9 @@ const App = () => (
               path="/visitor-security"
               element={
                 <ProtectedRoute>
-                  <VisitorSecurity />
+                  <Layout>
+                    <VisitorSecurity />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -211,7 +267,9 @@ const App = () => (
               path="/visitor-analytics"
               element={
                 <ProtectedRoute>
-                  <VisitorAnalytics />
+                  <Layout>
+                    <VisitorAnalytics />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -219,7 +277,9 @@ const App = () => (
               path="/cctv-live"
               element={
                 <ProtectedRoute>
-                  <CCTVLiveFeed />
+                  <Layout>
+                    <CCTVLiveFeed />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -229,7 +289,9 @@ const App = () => (
               path="/admin/*"
               element={
                 <ProtectedRoute>
-                  <AdminPanel />
+                  <Layout>
+                    <AdminPanel />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -237,7 +299,33 @@ const App = () => (
               path="/admin/users"
               element={
                 <ProtectedRoute>
-                  <UserManagement />
+                  <Layout>
+                    <UserManagement />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/service-providers"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <ServiceProviderManagement />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/service-providers/review/:id"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <ServiceProviderReview />
+                    </Layout>
+                  </RequireRoles>
                 </ProtectedRoute>
               }
             />
@@ -245,7 +333,9 @@ const App = () => (
               path="/admin/security"
               element={
                 <ProtectedRoute>
-                  <SecurityDashboard />
+                  <Layout>
+                    <SecurityDashboard />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -253,7 +343,9 @@ const App = () => (
               path="/admin/communities"
               element={
                 <ProtectedRoute>
-                  <CommunityManagement />
+                  <Layout>
+                    <CommunityManagement />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -261,7 +353,9 @@ const App = () => (
               path="/admin/districts"
               element={
                 <ProtectedRoute>
-                  <DistrictManagement />
+                  <Layout>
+                    <DistrictManagement />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -269,7 +363,9 @@ const App = () => (
               path="/admin/facilities"
               element={
                 <ProtectedRoute>
-                  <FacilitiesManagement />
+                  <Layout>
+                    <FacilitiesManagement />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -277,7 +373,9 @@ const App = () => (
               path="/admin/maintenance"
               element={
                 <ProtectedRoute>
-                  <MaintenanceManagement />
+                  <Layout>
+                    <MaintenanceManagement />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -285,7 +383,9 @@ const App = () => (
               path="/admin/complaints"
               element={
                 <ProtectedRoute>
-                  <ComplaintsManagement />
+                  <Layout>
+                    <ComplaintsManagement />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -296,7 +396,9 @@ const App = () => (
                   <RequireRoles
                     roles={["admin", "manager", "security_officer"]}
                   >
-                    <CCTVManagement />
+                    <Layout>
+                      <CCTVManagement />
+                    </Layout>
                   </RequireRoles>
                 </ProtectedRoute>
               }
@@ -305,7 +407,9 @@ const App = () => (
               path="/admin/smart-monitoring"
               element={
                 <ProtectedRoute>
-                  <SmartMonitoring />
+                  <Layout>
+                    <SmartMonitoring />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -313,7 +417,9 @@ const App = () => (
               path="/admin/sensors"
               element={
                 <ProtectedRoute>
-                  <SensorManagement />
+                  <Layout>
+                    <SensorManagement />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -321,7 +427,9 @@ const App = () => (
               path="/admin/announcements"
               element={
                 <ProtectedRoute>
-                  <AnnouncementManagement />
+                  <Layout>
+                    <AnnouncementManagement />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -329,7 +437,9 @@ const App = () => (
               path="/admin/discussions"
               element={
                 <ProtectedRoute>
-                  <DiscussionManagement />
+                  <Layout>
+                    <DiscussionManagement />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -339,7 +449,9 @@ const App = () => (
               path="/panic-alerts"
               element={
                 <ProtectedRoute>
-                  <PanicAlerts />
+                  <Layout>
+                    <PanicAlerts />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
