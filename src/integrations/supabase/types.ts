@@ -1708,6 +1708,53 @@ export type Database = {
           },
         ]
       }
+      financial_accounts: {
+        Row: {
+          account_code: string
+          account_name: string
+          account_type: string
+          created_at: string | null
+          description: string | null
+          district_id: string | null
+          id: string
+          is_active: boolean | null
+          parent_account_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_code: string
+          account_name: string
+          account_type: string
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          parent_account_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_code?: string
+          account_name?: string
+          account_type?: string
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          parent_account_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_accounts_parent_account_id_fkey"
+            columns: ["parent_account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_records: {
         Row: {
           amount: number
@@ -1779,6 +1826,83 @@ export type Database = {
           vendor_supplier?: string | null
         }
         Relationships: []
+      }
+      financial_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          attachments: string[] | null
+          created_at: string | null
+          description: string
+          district_id: string | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          processed_by: string | null
+          receipt_number: string | null
+          reference_id: string | null
+          reference_type: string | null
+          status: string | null
+          transaction_code: string
+          transaction_date: string
+          transaction_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          attachments?: string[] | null
+          created_at?: string | null
+          description: string
+          district_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          processed_by?: string | null
+          receipt_number?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string | null
+          transaction_code: string
+          transaction_date?: string
+          transaction_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          attachments?: string[] | null
+          created_at?: string | null
+          description?: string
+          district_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          processed_by?: string | null
+          receipt_number?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string | null
+          transaction_code?: string
+          transaction_date?: string
+          transaction_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       group_memberships: {
         Row: {
@@ -1953,6 +2077,124 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          district_id: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          parent_category_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          parent_category_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          parent_category_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_categories_parent_category_id_fkey"
+            columns: ["parent_category_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_items: {
+        Row: {
+          barcode: string | null
+          category_id: string
+          created_at: string | null
+          current_stock: number | null
+          description: string | null
+          district_id: string | null
+          expiry_tracking: boolean | null
+          id: string
+          is_active: boolean | null
+          item_code: string
+          maximum_stock: number | null
+          minimum_stock: number | null
+          name: string
+          photos: string[] | null
+          reorder_level: number | null
+          storage_location: string | null
+          supplier_contact: string | null
+          supplier_name: string | null
+          unit_cost: number | null
+          unit_of_measure: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          barcode?: string | null
+          category_id: string
+          created_at?: string | null
+          current_stock?: number | null
+          description?: string | null
+          district_id?: string | null
+          expiry_tracking?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          item_code: string
+          maximum_stock?: number | null
+          minimum_stock?: number | null
+          name: string
+          photos?: string[] | null
+          reorder_level?: number | null
+          storage_location?: string | null
+          supplier_contact?: string | null
+          supplier_name?: string | null
+          unit_cost?: number | null
+          unit_of_measure?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          barcode?: string | null
+          category_id?: string
+          created_at?: string | null
+          current_stock?: number | null
+          description?: string | null
+          district_id?: string | null
+          expiry_tracking?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          item_code?: string
+          maximum_stock?: number | null
+          minimum_stock?: number | null
+          name?: string
+          photos?: string[] | null
+          reorder_level?: number | null
+          storage_location?: string | null
+          supplier_contact?: string | null
+          supplier_name?: string | null
+          unit_cost?: number | null
+          unit_of_measure?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_movements: {
         Row: {
           id: string
@@ -1999,6 +2241,71 @@ export type Database = {
             columns: ["inventory_id"]
             isOneToOne: false
             referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_transactions: {
+        Row: {
+          approved_by: string | null
+          batch_number: string | null
+          created_at: string | null
+          expiry_date: string | null
+          id: string
+          item_id: string
+          notes: string | null
+          performed_by: string
+          quantity: number
+          reference_id: string | null
+          reference_type: string | null
+          total_cost: number | null
+          transaction_code: string
+          transaction_date: string | null
+          transaction_type: string
+          unit_cost: number | null
+        }
+        Insert: {
+          approved_by?: string | null
+          batch_number?: string | null
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          item_id: string
+          notes?: string | null
+          performed_by: string
+          quantity: number
+          reference_id?: string | null
+          reference_type?: string | null
+          total_cost?: number | null
+          transaction_code: string
+          transaction_date?: string | null
+          transaction_type: string
+          unit_cost?: number | null
+        }
+        Update: {
+          approved_by?: string | null
+          batch_number?: string | null
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          item_id?: string
+          notes?: string | null
+          performed_by?: string
+          quantity?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          total_cost?: number | null
+          transaction_code?: string
+          transaction_date?: string | null
+          transaction_type?: string
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
             referencedColumns: ["id"]
           },
         ]
@@ -3542,6 +3849,45 @@ export type Database = {
           },
         ]
       }
+      service_categories: {
+        Row: {
+          color_code: string | null
+          created_at: string | null
+          description: string | null
+          district_id: string | null
+          estimated_response_time: unknown | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          requires_approval: boolean | null
+        }
+        Insert: {
+          color_code?: string | null
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          estimated_response_time?: unknown | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          requires_approval?: boolean | null
+        }
+        Update: {
+          color_code?: string | null
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          estimated_response_time?: unknown | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          requires_approval?: boolean | null
+        }
+        Relationships: []
+      }
       service_provider_applications: {
         Row: {
           applicant_id: string | null
@@ -3840,6 +4186,92 @@ export type Database = {
           },
         ]
       }
+      service_requests: {
+        Row: {
+          actual_cost: number | null
+          assigned_at: string | null
+          assigned_to: string | null
+          attachments: string[] | null
+          category_id: string
+          completed_at: string | null
+          completion_notes: string | null
+          created_at: string | null
+          description: string
+          district_id: string | null
+          estimated_cost: number | null
+          id: string
+          location: string | null
+          photos: string[] | null
+          preferred_date: string | null
+          preferred_time: string | null
+          priority: string | null
+          request_number: string
+          requester_id: string
+          started_at: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          actual_cost?: number | null
+          assigned_at?: string | null
+          assigned_to?: string | null
+          attachments?: string[] | null
+          category_id: string
+          completed_at?: string | null
+          completion_notes?: string | null
+          created_at?: string | null
+          description: string
+          district_id?: string | null
+          estimated_cost?: number | null
+          id?: string
+          location?: string | null
+          photos?: string[] | null
+          preferred_date?: string | null
+          preferred_time?: string | null
+          priority?: string | null
+          request_number: string
+          requester_id: string
+          started_at?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          actual_cost?: number | null
+          assigned_at?: string | null
+          assigned_to?: string | null
+          attachments?: string[] | null
+          category_id?: string
+          completed_at?: string | null
+          completion_notes?: string | null
+          created_at?: string | null
+          description?: string
+          district_id?: string | null
+          estimated_cost?: number | null
+          id?: string
+          location?: string | null
+          photos?: string[] | null
+          preferred_date?: string | null
+          preferred_time?: string | null
+          priority?: string | null
+          request_number?: string
+          requester_id?: string
+          started_at?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_requests_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff: {
         Row: {
           address: string | null
@@ -3919,6 +4351,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_metrics: {
+        Row: {
+          category: string
+          created_at: string | null
+          district_id: string | null
+          id: string
+          measurement_date: string | null
+          measurement_time: string | null
+          metadata: Json | null
+          metric_name: string
+          metric_type: string
+          metric_value: number | null
+          subcategory: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          district_id?: string | null
+          id?: string
+          measurement_date?: string | null
+          measurement_time?: string | null
+          metadata?: Json | null
+          metric_name: string
+          metric_type: string
+          metric_value?: number | null
+          subcategory?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          district_id?: string | null
+          id?: string
+          measurement_date?: string | null
+          measurement_time?: string | null
+          metadata?: Json | null
+          metric_name?: string
+          metric_type?: string
+          metric_value?: number | null
+          subcategory?: string | null
+        }
+        Relationships: []
       }
       system_modules: {
         Row: {
