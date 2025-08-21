@@ -43,12 +43,6 @@ export function StateAdminDashboard() {
       trend: '+5.2% this month'
     },
     {
-      title: language === 'en' ? 'Monthly Revenue' : 'Pendapatan Bulanan',
-      value: 'RM 2.4M',
-      icon: DollarSign,
-      trend: '+12% vs last month'
-    },
-    {
       title: language === 'en' ? 'System Health' : 'Kesihatan Sistem',
       value: '4/5',
       icon: TrendingUp,
