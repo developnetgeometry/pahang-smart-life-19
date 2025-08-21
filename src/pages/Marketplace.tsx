@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -11,9 +11,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ShoppingBag, Plus, Search, Heart, MessageCircle, Star, MapPin, Clock } from 'lucide-react';
+import { ShoppingBag, Plus, Search, Heart, MessageCircle, Star, MapPin, Clock, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useChatRooms } from '@/hooks/use-chat-rooms';
+import { supabase } from '@/integrations/supabase/client';
+
+// Import marketplace images
+import iphoneImage from '@/assets/iphone-marketplace.jpg';
+import diningTableImage from '@/assets/dining-table-marketplace.jpg';
+import programmingBooksImage from '@/assets/programming-books-marketplace.jpg';
 
 interface MarketplaceItem {
   id: string;
@@ -39,6 +45,8 @@ export default function Marketplace() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedCondition, setSelectedCondition] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const text = {
     en: {
@@ -123,6 +131,62 @@ export default function Marketplace() {
 
   const t = text[language];
 
+  // Fetch marketplace items from Supabase
+  useEffect(() => {
+    const fetchMarketplaceItems = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('marketplace_items')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Helper function to get fallback image based on category/title
+        const getFallbackImage = (title: string, category: string) => {
+          const titleLower = title.toLowerCase();
+          if (titleLower.includes('iphone') || category === 'electronics') return iphoneImage;
+          if (titleLower.includes('table') || titleLower.includes('dining') || category === 'furniture') return diningTableImage;
+          if (titleLower.includes('book') || category === 'books') return programmingBooksImage;
+          return '/placeholder.svg';
+        };
+
+        // Transform Supabase data to match our interface
+        const transformedItems: MarketplaceItem[] = (data || []).map(item => ({
+          id: item.id,
+          title: item.title,
+          description: item.description || '',
+          price: Number(item.price),
+          category: item.category,
+          condition: item.condition as 'new' | 'like-new' | 'good' | 'fair',
+          seller: 'Anonymous User',
+          sellerRating: 4.5,
+          location: item.location || '',
+          postedDate: new Date(item.created_at).toISOString().split('T')[0],
+          images: item.image ? [
+            item.image.startsWith('http') ? item.image : 
+            item.image === 'iphone-marketplace.jpg' ? iphoneImage :
+            item.image === 'dining-table-marketplace.jpg' ? diningTableImage :
+            item.image === 'programming-books-marketplace.jpg' ? programmingBooksImage :
+            getFallbackImage(item.title, item.category)
+          ] : [getFallbackImage(item.title, item.category)],
+          isFavorite: false
+        }));
+
+        setMarketplaceItems(transformedItems.length > 0 ? transformedItems : mockItems);
+      } catch (error) {
+        console.error('Error fetching marketplace items:', error);
+        // Fallback to demo data with images
+        setMarketplaceItems(mockItems);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMarketplaceItems();
+  }, [language]);
+
   const mockItems: MarketplaceItem[] = [
     {
       id: '1',
@@ -135,7 +199,7 @@ export default function Marketplace() {
       sellerRating: 4.8,
       location: 'Block A, Unit 15-2',
       postedDate: '2024-01-15',
-      images: ['/phone.jpg'],
+      images: [iphoneImage],
       isFavorite: false
     },
     {
@@ -149,7 +213,7 @@ export default function Marketplace() {
       sellerRating: 4.5,
       location: 'Block B, Unit 8-1',
       postedDate: '2024-01-12',
-      images: ['/table.jpg'],
+      images: [diningTableImage],
       isFavorite: true
     },
     {
@@ -163,7 +227,7 @@ export default function Marketplace() {
       sellerRating: 4.9,
       location: 'Block C, Unit 12-5',
       postedDate: '2024-01-10',
-      images: ['/books.jpg'],
+      images: [programmingBooksImage],
       isFavorite: false
     }
   ];
@@ -206,7 +270,7 @@ export default function Marketplace() {
     }
   };
 
-  const filteredItems = mockItems.filter(item => {
+  const filteredItems = marketplaceItems.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
@@ -395,12 +459,39 @@ export default function Marketplace() {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredItems.map((item) => (
-          <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="aspect-square bg-muted flex items-center justify-center">
-              <ShoppingBag className="h-12 w-12 text-muted-foreground" />
-            </div>
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="overflow-hidden">
+              <div className="aspect-square bg-muted animate-pulse" />
+              <CardHeader>
+                <div className="h-4 bg-muted animate-pulse rounded mb-2" />
+                <div className="h-3 bg-muted animate-pulse rounded w-3/4" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="h-3 bg-muted animate-pulse rounded" />
+                  <div className="h-3 bg-muted animate-pulse rounded w-1/2" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredItems.map((item) => (
+            <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden">
+                {item.images[0] && item.images[0] !== '/placeholder.svg' ? (
+                  <img 
+                    src={item.images[0]} 
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <ShoppingBag className="h-12 w-12 text-muted-foreground" />
+                )}
+              </div>
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -455,11 +546,12 @@ export default function Marketplace() {
                 {t.contact}
               </Button>
             </CardContent>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
-      {filteredItems.length === 0 && (
+      {!loading && filteredItems.length === 0 && (
         <Card>
           <CardContent className="flex items-center justify-center py-12">
             <div className="text-center">

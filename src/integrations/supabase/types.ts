@@ -2168,7 +2168,9 @@ export type Database = {
           description: string | null
           district_id: string | null
           id: string
+          image: string | null
           images: string[] | null
+          is_active: boolean | null
           is_available: boolean | null
           location: string | null
           price: number
@@ -2183,7 +2185,9 @@ export type Database = {
           description?: string | null
           district_id?: string | null
           id?: string
+          image?: string | null
           images?: string[] | null
+          is_active?: boolean | null
           is_available?: boolean | null
           location?: string | null
           price: number
@@ -2198,7 +2202,9 @@ export type Database = {
           description?: string | null
           district_id?: string | null
           id?: string
+          image?: string | null
           images?: string[] | null
+          is_active?: boolean | null
           is_available?: boolean | null
           location?: string | null
           price?: number
