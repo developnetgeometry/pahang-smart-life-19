@@ -98,7 +98,6 @@ export function AppSidebar() {
       items: [
         { title: t("facilities"), url: "/facilities", icon: Building },
         { title: t("marketplace"), url: "/marketplace", icon: ShoppingCart },
-        { title: t("cctvLiveFeed"), url: "/cctv-live", icon: Camera },
         { title: "Service Requests", url: "/service-requests", icon: Clipboard },
       ],
     });
