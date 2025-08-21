@@ -195,6 +195,123 @@ export type Database = {
           },
         ]
       }
+      application_communications: {
+        Row: {
+          application_id: string | null
+          attachments: string[] | null
+          created_at: string | null
+          id: string
+          is_internal: boolean | null
+          message: string
+          message_type: string | null
+          read_by: string[] | null
+          sender_id: string | null
+          subject: string | null
+        }
+        Insert: {
+          application_id?: string | null
+          attachments?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_internal?: boolean | null
+          message: string
+          message_type?: string | null
+          read_by?: string[] | null
+          sender_id?: string | null
+          subject?: string | null
+        }
+        Update: {
+          application_id?: string | null
+          attachments?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_internal?: boolean | null
+          message?: string
+          message_type?: string | null
+          read_by?: string[] | null
+          sender_id?: string | null
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_communications_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "service_provider_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_communications_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      application_documents: {
+        Row: {
+          application_id: string | null
+          document_name: string
+          document_type: string
+          expiry_date: string | null
+          file_size: number | null
+          file_url: string
+          id: string
+          is_verified: boolean | null
+          mime_type: string | null
+          notes: string | null
+          upload_date: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          application_id?: string | null
+          document_name: string
+          document_type: string
+          expiry_date?: string | null
+          file_size?: number | null
+          file_url: string
+          id?: string
+          is_verified?: boolean | null
+          mime_type?: string | null
+          notes?: string | null
+          upload_date?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          application_id?: string | null
+          document_name?: string
+          document_type?: string
+          expiry_date?: string | null
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          is_verified?: boolean | null
+          mime_type?: string | null
+          notes?: string | null
+          upload_date?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_documents_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "service_provider_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_documents_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assets: {
         Row: {
           asset_type: string
@@ -3412,6 +3529,239 @@ export type Database = {
             columns: ["provider_id"]
             isOneToOne: false
             referencedRelation: "service_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_provider_applications: {
+        Row: {
+          applicant_id: string | null
+          business_address: string
+          business_description: string | null
+          business_name: string
+          business_references: Json | null
+          business_registration_number: string | null
+          business_type: string
+          contact_email: string
+          contact_person: string
+          contact_phone: string
+          created_at: string | null
+          district_id: string | null
+          experience_years: number | null
+          id: string
+          insurance_info: Json | null
+          operating_hours: Json | null
+          priority: string | null
+          rejection_reason: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          service_areas: string[] | null
+          service_categories: string[] | null
+          services_offered: string[] | null
+          social_media: Json | null
+          status: string | null
+          tax_id: string | null
+          updated_at: string | null
+          website_url: string | null
+        }
+        Insert: {
+          applicant_id?: string | null
+          business_address: string
+          business_description?: string | null
+          business_name: string
+          business_references?: Json | null
+          business_registration_number?: string | null
+          business_type: string
+          contact_email: string
+          contact_person: string
+          contact_phone: string
+          created_at?: string | null
+          district_id?: string | null
+          experience_years?: number | null
+          id?: string
+          insurance_info?: Json | null
+          operating_hours?: Json | null
+          priority?: string | null
+          rejection_reason?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          service_areas?: string[] | null
+          service_categories?: string[] | null
+          services_offered?: string[] | null
+          social_media?: Json | null
+          status?: string | null
+          tax_id?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          applicant_id?: string | null
+          business_address?: string
+          business_description?: string | null
+          business_name?: string
+          business_references?: Json | null
+          business_registration_number?: string | null
+          business_type?: string
+          contact_email?: string
+          contact_person?: string
+          contact_phone?: string
+          created_at?: string | null
+          district_id?: string | null
+          experience_years?: number | null
+          id?: string
+          insurance_info?: Json | null
+          operating_hours?: Json | null
+          priority?: string | null
+          rejection_reason?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          service_areas?: string[] | null
+          service_categories?: string[] | null
+          services_offered?: string[] | null
+          social_media?: Json | null
+          status?: string | null
+          tax_id?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_provider_applications_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_provider_applications_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_provider_applications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_provider_profiles: {
+        Row: {
+          application_id: string | null
+          approved_at: string | null
+          average_rating: number | null
+          business_address: string | null
+          business_description: string | null
+          business_name: string
+          business_type: string
+          compliance_status: string | null
+          contact_email: string
+          contact_phone: string
+          created_at: string | null
+          district_id: string | null
+          featured: boolean | null
+          id: string
+          is_active: boolean | null
+          is_verified: boolean | null
+          logo_url: string | null
+          operating_hours: Json | null
+          service_areas: string[] | null
+          service_categories: string[] | null
+          service_pricing: Json | null
+          services_offered: string[] | null
+          social_media: Json | null
+          subscription_tier: string | null
+          total_reviews: number | null
+          updated_at: string | null
+          user_id: string | null
+          website_url: string | null
+        }
+        Insert: {
+          application_id?: string | null
+          approved_at?: string | null
+          average_rating?: number | null
+          business_address?: string | null
+          business_description?: string | null
+          business_name: string
+          business_type: string
+          compliance_status?: string | null
+          contact_email: string
+          contact_phone: string
+          created_at?: string | null
+          district_id?: string | null
+          featured?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          logo_url?: string | null
+          operating_hours?: Json | null
+          service_areas?: string[] | null
+          service_categories?: string[] | null
+          service_pricing?: Json | null
+          services_offered?: string[] | null
+          social_media?: Json | null
+          subscription_tier?: string | null
+          total_reviews?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          application_id?: string | null
+          approved_at?: string | null
+          average_rating?: number | null
+          business_address?: string | null
+          business_description?: string | null
+          business_name?: string
+          business_type?: string
+          compliance_status?: string | null
+          contact_email?: string
+          contact_phone?: string
+          created_at?: string | null
+          district_id?: string | null
+          featured?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          logo_url?: string | null
+          operating_hours?: Json | null
+          service_areas?: string[] | null
+          service_categories?: string[] | null
+          service_pricing?: Json | null
+          services_offered?: string[] | null
+          social_media?: Json | null
+          subscription_tier?: string | null
+          total_reviews?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_provider_profiles_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "service_provider_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_provider_profiles_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_provider_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
