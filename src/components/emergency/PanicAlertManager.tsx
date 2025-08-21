@@ -202,8 +202,8 @@ export default function PanicAlertManager() {
 
   const openMaps = (alert: PanicAlert) => {
     if (alert.location_latitude && alert.location_longitude) {
-      const url = `https://www.google.com/maps?q=${alert.location_latitude},${alert.location_longitude}`;
-      window.open(url, '_blank');
+      const url = `https://www.google.com/maps/search/?api=1&query=${alert.location_latitude},${alert.location_longitude}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
 
