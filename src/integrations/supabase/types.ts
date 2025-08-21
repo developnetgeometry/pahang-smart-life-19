@@ -526,6 +526,45 @@ export type Database = {
           },
         ]
       }
+      chat_room_members: {
+        Row: {
+          id: string
+          is_admin: boolean
+          joined_at: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_admin?: boolean
+          joined_at?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_admin?: boolean
+          joined_at?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_room_members_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_room_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_rooms: {
         Row: {
           created_at: string
@@ -3990,6 +4029,10 @@ export type Database = {
       cleanup_old_typing_indicators: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      create_direct_chat: {
+        Args: { other_user_id: string }
+        Returns: string
       }
       get_approval_requirements: {
         Args: {
