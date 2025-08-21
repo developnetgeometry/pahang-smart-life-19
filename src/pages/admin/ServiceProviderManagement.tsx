@@ -90,6 +90,7 @@ export default function ServiceProviderManagement() {
 
   const fetchApplications = async () => {
     try {
+      console.log('Fetching applications...');
       // Build query - remove district filter for now to see all applications
       let query = supabase
         .from('service_provider_applications')
@@ -115,9 +116,10 @@ export default function ServiceProviderManagement() {
 
       const { data, error } = await query.order('created_at', { ascending: false });
 
+      console.log('Applications query result:', { data, error });
       if (error) throw error;
       setApplications(data || []);
-      console.log('Fetched applications:', data);
+      console.log('Set applications:', data);
     } catch (error) {
       console.error('Error fetching applications:', error);
       toast.error('Failed to load applications');
