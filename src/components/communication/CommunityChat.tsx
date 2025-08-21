@@ -18,7 +18,8 @@ import {
   Reply,
   Heart,
   ThumbsUp,
-  Laugh
+  Laugh,
+  Video
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Separator } from '@/components/ui/separator';
@@ -31,6 +32,7 @@ import TypingIndicator from './TypingIndicator';
 import { UserSelectionModal } from './UserSelectionModal';
 import { GroupCreationModal } from './GroupCreationModal';
 import { ChatListItem } from './ChatListItem';
+import VideoCallRoom from './VideoCallRoom';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -51,6 +53,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 
 interface MarketplaceChatInfo {
@@ -69,6 +72,7 @@ interface CommunityChatProps {
 
 export default function CommunityChat({ marketplaceChat }: CommunityChatProps = {}) {
   const { language, user } = useAuth();
+  const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // State
@@ -83,6 +87,7 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [replyToMessageId, setReplyToMessageId] = useState<string | null>(null);
   const [showFileUpload, setShowFileUpload] = useState(false);
+  const [showVideoCall, setShowVideoCall] = useState(false);
 
   // Custom hooks
   const { 
@@ -171,7 +176,11 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
       console.log('Message sent successfully');
     } catch (error) {
       console.error('Error sending message:', error);
-      toast.error('Failed to send message');
+      toast({
+        title: 'Error',
+        description: 'Failed to send message',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -182,7 +191,11 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
       setShowUserSelection(false);
     } catch (error) {
       console.error('Error creating direct chat:', error);
-      toast.error('Failed to create chat');
+      toast({
+        title: 'Error',
+        description: 'Failed to create chat',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -194,7 +207,10 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
       console.log('Group created with ID:', roomId);
       setSelectedRoomId(roomId);
       setShowGroupCreation(false);
-      toast.success('Group created successfully!');
+      toast({
+        title: 'Success',
+        description: 'Group created successfully!',
+      });
     } catch (error: any) {
       console.error('Error creating group:', error);
       
@@ -213,7 +229,11 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
         errorMessage = `Failed to create group: ${error.message}`;
       }
       
-      toast.error(errorMessage);
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     }
   };
 
@@ -260,7 +280,11 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
       await deleteMessage(messageId);
     } catch (error) {
       console.error('Error deleting message:', error);
-      toast.error('Failed to delete message');
+      toast({
+        title: 'Error',
+        description: 'Failed to delete message',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -269,7 +293,11 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
       await reactToMessage(messageId, emoji);
     } catch (error) {
       console.error('Error reacting to message:', error);
-      toast.error('Failed to react to message');
+      toast({
+        title: 'Error',
+        description: 'Failed to react to message',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -286,8 +314,32 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
       setShowFileUpload(false);
     } catch (error) {
       console.error('Error uploading file:', error);
-      toast.error('Failed to upload file');
+      toast({
+        title: 'Error',
+        description: 'Failed to upload file',
+        variant: 'destructive',
+      });
     }
+  };
+
+  const handleStartVideoCall = () => {
+    if (!selectedRoom) {
+      toast({
+        title: 'Error',
+        description: 'Please select a chat first',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setShowVideoCall(true);
+    
+    // Notify other participants about the video call
+    const callType = selectedRoom.room_type === 'direct' ? 'individual' : 'group';
+    toast({
+      title: 'Video Call Started',
+      description: `Starting ${callType} video call with ${selectedRoom.name}`,
+    });
   };
 
   // Filter rooms based on search
@@ -366,7 +418,16 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
 
       {/* Chat Area */}
       <div className="flex-1 flex flex-col">
-        {selectedRoom ? (
+        {showVideoCall && selectedRoom ? (
+          <div className="flex-1">
+            <VideoCallRoom 
+              roomId={selectedRoomId}
+              isHost={true}
+              onLeave={() => setShowVideoCall(false)}
+              onToggleChat={() => setShowVideoCall(false)}
+            />
+          </div>
+        ) : selectedRoom ? (
           <>
             {/* Chat Header */}
             <div className="p-4 border-b bg-muted/50">
@@ -387,8 +448,13 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
                     </p>
                   </div>
                 </div>
-                <Button size="sm" variant="ghost">
-                  <MoreHorizontal className="h-4 w-4" />
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={handleStartVideoCall}
+                  title={language === 'en' ? 'Start video call' : 'Mula panggilan video'}
+                >
+                  <Video className="h-4 w-4" />
                 </Button>
               </div>
             </div>
