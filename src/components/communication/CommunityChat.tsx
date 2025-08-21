@@ -187,13 +187,33 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
   };
 
   const handleCreateGroup = async (name: string, description: string, memberIds: string[]) => {
+    console.log('Handling group creation:', { name, description, memberIds });
+    
     try {
       const roomId = await createGroupChat(name, description, memberIds);
+      console.log('Group created with ID:', roomId);
       setSelectedRoomId(roomId);
       setShowGroupCreation(false);
-    } catch (error) {
+      toast.success('Group created successfully!');
+    } catch (error: any) {
       console.error('Error creating group:', error);
-      toast.error('Failed to create group');
+      
+      let errorMessage = 'Failed to create group';
+      
+      // Provide more specific error messages
+      if (error.code === '23505') {
+        errorMessage = 'A group with this name already exists';
+      } else if (error.code === '23503') {
+        errorMessage = 'Invalid user selected for group';
+      } else if (error.message?.includes('permission')) {
+        errorMessage = 'Permission denied - unable to create group';
+      } else if (error.message?.includes('RLS')) {
+        errorMessage = 'Database security error - please try again';
+      } else if (error.message) {
+        errorMessage = `Failed to create group: ${error.message}`;
+      }
+      
+      toast.error(errorMessage);
     }
   };
 

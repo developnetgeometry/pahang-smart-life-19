@@ -167,6 +167,8 @@ export const useChatRooms = () => {
   };
 
   const createGroupChat = async (name: string, description: string, memberIds: string[]) => {
+    console.log('Creating group chat:', { name, description, memberIds, userId: user?.id });
+    
     try {
       // Create the group chat room
       const { data: roomData, error: roomError } = await supabase
@@ -182,7 +184,12 @@ export const useChatRooms = () => {
         .select()
         .single();
 
-      if (roomError) throw roomError;
+      if (roomError) {
+        console.error('Error creating room:', roomError);
+        throw roomError;
+      }
+
+      console.log('Room created successfully:', roomData);
 
       // Add the creator and selected members
       const members = [
@@ -190,11 +197,22 @@ export const useChatRooms = () => {
         ...memberIds.map(userId => ({ room_id: roomData.id, user_id: userId, is_admin: false }))
       ];
 
+      console.log('Adding members:', members);
+
       const { error: membersError } = await supabase
         .from('chat_room_members')
         .insert(members);
 
-      if (membersError) throw membersError;
+      if (membersError) {
+        console.error('Error adding members:', membersError);
+        
+        // If member addition fails, try to clean up the room
+        await supabase.from('chat_rooms').delete().eq('id', roomData.id);
+        
+        throw membersError;
+      }
+
+      console.log('Members added successfully');
 
       await fetchRooms();
       return roomData.id;
