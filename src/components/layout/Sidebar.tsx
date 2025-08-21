@@ -1,5 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useAccessControl } from "@/hooks/use-access-control";
+import { useUserRoles } from "@/hooks/use-user-roles";
 import { useTranslation } from "@/lib/translations";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -60,6 +61,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const { userRoles } = useUserRoles();
   
   const {
     canAccessLevel,
@@ -138,7 +140,8 @@ export function AppSidebar() {
       hasSecurity: functionalAccess.security,
       userLevel,
       functionalAccess,
-      geographicScope
+      geographicScope,
+      userRoles: userRoles // Add this to see current roles
     });
     
     if (functionalAccess.security) {

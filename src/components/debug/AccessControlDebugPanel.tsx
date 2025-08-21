@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AccessControlTester, roleTestScenarios, testMarketplaceAccess, testRouteProtection, runRoleCombinationTests } from '@/utils/access-control-tests';
+import { RoleAssignmentPanel } from '@/components/debug/RoleAssignmentPanel';
 import { 
   Shield, 
   User, 
@@ -87,6 +88,8 @@ export function AccessControlDebugPanel() {
           </CardDescription>
         </CardHeader>
       </Card>
+
+      <RoleAssignmentPanel />
 
       <Tabs defaultValue="current" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
