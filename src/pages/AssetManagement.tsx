@@ -197,8 +197,8 @@ export default function AssetManagement() {
   const filteredAssets = assets.filter(asset => {
     const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (asset.asset_code && asset.asset_code.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = !categoryFilter || asset.asset_type === categoryFilter;
-    const matchesCondition = !conditionFilter || asset.condition_status === conditionFilter;
+    const matchesCategory = !categoryFilter || categoryFilter === 'all' || asset.asset_type === categoryFilter;
+    const matchesCondition = !conditionFilter || conditionFilter === 'all' || asset.condition_status === conditionFilter;
     
     return matchesSearch && matchesCategory && matchesCondition;
   });
@@ -471,7 +471,7 @@ export default function AssetManagement() {
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories.map(category => (
                   <SelectItem key={category} value={category}>
                     {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -484,7 +484,7 @@ export default function AssetManagement() {
                 <SelectValue placeholder="Filter by condition" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Conditions</SelectItem>
+                <SelectItem value="all">All Conditions</SelectItem>
                 {conditionOptions.map(condition => (
                   <SelectItem key={condition.value} value={condition.value}>
                     {condition.label}
