@@ -2220,9 +2220,13 @@ export type Database = {
           bookings: boolean | null
           complaints: boolean | null
           created_at: string | null
+          emergencies: boolean | null
           events: boolean | null
           id: string
           maintenance: boolean | null
+          marketplace: boolean | null
+          mentions: boolean | null
+          messages: boolean | null
           security: boolean | null
           updated_at: string | null
           user_id: string
@@ -2232,9 +2236,13 @@ export type Database = {
           bookings?: boolean | null
           complaints?: boolean | null
           created_at?: string | null
+          emergencies?: boolean | null
           events?: boolean | null
           id?: string
           maintenance?: boolean | null
+          marketplace?: boolean | null
+          mentions?: boolean | null
+          messages?: boolean | null
           security?: boolean | null
           updated_at?: string | null
           user_id: string
@@ -2244,9 +2252,13 @@ export type Database = {
           bookings?: boolean | null
           complaints?: boolean | null
           created_at?: string | null
+          emergencies?: boolean | null
           events?: boolean | null
           id?: string
           maintenance?: boolean | null
+          marketplace?: boolean | null
+          mentions?: boolean | null
+          messages?: boolean | null
           security?: boolean | null
           updated_at?: string | null
           user_id?: string

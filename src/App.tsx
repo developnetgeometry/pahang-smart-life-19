@@ -36,6 +36,7 @@ import VisitorAnalytics from "./pages/VisitorAnalytics";
 import CommunicationHub from "./pages/CommunicationHub";
 import RoleManagement from "./pages/RoleManagement";
 import NotificationSettings from "./pages/NotificationSettings";
+import NotificationPage from "./pages/NotificationPage";
 import PanicAlerts from "./pages/PanicAlerts";
 import NotFound from "./pages/NotFound";
 
@@ -121,6 +122,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <RoleManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute>
+                  <NotificationPage />
                 </ProtectedRoute>
               }
             />
