@@ -32,6 +32,7 @@ import {
   Home,
   Activity,
   Bell,
+  UserCheck,
 } from "lucide-react";
 
 interface NavigationItem {
@@ -114,6 +115,16 @@ export function AppSidebar() {
           requiredRoles: ["admin", "manager"],
         }
       );
+    }
+
+    // Role Approval Authority - for approval management roles
+    if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+      adminItems.push({
+        title: "Role Approval Authority",
+        url: "/role-management",
+        icon: UserCheck,
+        requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
+      });
     }
 
     if (hasRole("admin")) {
