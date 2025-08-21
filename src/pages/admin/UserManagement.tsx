@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, UserPlus, Search, Filter, MoreVertical, Edit, Trash2, Shield, ShieldCheck } from 'lucide-react';
+import { Users, UserPlus, Search, Filter, MoreVertical, Edit, Trash2, Shield, ShieldCheck, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface User {
   id: string;
@@ -17,9 +18,10 @@ interface User {
   email: string;
   phone: string;
   unit: string;
-  role: 'resident' | 'admin' | 'security' | 'maintenance';
+  role: string;
   status: 'active' | 'inactive' | 'pending';
   joinDate: string;
+  district_id: string;
 }
 
 export default function UserManagement() {
@@ -29,8 +31,10 @@ export default function UserManagement() {
   const [selectedRole, setSelectedRole] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [form, setForm] = useState<{ name: string; email: string; phone: string; unit: string; role: User['role'] | ''; status: User['status'] | '' }>({ name: '', email: '', phone: '', unit: '', role: '', status: '' });
+  const [form, setForm] = useState<{ name: string; email: string; phone: string; unit: string; role: string; status: User['status'] | '' }>({ name: '', email: '', phone: '', unit: '', role: '', status: '' });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const text = {
     en: {
       title: 'User Management',
@@ -108,45 +112,90 @@ export default function UserManagement() {
 
   const t = text[language];
 
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: '1',
-      name: 'John Doe',
-      email: 'john.doe@email.com',
-      phone: '+60123456789',
-      unit: 'A-15-02',
-      role: 'resident',
-      status: 'active',
-      joinDate: '2024-01-15'
-    },
-    {
-      id: '2',
-      name: 'Sarah Chen',
-      email: 'sarah.chen@email.com',
-      phone: '+60198765432',
-      unit: 'B-08-01',
-      role: 'admin',
-      status: 'active',
-      joinDate: '2024-01-10'
-    },
-    {
-      id: '3',
-      name: 'Mike Wong',
-      email: 'mike.wong@email.com',
-      phone: '+60187654321',
-      unit: 'Security Office',
-      role: 'security',
-      status: 'active',
-      joinDate: '2024-01-08'
+  // Fetch users from database
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          full_name,
+          email,
+          phone,
+          unit_number,
+          district_id,
+          created_at
+        `);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch users',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Get user roles separately
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+
+      if (rolesError) {
+        console.error('Error fetching roles:', rolesError);
+      }
+
+      // Create a map of user roles for quick lookup
+      const roleMap = new Map();
+      userRoles?.forEach(ur => {
+        if (!roleMap.has(ur.user_id)) {
+          roleMap.set(ur.user_id, []);
+        }
+        roleMap.get(ur.user_id).push(ur.role);
+      });
+
+      const formattedUsers: User[] = (profiles || []).map(profile => ({
+        id: profile.id,
+        name: profile.full_name || 'Unknown User',
+        email: profile.email || '',
+        phone: profile.phone || '',
+        unit: profile.unit_number || '',
+        role: roleMap.get(profile.id)?.[0] || 'resident',
+        status: 'active' as const,
+        joinDate: profile.created_at ? new Date(profile.created_at).toISOString().slice(0, 10) : '',
+        district_id: profile.district_id || ''
+      }));
+
+      setUsers(formattedUsers);
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch users',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   const roles = [
     { value: 'all', label: t.allRoles },
     { value: 'resident', label: t.resident },
-    { value: 'admin', label: t.admin },
-    { value: 'security', label: t.security },
-    { value: 'maintenance', label: t.maintenance }
+    { value: 'state_admin', label: t.admin },
+    { value: 'community_admin', label: 'Community Admin' },
+    { value: 'district_coordinator', label: 'District Coordinator' },
+    { value: 'security_officer', label: t.security },
+    { value: 'maintenance_staff', label: t.maintenance },
+    { value: 'facility_manager', label: 'Facility Manager' },
+    { value: 'service_provider', label: 'Service Provider' },
+    { value: 'community_leader', label: 'Community Leader' }
   ];
 
   const statuses = [
@@ -158,9 +207,14 @@ export default function UserManagement() {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'bg-purple-100 text-purple-800';
-      case 'security': return 'bg-blue-100 text-blue-800';
-      case 'maintenance': return 'bg-orange-100 text-orange-800';
+      case 'state_admin': return 'bg-purple-100 text-purple-800';
+      case 'community_admin': return 'bg-purple-50 text-purple-700';
+      case 'district_coordinator': return 'bg-indigo-100 text-indigo-800';
+      case 'security_officer': return 'bg-blue-100 text-blue-800';
+      case 'maintenance_staff': return 'bg-orange-100 text-orange-800';
+      case 'facility_manager': return 'bg-teal-100 text-teal-800';
+      case 'service_provider': return 'bg-cyan-100 text-cyan-800';
+      case 'community_leader': return 'bg-emerald-100 text-emerald-800';
       case 'resident': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -177,11 +231,16 @@ export default function UserManagement() {
 
   const getRoleText = (role: string) => {
     switch (role) {
-      case 'admin': return t.admin;
-      case 'security': return t.security;
-      case 'maintenance': return t.maintenance;
+      case 'state_admin': return t.admin;
+      case 'community_admin': return 'Community Admin';
+      case 'district_coordinator': return 'District Coordinator';
+      case 'security_officer': return t.security;
+      case 'maintenance_staff': return t.maintenance;
+      case 'facility_manager': return 'Facility Manager';
+      case 'service_provider': return 'Service Provider';
+      case 'community_leader': return 'Community Leader';
       case 'resident': return t.resident;
-      default: return role;
+      default: return role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
   };
 
@@ -202,33 +261,58 @@ export default function UserManagement() {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const handleCreateUser = () => {
+  const handleCreateUser = async () => {
     if (!form.name || !form.email || !form.role || !form.status) {
       toast({ title: t.createUser, description: 'Please fill all required fields.' });
       return;
     }
 
-    if (editingId) {
-      setUsers(prev => prev.map(u => u.id === editingId ? { ...u, ...form, role: form.role as User['role'], status: form.status as User['status'] } : u));
-      toast({ title: t.userUpdated });
-    } else {
-      const newUser: User = {
-        id: String(Date.now()),
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        unit: form.unit,
-        role: form.role as User['role'],
-        status: form.status as User['status'],
-        joinDate: new Date().toISOString().slice(0,10)
-      };
-      setUsers(prev => [newUser, ...prev]);
-      toast({ title: t.userCreated });
-    }
+    try {
+      if (editingId) {
+        // Update existing user
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            full_name: form.name,
+            phone: form.phone,
+            unit_number: form.unit
+          })
+          .eq('id', editingId);
 
-    setIsCreateOpen(false);
-    setEditingId(null);
-    setForm({ name: '', email: '', phone: '', unit: '', role: '', status: '' });
+        if (profileError) throw profileError;
+
+        // Update user role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .update({ role: form.role as any })
+          .eq('user_id', editingId);
+
+        if (roleError) throw roleError;
+
+        toast({ title: t.userUpdated });
+      } else {
+        // For new users, they would need to be created through auth signup
+        // This is a simplified version - in practice, you'd need proper user creation
+        toast({ 
+          title: 'Info', 
+          description: 'User creation requires authentication setup. Please use the proper registration flow.',
+          variant: 'default'
+        });
+        return;
+      }
+
+      setIsCreateOpen(false);
+      setEditingId(null);
+      setForm({ name: '', email: '', phone: '', unit: '', role: '', status: '' });
+      fetchUsers(); // Refresh the user list
+    } catch (error) {
+      console.error('Error saving user:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save user changes',
+        variant: 'destructive'
+      });
+    }
   };
 
   const handleEdit = (user: User) => {
@@ -237,10 +321,35 @@ export default function UserManagement() {
     setIsCreateOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Delete this user?')) {
-      setUsers(prev => prev.filter(u => u.id !== id));
-      toast({ title: t.userDeleted });
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Delete this user? This action cannot be undone.')) {
+      try {
+        // First delete user roles
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', id);
+
+        if (roleError) throw roleError;
+
+        // Then delete profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', id);
+
+        if (profileError) throw profileError;
+
+        toast({ title: t.userDeleted });
+        fetchUsers(); // Refresh the list
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to delete user',
+          variant: 'destructive'
+        });
+      }
     }
   };
 
@@ -283,7 +392,7 @@ export default function UserManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">{t.role}</Label>
-                  <Select value={form.role} onValueChange={(v) => setForm(prev => ({ ...prev, role: v as User['role'] }))}>
+                  <Select value={form.role} onValueChange={(v) => setForm(prev => ({ ...prev, role: v }))}>
                     <SelectTrigger>
                       <SelectValue placeholder={t.selectRole} />
                     </SelectTrigger>
@@ -369,9 +478,20 @@ export default function UserManagement() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {filteredUsers.map((user) => (
-              <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Loading users...</span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredUsers.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No users found
+                </div>
+              ) : (
+                filteredUsers.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-4">
                   <Avatar>
                     <AvatarImage src="" />
@@ -407,10 +527,12 @@ export default function UserManagement() {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
