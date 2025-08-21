@@ -278,7 +278,7 @@ export default function VideoCallRoom({
   };
 
   return (
-    <div className={`relative h-full bg-black rounded-lg overflow-hidden ${className}`}>
+    <div className={`fixed inset-0 bg-black rounded-lg overflow-hidden z-50 ${className}`}>
       {/* Main Video Area */}
       <div 
         className="relative h-full flex items-center justify-center"
@@ -307,9 +307,9 @@ export default function VideoCallRoom({
 
         {/* Participants Grid (when multiple participants) */}
         {participants.length > 1 && (
-          <div className="absolute top-4 right-4 grid grid-cols-1 gap-2 max-w-xs">
+          <div className="absolute top-4 right-4 grid grid-cols-1 gap-2 max-w-xs z-10">
             {participants.slice(1).map((participant) => (
-              <Card key={participant.id} className="relative">
+              <Card key={participant.id} className="relative bg-black/70 backdrop-blur-sm border-gray-600">
                 <CardContent className="p-0">
                   <div className="relative aspect-video bg-gray-800 rounded">
                     {participant.isVideoEnabled ? (
@@ -357,8 +357,8 @@ export default function VideoCallRoom({
         )}
 
         {/* Call Info */}
-        <div className="absolute top-4 left-4">
-          <Card className="bg-black/50 border-gray-600">
+        <div className="absolute top-4 left-4 z-10">
+          <Card className="bg-black/70 border-gray-600 backdrop-blur-sm">
             <CardContent className="p-3">
               <div className="flex items-center gap-4 text-white">
                 <div className="flex items-center gap-2">
@@ -383,8 +383,8 @@ export default function VideoCallRoom({
 
         {/* Controls */}
         {showControls && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-            <Card className="bg-black/70 border-gray-600">
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20">
+            <Card className="bg-black/80 border-gray-600 backdrop-blur-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
                   {/* Audio Toggle */}

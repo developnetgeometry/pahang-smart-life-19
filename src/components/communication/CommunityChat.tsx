@@ -419,14 +419,12 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
       {/* Chat Area */}
       <div className="flex-1 flex flex-col">
         {showVideoCall && selectedRoom ? (
-          <div className="flex-1">
-            <VideoCallRoom 
-              roomId={selectedRoomId}
-              isHost={true}
-              onLeave={() => setShowVideoCall(false)}
-              onToggleChat={() => setShowVideoCall(false)}
-            />
-          </div>
+          <VideoCallRoom 
+            roomId={selectedRoomId}
+            isHost={true}
+            onLeave={() => setShowVideoCall(false)}
+            onToggleChat={() => setShowVideoCall(false)}
+          />
         ) : selectedRoom ? (
           <>
             {/* Chat Header */}
