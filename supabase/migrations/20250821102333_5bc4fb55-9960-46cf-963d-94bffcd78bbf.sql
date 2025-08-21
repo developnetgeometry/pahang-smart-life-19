@@ -1,0 +1,133 @@
+-- Add sample documents for the applications that exist
+INSERT INTO application_documents (
+  id,
+  application_id,
+  document_type,
+  document_name,
+  file_url,
+  file_size,
+  mime_type,
+  is_verified,
+  upload_date,
+  notes
+) VALUES
+  (
+    '880e8400-e29b-41d4-a716-446655440001',
+    '660e8400-e29b-41d4-a716-446655440001',
+    'business_registration',
+    'Elite_Cleaning_Business_Registration.pdf',
+    '/documents/elite_cleaning_reg.pdf',
+    245760,
+    'application/pdf',
+    true,
+    now() - interval '2 days',
+    'Valid business registration certificate'
+  ),
+  (
+    '880e8400-e29b-41d4-a716-446655440002',
+    '660e8400-e29b-41d4-a716-446655440001',
+    'insurance_certificate',
+    'Elite_Cleaning_Insurance_Certificate.pdf',
+    '/documents/elite_cleaning_insurance.pdf',
+    189432,
+    'application/pdf',
+    true,
+    now() - interval '2 days',
+    'Comprehensive liability insurance coverage'
+  ),
+  (
+    '880e8400-e29b-41d4-a716-446655440003',
+    '660e8400-e29b-41d4-a716-446655440002',
+    'business_registration',
+    'Garden_Paradise_Registration.pdf',
+    '/documents/garden_paradise_reg.pdf',
+    298765,
+    'application/pdf',
+    false,
+    now() - interval '5 days',
+    'Pending verification - requires additional information'
+  ),
+  (
+    '880e8400-e29b-41d4-a716-446655440004',
+    '660e8400-e29b-41d4-a716-446655440002',
+    'license',
+    'Landscaping_Professional_License.jpg',
+    '/documents/landscaping_license.jpg',
+    156789,
+    'image/jpeg',
+    true,
+    now() - interval '4 days',
+    'Valid professional landscaping license'
+  ),
+  (
+    '880e8400-e29b-41d4-a716-446655440005',
+    '660e8400-e29b-41d4-a716-446655440003',
+    'business_registration',
+    'TechFix_Business_Registration.pdf',
+    '/documents/techfix_registration.pdf',
+    321456,
+    'application/pdf',
+    true,
+    now() - interval '10 days',
+    'Approved business registration'
+  ),
+  (
+    '880e8400-e29b-41d4-a716-446655440006',
+    '660e8400-e29b-41d4-a716-446655440003',
+    'insurance_certificate',
+    'TechFix_Liability_Insurance.pdf',
+    '/documents/techfix_insurance.pdf',
+    278900,
+    'application/pdf',
+    true,
+    now() - interval '9 days',
+    'Professional liability insurance certificate'
+  ),
+  (
+    '880e8400-e29b-41d4-a716-446655440007',
+    '660e8400-e29b-41d4-a716-446655440004',
+    'business_registration',
+    'Delicious_Catering_Registration.pdf',
+    '/documents/catering_registration.pdf',
+    234567,
+    'application/pdf',
+    false,
+    now() - interval '7 days',
+    'Registration document under review'
+  ),
+  (
+    '880e8400-e29b-41d4-a716-446655440008',
+    '660e8400-e29b-41d4-a716-446655440004',
+    'license',
+    'Food_Handler_Certificate.pdf',
+    '/documents/food_handler_cert.pdf',
+    145678,
+    'application/pdf',
+    true,
+    now() - interval '6 days',
+    'Valid food handling certification'
+  ),
+  (
+    '880e8400-e29b-41d4-a716-446655440009',
+    '660e8400-e29b-41d4-a716-446655440006',
+    'business_registration',
+    'Fresh_Mart_Business_License.pdf',
+    '/documents/freshmart_license.pdf',
+    198765,
+    'application/pdf',
+    false,
+    now() - interval '1 day',
+    'Recently uploaded, pending review'
+  ),
+  (
+    '880e8400-e29b-41d4-a716-446655440010',
+    '660e8400-e29b-41d4-a716-446655440006',
+    'insurance_certificate',
+    'Fresh_Mart_Delivery_Insurance.pdf',
+    '/documents/freshmart_insurance.pdf',
+    167432,
+    'application/pdf',
+    false,
+    now() - interval '1 day',
+    'Commercial vehicle insurance coverage'
+  );
