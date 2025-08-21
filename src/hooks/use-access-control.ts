@@ -270,9 +270,13 @@ export function useAccessControl() {
     }
     
     if (functionalAccess.security) {
-      routes.push('/cctv-live-feed');
+      routes.push('/cctv-live');
       routes.push('/visitor-security');
       routes.push('/panic-alerts');
+      // Security management routes
+      if (canAccessLevel(6)) {
+        routes.push('/admin/cctv');
+      }
     }
     
     if (functionalAccess.administration) {
