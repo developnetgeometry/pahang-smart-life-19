@@ -5,13 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import PanicButton from '@/components/emergency/PanicButton';
 import { 
-  DollarSign, 
   Calendar, 
   Users, 
   Package,
   Megaphone,
   PartyPopper,
-  CreditCard,
   UserPlus,
   FileText,
   MessageSquare,
@@ -25,20 +23,6 @@ export function ResidentDashboard() {
   const { language, user } = useAuth();
 
   const personalMetrics = [
-    {
-      title: language === 'en' ? 'Account Balance' : 'Baki Akaun',
-      value: 'RM 150',
-      icon: DollarSign,
-      trend: 'Credit balance',
-      status: 'positive'
-    },
-    {
-      title: language === 'en' ? 'Upcoming Bills' : 'Bil Akan Datang',
-      value: 'RM 280',
-      icon: CreditCard,
-      trend: 'Due March 1',
-      status: 'pending'
-    },
     {
       title: language === 'en' ? 'My Bookings' : 'Tempahan Saya',
       value: '1',
@@ -70,9 +54,9 @@ export function ResidentDashboard() {
       priority: 'low'
     },
     {
-      type: 'bill',
-      title: language === 'en' ? 'Monthly Fee Reminder' : 'Peringatan Yuran Bulanan',
-      message: language === 'en' ? 'Reminder: Monthly maintenance fee due March 1' : 'Peringatan: Yuran penyelenggaraan bulanan perlu dibayar 1 Mac',
+      type: 'announcement',
+      title: language === 'en' ? 'Security Update' : 'Kemaskini Keselamatan',
+      message: language === 'en' ? 'New security protocols implemented for visitor access' : 'Protokol keselamatan baharu dilaksanakan untuk akses pelawat',
       time: '3 days ago',
       priority: 'high'
     }
@@ -96,12 +80,6 @@ export function ResidentDashboard() {
       description: language === 'en' ? 'Report issues or concerns' : 'Laporkan isu atau masalah',
       icon: FileText,
       action: '/my-complaints'
-    },
-    {
-      title: language === 'en' ? 'Pay Bills' : 'Bayar Bil',
-      description: language === 'en' ? 'View and pay outstanding bills' : 'Lihat dan bayar bil tertunggak',
-      icon: CreditCard,
-      action: '/my-profile'
     },
     {
       title: language === 'en' ? 'Community Chat' : 'Sembang Komuniti',
@@ -131,8 +109,8 @@ export function ResidentDashboard() {
       status: 'approved'
     },
     {
-      type: 'payment',
-      title: language === 'en' ? 'Maintenance fee paid' : 'Yuran penyelenggaraan dibayar',
+      type: 'announcement',
+      title: language === 'en' ? 'New facility booking confirmed' : 'Tempahan kemudahan baru disahkan',
       time: '3 days ago',
       status: 'completed'
     }
@@ -143,7 +121,7 @@ export function ResidentDashboard() {
       service: language === 'en' ? 'Internet Service' : 'Perkhidmatan Internet',
       provider: 'TM Unifi',
       status: 'active',
-      nextBilling: '2024-03-01'
+      nextService: '2024-03-01'
     },
     {
       service: language === 'en' ? 'Cleaning Service' : 'Perkhidmatan Pembersihan',
@@ -157,7 +135,7 @@ export function ResidentDashboard() {
     switch (type) {
       case 'maintenance': return AlertTriangle;
       case 'event': return PartyPopper;
-      case 'bill': return CreditCard;
+      case 'announcement': return Megaphone;
       default: return Megaphone;
     }
   };
@@ -188,7 +166,7 @@ export function ResidentDashboard() {
     switch (type) {
       case 'booking': return Calendar;
       case 'visitor': return Users;
-      case 'payment': return DollarSign;
+      case 'announcement': return Megaphone;
       default: return CheckCircle;
     }
   };
@@ -304,7 +282,7 @@ export function ResidentDashboard() {
                   <p className="text-xs text-muted-foreground">{service.provider}</p>
                   <p className="text-xs text-muted-foreground">
                     {service.status === 'active' 
-                      ? `Next billing: ${service.nextBilling}`
+                      ? `Next service: ${service.nextService || service.nextVisit}`
                       : `Next visit: ${service.nextVisit}`
                     }
                   </p>
