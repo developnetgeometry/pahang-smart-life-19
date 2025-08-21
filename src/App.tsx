@@ -234,6 +234,10 @@ const App = () => (
               }
             />
             <Route
+              path="/communication"
+              element={<Navigate to="/communication-hub" replace />}
+            />
+            <Route
               path="/communication-hub"
               element={
                 <ProtectedRoute>
