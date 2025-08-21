@@ -337,13 +337,15 @@ export default function InventoryManagement() {
   const filteredItems = items.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.item_code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !categoryFilter || item.inventory_categories?.name === categoryFilter;
+    const matchesCategory = !categoryFilter || categoryFilter === 'all' || item.inventory_categories?.name === categoryFilter;
     
     let matchesStock = true;
     if (stockFilter === 'low') {
       matchesStock = item.current_stock <= item.reorder_level;
     } else if (stockFilter === 'out') {
       matchesStock = item.current_stock === 0;
+    } else if (stockFilter === 'all') {
+      matchesStock = true;
     }
     
     return matchesSearch && matchesCategory && matchesStock;
@@ -482,7 +484,7 @@ export default function InventoryManagement() {
                   <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   {categories.map(category => (
                     <SelectItem key={category.id} value={category.name}>
                       {category.name}
@@ -495,7 +497,7 @@ export default function InventoryManagement() {
                   <SelectValue placeholder="Filter by stock" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Stock Levels</SelectItem>
+                  <SelectItem value="all">All Stock Levels</SelectItem>
                   <SelectItem value="low">Low Stock</SelectItem>
                   <SelectItem value="out">Out of Stock</SelectItem>
                 </SelectContent>
