@@ -93,7 +93,8 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
   const [replyToMessageId, setReplyToMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Enhanced real-time messaging
+  // Enhanced real-time messaging - only for UUID room IDs
+  const isRealTimeRoom = currentChannel && currentChannel.length === 36; // UUID length
   const {
     messages: realtimeMessages,
     typingUsers,
@@ -104,7 +105,7 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
     startTyping,
     stopTyping,
     isLoading: messagesLoading
-  } = useRealtimeMessaging(currentChannel);
+  } = useRealtimeMessaging(isRealTimeRoom ? currentChannel : undefined);
 
   useEffect(() => {
     if (marketplaceChat?.presetMessage) {
@@ -754,8 +755,8 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
   const handleEnhancedSendMessage = async () => {
     if (!newMessage.trim()) return;
 
-    if (currentChannel.length === 36) {
-      // Use enhanced hook for real-time messaging
+    if (isRealTimeRoom) {
+      // Use enhanced hook for real-time messaging with UUID room IDs
       await sendRealtimeMessage(newMessage, 'text', undefined, replyToMessageId || undefined);
     } else {
       // Use original function for mock channels
@@ -764,7 +765,9 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
     
     setNewMessage('');
     setReplyToMessageId(null);
-    stopTyping();
+    if (isRealTimeRoom) {
+      stopTyping();
+    }
   };
 
   const getChannelIcon = (type: string) => {
@@ -918,12 +921,12 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
           </div>
         </ScrollArea>
       ) : (
-        // Regular Messages with Enhanced Features
+        // Enhanced Messages with Real-time Features for UUID rooms, Mock data for others
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
-            {(realtimeMessages.length > 0 ? realtimeMessages : messages).map((message, index) => (
+            {(isRealTimeRoom && realtimeMessages.length > 0 ? realtimeMessages : messages).map((message, index) => (
               <div key={message.id} className="space-y-2">
-                {index === 0 || new Date((realtimeMessages.length > 0 ? realtimeMessages : messages)[index - 1].created_at).toDateString() !== new Date(message.created_at).toDateString() && (
+                {index === 0 || new Date((isRealTimeRoom && realtimeMessages.length > 0 ? realtimeMessages : messages)[index - 1].created_at).toDateString() !== new Date(message.created_at).toDateString() && (
                   <div className="text-center">
                     <Separator />
                     <Badge variant="secondary" className="px-3 py-1">
@@ -962,12 +965,12 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
                     {replyToMessageId === message.id && (
                       <div className="mb-2 p-2 bg-muted/50 rounded border-l-2 border-primary">
                         <span className="text-xs text-muted-foreground">
-                          {language === 'en' ? 'Replying to' : 'Membalas kepada'}: {message.sender_profile?.full_name}
+                          {language === 'en' ? 'Replying to' : 'Membalas kepada'}: {message.sender_profile?.full_name || message.profiles?.display_name}
                         </span>
                       </div>
                     )}
                     
-                    {editingMessageId === message.id ? (
+                    {editingMessageId === message.id && isRealTimeRoom ? (
                       <div className="space-y-2">
                         <Input
                           defaultValue={message.message_text || (message as any).message}
@@ -1011,17 +1014,19 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
                           </div>
                         )}
 
-                        <MessageReactions 
-                          messageId={message.id}
-                          reactions={message.reactions || []}
-                          onReact={(emoji) => reactToMessage(message.id, emoji)}
-                        />
+                        {isRealTimeRoom && (
+                          <MessageReactions 
+                            messageId={message.id}
+                            reactions={message.reactions || []}
+                            onReact={(emoji) => reactToMessage(message.id, emoji)}
+                          />
+                        )}
                       </div>
                     )}
                   </div>
 
-                  {/* Message Actions */}
-                  {message.sender_id === user?.id && (
+                  {/* Message Actions - only for real-time rooms and user's own messages */}
+                  {isRealTimeRoom && message.sender_id === user?.id && (
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                       <Button
                         size="sm"
@@ -1061,7 +1066,7 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
               </div>
             ))}
             
-            <TypingIndicator typingUsers={typingUsers} />
+            {isRealTimeRoom && <TypingIndicator typingUsers={typingUsers} />}
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
@@ -1098,7 +1103,7 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
           </div>
         )}
 
-        {showFileUpload && (
+        {showFileUpload && isRealTimeRoom && (
           <div className="mb-3">
             <FileUpload
               onFileUploaded={(uploadedFile) => {
@@ -1117,14 +1122,16 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
         )}
         
         <div className="flex space-x-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setShowFileUpload(!showFileUpload)}
-            className="flex items-center gap-1"
-          >
-            <Paperclip className="w-4 h-4" />
-          </Button>
+          {isRealTimeRoom && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowFileUpload(!showFileUpload)}
+              className="flex items-center gap-1"
+            >
+              <Paperclip className="w-4 h-4" />
+            </Button>
+          )}
           
           <Input
             placeholder={
@@ -1135,9 +1142,15 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
             value={newMessage}
             onChange={(e) => {
               setNewMessage(e.target.value);
-              startTyping();
+              if (isRealTimeRoom) {
+                startTyping();
+              }
             }}
-            onBlur={stopTyping}
+            onBlur={() => {
+              if (isRealTimeRoom) {
+                stopTyping();
+              }
+            }}
             onKeyPress={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
