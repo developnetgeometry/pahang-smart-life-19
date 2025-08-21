@@ -537,34 +537,32 @@ export default function Login() {
               </form>
 
               {/* Test Users Section */}
-              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm font-medium mb-2">
-                  {language === 'en' ? 'Test Credentials (12 Users - All Roles):' : 'Kredensi Ujian (12 Pengguna - Semua Peranan):'}
-                </p>
-                <div className="text-xs text-muted-foreground space-y-1 max-h-40 overflow-y-auto">
-                  <p><strong>State Admin:</strong> stateadmin@test.com / password123</p>
-                  <p><strong>District Coordinator:</strong> districtcoord@test.com / password123</p>
-                  <p><strong>Community Admin:</strong> communityadmin@test.com / password123</p>
-                  <p><strong>Admin:</strong> admin@test.com / password123</p>
-                  <p><strong>Manager:</strong> managernorth@test.com / password123</p>
-                  <p><strong>Facility Manager:</strong> facilitymanager@test.com / password123</p>
-                  <p><strong>Security Officer:</strong> securitynorth@test.com / password123</p>
-                  <p><strong>Maintenance Staff:</strong> maintenancestaff@test.com / password123</p>
-                  <p><strong>Resident:</strong> resident@test.com / password123</p>
-                  <p><strong>Service Provider:</strong> serviceprovider@test.com / password123</p>
-                  <p><strong>Community Leader:</strong> communityleader@test.com / password123</p>
-                  <p><strong>State Service Manager:</strong> stateservicemgr@test.com / password123</p>
-                </div>
-                
-                <div className="text-center p-4 bg-green-50 border border-green-200 rounded-md">
-                  <p className="text-green-800 font-medium">
-                    {language === 'en' ? '✅ All 12 test users are ready!' : '✅ Semua 12 pengguna ujian sudah siap!'}
-                  </p>
-                  <p className="text-green-600 text-sm mt-1">
-                    {language === 'en' ? 'Use any email above with password: password123' : 'Gunakan mana-mana e-mel di atas dengan kata laluan: password123'}
-                  </p>
-                </div>
-              </div>
+               <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                 <p className="text-sm font-medium mb-2">
+                   {language === 'en' ? 'Test Credentials (10 Users - Various Roles):' : 'Kredensi Ujian (10 Pengguna - Pelbagai Peranan):'}
+                 </p>
+                 <div className="text-xs text-muted-foreground space-y-1 max-h-40 overflow-y-auto">
+                   <p><strong>State Admin:</strong> stateadmin@test.com / password123</p>
+                   <p><strong>District Coordinator:</strong> districtcoord@test.com / password123</p>
+                   <p><strong>Community Admin:</strong> communityadmin@test.com / password123</p>
+                   <p><strong>Facility Manager:</strong> facilitymanager@test.com / password123</p>
+                   <p><strong>Security Officer:</strong> securitynorth@test.com / password123</p>
+                   <p><strong>Maintenance Staff:</strong> maintenancestaff@test.com / password123</p>
+                   <p><strong>Resident:</strong> resident@test.com / password123</p>
+                   <p><strong>Service Provider:</strong> serviceprovider@test.com / password123</p>
+                   <p><strong>Community Leader:</strong> communityleader@test.com / password123</p>
+                   <p><strong>State Service Manager:</strong> stateservicemgr@test.com / password123</p>
+                 </div>
+                 
+                 <div className="text-center p-4 bg-green-50 border border-green-200 rounded-md">
+                   <p className="text-green-800 font-medium">
+                     {language === 'en' ? '✅ All 10 test users are ready!' : '✅ Semua 10 pengguna ujian sudah siap!'}
+                   </p>
+                   <p className="text-green-600 text-sm mt-1">
+                     {language === 'en' ? 'Use any email above with password: password123' : 'Gunakan mana-mana e-mel di atas dengan kata laluan: password123'}
+                   </p>
+                 </div>
+               </div>
             </CardContent>
           </Card>
 
