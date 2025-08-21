@@ -1,4 +1,4 @@
-import { Layout } from "@/components/layout/Layout";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -121,8 +121,7 @@ export default function Directory() {
   const categories = ['management', 'security', 'maintenance', 'community', 'services'] as const;
 
   return (
-    <Layout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">
             {language === 'en' ? 'Community Directory' : 'Direktori Komuniti'}
@@ -259,6 +258,5 @@ export default function Directory() {
           </Card>
         )}
       </div>
-    </Layout>
   );
 }
