@@ -440,7 +440,7 @@ export function ResidentDashboard() {
                       <Button
                         variant="destructive"
                         className={`
-                          h-auto p-4 flex flex-col items-start gap-2 hover:shadow-md transition-all duration-150 w-full relative
+                          min-h-[100px] p-4 flex flex-col items-start gap-2 hover:shadow-md transition-all duration-150 w-full relative
                           ${isPressed ? 'scale-95 bg-red-700' : ''}
                           ${isTriggering ? 'animate-pulse' : ''}
                         `}
@@ -467,7 +467,7 @@ export function ResidentDashboard() {
                     <Button
                       key={index}
                       variant="outline"
-                      className="h-auto p-4 flex flex-col items-start gap-2 hover:shadow-md transition-shadow"
+                      className="min-h-[100px] p-4 flex flex-col items-start gap-2 hover:shadow-md transition-shadow"
                       asChild
                     >
                       <a href={action.action}>
