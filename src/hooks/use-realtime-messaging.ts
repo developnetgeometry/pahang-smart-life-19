@@ -81,6 +81,7 @@ export const useRealtimeMessaging = (roomId?: string) => {
 
       const enhancedMessages: EnhancedMessage[] = (data || []).map(msg => ({
         ...msg,
+        message_type: msg.message_type as 'text' | 'image' | 'file' | 'voice' | 'system',
         sender_profile: { full_name: 'Demo User' },
         reactions: [],
         read_by: [],
