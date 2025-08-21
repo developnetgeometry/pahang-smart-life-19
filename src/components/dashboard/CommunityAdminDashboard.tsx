@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { WeatherWidget } from './WeatherWidget';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, 
   DollarSign, 
@@ -18,32 +20,96 @@ import {
 } from 'lucide-react';
 
 export function CommunityAdminDashboard() {
-  const { language } = useAuth();
+  const { language, user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState({
+    totalResidents: 0,
+    pendingRegistrations: 0,
+    activeComplaints: 0,
+    completedComplaints: 0,
+    totalBookings: 0,
+    upcomingEvents: 0,
+    recentAnnouncements: 0,
+    facilityUsage: [] as any[]
+  });
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Get user's district for filtering
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('district_id')
+          .eq('id', user?.id)
+          .single();
+
+        const districtId = profileData?.district_id;
+
+        // Fetch all metrics in parallel
+        const [
+          { data: residents, count: residentsCount },
+          { data: activeComplaints, count: activeComplaintsCount },
+          { data: completedComplaints, count: completedComplaintsCount },
+          { data: bookings, count: bookingsCount },
+          { data: events, count: eventsCount },
+          { data: announcements, count: announcementsCount },
+          { data: facilities }
+        ] = await Promise.all([
+          supabase.from('profiles').select('*', { count: 'exact' }).eq('district_id', districtId),
+          supabase.from('complaints').select('*', { count: 'exact' }).in('status', ['pending', 'in_progress']).eq('district_id', districtId),
+          supabase.from('complaints').select('*', { count: 'exact' }).eq('status', 'resolved').eq('district_id', districtId),
+          supabase.from('bookings').select('*', { count: 'exact' }).gte('booking_date', new Date().toISOString().split('T')[0]),
+          supabase.from('events').select('*', { count: 'exact' }).eq('district_id', districtId).gte('start_date', new Date().toISOString().split('T')[0]),
+          supabase.from('announcements').select('*', { count: 'exact' }).eq('district_id', districtId).eq('is_published', true),
+          supabase.from('facilities').select('*').eq('district_id', districtId)
+        ]);
+
+        setDashboardData({
+          totalResidents: residentsCount || 0,
+          pendingRegistrations: 0, // No role_requests table available
+          activeComplaints: activeComplaintsCount || 0,
+          completedComplaints: completedComplaintsCount || 0,
+          totalBookings: bookingsCount || 0,
+          upcomingEvents: eventsCount || 0,
+          recentAnnouncements: announcementsCount || 0,
+          facilityUsage: facilities || []
+        });
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user?.id) {
+      fetchDashboardData();
+    }
+  }, [user?.id]);
 
   const communityMetrics = [
     {
       title: language === 'en' ? 'Total Residents' : 'Jumlah Penduduk',
-      value: '342',
+      value: loading ? '...' : dashboardData.totalResidents.toString(),
       icon: Users,
-      trend: '+5 new residents'
+      trend: loading ? '...' : `${dashboardData.pendingRegistrations} ${language === 'en' ? 'pending approvals' : 'menunggu kelulusan'}`
     },
     {
       title: language === 'en' ? 'Active Issues' : 'Isu Aktif',
-      value: '8',
+      value: loading ? '...' : dashboardData.activeComplaints.toString(),
       icon: AlertTriangle,
-      trend: '3 resolved this week'
+      trend: loading ? '...' : `${dashboardData.completedComplaints} ${language === 'en' ? 'resolved' : 'diselesaikan'}`
     },
     {
-      title: language === 'en' ? 'Collections' : 'Kutipan',
-      value: 'RM 52K',
-      icon: DollarSign,
-      trend: '92% collection rate'
+      title: language === 'en' ? 'Bookings' : 'Tempahan',
+      value: loading ? '...' : dashboardData.totalBookings.toString(),
+      icon: Building,
+      trend: loading ? '...' : `${language === 'en' ? 'upcoming bookings' : 'tempahan akan datang'}`
     },
     {
-      title: language === 'en' ? 'Satisfaction' : 'Kepuasan',
-      value: '4.1/5',
-      icon: Star,
-      trend: '78% engagement rate'
+      title: language === 'en' ? 'Events' : 'Acara',
+      value: loading ? '...' : dashboardData.upcomingEvents.toString(),
+      icon: Calendar,
+      trend: loading ? '...' : `${language === 'en' ? 'upcoming events' : 'acara akan datang'}`
     }
   ];
 
@@ -135,10 +201,30 @@ export function CommunityAdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-sm text-muted-foreground">
-                {language === 'en' 
-                  ? 'All systems operational. 3 new resident registrations pending approval.' 
-                  : 'Semua sistem beroperasi. 3 pendaftaran penduduk baru menunggu kelulusan.'}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">
+                    {language === 'en' ? 'System Status' : 'Status Sistem'}
+                  </span>
+                  <Badge variant="default" className="bg-green-500">
+                    {language === 'en' ? 'Operational' : 'Beroperasi'}
+                  </Badge>
+                </div>
+                
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <div className="flex justify-between">
+                    <span>{language === 'en' ? 'Pending Registrations:' : 'Pendaftaran Menunggu:'}</span>
+                    <span className="font-medium">{loading ? '...' : dashboardData.pendingRegistrations}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>{language === 'en' ? 'Active Complaints:' : 'Aduan Aktif:'}</span>
+                    <span className="font-medium">{loading ? '...' : dashboardData.activeComplaints}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>{language === 'en' ? 'Published Announcements:' : 'Pengumuman Diterbitkan:'}</span>
+                    <span className="font-medium">{loading ? '...' : dashboardData.recentAnnouncements}</span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
