@@ -173,26 +173,6 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
           member_count: 45
         },
         {
-          id: 'announcements',
-          name: language === 'en' ? 'Announcements' : 'Pengumuman',
-          description: language === 'en' ? 'Official community announcements' : 'Pengumuman rasmi komuniti',
-          channel_type: 'announcements',
-          is_private: false,
-          created_by: user?.id || '',
-          district_id: 'district-1',
-          member_count: 67
-        },
-        {
-          id: 'maintenance',
-          name: language === 'en' ? 'Maintenance' : 'Penyelenggaraan',
-          description: language === 'en' ? 'Maintenance updates and schedules' : 'Kemas kini dan jadual penyelenggaraan',
-          channel_type: 'maintenance',
-          is_private: false,
-          created_by: user?.id || '',
-          district_id: 'district-1',
-          member_count: 23
-        },
-        {
           id: 'social',
           name: language === 'en' ? 'Social' : 'Sosial',
           description: language === 'en' ? 'Casual conversations and social events' : 'Perbualan santai dan acara sosial',
