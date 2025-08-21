@@ -133,31 +133,31 @@ export function AppSidebar() {
       });
     }
 
-    // Administration - only for admin and manager roles
+    // Administration - only for state_admin and community_admin roles
     const adminItems = [];
-    if (hasRole("admin") || hasRole("manager")) {
+    if (hasRole("state_admin") || hasRole("community_admin")) {
       adminItems.push(
         {
           title: t("userManagement"),
           url: "/admin/users",
           icon: UserPlus,
-          requiredRoles: ["admin", "manager"],
+          requiredRoles: ["state_admin", "community_admin"],
         },
         {
           title: t("communityManagement"),
           url: "/admin/communities",
           icon: Home,
-          requiredRoles: ["admin", "manager"],
+          requiredRoles: ["state_admin", "community_admin"],
         }
       );
     }
 
-    if (hasRole("admin")) {
+    if (hasRole("state_admin")) {
       adminItems.push({
         title: t("districtManagement"),
         url: "/admin/districts",
         icon: Settings,
-        requiredRoles: ["admin"],
+        requiredRoles: ["state_admin"],
       });
     }
 
@@ -168,27 +168,27 @@ export function AppSidebar() {
       });
     }
 
-    // Operations Management - for admin and manager roles
+    // Operations Management - for state_admin and community_admin roles
     const operationsItems = [];
-    if (hasRole("admin") || hasRole("manager")) {
+    if (hasRole("state_admin") || hasRole("community_admin")) {
       operationsItems.push(
         {
           title: t("facilitiesManagement"),
           url: "/admin/facilities",
           icon: Building,
-          requiredRoles: ["admin", "manager"],
+          requiredRoles: ["state_admin", "community_admin"],
         },
         {
           title: t("maintenanceManagement"),
           url: "/admin/maintenance",
           icon: Wrench,
-          requiredRoles: ["admin", "manager"],
+          requiredRoles: ["state_admin", "community_admin"],
         },
         {
           title: t("complaintsManagement"),
           url: "/admin/complaints",
           icon: AlertTriangle,
-          requiredRoles: ["admin", "manager"],
+          requiredRoles: ["state_admin", "community_admin"],
         }
       );
     }
@@ -230,50 +230,50 @@ export function AppSidebar() {
       });
     }
 
-    // Security & Monitoring - for security, admin, and manager roles
+    // Security & Monitoring - for security, state_admin, and community_admin roles
     const securityItems = [];
-    if (hasRole("security_officer") || hasRole("admin") || hasRole("manager")) {
+    if (hasRole("security_officer") || hasRole("state_admin") || hasRole("community_admin")) {
       securityItems.push(
         {
           title: t("panicAlerts"),
           url: "/panic-alerts",
           icon: AlertTriangle,
-          requiredRoles: ["security_officer", "admin", "manager"],
+          requiredRoles: ["security_officer", "state_admin", "community_admin"],
         },
         {
           title: t("visitorSecurity"),
           url: "/visitor-security",
           icon: Shield,
-          requiredRoles: ["security_officer", "admin", "manager"],
+          requiredRoles: ["security_officer", "state_admin", "community_admin"],
         },
         {
           title: t("cctvManagement"),
           url: "/admin/cctv",
           icon: Camera,
-          requiredRoles: ["security_officer", "admin", "manager"],
+          requiredRoles: ["security_officer", "state_admin", "community_admin"],
         }
       );
     }
 
-    if (hasRole("admin") || hasRole("manager")) {
+    if (hasRole("state_admin") || hasRole("community_admin")) {
       securityItems.push(
         {
           title: t("visitorAnalytics"),
           url: "/visitor-analytics",
           icon: Activity,
-          requiredRoles: ["admin", "manager"],
+          requiredRoles: ["state_admin", "community_admin"],
         },
         {
           title: t("smartMonitoring"),
           url: "/admin/smart-monitoring",
           icon: Monitor,
-          requiredRoles: ["admin", "manager"],
+          requiredRoles: ["state_admin", "community_admin"],
         },
         {
           title: t("sensorManagement"),
           url: "/admin/sensors",
           icon: Radio,
-          requiredRoles: ["admin", "manager"],
+          requiredRoles: ["state_admin", "community_admin"],
         }
       );
     }
@@ -287,21 +287,21 @@ export function AppSidebar() {
 
     // Service Provider Management - moved to Role Management section above
 
-    // Communication Management - for admin and manager roles
+    // Communication Management - for state_admin and community_admin roles
     const commMgmtItems = [];
-    if (hasRole("admin") || hasRole("manager")) {
+    if (hasRole("state_admin") || hasRole("community_admin")) {
       commMgmtItems.push(
         {
           title: t("announcementManagement"),
           url: "/admin/announcements",
           icon: Megaphone,
-          requiredRoles: ["admin", "manager"],
+          requiredRoles: ["state_admin", "community_admin"],
         },
         {
           title: t("discussionManagement"),
           url: "/admin/discussions",
           icon: MessageSquare,
-          requiredRoles: ["admin", "manager"],
+          requiredRoles: ["state_admin", "community_admin"],
         }
       );
     }
