@@ -8,6 +8,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ServiceManagement } from '@/components/services/ServiceManagement';
+import { CommunityStats } from './CommunityStats';
+import { QuickServicesWidget } from './QuickServicesWidget';
+import { UpcomingEventsWidget } from './UpcomingEventsWidget';
+import { WeatherWidget } from './WeatherWidget';
 import { MapPin } from 'lucide-react';
 import { 
   Calendar, 
@@ -517,6 +521,14 @@ export function ResidentDashboard() {
           })}
         </CardContent>
       </Card>
+
+      {/* Additional Widgets */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <CommunityStats language={language} />
+        <QuickServicesWidget language={language} />
+        <UpcomingEventsWidget language={language} />
+        <WeatherWidget />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activities */}
