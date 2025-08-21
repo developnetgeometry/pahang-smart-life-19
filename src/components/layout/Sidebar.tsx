@@ -134,6 +134,13 @@ export function AppSidebar() {
 
     // Security Functions
     const securityItems = [];
+    console.log('Security access check:', {
+      hasSecurity: functionalAccess.security,
+      userLevel,
+      functionalAccess,
+      geographicScope
+    });
+    
     if (functionalAccess.security) {
       securityItems.push(
         { title: t("cctvLiveFeed"), url: "/cctv-live", icon: Camera },
@@ -189,6 +196,12 @@ export function AppSidebar() {
     }
 
     // Security Admin - Level 6+ with security function
+    console.log('CCTV Management access check:', {
+      hasSecurity: functionalAccess.security,
+      canAccessLevel6: canAccessLevel(6),
+      userLevel
+    });
+    
     if (functionalAccess.security && canAccessLevel(6)) {
       adminItems.push(
         { title: t("cctvManagement"), url: "/admin/cctv", icon: Camera, requiredLevel: 6 }
@@ -217,6 +230,14 @@ export function AppSidebar() {
         items: adminItems,
       });
     }
+
+    // Debug Page (temporary)
+    nav.push({
+      label: "Debug",
+      items: [
+        { title: "Access Control Test", url: "/access-control-test", icon: Settings }
+      ]
+    });
 
     return nav;
   };
