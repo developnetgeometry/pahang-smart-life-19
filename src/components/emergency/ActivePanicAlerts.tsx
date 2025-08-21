@@ -225,11 +225,11 @@ export default function ActivePanicAlerts() {
       <div className="space-y-3">
         {alerts.map((alert) => (
           <div key={alert.id} className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-                <div>
-                  <p className="font-semibold text-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-sm break-words">
                     {language === 'en' ? 'Alert from: ' : 'Amaran daripada: '}
                     {alert.profiles?.full_name || alert.profiles?.email || `User ID: ${alert.user_id}`}
                   </p>
@@ -239,14 +239,15 @@ export default function ActivePanicAlerts() {
                 </div>
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 {alert.location_latitude && alert.location_longitude && (
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => openMaps(alert)}
+                    className="w-full sm:w-auto h-9"
                   >
-                    <Navigation className="w-3 h-3 mr-1" />
+                    <Navigation className="w-3 h-3 mr-2" />
                     {language === 'en' ? 'Location' : 'Lokasi'}
                   </Button>
                 )}
@@ -255,7 +256,7 @@ export default function ActivePanicAlerts() {
                   <DialogTrigger asChild>
                     <Button 
                       size="sm" 
-                      className="bg-red-600 hover:bg-red-700"
+                      className="bg-red-600 hover:bg-red-700 w-full sm:w-auto h-9 font-medium"
                       onClick={() => {
                         setSelectedAlert(alert);
                         setResponseNotes('');
@@ -264,43 +265,43 @@ export default function ActivePanicAlerts() {
                       {language === 'en' ? 'RESPOND' : 'RESPON'}
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-lg">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2 text-red-600">
+                  <DialogContent className="w-[95vw] max-w-lg mx-auto">
+                    <DialogHeader className="pb-4">
+                      <DialogTitle className="flex items-center gap-2 text-red-600 text-lg">
                         <AlertTriangle className="w-5 h-5" />
                         {language === 'en' ? 'Emergency Response' : 'Respon Kecemasan'}
                       </DialogTitle>
-                      <DialogDescription>
+                      <DialogDescription className="text-base">
                         {language === 'en' ? 'Respond to panic alert' : 'Respon kepada amaran panik'}
                       </DialogDescription>
                     </DialogHeader>
                     
-                    <div className="space-y-4">
-                      <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <User className="w-4 h-4" />
-                          <span className="font-semibold">
+                    <div className="space-y-6 max-h-[60vh] overflow-y-auto">
+                      <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+                        <div className="flex items-start gap-3">
+                          <User className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                          <span className="font-semibold text-base">
                             {alert.profiles?.full_name || alert.profiles?.email}
                           </span>
                         </div>
                         
-                        <div className="flex items-center gap-2 mb-2">
-                          <Clock className="w-4 h-4" />
+                        <div className="flex items-start gap-3">
+                          <Clock className="w-5 h-5 mt-0.5 flex-shrink-0" />
                           <span className="text-sm">
                             {new Date(alert.created_at).toLocaleString(language === 'en' ? 'en-US' : 'ms-MY')}
                           </span>
                         </div>
                         
                         {alert.location_address && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4" />
-                            <span className="text-sm">{alert.location_address}</span>
+                          <div className="flex items-start gap-3">
+                            <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                            <span className="text-sm break-words">{alert.location_address}</span>
                           </div>
                         )}
                       </div>
 
-                      <div>
-                        <label className="text-sm font-medium">
+                      <div className="space-y-3">
+                        <label className="text-sm font-medium block">
                           {language === 'en' ? 'Response Notes' : 'Nota Respon'}
                         </label>
                         <Textarea
@@ -311,38 +312,41 @@ export default function ActivePanicAlerts() {
                               ? 'Add notes about your response...'
                               : 'Tambah nota tentang respon anda...'
                           }
-                          className="mt-2"
+                          className="min-h-[100px] resize-none"
+                          rows={4}
                         />
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <Button
+                            onClick={() => updateAlertStatus(alert.id, 'responded', responseNotes)}
+                            className="w-full h-12 text-sm font-medium"
+                            variant="default"
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            {language === 'en' ? 'Mark as Responded' : 'Tandakan sebagai Direspon'}
+                          </Button>
+                          
+                          <Button
+                            onClick={() => updateAlertStatus(alert.id, 'resolved', responseNotes)}
+                            className="w-full h-12 text-sm font-medium"
+                            variant="default"
+                          >
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            {language === 'en' ? 'Mark as Resolved' : 'Tandakan sebagai Selesai'}
+                          </Button>
+                        </div>
+
                         <Button
-                          onClick={() => updateAlertStatus(alert.id, 'responded', responseNotes)}
-                          className="flex-1"
-                          variant="default"
+                          onClick={() => updateAlertStatus(alert.id, 'false_alarm', responseNotes)}
+                          variant="outline"
+                          className="w-full h-12 text-sm font-medium"
                         >
-                          <Eye className="w-4 h-4 mr-2" />
-                          {language === 'en' ? 'Mark as Responded' : 'Tandakan sebagai Direspon'}
-                        </Button>
-                        
-                        <Button
-                          onClick={() => updateAlertStatus(alert.id, 'resolved', responseNotes)}
-                          className="flex-1"
-                          variant="default"
-                        >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          {language === 'en' ? 'Mark as Resolved' : 'Tandakan sebagai Selesai'}
+                          <XCircle className="w-4 h-4 mr-2" />
+                          {language === 'en' ? 'Mark as False Alarm' : 'Tandakan sebagai Amaran Palsu'}
                         </Button>
                       </div>
-
-                      <Button
-                        onClick={() => updateAlertStatus(alert.id, 'false_alarm', responseNotes)}
-                        variant="outline"
-                        className="w-full"
-                      >
-                        <XCircle className="w-4 h-4 mr-2" />
-                        {language === 'en' ? 'Mark as False Alarm' : 'Tandakan sebagai Amaran Palsu'}
-                      </Button>
                     </div>
                   </DialogContent>
                 </Dialog>
