@@ -48,6 +48,7 @@ import AssetManagement from "./pages/AssetManagement";
 import ServiceRequests from "./pages/ServiceRequests";
 import FinancialManagement from "./pages/FinancialManagement";
 import InventoryManagement from "./pages/InventoryManagement";
+import AccessControlTest from "./pages/AccessControlTest";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -498,6 +499,18 @@ const App = () => (
                 <ProtectedRoute requiredLevel={10}>
                   <Layout>
                     <SensorManagement />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Access Control Testing (Development) */}
+            <Route
+              path="/access-control-test"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AccessControlTest />
                   </Layout>
                 </ProtectedRoute>
               }
