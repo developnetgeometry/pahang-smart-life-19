@@ -868,6 +868,62 @@ export type Database = {
         }
         Relationships: []
       }
+      directory_contacts: {
+        Row: {
+          category: string
+          created_at: string
+          district_id: string | null
+          email: string | null
+          hours: string
+          id: string
+          is_active: boolean
+          location: string
+          name: string
+          phone: string
+          role: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          district_id?: string | null
+          email?: string | null
+          hours: string
+          id?: string
+          is_active?: boolean
+          location: string
+          name: string
+          phone: string
+          role: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          district_id?: string | null
+          email?: string | null
+          hours?: string
+          id?: string
+          is_active?: boolean
+          location?: string
+          name?: string
+          phone?: string
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "directory_contacts_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discussion_replies: {
         Row: {
           author_id: string | null
