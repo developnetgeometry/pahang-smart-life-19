@@ -553,15 +553,6 @@ export default function Login() {
                    <p><strong>Community Leader:</strong> communityleader@test.com / password123</p>
                    <p><strong>State Service Manager:</strong> stateservicemgr@test.com / password123</p>
                  </div>
-                 
-                 <div className="text-center p-4 bg-green-50 border border-green-200 rounded-md">
-                   <p className="text-green-800 font-medium">
-                     {language === 'en' ? '✅ All 10 test users are ready!' : '✅ Semua 10 pengguna ujian sudah siap!'}
-                   </p>
-                   <p className="text-green-600 text-sm mt-1">
-                     {language === 'en' ? 'Use any email above with password: password123' : 'Gunakan mana-mana e-mel di atas dengan kata laluan: password123'}
-                   </p>
-                 </div>
                </div>
             </CardContent>
           </Card>
