@@ -66,11 +66,18 @@ interface MarketplaceChatInfo {
   };
 }
 
-interface CommunityChatProps {
-  marketplaceChat?: MarketplaceChatInfo | null;
+interface DirectoryChatInfo {
+  contactId: string;
+  contactName: string;
+  contactTitle: string;
 }
 
-export default function CommunityChat({ marketplaceChat }: CommunityChatProps = {}) {
+interface CommunityChatProps {
+  marketplaceChat?: MarketplaceChatInfo | null;
+  directoryChat?: DirectoryChatInfo | null;
+}
+
+export default function CommunityChat({ marketplaceChat, directoryChat }: CommunityChatProps = {}) {
   const { language, user } = useAuth();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -116,6 +123,15 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
       setNewMessage(marketplaceChat.presetMessage);
     }
   }, [marketplaceChat]);
+
+  useEffect(() => {
+    if (directoryChat) {
+      const presetMessage = language === 'en' 
+        ? `Hello, I would like to contact ${directoryChat.contactName} regarding ${directoryChat.contactTitle}.`
+        : `Hello, saya ingin menghubungi ${directoryChat.contactName} berkenaan ${directoryChat.contactTitle}.`;
+      setNewMessage(presetMessage);
+    }
+  }, [directoryChat, language]);
 
   useEffect(() => {
     if (rooms.length > 0 && !selectedRoomId) {

@@ -32,8 +32,8 @@ export default function CommunicationHub() {
   const { stats: communicationStats, isLoading: statsLoading } = useCommunicationStats();
   const { onlineUsers, updatePresence } = useUserPresence();
 
-  // Check if navigated from marketplace with seller chat info
-  const marketplaceChat = location.state as {
+  // Check if navigated from marketplace or directory with chat info
+  const locationState = location.state as {
     chatWith?: string;
     presetMessage?: string;
     itemInfo?: {
@@ -41,7 +41,20 @@ export default function CommunicationHub() {
       price: number;
       id: string;
     };
+    directoryChat?: {
+      contactId: string;
+      contactName: string;
+      contactTitle: string;
+    };
   } | null;
+
+  const marketplaceChat = locationState && locationState.itemInfo ? {
+    chatWith: locationState.chatWith,
+    presetMessage: locationState.presetMessage,
+    itemInfo: locationState.itemInfo
+  } : null;
+
+  const directoryChat = locationState?.directoryChat;
 
   return (
     <Layout>
@@ -97,6 +110,34 @@ export default function CommunicationHub() {
                     </span>
                     <Badge variant="secondary" className="text-xs">
                       {language === 'en' ? 'Marketplace Item' : 'Item Marketplace'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Directory Chat Notification */}
+        {directoryChat && (
+          <Card className="border-green-500/20 bg-green-500/5">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <MessageSquare className="w-5 h-5 text-green-600 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-green-900 dark:text-green-100">
+                    {language === 'en' ? 'Directory Contact' : 'Kenalan Direktori'}
+                  </h3>
+                  <p className="text-sm text-green-700 dark:text-green-200 mb-2">
+                    {language === 'en' 
+                      ? `Starting chat with ${directoryChat.contactName}`
+                      : `Memulakan chat dengan ${directoryChat.contactName}`
+                    }
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-300">
+                    <span>{directoryChat.contactTitle}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {language === 'en' ? 'Directory Contact' : 'Kenalan Direktori'}
                     </Badge>
                   </div>
                 </div>
@@ -220,7 +261,7 @@ export default function CommunicationHub() {
               </TabsList>
 
               <TabsContent value="chat" className="mt-6">
-                <CommunityChat marketplaceChat={marketplaceChat} />
+                <CommunityChat marketplaceChat={marketplaceChat} directoryChat={directoryChat} />
               </TabsContent>
 
               <TabsContent value="video" className="mt-6">

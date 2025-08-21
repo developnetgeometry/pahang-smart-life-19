@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Phone, MapPin, Clock, Users, Search, Mail, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface Contact {
   id: number;
@@ -22,6 +23,23 @@ interface Contact {
 export default function Directory() {
   const { language } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
+
+  const handleMessageContact = (contact: Contact) => {
+    navigate('/communication-hub', { 
+      state: { 
+        directoryChat: {
+          contactId: contact.id.toString(),
+          contactName: contact.name,
+          contactTitle: contact.role
+        }
+      }
+    });
+  };
+
+  const handleCallContact = (phoneNumber: string) => {
+    window.open(`tel:${phoneNumber}`, '_self');
+  };
 
   const allContacts: Contact[] = [
     // Management
@@ -254,11 +272,11 @@ export default function Directory() {
                         </div>
                         
                         <div className="flex gap-2 pt-2">
-                          <Button size="sm" variant="outline" className="flex-1">
+                          <Button size="sm" variant="outline" className="flex-1" onClick={() => handleCallContact(contact.phone)}>
                             <Phone className="w-3 h-3 mr-1" />
                             {language === 'en' ? 'Call' : 'Panggil'}
                           </Button>
-                          <Button size="sm" variant="outline" className="flex-1">
+                          <Button size="sm" variant="outline" className="flex-1" onClick={() => handleMessageContact(contact)}>
                             <MessageCircle className="w-3 h-3 mr-1" />
                             {language === 'en' ? 'Message' : 'Mesej'}
                           </Button>
