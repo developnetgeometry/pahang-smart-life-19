@@ -3,9 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { MapPin } from 'lucide-react';
 import { 
   Calendar, 
   Users, 
@@ -22,21 +24,111 @@ import {
   Shield
 } from 'lucide-react';
 
+interface Location {
+  latitude: number;
+  longitude: number;
+  address?: string;
+}
+
 export function ResidentDashboard() {
   const { language, user } = useAuth();
   const { toast } = useToast();
+  const [isPressed, setIsPressed] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [isTriggering, setIsTriggering] = useState(false);
+  const [location, setLocation] = useState<Location | null>(null);
   const [progress, setProgress] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const progressRef = useRef<NodeJS.Timeout | null>(null);
 
+  const HOLD_DURATION = 3000; // 3 seconds
+
+  useEffect(() => {
+    // Get user's current location on component mount
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+          
+          // Reverse geocoding to get address
+          reverseGeocode(position.coords.latitude, position.coords.longitude);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+        }
+      );
+    }
+  }, []);
+
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      const response = await fetch(
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
+      );
+      const data = await response.json();
+      
+      if (data.display_name || data.locality) {
+        setLocation(prev => prev ? {
+          ...prev,
+          address: data.display_name || `${data.locality}, ${data.countryName}`
+        } : null);
+      }
+    } catch (error) {
+      console.error('Error reverse geocoding:', error);
+    }
+  };
+
+  const startHold = () => {
+    if (isTriggering) return;
+
+    setIsPressed(true);
+    setProgress(0);
+
+    // Start progress animation
+    progressRef.current = setInterval(() => {
+      setProgress(prev => {
+        const newProgress = prev + (100 / (HOLD_DURATION / 100));
+        if (newProgress >= 100) {
+          if (progressRef.current) {
+            clearInterval(progressRef.current);
+          }
+          return 100;
+        }
+        return newProgress;
+      });
+    }, 100);
+
+    // Start hold timer
+    timerRef.current = setTimeout(() => {
+      triggerPanicAlert();
+    }, HOLD_DURATION);
+  };
+
+  const endHold = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    if (progressRef.current) {
+      clearInterval(progressRef.current);
+      progressRef.current = null;
+    }
+    setIsPressed(false);
+    setProgress(0);
+  };
+
   const triggerPanicAlert = async () => {
     setIsTriggering(true);
+    setIsPressed(false);
+    setProgress(0);
 
     try {
-      // Get current location
-      let currentLocation = null;
-      if (navigator.geolocation) {
+      // Get current location if not already available
+      let currentLocation = location;
+      if (!currentLocation && navigator.geolocation) {
         try {
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
@@ -52,32 +144,52 @@ export function ResidentDashboard() {
       }
 
       // Create panic alert in database
-      const { error } = await supabase
+      const { data: panicAlert, error } = await supabase
         .from('panic_alerts')
         .insert({
           user_id: user?.id,
           location_latitude: currentLocation?.latitude,
           location_longitude: currentLocation?.longitude,
+          location_address: currentLocation?.address,
           alert_status: 'active',
           district_id: '00000000-0000-0000-0000-000000000001'
-        });
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
+
+      // Call edge function to notify security
+      const { error: notifyError } = await supabase.functions.invoke('notify-panic-alert', {
+        body: {
+          panicAlertId: panicAlert.id,
+          userLocation: currentLocation,
+          userName: user?.email
+        }
+      });
+
+      if (notifyError) {
+        console.error('Error notifying security:', notifyError);
+      }
 
       toast({
         title: language === 'en' ? 'Emergency Alert Sent!' : 'Amaran Kecemasan Dihantar!',
         description: language === 'en' 
-          ? 'Security has been notified of your emergency.' 
-          : 'Keselamatan telah dimaklumkan tentang kecemasan anda.',
+          ? 'Security has been notified of your emergency. Help is on the way.' 
+          : 'Keselamatan telah dimaklumkan tentang kecemasan anda. Bantuan sedang dalam perjalanan.',
       });
+
+      setShowConfirm(true);
 
     } catch (error) {
       console.error('Error triggering panic alert:', error);
       toast({
         title: language === 'en' ? 'Error' : 'Ralat',
         description: language === 'en' 
-          ? 'Failed to send emergency alert. Please try again.' 
-          : 'Gagal menghantar amaran kecemasan. Sila cuba lagi.',
+          ? 'Failed to send emergency alert. Please try again or contact security directly.' 
+          : 'Gagal menghantar amaran kecemasan. Sila cuba lagi atau hubungi keselamatan secara langsung.',
         variant: 'destructive',
       });
     } finally {
@@ -279,21 +391,61 @@ export function ResidentDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {quickActions.map((action, index) => (
               action.isPanic ? (
-                <Button
-                  key={index}
-                  variant="destructive"
-                  className="h-auto p-4 flex flex-col items-start gap-2 hover:shadow-md transition-shadow"
-                  onClick={triggerPanicAlert}
-                  disabled={isTriggering}
-                >
-                  <div className="flex items-center gap-2 w-full">
-                    <action.icon className="h-5 w-5" />
-                    <span className="font-medium">{action.title}</span>
-                  </div>
-                  <p className="text-xs text-white/80 text-left">
-                    {action.description}
-                  </p>
-                </Button>
+                <div key={index} className="relative">
+                  {/* Progress Circle */}
+                  {isPressed && (
+                    <div className="absolute inset-0 -m-1 pointer-events-none">
+                      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="45"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                          className="text-red-200"
+                        />
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="45"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                          strokeDasharray={`${2 * Math.PI * 45}`}
+                          strokeDashoffset={`${2 * Math.PI * 45 * (1 - progress / 100)}`}
+                          className="text-red-500 transition-all duration-100 ease-linear"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                  
+                  <Button
+                    variant="destructive"
+                    className={`
+                      h-auto p-4 flex flex-col items-start gap-2 hover:shadow-md transition-all duration-150 w-full relative
+                      ${isPressed ? 'scale-95 bg-red-700' : ''}
+                      ${isTriggering ? 'animate-pulse' : ''}
+                    `}
+                    onMouseDown={startHold}
+                    onMouseUp={endHold}
+                    onMouseLeave={endHold}
+                    onTouchStart={startHold}
+                    onTouchEnd={endHold}
+                    disabled={isTriggering}
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      <action.icon className="h-5 w-5" />
+                      <span className="font-medium">{action.title}</span>
+                    </div>
+                    <p className="text-xs text-white/80 text-left">
+                      {isPressed 
+                        ? (language === 'en' ? 'Hold to confirm...' : 'Tahan untuk mengesahkan...')
+                        : action.description
+                      }
+                    </p>
+                  </Button>
+                </div>
               ) : (
                 <Button
                   key={index}
@@ -413,6 +565,57 @@ export function ResidentDashboard() {
         </Card>
       </div>
 
+      {/* Confirmation Dialog */}
+      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Shield className="w-5 h-5" />
+              {language === 'en' ? 'Emergency Alert Activated' : 'Amaran Kecemasan Diaktifkan'}
+            </DialogTitle>
+            <DialogDescription>
+              {language === 'en' 
+                ? 'Your emergency alert has been sent to security personnel.' 
+                : 'Amaran kecemasan anda telah dihantar kepada petugas keselamatan.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Alert>
+              <Clock className="h-4 w-4" />
+              <AlertDescription>
+                <strong>{language === 'en' ? 'Time:' : 'Masa:'}</strong>{' '}
+                {new Date().toLocaleString(language === 'en' ? 'en-US' : 'ms-MY')}
+              </AlertDescription>
+            </Alert>
+
+            {location && (
+              <Alert>
+                <MapPin className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>{language === 'en' ? 'Location:' : 'Lokasi:'}</strong>{' '}
+                  {location.address || `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg border border-green-200 dark:border-green-800">
+              <p className="text-sm text-green-800 dark:text-green-200 whitespace-pre-line">
+                {language === 'en' 
+                  ? '✓ Security has been notified\n✓ Your location has been shared\n✓ Help is on the way'
+                  : '✓ Keselamatan telah dimaklumkan\n✓ Lokasi anda telah dikongsi\n✓ Bantuan sedang dalam perjalanan'}
+              </p>
+            </div>
+
+            <Button 
+              onClick={() => setShowConfirm(false)}
+              className="w-full"
+            >
+              {language === 'en' ? 'Close' : 'Tutup'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
