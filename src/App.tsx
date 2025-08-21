@@ -18,7 +18,6 @@ import Discussions from "./pages/Discussions";
 import Facilities from "./pages/Facilities";
 import Marketplace from "./pages/Marketplace";
 import CCTVLiveFeed from "./pages/CCTVLiveFeed";
-import AdminPanel from "./pages/AdminPanel";
 import UserManagement from "./pages/admin/UserManagement";
 import SecurityDashboard from "./pages/admin/SecurityDashboard";
 import CommunityManagement from "./pages/admin/CommunityManagement";
