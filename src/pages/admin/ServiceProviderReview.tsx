@@ -26,7 +26,10 @@ import {
   AlertCircle,
   MessageSquare,
   Send,
-  Calendar
+  Calendar,
+  FileText,
+  Download,
+  Eye
 } from 'lucide-react';
 
 interface ApplicationDetails {
@@ -70,6 +73,18 @@ interface Communication {
   };
 }
 
+interface Document {
+  id: string;
+  document_type: string;
+  document_name: string;
+  file_url: string;
+  file_size: number;
+  mime_type: string;
+  is_verified: boolean;
+  upload_date: string;
+  notes: string;
+}
+
 const STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-800',
   under_review: 'bg-blue-100 text-blue-800', 
@@ -84,6 +99,7 @@ export default function ServiceProviderReview() {
   const { user } = useAuth();
   const [application, setApplication] = useState<ApplicationDetails | null>(null);
   const [communications, setCommunications] = useState<Communication[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [reviewNotes, setReviewNotes] = useState('');
@@ -94,6 +110,7 @@ export default function ServiceProviderReview() {
     if (id) {
       fetchApplicationDetails();
       fetchCommunications();
+      fetchDocuments();
     }
   }, [id]);
 
@@ -140,6 +157,42 @@ export default function ServiceProviderReview() {
     } catch (error) {
       console.error('Error fetching communications:', error);
     }
+  };
+
+  const fetchDocuments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('application_documents')
+        .select('*')
+        .eq('application_id', id)
+        .order('upload_date', { ascending: false });
+
+      if (error) throw error;
+      setDocuments(data || []);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getDocumentTypeLabel = (type: string) => {
+    const types: Record<string, string> = {
+      'business_registration': 'Business Registration',
+      'insurance_certificate': 'Insurance Certificate',
+      'tax_certificate': 'Tax Certificate',
+      'license': 'Professional License',
+      'id_document': 'ID Document',
+      'bank_statement': 'Bank Statement',
+      'other': 'Other Document'
+    };
+    return types[type] || type;
   };
 
   const updateApplicationStatus = async (newStatus: string) => {
@@ -440,6 +493,83 @@ export default function ServiceProviderReview() {
                   <p className="text-sm text-muted-foreground mt-1">
                     {application.experience_years} years
                   </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Uploaded Documents */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Uploaded Documents
+              </CardTitle>
+              <CardDescription>
+                Documents submitted by the applicant for verification
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {documents.length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No documents uploaded yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {documents.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-primary/10">
+                          <FileText className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{doc.document_name}</p>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span>{getDocumentTypeLabel(doc.document_type)}</span>
+                            <span>{formatFileSize(doc.file_size || 0)}</span>
+                            <span>{new Date(doc.upload_date).toLocaleDateString()}</span>
+                          </div>
+                          {doc.notes && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Note: {doc.notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {doc.is_verified && (
+                          <Badge variant="outline" className="text-green-600 border-green-200">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Verified
+                          </Badge>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(doc.file_url, '_blank')}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = doc.file_url;
+                            link.download = doc.document_name;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                          }}
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          Download
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>
