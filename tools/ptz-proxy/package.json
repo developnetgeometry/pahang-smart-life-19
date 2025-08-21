@@ -1,0 +1,20 @@
+{
+  "name": "ptz-proxy",
+  "version": "1.0.0",
+  "description": "A tiny Node server that relays PTZ commands to ONVIF cameras on your LAN. Used by the web app to control PTZ safely (avoids CORS and credential exposure).",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "onvif": "^0.8.1"
+  }
+}
