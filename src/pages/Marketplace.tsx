@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { ShoppingBag, Plus, Search, Heart, MessageCircle, Star, MapPin, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useChatRooms } from '@/hooks/use-chat-rooms';
 
 interface MarketplaceItem {
   id: string;
@@ -33,6 +34,7 @@ export default function Marketplace() {
   const { language } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { createGroupChat } = useChatRooms();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedCondition, setSelectedCondition] = useState('all');
@@ -219,24 +221,48 @@ export default function Marketplace() {
     setIsCreateOpen(false);
   };
 
-  const handleContactSeller = (item: MarketplaceItem) => {
-    // For demo purposes, show a message about contacting the seller
-    // In a real app, this would integrate with the actual user system
-    toast({
-      title: language === 'en' ? 'Contact Seller' : 'Hubungi Penjual',
-      description: language === 'en' 
-        ? `In a real marketplace, this would start a chat with ${item.seller} about "${item.title}"`
-        : `Dalam pasaran sebenar, ini akan memulakan sembang dengan ${item.seller} tentang "${item.title}"`,
-    });
+  const handleContactSeller = async (item: MarketplaceItem) => {
+    try {
+      // Create a chat room for the marketplace item
+      const chatName = `${item.seller} - ${item.title}`;
+      const chatDescription = language === 'en' 
+        ? `Marketplace chat about "${item.title}" (RM${item.price.toLocaleString()})`
+        : `Chat marketplace tentang "${item.title}" (RM${item.price.toLocaleString()})`;
+      
+      const roomId = await createGroupChat(chatName, chatDescription, []);
+      
+      // Navigate to communication hub with the created room
+      navigate('/communication', {
+        state: {
+          roomId,
+          chatWith: item.seller,
+          presetMessage: language === 'en' 
+            ? `Hi, is this item still available? - ${item.title} (RM${item.price.toLocaleString()})`
+            : `Hai, adakah item ini masih tersedia? - ${item.title} (RM${item.price.toLocaleString()})`,
+          itemInfo: {
+            title: item.title,
+            price: item.price,
+            id: item.id
+          }
+        }
+      });
 
-    // Navigate to communication hub for demo purposes
-    navigate('/communication', {
-      state: {
-        demoMessage: language === 'en' 
-          ? `Demo: Contact ${item.seller} about ${item.title} (RM${item.price.toLocaleString()})`
-          : `Demo: Hubungi ${item.seller} tentang ${item.title} (RM${item.price.toLocaleString()})`
-      }
-    });
+      toast({
+        title: language === 'en' ? 'Chat Created' : 'Chat Dicipta',
+        description: language === 'en' 
+          ? `Chat room created for ${item.title}` 
+          : `Bilik chat dicipta untuk ${item.title}`
+      });
+    } catch (error) {
+      console.error('Error creating chat:', error);
+      toast({
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' 
+          ? 'Failed to create chat room' 
+          : 'Gagal mencipta bilik chat',
+        variant: 'destructive'
+      });
+    }
   };
 
   return (
