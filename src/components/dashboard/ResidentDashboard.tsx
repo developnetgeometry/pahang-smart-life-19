@@ -200,6 +200,35 @@ export function ResidentDashboard() {
         ))}
       </div>
 
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{language === 'en' ? 'Quick Actions' : 'Tindakan Pantas'}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {quickActions.map((action, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                className="h-auto p-4 flex flex-col items-start gap-2 hover:shadow-md transition-shadow"
+                asChild
+              >
+                <a href={action.action}>
+                  <div className="flex items-center gap-2 w-full">
+                    <action.icon className="h-5 w-5 text-primary" />
+                    <span className="font-medium">{action.title}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-left">
+                    {action.description}
+                  </p>
+                </a>
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Community Updates */}
       <Card>
         <CardHeader>
@@ -296,34 +325,6 @@ export function ResidentDashboard() {
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{language === 'en' ? 'Quick Actions' : 'Tindakan Pantas'}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {quickActions.map((action, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                className="h-auto p-4 flex flex-col items-start gap-2 hover:shadow-md transition-shadow"
-                asChild
-              >
-                <a href={action.action}>
-                  <div className="flex items-center gap-2 w-full">
-                    <action.icon className="h-5 w-5 text-primary" />
-                    <span className="font-medium">{action.title}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground text-left">
-                    {action.description}
-                  </p>
-                </a>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Emergency Panic Button */}
       <PanicButton />
