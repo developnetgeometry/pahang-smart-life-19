@@ -19,6 +19,10 @@ export default function Login() {
   const [districtId, setDistrictId] = useState('');
   const [location, setLocation] = useState('');
   const [selectedRole, setSelectedRole] = useState('resident');
+  const [businessName, setBusinessName] = useState('');
+  const [businessType, setBusinessType] = useState('');
+  const [licenseNumber, setLicenseNumber] = useState('');
+  const [yearsOfExperience, setYearsOfExperience] = useState('');
   const [districts, setDistricts] = useState<Array<{id: string, name: string}>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -65,6 +69,19 @@ export default function Login() {
           throw new Error(language === 'en' ? 'Location is required' : 'Lokasi diperlukan');
         }
 
+        // Validate service provider specific fields
+        if (selectedRole === 'service_provider') {
+          if (!businessName.trim()) {
+            throw new Error(language === 'en' ? 'Business name is required' : 'Nama perniagaan diperlukan');
+          }
+          if (!businessType.trim()) {
+            throw new Error(language === 'en' ? 'Business type is required' : 'Jenis perniagaan diperlukan');
+          }
+          if (!yearsOfExperience.trim()) {
+            throw new Error(language === 'en' ? 'Years of experience is required' : 'Tahun pengalaman diperlukan');
+          }
+        }
+
         const redirectUrl = `${window.location.origin}/`;
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
@@ -81,18 +98,28 @@ export default function Login() {
         
         if (authData.user) {
           // Create profile record
+          const profileData: any = {
+            id: authData.user.id,
+            email: email,
+            full_name: fullName.trim(),
+            phone: phone.trim() || null,
+            district_id: districtId,
+            address: location.trim(),
+            language: language,
+            is_active: true
+          };
+
+          // Add service provider specific data
+          if (selectedRole === 'service_provider') {
+            profileData.business_name = businessName.trim();
+            profileData.business_type = businessType.trim();
+            profileData.license_number = licenseNumber.trim() || null;
+            profileData.years_of_experience = parseInt(yearsOfExperience) || null;
+          }
+
           const { error: profileError } = await supabase
             .from('profiles')
-            .insert({
-              id: authData.user.id,
-              email: email,
-              full_name: fullName.trim(),
-              phone: phone.trim() || null,
-              district_id: districtId,
-              address: location.trim(),
-              language: language,
-              is_active: true
-            });
+            .insert(profileData);
 
           if (profileError) {
             console.error('Profile creation error:', profileError);
@@ -128,6 +155,10 @@ export default function Login() {
           setDistrictId('');
           setLocation('');
           setSelectedRole('resident');
+          setBusinessName('');
+          setBusinessType('');
+          setLicenseNumber('');
+          setYearsOfExperience('');
           setPassword('');
         }
       }
@@ -355,12 +386,96 @@ export default function Login() {
                           <SelectItem value="service_provider">
                             {language === 'en' ? 'Service Provider' : 'Penyedia Perkhidmatan'}
                           </SelectItem>
-                          <SelectItem value="community_leader">
-                            {language === 'en' ? 'Community Leader' : 'Ketua Komuniti'}
-                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Service Provider specific fields */}
+                    {selectedRole === 'service_provider' && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="businessName">
+                            {language === 'en' ? 'Business Name' : 'Nama Perniagaan'} *
+                          </Label>
+                          <Input
+                            id="businessName"
+                            type="text"
+                            value={businessName}
+                            onChange={(e) => setBusinessName(e.target.value)}
+                            placeholder={language === 'en' ? 'e.g., ABC Plumbing Services' : 'cth: Perkhidmatan Paip ABC'}
+                            required
+                            className="transition-smooth"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="businessType">
+                            {language === 'en' ? 'Business Type' : 'Jenis Perniagaan'} *
+                          </Label>
+                          <Select value={businessType} onValueChange={setBusinessType} required>
+                            <SelectTrigger className="transition-smooth">
+                              <SelectValue placeholder={
+                                language === 'en' ? 'Select business type' : 'Pilih jenis perniagaan'
+                              } />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="plumbing">
+                                {language === 'en' ? 'Plumbing Services' : 'Perkhidmatan Paip'}
+                              </SelectItem>
+                              <SelectItem value="electrical">
+                                {language === 'en' ? 'Electrical Services' : 'Perkhidmatan Elektrik'}
+                              </SelectItem>
+                              <SelectItem value="cleaning">
+                                {language === 'en' ? 'Cleaning Services' : 'Perkhidmatan Pembersihan'}
+                              </SelectItem>
+                              <SelectItem value="maintenance">
+                                {language === 'en' ? 'Maintenance Services' : 'Perkhidmatan Penyelenggaraan'}
+                              </SelectItem>
+                              <SelectItem value="landscaping">
+                                {language === 'en' ? 'Landscaping Services' : 'Perkhidmatan Landskap'}
+                              </SelectItem>
+                              <SelectItem value="security">
+                                {language === 'en' ? 'Security Services' : 'Perkhidmatan Keselamatan'}
+                              </SelectItem>
+                              <SelectItem value="other">
+                                {language === 'en' ? 'Other Services' : 'Perkhidmatan Lain'}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="licenseNumber">
+                            {language === 'en' ? 'License Number (Optional)' : 'Nombor Lesen (Pilihan)'}
+                          </Label>
+                          <Input
+                            id="licenseNumber"
+                            type="text"
+                            value={licenseNumber}
+                            onChange={(e) => setLicenseNumber(e.target.value)}
+                            placeholder={language === 'en' ? 'e.g., LIC123456' : 'cth: LIC123456'}
+                            className="transition-smooth"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="yearsOfExperience">
+                            {language === 'en' ? 'Years of Experience' : 'Tahun Pengalaman'} *
+                          </Label>
+                          <Input
+                            id="yearsOfExperience"
+                            type="number"
+                            min="0"
+                            max="50"
+                            value={yearsOfExperience}
+                            onChange={(e) => setYearsOfExperience(e.target.value)}
+                            placeholder={language === 'en' ? 'e.g., 5' : 'cth: 5'}
+                            required
+                            className="transition-smooth"
+                          />
+                        </div>
+                      </>
+                    )}
                   </>
                 )}
 
