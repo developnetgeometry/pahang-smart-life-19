@@ -583,6 +583,41 @@ export type Database = {
           },
         ]
       }
+      communication_analytics: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          room_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          room_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          room_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_analytics_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_groups: {
         Row: {
           category: string | null
@@ -1414,6 +1449,50 @@ export type Database = {
         }
         Relationships: []
       }
+      file_shares: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          is_deleted: boolean | null
+          room_id: string
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id?: string
+          is_deleted?: boolean | null
+          room_id: string
+          sender_id: string
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          file_url?: string
+          id?: string
+          is_deleted?: boolean | null
+          room_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_shares_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_records: {
         Row: {
           amount: number
@@ -2063,6 +2142,38 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      message_reactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          message_id: string
+          reaction_emoji: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message_id: string
+          reaction_emoji: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message_id?: string
+          reaction_emoji?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_preferences: {
         Row: {
@@ -3418,6 +3529,67 @@ export type Database = {
         }
         Relationships: []
       }
+      typing_indicators: {
+        Row: {
+          id: string
+          room_id: string
+          started_at: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          room_id: string
+          started_at?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          room_id?: string
+          started_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "typing_indicators_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_presence: {
+        Row: {
+          current_room_id: string | null
+          last_seen: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          current_room_id?: string | null
+          last_seen?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          current_room_id?: string | null
+          last_seen?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_presence_current_room_id_fkey"
+            columns: ["current_room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           community_id: string | null
@@ -3510,6 +3682,53 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_calls: {
+        Row: {
+          call_type: string
+          created_at: string | null
+          duration_minutes: number | null
+          ended_at: string | null
+          id: string
+          initiated_by: string
+          participants: Json | null
+          room_id: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          call_type?: string
+          created_at?: string | null
+          duration_minutes?: number | null
+          ended_at?: string | null
+          id?: string
+          initiated_by: string
+          participants?: Json | null
+          room_id: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          call_type?: string
+          created_at?: string | null
+          duration_minutes?: number | null
+          ended_at?: string | null
+          id?: string
+          initiated_by?: string
+          participants?: Json | null
+          room_id?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_calls_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
             referencedColumns: ["id"]
           },
         ]
@@ -3722,11 +3941,56 @@ export type Database = {
           },
         ]
       }
+      voice_messages: {
+        Row: {
+          audio_url: string
+          created_at: string | null
+          duration_seconds: number
+          id: string
+          is_deleted: boolean | null
+          room_id: string
+          sender_id: string
+          transcript: string | null
+        }
+        Insert: {
+          audio_url: string
+          created_at?: string | null
+          duration_seconds: number
+          id?: string
+          is_deleted?: boolean | null
+          room_id: string
+          sender_id: string
+          transcript?: string | null
+        }
+        Update: {
+          audio_url?: string
+          created_at?: string | null
+          duration_seconds?: number
+          id?: string
+          is_deleted?: boolean | null
+          room_id?: string
+          sender_id?: string
+          transcript?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_typing_indicators: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_approval_requirements: {
         Args: {
           current_user_role: Database["public"]["Enums"]["user_role"]
@@ -3805,6 +4069,10 @@ export type Database = {
       has_role_level_or_higher: {
         Args: { check_user_id?: string; min_level: number }
         Returns: boolean
+      }
+      update_user_presence: {
+        Args: { p_room_id?: string; p_status: string; p_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
