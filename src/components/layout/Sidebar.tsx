@@ -104,7 +104,7 @@ export function AppSidebar() {
     // Role Approval Authority - for approval management roles
     if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
       roleManagementItems.push({
-        title: "Role Approval Authority",
+        title: t("roleApprovalAuthority"),
         url: "/role-management",
         icon: UserCheck,
         requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
@@ -114,7 +114,7 @@ export function AppSidebar() {
     // Service Provider Management - for community admins and above
     if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
       roleManagementItems.push({
-        title: "Service Providers",
+        title: t("serviceProviders"),
         url: "/admin/service-providers",
         icon: Building,
         requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
@@ -123,7 +123,7 @@ export function AppSidebar() {
 
     if (roleManagementItems.length > 0) {
       nav.push({
-        label: "Role & Service Management",
+        label: t("roleManagement"),
         items: roleManagementItems,
       });
     }

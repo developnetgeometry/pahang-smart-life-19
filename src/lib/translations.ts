@@ -33,6 +33,12 @@ export const translations = {
     'visitorSecurity': 'Visitor Security',
     'visitorAnalytics': 'Visitor Analytics',
     'sensorManagement': 'Sensor Management',
+    'communicationManagement': 'Communication Management',
+    'announcementManagement': 'Announcement Management',
+    'discussionManagement': 'Discussion Management',
+    'roleManagement': 'Role & Service Management',
+    'roleApprovalAuthority': 'Role Approval Authority',
+    'serviceProviders': 'Service Providers',
 
     // Common
     'welcome': 'Welcome',
@@ -121,6 +127,12 @@ export const translations = {
     'visitorAnalytics': 'Analitik Pelawat',
     'sensorManagement': 'Pengurusan Sensor',
     'communication': 'Pusat Komunikasi',
+    'communicationManagement': 'Pengurusan Komunikasi',
+    'announcementManagement': 'Pengurusan Pengumuman',
+    'discussionManagement': 'Pengurusan Perbincangan',
+    'roleManagement': 'Pengurusan Peranan & Perkhidmatan',
+    'roleApprovalAuthority': 'Kuasa Kelulusan Peranan',
+    'serviceProviders': 'Penyedia Perkhidmatan',
 
     // Common
     'welcome': 'Selamat Datang',
