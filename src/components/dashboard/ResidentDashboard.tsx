@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ServiceManagement } from '@/components/services/ServiceManagement';
 import { MapPin } from 'lucide-react';
 import { 
   Calendar, 
@@ -319,21 +320,6 @@ export function ResidentDashboard() {
     }
   ];
 
-  const myServices = [
-    {
-      service: language === 'en' ? 'Internet Service' : 'Perkhidmatan Internet',
-      provider: 'TM Unifi',
-      status: 'active',
-      nextService: '2024-03-01'
-    },
-    {
-      service: language === 'en' ? 'Cleaning Service' : 'Perkhidmatan Pembersihan',
-      provider: 'Clean Pro',
-      status: 'scheduled',
-      nextVisit: '2024-02-16'
-    }
-  ];
-
   const getUpdateIcon = (type: string) => {
     switch (type) {
       case 'maintenance': return AlertTriangle;
@@ -561,33 +547,9 @@ export function ResidentDashboard() {
         </Card>
 
         {/* My Services */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              {language === 'en' ? 'My Services' : 'Perkhidmatan Saya'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {myServices.map((service, index) => (
-              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{service.service}</p>
-                  <p className="text-xs text-muted-foreground">{service.provider}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {service.status === 'active' 
-                      ? `Next service: ${service.nextService || service.nextVisit}`
-                      : `Next visit: ${service.nextVisit}`
-                    }
-                  </p>
-                </div>
-                <Badge className={getStatusColor(service.status)}>
-                  {service.status}
-                </Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <div>
+          <ServiceManagement />
+        </div>
       </div>
 
       {/* Community Update Details Dialog */}

@@ -3659,6 +3659,57 @@ export type Database = {
         }
         Relationships: []
       }
+      user_services: {
+        Row: {
+          availability: string | null
+          category: string
+          contact_method: string
+          created_at: string
+          description: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          location: string | null
+          phone_number: string | null
+          price_range: string | null
+          service_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          availability?: string | null
+          category: string
+          contact_method?: string
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          phone_number?: string | null
+          price_range?: string | null
+          service_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          availability?: string | null
+          category?: string
+          contact_method?: string
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          phone_number?: string | null
+          price_range?: string | null
+          service_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       utility_readings: {
         Row: {
           consumption: number | null
