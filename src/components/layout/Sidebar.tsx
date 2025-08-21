@@ -98,6 +98,36 @@ export function AppSidebar() {
       ],
     });
 
+    // Role Management & Services - for approval and service provider management roles
+    const roleManagementItems = [];
+    
+    // Role Approval Authority - for approval management roles
+    if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+      roleManagementItems.push({
+        title: "Role Approval Authority",
+        url: "/role-management",
+        icon: UserCheck,
+        requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
+      });
+    }
+
+    // Service Provider Management - for community admins and above
+    if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+      roleManagementItems.push({
+        title: "Service Providers",
+        url: "/admin/service-providers",
+        icon: Building,
+        requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
+      });
+    }
+
+    if (roleManagementItems.length > 0) {
+      nav.push({
+        label: "Role & Service Management",
+        items: roleManagementItems,
+      });
+    }
+
     // Administration - only for admin and manager roles
     const adminItems = [];
     if (hasRole("admin") || hasRole("manager")) {
@@ -115,16 +145,6 @@ export function AppSidebar() {
           requiredRoles: ["admin", "manager"],
         }
       );
-    }
-
-    // Role Approval Authority - for approval management roles
-    if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
-      adminItems.push({
-        title: "Role Approval Authority",
-        url: "/role-management",
-        icon: UserCheck,
-        requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
-      });
     }
 
     if (hasRole("admin")) {
@@ -230,23 +250,7 @@ export function AppSidebar() {
       });
     }
 
-    // Service Provider Management - only for community admins
-    const serviceProviderItems = [];
-    if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
-      serviceProviderItems.push({
-        title: "Service Providers",
-        url: "/admin/service-providers",
-        icon: Building,
-        requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
-      });
-    }
-
-    if (serviceProviderItems.length > 0) {
-      nav.push({
-        label: "Service Management",
-        items: serviceProviderItems,
-      });
-    }
+    // Service Provider Management - moved to Role Management section above
 
     // Communication Management - for admin and manager roles
     const commMgmtItems = [];
