@@ -16,7 +16,10 @@ import {
   Megaphone,
   FileText,
   Calendar,
-  MessageSquare
+  MessageSquare,
+  UserPlus,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 
 export function CommunityAdminDashboard() {
@@ -32,6 +35,7 @@ export function CommunityAdminDashboard() {
     recentAnnouncements: 0,
     facilityUsage: [] as any[]
   });
+  const [pendingRoleRequests, setPendingRoleRequests] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -53,7 +57,8 @@ export function CommunityAdminDashboard() {
           { data: bookings, count: bookingsCount },
           { data: events, count: eventsCount },
           { data: announcements, count: announcementsCount },
-          { data: facilities }
+          { data: facilities },
+          { data: roleRequests, count: roleRequestsCount }
         ] = await Promise.all([
           supabase.from('profiles').select('*', { count: 'exact' }).eq('district_id', districtId),
           supabase.from('complaints').select('*', { count: 'exact' }).in('status', ['pending', 'in_progress']).eq('district_id', districtId),
@@ -61,12 +66,16 @@ export function CommunityAdminDashboard() {
           supabase.from('bookings').select('*', { count: 'exact' }).gte('booking_date', new Date().toISOString().split('T')[0]),
           supabase.from('events').select('*', { count: 'exact' }).eq('district_id', districtId).gte('start_date', new Date().toISOString().split('T')[0]),
           supabase.from('announcements').select('*', { count: 'exact' }).eq('district_id', districtId).eq('is_published', true),
-          supabase.from('facilities').select('*').eq('district_id', districtId)
+          supabase.from('facilities').select('*').eq('district_id', districtId),
+          supabase.from('role_change_requests').select(`
+            *,
+            profiles!role_change_requests_requester_id_fkey(full_name, email)
+          `, { count: 'exact' }).eq('status', 'pending').eq('district_id', districtId)
         ]);
 
         setDashboardData({
           totalResidents: residentsCount || 0,
-          pendingRegistrations: 0, // No role_requests table available
+          pendingRegistrations: roleRequestsCount || 0,
           activeComplaints: activeComplaintsCount || 0,
           completedComplaints: completedComplaintsCount || 0,
           totalBookings: bookingsCount || 0,
@@ -74,6 +83,8 @@ export function CommunityAdminDashboard() {
           recentAnnouncements: announcementsCount || 0,
           facilityUsage: facilities || []
         });
+
+        setPendingRoleRequests(roleRequests || []);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -112,6 +123,32 @@ export function CommunityAdminDashboard() {
       trend: loading ? '...' : `${language === 'en' ? 'upcoming events' : 'acara akan datang'}`
     }
   ];
+
+  const handleRoleRequestAction = async (requestId: string, action: 'approved' | 'rejected') => {
+    try {
+      await supabase
+        .from('role_change_requests')
+        .update({ 
+          status: action,
+          approved_by: user?.id,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', requestId);
+
+      // Refresh the data
+      setPendingRoleRequests(prev => 
+        prev.filter(req => req.id !== requestId)
+      );
+      
+      setDashboardData(prev => ({
+        ...prev,
+        pendingRegistrations: prev.pendingRegistrations - 1
+      }));
+
+    } catch (error) {
+      console.error('Error updating role request:', error);
+    }
+  };
 
   const recentActivities = [
     {
@@ -320,6 +357,77 @@ export function CommunityAdminDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Pending Role Requests */}
+      {pendingRoleRequests.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              {language === 'en' ? 'Pending Role Requests' : 'Permohonan Peranan Menunggu'}
+            </CardTitle>
+            <CardDescription>
+              {language === 'en' 
+                ? 'Review and approve role change requests from residents'
+                : 'Semak dan luluskan permohonan tukar peranan daripada penduduk'
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {pendingRoleRequests.slice(0, 3).map((request) => (
+                <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h4 className="font-medium">
+                        {request.profiles?.full_name || request.profiles?.email}
+                      </h4>
+                      <Badge variant="outline">
+                        {request.current_user_role}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">→</span>
+                      <Badge variant="secondary">
+                        {request.requested_user_role}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {language === 'en' ? 'Reason:' : 'Sebab:'} {request.justification || 'No reason provided'}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 ml-4">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleRoleRequestAction(request.id, 'approved')}
+                      className="text-green-600 border-green-600 hover:bg-green-50"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      {language === 'en' ? 'Approve' : 'Lulus'}
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleRoleRequestAction(request.id, 'rejected')}
+                      className="text-red-600 border-red-600 hover:bg-red-50"
+                    >
+                      <XCircle className="w-4 h-4 mr-1" />
+                      {language === 'en' ? 'Reject' : 'Tolak'}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              
+              {pendingRoleRequests.length > 3 && (
+                <div className="text-center pt-2">
+                  <Button variant="outline" size="sm">
+                    {language === 'en' ? `View all ${pendingRoleRequests.length} requests` : `Lihat semua ${pendingRoleRequests.length} permohonan`}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Actions */}
       <Card>
