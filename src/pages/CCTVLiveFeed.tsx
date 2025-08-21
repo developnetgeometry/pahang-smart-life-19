@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Layout } from "@/components/layout/Layout";
+
 import {
   Card,
   CardContent,
@@ -521,8 +521,7 @@ export default function CCTVLiveFeed() {
   };
 
   return (
-    <Layout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
@@ -1145,6 +1144,5 @@ export default function CCTVLiveFeed() {
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
   );
 }

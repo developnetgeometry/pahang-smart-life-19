@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { useAccessControl } from "@/hooks/use-access-control";
 import { useTranslation } from "@/lib/translations";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -12,6 +13,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard,
   Calendar,
@@ -32,13 +34,19 @@ import {
   Home,
   Activity,
   Bell,
+  UserCheck,
+  Package,
+  DollarSign,
+  Clipboard,
+  BarChart3,
 } from "lucide-react";
 
 interface NavigationItem {
   title: string;
   url: string;
   icon: React.ComponentType<{ className?: string }>;
-  requiredRoles?: string[];
+  requiredLevel?: number;
+  requiredFunction?: string;
 }
 
 interface NavigationGroup {
@@ -47,14 +55,22 @@ interface NavigationGroup {
 }
 
 export function AppSidebar() {
-  const { language, hasRole } = useAuth();
+  const { language } = useAuth();
   const { t } = useTranslation(language);
   const location = useLocation();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  
+  const {
+    canAccessLevel,
+    canAccessFunction,
+    functionalAccess,
+    userLevel,
+    geographicScope
+  } = useAccessControl();
 
-  // Role-based navigation groups - enhanced filtering
-  const getNavigationForUser = () => {
+  // Enhanced role-based navigation with hierarchical access
+  const getNavigationForUser = (): NavigationGroup[] => {
     const nav: NavigationGroup[] = [];
 
     // Dashboard - available to all authenticated users
@@ -70,150 +86,59 @@ export function AppSidebar() {
         { title: t("myBookings"), url: "/my-bookings", icon: Calendar },
         { title: t("myVisitors"), url: "/my-visitors", icon: Users },
         { title: t("myComplaints"), url: "/my-complaints", icon: FileText },
-        {
-          title: t("notificationSettings"),
-          url: "/notification-settings",
-          icon: Bell,
-        },
       ],
     });
 
-    // Community Hub - available to all users
-    nav.push({
-      label: t("communityHub"),
-      items: [
-        {
-          title: t("communication"),
-          url: "/communication",
-          icon: MessageSquare,
-        },
+    // Community Functions
+    const communityItems = [];
+    if (functionalAccess.community) {
+      communityItems.push(
         { title: t("announcements"), url: "/announcements", icon: Megaphone },
         { title: t("discussions"), url: "/discussions", icon: MessageSquare },
-      ],
+        { title: t("directory"), url: "/directory", icon: Users }
+      );
+    }
+    communityItems.push({
+      title: t("communication"),
+      url: "/communication-hub",
+      icon: MessageSquare,
     });
 
-    // Services & Facilities - available to all users
-    nav.push({
-      label: t("servicesAndFacilities"),
-      items: [
-        { title: t("facilities"), url: "/facilities", icon: Building },
+    if (communityItems.length > 0) {
+      nav.push({
+        label: t("communityHub"),
+        items: communityItems,
+      });
+    }
+
+    // Services & Facilities
+    const serviceItems = [];
+    if (functionalAccess.facilities) {
+      serviceItems.push(
+        { title: t("facilities"), url: "/facilities", icon: Building }
+      );
+    }
+    if (functionalAccess.services) {
+      serviceItems.push(
         { title: t("marketplace"), url: "/marketplace", icon: ShoppingCart },
-        { title: t("cctvLiveFeed"), url: "/cctv-live", icon: Camera },
-      ],
-    });
-
-    // Administration - only for admin and manager roles
-    const adminItems = [];
-    if (hasRole("admin") || hasRole("manager")) {
-      adminItems.push(
-        {
-          title: t("userManagement"),
-          url: "/admin/users",
-          icon: UserPlus,
-          requiredRoles: ["admin", "manager"],
-        },
-        {
-          title: t("communityManagement"),
-          url: "/admin/communities",
-          icon: Home,
-          requiredRoles: ["admin", "manager"],
-        }
+        { title: "Service Requests", url: "/service-requests", icon: Clipboard }
       );
     }
 
-    if (hasRole("admin")) {
-      adminItems.push({
-        title: t("districtManagement"),
-        url: "/admin/districts",
-        icon: Settings,
-        requiredRoles: ["admin"],
-      });
-    }
-
-    if (adminItems.length > 0) {
+    if (serviceItems.length > 0) {
       nav.push({
-        label: t("administration"),
-        items: adminItems,
+        label: t("servicesAndFacilities"),
+        items: serviceItems,
       });
     }
 
-    // Operations Management - for admin and manager roles
-    const operationsItems = [];
-    if (hasRole("admin") || hasRole("manager")) {
-      operationsItems.push(
-        {
-          title: t("facilitiesManagement"),
-          url: "/admin/facilities",
-          icon: Building,
-          requiredRoles: ["admin", "manager"],
-        },
-        {
-          title: t("maintenanceManagement"),
-          url: "/admin/maintenance",
-          icon: Wrench,
-          requiredRoles: ["admin", "manager"],
-        },
-        {
-          title: t("complaintsManagement"),
-          url: "/admin/complaints",
-          icon: AlertTriangle,
-          requiredRoles: ["admin", "manager"],
-        }
-      );
-    }
-
-    if (operationsItems.length > 0) {
-      nav.push({
-        label: t("operations"),
-        items: operationsItems,
-      });
-    }
-
-    // Security & Monitoring - for security, admin, and manager roles
+    // Security Functions
     const securityItems = [];
-    if (hasRole("security_officer") || hasRole("admin") || hasRole("manager")) {
+    if (functionalAccess.security) {
       securityItems.push(
-        {
-          title: t("panicAlerts"),
-          url: "/panic-alerts",
-          icon: AlertTriangle,
-          requiredRoles: ["security_officer", "admin", "manager"],
-        },
-        {
-          title: t("visitorSecurity"),
-          url: "/visitor-security",
-          icon: Shield,
-          requiredRoles: ["security_officer", "admin", "manager"],
-        },
-        {
-          title: t("cctvManagement"),
-          url: "/admin/cctv",
-          icon: Camera,
-          requiredRoles: ["security_officer", "admin", "manager"],
-        }
-      );
-    }
-
-    if (hasRole("admin") || hasRole("manager")) {
-      securityItems.push(
-        {
-          title: t("visitorAnalytics"),
-          url: "/visitor-analytics",
-          icon: Activity,
-          requiredRoles: ["admin", "manager"],
-        },
-        {
-          title: t("smartMonitoring"),
-          url: "/admin/smart-monitoring",
-          icon: Monitor,
-          requiredRoles: ["admin", "manager"],
-        },
-        {
-          title: t("sensorManagement"),
-          url: "/admin/sensors",
-          icon: Radio,
-          requiredRoles: ["admin", "manager"],
-        }
+        { title: t("cctvLiveFeed"), url: "/cctv-live", icon: Camera },
+        { title: t("visitorSecurity"), url: "/visitor-security", icon: Shield },
+        { title: t("panicAlerts"), url: "/panic-alerts", icon: AlertTriangle }
       );
     }
 
@@ -224,29 +149,72 @@ export function AppSidebar() {
       });
     }
 
-    // Communication Management - for admin and manager roles
-    const commMgmtItems = [];
-    if (hasRole("admin") || hasRole("manager")) {
-      commMgmtItems.push(
-        {
-          title: t("announcementManagement"),
-          url: "/admin/announcements",
-          icon: Megaphone,
-          requiredRoles: ["admin", "manager"],
-        },
-        {
-          title: t("discussionManagement"),
-          url: "/admin/discussions",
-          icon: MessageSquare,
-          requiredRoles: ["admin", "manager"],
-        }
+    // Maintenance Functions
+    const maintenanceItems = [];
+    if (functionalAccess.maintenance && canAccessLevel(5)) {
+      maintenanceItems.push(
+        { title: "Asset Management", url: "/asset-management", icon: Package, requiredLevel: 5 },
+        { title: "Inventory Management", url: "/inventory-management", icon: BarChart3, requiredLevel: 5 }
       );
     }
 
-    if (commMgmtItems.length > 0) {
+    if (maintenanceItems.length > 0) {
       nav.push({
-        label: t("communicationManagement"),
-        items: commMgmtItems,
+        label: "Maintenance",
+        items: maintenanceItems,
+      });
+    }
+
+    // Administration - Level 7+ (Facility Manager and above)
+    const adminItems = [];
+    if (canAccessLevel(7)) {
+      adminItems.push(
+        { title: t("facilitiesManagement"), url: "/admin/facilities", icon: Building, requiredLevel: 7 },
+        { title: t("maintenanceManagement"), url: "/admin/maintenance", icon: Wrench, requiredLevel: 7 }
+      );
+    }
+
+    // Level 8+ (Community Admin and above)
+    if (functionalAccess.administration && canAccessLevel(8)) {
+      adminItems.push(
+        { title: t("userManagement"), url: "/admin/users", icon: UserPlus, requiredLevel: 8 },
+        { title: t("roleApprovalAuthority"), url: "/role-management", icon: UserCheck, requiredLevel: 8 },
+        { title: t("announcementManagement"), url: "/admin/announcements", icon: Megaphone, requiredLevel: 8 },
+        { title: t("complaintsManagement"), url: "/admin/complaints", icon: AlertTriangle, requiredLevel: 8 },
+        { title: t("discussionManagement"), url: "/admin/discussions", icon: MessageSquare, requiredLevel: 8 },
+        { title: t("serviceProviders"), url: "/admin/service-providers", icon: Building, requiredLevel: 8 },
+        { title: "Financial Management", url: "/financial-management", icon: DollarSign, requiredLevel: 8 },
+        { title: t("communityManagement"), url: "/admin/communities", icon: Home, requiredLevel: 8 }
+      );
+    }
+
+    // Security Admin - Level 6+ with security function
+    if (functionalAccess.security && canAccessLevel(6)) {
+      adminItems.push(
+        { title: t("cctvManagement"), url: "/admin/cctv", icon: Camera, requiredLevel: 6 }
+      );
+    }
+
+    // Level 9+ (District Coordinator and above)
+    if (canAccessLevel(9)) {
+      adminItems.push(
+        { title: t("districtManagement"), url: "/admin/districts", icon: Settings, requiredLevel: 9 },
+        { title: t("visitorAnalytics"), url: "/visitor-analytics", icon: Activity, requiredLevel: 9 }
+      );
+    }
+
+    // Level 10 (State Admin only)
+    if (canAccessLevel(10)) {
+      adminItems.push(
+        { title: t("smartMonitoring"), url: "/admin/smart-monitoring", icon: Monitor, requiredLevel: 10 },
+        { title: t("sensorManagement"), url: "/admin/sensors", icon: Radio, requiredLevel: 10 }
+      );
+    }
+
+    if (adminItems.length > 0) {
+      nav.push({
+        label: t("administration"),
+        items: adminItems,
       });
     }
 
@@ -254,10 +222,23 @@ export function AppSidebar() {
   };
 
   const navigation = getNavigationForUser();
-  const canSee = (item: NavigationItem) =>
-    !item.requiredRoles || item.requiredRoles.some((r) => hasRole?.(r as any));
+  
+  // Filter navigation items based on access control
   const filteredNavigation = navigation
-    .map((group) => ({ ...group, items: group.items.filter(canSee) }))
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        // Check level access
+        if (item.requiredLevel && !canAccessLevel(item.requiredLevel)) {
+          return false;
+        }
+        // Check functional access
+        if (item.requiredFunction && !canAccessFunction(item.requiredFunction as any)) {
+          return false;
+        }
+        return true;
+      })
+    }))
     .filter((group) => group.items.length > 0);
 
   return (
@@ -275,7 +256,15 @@ export function AppSidebar() {
               <span className="text-sm font-semibold text-foreground">
                 Smart Community
               </span>
-              <span className="text-xs text-muted-foreground">Pahang</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {geographicScope.type === 'state' ? 'State' : 
+                   geographicScope.type === 'district' ? 'District' : 'Community'} Level
+                </span>
+                <Badge variant="outline" className="text-xs px-1 py-0">
+                  L{userLevel}
+                </Badge>
+              </div>
             </div>
           )}
         </div>
@@ -305,7 +294,16 @@ export function AppSidebar() {
                         }
                       >
                         <item.icon className="h-4 w-4" />
-                        {!isCollapsed && <span>{item.title}</span>}
+                        {!isCollapsed && (
+                          <div className="flex items-center justify-between w-full">
+                            <span>{item.title}</span>
+                            {item.requiredLevel && (
+                              <Badge variant="secondary" className="text-xs ml-2">
+                                L{item.requiredLevel}+
+                              </Badge>
+                            )}
+                          </div>
+                        )}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

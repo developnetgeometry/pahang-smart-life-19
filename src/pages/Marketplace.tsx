@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Layout } from '@/components/layout/Layout';
+import { useUserRoles } from '@/hooks/use-user-roles';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,8 +12,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ShoppingBag, Plus, Search, Heart, MessageCircle, Star, MapPin, Clock } from 'lucide-react';
+import { ShoppingBag, Plus, Search, Heart, MessageCircle, Star, MapPin, Clock, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useChatRooms } from '@/hooks/use-chat-rooms';
+import { supabase } from '@/integrations/supabase/client';
+
+// Import marketplace product images
+import iphoneMarketplaceImage from '@/assets/iphone-marketplace.jpg';
+import diningTableMarketplaceImage from '@/assets/dining-table-marketplace.jpg';
+import programmingBooksMarketplaceImage from '@/assets/programming-books-marketplace.jpg';
 
 interface MarketplaceItem {
   id: string;
@@ -30,13 +38,32 @@ interface MarketplaceItem {
 }
 
 export default function Marketplace() {
-  const { language } = useAuth();
+  const { language, user } = useAuth();
+  const { hasRole } = useUserRoles();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { createGroupChat } = useChatRooms();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedCondition, setSelectedCondition] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Check if user is a service provider
+  const isServiceProvider = hasRole('service_provider');
+  
+  // Form state for new listing
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    category: '',
+    condition: '',
+    price: '',
+    location: '',
+    contact: ''
+  });
 
   const text = {
     en: {
@@ -121,6 +148,62 @@ export default function Marketplace() {
 
   const t = text[language];
 
+  // Fetch marketplace items from Supabase
+  useEffect(() => {
+    const fetchMarketplaceItems = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('marketplace_items')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Helper function to get fallback image based on category/title
+        const getFallbackImage = (title: string, category: string) => {
+          const titleLower = title.toLowerCase();
+          if (titleLower.includes('iphone') || category === 'electronics') return iphoneMarketplaceImage;
+          if (titleLower.includes('table') || titleLower.includes('dining') || category === 'furniture') return diningTableMarketplaceImage;
+          if (titleLower.includes('book') || category === 'books') return programmingBooksMarketplaceImage;
+          return '/placeholder.svg';
+        };
+
+        // Transform Supabase data to match our interface
+        const transformedItems: MarketplaceItem[] = (data || []).map(item => ({
+          id: item.id,
+          title: item.title,
+          description: item.description || '',
+          price: Number(item.price),
+          category: item.category,
+          condition: item.condition as 'new' | 'like-new' | 'good' | 'fair',
+          seller: 'Anonymous User',
+          sellerRating: 4.5,
+          location: item.location || '',
+          postedDate: new Date(item.created_at).toISOString().split('T')[0],
+          images: item.image ? [
+            item.image.startsWith('http') ? item.image : 
+            item.image === 'iphone-marketplace.jpg' ? iphoneMarketplaceImage :
+            item.image === 'dining-table-marketplace.jpg' ? diningTableMarketplaceImage :
+            item.image === 'programming-books-marketplace.jpg' ? programmingBooksMarketplaceImage :
+            getFallbackImage(item.title, item.category)
+          ] : [getFallbackImage(item.title, item.category)],
+          isFavorite: false
+        }));
+
+        setMarketplaceItems(transformedItems.length > 0 ? transformedItems : mockItems);
+      } catch (error) {
+        console.error('Error fetching marketplace items:', error);
+        // Fallback to demo data with images
+        setMarketplaceItems(mockItems);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMarketplaceItems();
+  }, [language]);
+
   const mockItems: MarketplaceItem[] = [
     {
       id: '1',
@@ -133,7 +216,7 @@ export default function Marketplace() {
       sellerRating: 4.8,
       location: 'Block A, Unit 15-2',
       postedDate: '2024-01-15',
-      images: ['/phone.jpg'],
+      images: [iphoneMarketplaceImage],
       isFavorite: false
     },
     {
@@ -147,7 +230,7 @@ export default function Marketplace() {
       sellerRating: 4.5,
       location: 'Block B, Unit 8-1',
       postedDate: '2024-01-12',
-      images: ['/table.jpg'],
+      images: [diningTableMarketplaceImage],
       isFavorite: true
     },
     {
@@ -161,7 +244,7 @@ export default function Marketplace() {
       sellerRating: 4.9,
       location: 'Block C, Unit 12-5',
       postedDate: '2024-01-10',
-      images: ['/books.jpg'],
+      images: [programmingBooksMarketplaceImage],
       isFavorite: false
     }
   ];
@@ -204,7 +287,7 @@ export default function Marketplace() {
     }
   };
 
-  const filteredItems = mockItems.filter(item => {
+  const filteredItems = marketplaceItems.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
@@ -212,123 +295,303 @@ export default function Marketplace() {
     return matchesSearch && matchesCategory && matchesCondition;
   });
 
-  const handleCreateListing = () => {
-    toast({
-      title: t.createSuccess,
-    });
-    setIsCreateOpen(false);
+  const handleCreateListing = async () => {
+    if (!user) {
+      toast({
+        title: language === 'en' ? 'Authentication Required' : 'Pengesahan Diperlukan',
+        description: language === 'en' ? 'Please login to create a listing' : 'Sila log masuk untuk mencipta senarai',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Check if user is a service provider
+    if (!isServiceProvider) {
+      toast({
+        title: language === 'en' ? 'Access Denied' : 'Akses Ditolak',
+        description: language === 'en' ? 'Only service providers can create listings' : 'Hanya penyedia perkhidmatan boleh mencipta senarai',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Validate required fields
+    if (!formData.title || !formData.category || !formData.condition || !formData.price) {
+      toast({
+        title: language === 'en' ? 'Validation Error' : 'Ralat Pengesahan',
+        description: language === 'en' ? 'Please fill in all required fields' : 'Sila isi semua medan yang diperlukan',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      // Get user's district from their profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('district_id')
+        .eq('id', user.id)
+        .single();
+
+      const { error } = await supabase
+        .from('marketplace_items')
+        .insert({
+          seller_id: user.id,
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          price: parseFloat(formData.price),
+          condition: formData.condition,
+          location: formData.location,
+          district_id: profile?.district_id,
+          is_available: true,
+          is_active: true
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: t.createSuccess,
+      });
+
+      // Reset form and close dialog
+      setFormData({
+        title: '',
+        description: '',
+        category: '',
+        condition: '',
+        price: '',
+        location: '',
+        contact: ''
+      });
+      setIsCreateOpen(false);
+
+      // Refresh the marketplace items
+      const fetchMarketplaceItems = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('marketplace_items')
+            .select('*')
+            .eq('is_active', true)
+            .order('created_at', { ascending: false });
+
+          if (error) throw error;
+
+          // Transform data to match our interface (reusing existing logic)
+          const getFallbackImage = (title: string, category: string) => {
+            const titleLower = title.toLowerCase();
+            if (titleLower.includes('iphone') || category === 'electronics') return iphoneMarketplaceImage;
+            if (titleLower.includes('table') || titleLower.includes('dining') || category === 'furniture') return diningTableMarketplaceImage;
+            if (titleLower.includes('book') || category === 'books') return programmingBooksMarketplaceImage;
+            return '/placeholder.svg';
+          };
+
+          const transformedItems: MarketplaceItem[] = (data || []).map(item => ({
+            id: item.id,
+            title: item.title,
+            description: item.description || '',
+            price: Number(item.price),
+            category: item.category,
+            condition: item.condition as 'new' | 'like-new' | 'good' | 'fair',
+            seller: 'Anonymous User',
+            sellerRating: 4.5,
+            location: item.location || '',
+            postedDate: new Date(item.created_at).toISOString().split('T')[0],
+            images: item.image ? [
+              item.image.startsWith('http') ? item.image : 
+              item.image === 'iphone-marketplace.jpg' ? iphoneMarketplaceImage :
+              item.image === 'dining-table-marketplace.jpg' ? diningTableMarketplaceImage :
+              item.image === 'programming-books-marketplace.jpg' ? programmingBooksMarketplaceImage :
+              getFallbackImage(item.title, item.category)
+            ] : [getFallbackImage(item.title, item.category)],
+            isFavorite: false
+          }));
+
+          setMarketplaceItems(transformedItems.length > 0 ? transformedItems : mockItems);
+        } catch (error) {
+          console.error('Error refreshing marketplace items:', error);
+        }
+      };
+
+      await fetchMarketplaceItems();
+
+    } catch (error) {
+      console.error('Error creating listing:', error);
+      toast({
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' ? 'Failed to create listing' : 'Gagal mencipta senarai',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleContactSeller = (item: MarketplaceItem) => {
-    // Navigate to communication hub with seller info and preset message
-    navigate('/communication', {
-      state: {
-        chatWith: item.seller,
-        presetMessage: language === 'en' 
-          ? `Hi, is this item still available? - ${item.title}`
-          : `Hai, adakah item ini masih tersedia? - ${item.title}`,
-        itemInfo: {
-          title: item.title,
-          price: item.price,
-          id: item.id
+  const handleContactSeller = async (item: MarketplaceItem) => {
+    try {
+      // Create a chat room for the marketplace item
+      const chatName = `${item.seller} - ${item.title}`;
+      const chatDescription = language === 'en' 
+        ? `Marketplace chat about "${item.title}" (RM${item.price.toLocaleString()})`
+        : `Chat marketplace tentang "${item.title}" (RM${item.price.toLocaleString()})`;
+      
+      const roomId = await createGroupChat(chatName, chatDescription, []);
+      
+      // Navigate to communication hub with the created room
+      navigate('/communication', {
+        state: {
+          roomId,
+          chatWith: item.seller,
+          presetMessage: language === 'en' 
+            ? `Hi, is this item still available? - ${item.title} (RM${item.price.toLocaleString()})`
+            : `Hai, adakah item ini masih tersedia? - ${item.title} (RM${item.price.toLocaleString()})`,
+          itemInfo: {
+            title: item.title,
+            price: item.price,
+            id: item.id
+          }
         }
-      }
-    });
+      });
+
+      toast({
+        title: language === 'en' ? 'Chat Created' : 'Chat Dicipta',
+        description: language === 'en' 
+          ? `Chat room created for ${item.title}` 
+          : `Bilik chat dicipta untuk ${item.title}`
+      });
+    } catch (error) {
+      console.error('Error creating chat:', error);
+      toast({
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' 
+          ? 'Failed to create chat room' 
+          : 'Gagal mencipta bilik chat',
+        variant: 'destructive'
+      });
+    }
   };
 
   return (
-    <Layout>
-      <div className="space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              {t.newListing}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[525px]">
-            <DialogHeader>
-              <DialogTitle>{t.createTitle}</DialogTitle>
-              <DialogDescription>{t.createSubtitle}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">{t.itemTitle}</Label>
-                <Input id="title" placeholder={t.itemTitle} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+        {isServiceProvider && (
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                {t.newListing}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[525px]">
+              <DialogHeader>
+                <DialogTitle>{t.createTitle}</DialogTitle>
+                <DialogDescription>{t.createSubtitle}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="category">{t.category}</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t.selectCategory} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.slice(1).map((category) => (
-                        <SelectItem key={category.value} value={category.value}>
-                          {category.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="title">{t.itemTitle}*</Label>
+                  <Input 
+                    id="title" 
+                    placeholder={t.itemTitle}
+                    value={formData.title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="category">{t.category}*</Label>
+                    <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t.selectCategory} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.slice(1).map((category) => (
+                          <SelectItem key={category.value} value={category.value}>
+                            {category.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="condition">{t.condition}*</Label>
+                    <Select value={formData.condition} onValueChange={(value) => setFormData(prev => ({ ...prev, condition: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t.selectCondition} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {conditions.slice(1).map((condition) => (
+                          <SelectItem key={condition.value} value={condition.value}>
+                            {condition.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="condition">{t.condition}</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t.selectCondition} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {conditions.slice(1).map((condition) => (
-                        <SelectItem key={condition.value} value={condition.value}>
-                          {condition.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="price">{t.itemPrice}*</Label>
+                  <Input 
+                    id="price" 
+                    type="number" 
+                    placeholder="0"
+                    value={formData.price}
+                    onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">{t.itemDescription}</Label>
+                  <Textarea 
+                    id="description" 
+                    placeholder={t.itemDescription}
+                    rows={3}
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input 
+                    id="location" 
+                    placeholder="e.g., Block A, Unit 10-2"
+                    value={formData.location}
+                    onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contact">{t.contactInfo}</Label>
+                  <Input 
+                    id="contact" 
+                    placeholder="Phone number or email"
+                    value={formData.contact}
+                    onChange={(e) => setFormData(prev => ({ ...prev, contact: e.target.value }))}
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>
+                    {t.cancel}
+                  </Button>
+                  <Button onClick={handleCreateListing} disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        {language === 'en' ? 'Creating...' : 'Mencipta...'}
+                      </>
+                    ) : (
+                      t.create
+                    )}
+                  </Button>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="price">{t.itemPrice}</Label>
-                <Input id="price" type="number" placeholder="0" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">{t.itemDescription}</Label>
-                <Textarea 
-                  id="description" 
-                  placeholder={t.itemDescription}
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="image">Item Image</Label>
-                <Input 
-                  id="image" 
-                  type="file" 
-                  accept="image/*"
-                  className="file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground file:cursor-pointer hover:file:bg-primary/90"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="contact">{t.contactInfo}</Label>
-                <Input id="contact" placeholder="Phone number or email" />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
-                  {t.cancel}
-                </Button>
-                <Button onClick={handleCreateListing}>
-                  {t.create}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
@@ -367,12 +630,39 @@ export default function Marketplace() {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredItems.map((item) => (
-          <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="aspect-square bg-muted flex items-center justify-center">
-              <ShoppingBag className="h-12 w-12 text-muted-foreground" />
-            </div>
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="overflow-hidden">
+              <div className="aspect-square bg-muted animate-pulse" />
+              <CardHeader>
+                <div className="h-4 bg-muted animate-pulse rounded mb-2" />
+                <div className="h-3 bg-muted animate-pulse rounded w-3/4" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="h-3 bg-muted animate-pulse rounded" />
+                  <div className="h-3 bg-muted animate-pulse rounded w-1/2" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredItems.map((item) => (
+            <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden">
+                {item.images[0] && item.images[0] !== '/placeholder.svg' ? (
+                  <img 
+                    src={item.images[0]} 
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <ShoppingBag className="h-12 w-12 text-muted-foreground" />
+                )}
+              </div>
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -427,11 +717,12 @@ export default function Marketplace() {
                 {t.contact}
               </Button>
             </CardContent>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
-      {filteredItems.length === 0 && (
+      {!loading && filteredItems.length === 0 && (
         <Card>
           <CardContent className="flex items-center justify-center py-12">
             <div className="text-center">
@@ -443,7 +734,6 @@ export default function Marketplace() {
           </CardContent>
         </Card>
       )}
-      </div>
-    </Layout>
+    </div>
   );
 }

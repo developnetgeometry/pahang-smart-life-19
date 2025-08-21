@@ -195,6 +195,123 @@ export type Database = {
           },
         ]
       }
+      application_communications: {
+        Row: {
+          application_id: string | null
+          attachments: string[] | null
+          created_at: string | null
+          id: string
+          is_internal: boolean | null
+          message: string
+          message_type: string | null
+          read_by: string[] | null
+          sender_id: string | null
+          subject: string | null
+        }
+        Insert: {
+          application_id?: string | null
+          attachments?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_internal?: boolean | null
+          message: string
+          message_type?: string | null
+          read_by?: string[] | null
+          sender_id?: string | null
+          subject?: string | null
+        }
+        Update: {
+          application_id?: string | null
+          attachments?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_internal?: boolean | null
+          message?: string
+          message_type?: string | null
+          read_by?: string[] | null
+          sender_id?: string | null
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_communications_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "service_provider_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_communications_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      application_documents: {
+        Row: {
+          application_id: string | null
+          document_name: string
+          document_type: string
+          expiry_date: string | null
+          file_size: number | null
+          file_url: string
+          id: string
+          is_verified: boolean | null
+          mime_type: string | null
+          notes: string | null
+          upload_date: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          application_id?: string | null
+          document_name: string
+          document_type: string
+          expiry_date?: string | null
+          file_size?: number | null
+          file_url: string
+          id?: string
+          is_verified?: boolean | null
+          mime_type?: string | null
+          notes?: string | null
+          upload_date?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          application_id?: string | null
+          document_name?: string
+          document_type?: string
+          expiry_date?: string | null
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          is_verified?: boolean | null
+          mime_type?: string | null
+          notes?: string | null
+          upload_date?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_documents_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "service_provider_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_documents_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assets: {
         Row: {
           asset_type: string
@@ -526,6 +643,45 @@ export type Database = {
           },
         ]
       }
+      chat_room_members: {
+        Row: {
+          id: string
+          is_admin: boolean
+          joined_at: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_admin?: boolean
+          joined_at?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_admin?: boolean
+          joined_at?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_room_members_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_room_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_rooms: {
         Row: {
           created_at: string
@@ -828,6 +984,62 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      directory_contacts: {
+        Row: {
+          category: string
+          created_at: string
+          district_id: string | null
+          email: string | null
+          hours: string
+          id: string
+          is_active: boolean
+          location: string
+          name: string
+          phone: string
+          role: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          district_id?: string | null
+          email?: string | null
+          hours: string
+          id?: string
+          is_active?: boolean
+          location: string
+          name: string
+          phone: string
+          role: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          district_id?: string | null
+          email?: string | null
+          hours?: string
+          id?: string
+          is_active?: boolean
+          location?: string
+          name?: string
+          phone?: string
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "directory_contacts_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       discussion_replies: {
         Row: {
@@ -1339,6 +1551,7 @@ export type Database = {
           district_id: string | null
           hourly_rate: number | null
           id: string
+          image: string | null
           images: string[] | null
           is_available: boolean | null
           location: string | null
@@ -1355,6 +1568,7 @@ export type Database = {
           district_id?: string | null
           hourly_rate?: number | null
           id?: string
+          image?: string | null
           images?: string[] | null
           is_available?: boolean | null
           location?: string | null
@@ -1371,6 +1585,7 @@ export type Database = {
           district_id?: string | null
           hourly_rate?: number | null
           id?: string
+          image?: string | null
           images?: string[] | null
           is_available?: boolean | null
           location?: string | null
@@ -1493,6 +1708,53 @@ export type Database = {
           },
         ]
       }
+      financial_accounts: {
+        Row: {
+          account_code: string
+          account_name: string
+          account_type: string
+          created_at: string | null
+          description: string | null
+          district_id: string | null
+          id: string
+          is_active: boolean | null
+          parent_account_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_code: string
+          account_name: string
+          account_type: string
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          parent_account_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_code?: string
+          account_name?: string
+          account_type?: string
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          parent_account_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_accounts_parent_account_id_fkey"
+            columns: ["parent_account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_records: {
         Row: {
           amount: number
@@ -1564,6 +1826,83 @@ export type Database = {
           vendor_supplier?: string | null
         }
         Relationships: []
+      }
+      financial_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          attachments: string[] | null
+          created_at: string | null
+          description: string
+          district_id: string | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          processed_by: string | null
+          receipt_number: string | null
+          reference_id: string | null
+          reference_type: string | null
+          status: string | null
+          transaction_code: string
+          transaction_date: string
+          transaction_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          attachments?: string[] | null
+          created_at?: string | null
+          description: string
+          district_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          processed_by?: string | null
+          receipt_number?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string | null
+          transaction_code: string
+          transaction_date?: string
+          transaction_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          attachments?: string[] | null
+          created_at?: string | null
+          description?: string
+          district_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          processed_by?: string | null
+          receipt_number?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string | null
+          transaction_code?: string
+          transaction_date?: string
+          transaction_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       group_memberships: {
         Row: {
@@ -1738,6 +2077,124 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          district_id: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          parent_category_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          parent_category_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          parent_category_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_categories_parent_category_id_fkey"
+            columns: ["parent_category_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_items: {
+        Row: {
+          barcode: string | null
+          category_id: string
+          created_at: string | null
+          current_stock: number | null
+          description: string | null
+          district_id: string | null
+          expiry_tracking: boolean | null
+          id: string
+          is_active: boolean | null
+          item_code: string
+          maximum_stock: number | null
+          minimum_stock: number | null
+          name: string
+          photos: string[] | null
+          reorder_level: number | null
+          storage_location: string | null
+          supplier_contact: string | null
+          supplier_name: string | null
+          unit_cost: number | null
+          unit_of_measure: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          barcode?: string | null
+          category_id: string
+          created_at?: string | null
+          current_stock?: number | null
+          description?: string | null
+          district_id?: string | null
+          expiry_tracking?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          item_code: string
+          maximum_stock?: number | null
+          minimum_stock?: number | null
+          name: string
+          photos?: string[] | null
+          reorder_level?: number | null
+          storage_location?: string | null
+          supplier_contact?: string | null
+          supplier_name?: string | null
+          unit_cost?: number | null
+          unit_of_measure?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          barcode?: string | null
+          category_id?: string
+          created_at?: string | null
+          current_stock?: number | null
+          description?: string | null
+          district_id?: string | null
+          expiry_tracking?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          item_code?: string
+          maximum_stock?: number | null
+          minimum_stock?: number | null
+          name?: string
+          photos?: string[] | null
+          reorder_level?: number | null
+          storage_location?: string | null
+          supplier_contact?: string | null
+          supplier_name?: string | null
+          unit_cost?: number | null
+          unit_of_measure?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_movements: {
         Row: {
           id: string
@@ -1784,6 +2241,71 @@ export type Database = {
             columns: ["inventory_id"]
             isOneToOne: false
             referencedRelation: "inventory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_transactions: {
+        Row: {
+          approved_by: string | null
+          batch_number: string | null
+          created_at: string | null
+          expiry_date: string | null
+          id: string
+          item_id: string
+          notes: string | null
+          performed_by: string
+          quantity: number
+          reference_id: string | null
+          reference_type: string | null
+          total_cost: number | null
+          transaction_code: string
+          transaction_date: string | null
+          transaction_type: string
+          unit_cost: number | null
+        }
+        Insert: {
+          approved_by?: string | null
+          batch_number?: string | null
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          item_id: string
+          notes?: string | null
+          performed_by: string
+          quantity: number
+          reference_id?: string | null
+          reference_type?: string | null
+          total_cost?: number | null
+          transaction_code: string
+          transaction_date?: string | null
+          transaction_type: string
+          unit_cost?: number | null
+        }
+        Update: {
+          approved_by?: string | null
+          batch_number?: string | null
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          item_id?: string
+          notes?: string | null
+          performed_by?: string
+          quantity?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          total_cost?: number | null
+          transaction_code?: string
+          transaction_date?: string | null
+          transaction_type?: string
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
             referencedColumns: ["id"]
           },
         ]
@@ -1953,7 +2475,9 @@ export type Database = {
           description: string | null
           district_id: string | null
           id: string
+          image: string | null
           images: string[] | null
+          is_active: boolean | null
           is_available: boolean | null
           location: string | null
           price: number
@@ -1968,7 +2492,9 @@ export type Database = {
           description?: string | null
           district_id?: string | null
           id?: string
+          image?: string | null
           images?: string[] | null
+          is_active?: boolean | null
           is_available?: boolean | null
           location?: string | null
           price: number
@@ -1983,7 +2509,9 @@ export type Database = {
           description?: string | null
           district_id?: string | null
           id?: string
+          image?: string | null
           images?: string[] | null
+          is_active?: boolean | null
           is_available?: boolean | null
           location?: string | null
           price?: number
@@ -2181,9 +2709,13 @@ export type Database = {
           bookings: boolean | null
           complaints: boolean | null
           created_at: string | null
+          emergencies: boolean | null
           events: boolean | null
           id: string
           maintenance: boolean | null
+          marketplace: boolean | null
+          mentions: boolean | null
+          messages: boolean | null
           security: boolean | null
           updated_at: string | null
           user_id: string
@@ -2193,9 +2725,13 @@ export type Database = {
           bookings?: boolean | null
           complaints?: boolean | null
           created_at?: string | null
+          emergencies?: boolean | null
           events?: boolean | null
           id?: string
           maintenance?: boolean | null
+          marketplace?: boolean | null
+          mentions?: boolean | null
+          messages?: boolean | null
           security?: boolean | null
           updated_at?: string | null
           user_id: string
@@ -2205,9 +2741,13 @@ export type Database = {
           bookings?: boolean | null
           complaints?: boolean | null
           created_at?: string | null
+          emergencies?: boolean | null
           events?: boolean | null
           id?: string
           maintenance?: boolean | null
+          marketplace?: boolean | null
+          mentions?: boolean | null
+          messages?: boolean | null
           security?: boolean | null
           updated_at?: string | null
           user_id?: string
@@ -3309,6 +3849,278 @@ export type Database = {
           },
         ]
       }
+      service_categories: {
+        Row: {
+          color_code: string | null
+          created_at: string | null
+          description: string | null
+          district_id: string | null
+          estimated_response_time: unknown | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          requires_approval: boolean | null
+        }
+        Insert: {
+          color_code?: string | null
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          estimated_response_time?: unknown | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          requires_approval?: boolean | null
+        }
+        Update: {
+          color_code?: string | null
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          estimated_response_time?: unknown | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          requires_approval?: boolean | null
+        }
+        Relationships: []
+      }
+      service_provider_applications: {
+        Row: {
+          applicant_id: string | null
+          business_address: string
+          business_description: string | null
+          business_name: string
+          business_references: Json | null
+          business_registration_number: string | null
+          business_type: string
+          contact_email: string
+          contact_person: string
+          contact_phone: string
+          created_at: string | null
+          district_id: string | null
+          experience_years: number | null
+          id: string
+          insurance_info: Json | null
+          operating_hours: Json | null
+          priority: string | null
+          rejection_reason: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          service_areas: string[] | null
+          service_categories: string[] | null
+          services_offered: string[] | null
+          social_media: Json | null
+          status: string | null
+          tax_id: string | null
+          updated_at: string | null
+          website_url: string | null
+        }
+        Insert: {
+          applicant_id?: string | null
+          business_address: string
+          business_description?: string | null
+          business_name: string
+          business_references?: Json | null
+          business_registration_number?: string | null
+          business_type: string
+          contact_email: string
+          contact_person: string
+          contact_phone: string
+          created_at?: string | null
+          district_id?: string | null
+          experience_years?: number | null
+          id?: string
+          insurance_info?: Json | null
+          operating_hours?: Json | null
+          priority?: string | null
+          rejection_reason?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          service_areas?: string[] | null
+          service_categories?: string[] | null
+          services_offered?: string[] | null
+          social_media?: Json | null
+          status?: string | null
+          tax_id?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          applicant_id?: string | null
+          business_address?: string
+          business_description?: string | null
+          business_name?: string
+          business_references?: Json | null
+          business_registration_number?: string | null
+          business_type?: string
+          contact_email?: string
+          contact_person?: string
+          contact_phone?: string
+          created_at?: string | null
+          district_id?: string | null
+          experience_years?: number | null
+          id?: string
+          insurance_info?: Json | null
+          operating_hours?: Json | null
+          priority?: string | null
+          rejection_reason?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          service_areas?: string[] | null
+          service_categories?: string[] | null
+          services_offered?: string[] | null
+          social_media?: Json | null
+          status?: string | null
+          tax_id?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_provider_applications_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_provider_applications_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_provider_applications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_provider_profiles: {
+        Row: {
+          application_id: string | null
+          approved_at: string | null
+          average_rating: number | null
+          business_address: string | null
+          business_description: string | null
+          business_name: string
+          business_type: string
+          compliance_status: string | null
+          contact_email: string
+          contact_phone: string
+          created_at: string | null
+          district_id: string | null
+          featured: boolean | null
+          id: string
+          is_active: boolean | null
+          is_verified: boolean | null
+          logo_url: string | null
+          operating_hours: Json | null
+          service_areas: string[] | null
+          service_categories: string[] | null
+          service_pricing: Json | null
+          services_offered: string[] | null
+          social_media: Json | null
+          subscription_tier: string | null
+          total_reviews: number | null
+          updated_at: string | null
+          user_id: string | null
+          website_url: string | null
+        }
+        Insert: {
+          application_id?: string | null
+          approved_at?: string | null
+          average_rating?: number | null
+          business_address?: string | null
+          business_description?: string | null
+          business_name: string
+          business_type: string
+          compliance_status?: string | null
+          contact_email: string
+          contact_phone: string
+          created_at?: string | null
+          district_id?: string | null
+          featured?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          logo_url?: string | null
+          operating_hours?: Json | null
+          service_areas?: string[] | null
+          service_categories?: string[] | null
+          service_pricing?: Json | null
+          services_offered?: string[] | null
+          social_media?: Json | null
+          subscription_tier?: string | null
+          total_reviews?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          application_id?: string | null
+          approved_at?: string | null
+          average_rating?: number | null
+          business_address?: string | null
+          business_description?: string | null
+          business_name?: string
+          business_type?: string
+          compliance_status?: string | null
+          contact_email?: string
+          contact_phone?: string
+          created_at?: string | null
+          district_id?: string | null
+          featured?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          logo_url?: string | null
+          operating_hours?: Json | null
+          service_areas?: string[] | null
+          service_categories?: string[] | null
+          service_pricing?: Json | null
+          services_offered?: string[] | null
+          social_media?: Json | null
+          subscription_tier?: string | null
+          total_reviews?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_provider_profiles_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "service_provider_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_provider_profiles_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_provider_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_providers: {
         Row: {
           business_name: string
@@ -3370,6 +4182,92 @@ export type Database = {
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_requests: {
+        Row: {
+          actual_cost: number | null
+          assigned_at: string | null
+          assigned_to: string | null
+          attachments: string[] | null
+          category_id: string
+          completed_at: string | null
+          completion_notes: string | null
+          created_at: string | null
+          description: string
+          district_id: string | null
+          estimated_cost: number | null
+          id: string
+          location: string | null
+          photos: string[] | null
+          preferred_date: string | null
+          preferred_time: string | null
+          priority: string | null
+          request_number: string
+          requester_id: string
+          started_at: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          actual_cost?: number | null
+          assigned_at?: string | null
+          assigned_to?: string | null
+          attachments?: string[] | null
+          category_id: string
+          completed_at?: string | null
+          completion_notes?: string | null
+          created_at?: string | null
+          description: string
+          district_id?: string | null
+          estimated_cost?: number | null
+          id?: string
+          location?: string | null
+          photos?: string[] | null
+          preferred_date?: string | null
+          preferred_time?: string | null
+          priority?: string | null
+          request_number: string
+          requester_id: string
+          started_at?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          actual_cost?: number | null
+          assigned_at?: string | null
+          assigned_to?: string | null
+          attachments?: string[] | null
+          category_id?: string
+          completed_at?: string | null
+          completion_notes?: string | null
+          created_at?: string | null
+          description?: string
+          district_id?: string | null
+          estimated_cost?: number | null
+          id?: string
+          location?: string | null
+          photos?: string[] | null
+          preferred_date?: string | null
+          preferred_time?: string | null
+          priority?: string | null
+          request_number?: string
+          requester_id?: string
+          started_at?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_requests_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
             referencedColumns: ["id"]
           },
         ]
@@ -3453,6 +4351,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_metrics: {
+        Row: {
+          category: string
+          created_at: string | null
+          district_id: string | null
+          id: string
+          measurement_date: string | null
+          measurement_time: string | null
+          metadata: Json | null
+          metric_name: string
+          metric_type: string
+          metric_value: number | null
+          subcategory: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          district_id?: string | null
+          id?: string
+          measurement_date?: string | null
+          measurement_time?: string | null
+          metadata?: Json | null
+          metric_name: string
+          metric_type: string
+          metric_value?: number | null
+          subcategory?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          district_id?: string | null
+          id?: string
+          measurement_date?: string | null
+          measurement_time?: string | null
+          metadata?: Json | null
+          metric_name?: string
+          metric_type?: string
+          metric_value?: number | null
+          subcategory?: string | null
+        }
+        Relationships: []
       }
       system_modules: {
         Row: {
@@ -3616,6 +4556,57 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_services: {
+        Row: {
+          availability: string | null
+          category: string
+          contact_method: string
+          created_at: string
+          description: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          location: string | null
+          phone_number: string | null
+          price_range: string | null
+          service_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          availability?: string | null
+          category: string
+          contact_method?: string
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          phone_number?: string | null
+          price_range?: string | null
+          service_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          availability?: string | null
+          category?: string
+          contact_method?: string
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          phone_number?: string | null
+          price_range?: string | null
+          service_name?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -3991,6 +4982,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      create_direct_chat: {
+        Args: { other_user_id: string }
+        Returns: string
+      }
       get_approval_requirements: {
         Args: {
           current_user_role: Database["public"]["Enums"]["user_role"]
@@ -4005,6 +5000,21 @@ export type Database = {
       get_module_id: {
         Args: { module_name: string }
         Returns: string
+      }
+      get_pending_role_requests_for_approver: {
+        Args: { approver_user_id: string }
+        Returns: {
+          created_at: string
+          district_name: string
+          justification: string
+          reason: string
+          request_id: string
+          requester_email: string
+          requester_name: string
+          requirements: Database["public"]["Enums"]["approval_requirement"][]
+          user_current_role: Database["public"]["Enums"]["user_role"]
+          user_requested_role: Database["public"]["Enums"]["user_role"]
+        }[]
       }
       get_required_approver_role: {
         Args: {
@@ -4073,6 +5083,14 @@ export type Database = {
       update_user_presence: {
         Args: { p_room_id?: string; p_status: string; p_user_id: string }
         Returns: undefined
+      }
+      user_is_room_admin: {
+        Args: { check_room_id: string; check_user_id?: string }
+        Returns: boolean
+      }
+      user_is_room_member: {
+        Args: { check_room_id: string; check_user_id?: string }
+        Returns: boolean
       }
     }
     Enums: {

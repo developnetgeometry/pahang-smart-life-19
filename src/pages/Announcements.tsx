@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -130,8 +129,22 @@ export default function Announcements() {
         table: 'announcements'
       }, (payload) => {
         console.log('New announcement:', payload);
-        // Refresh announcements
-        fetchAnnouncements();
+        // Add new announcement instead of refetching all
+        if (payload.new && payload.new.is_published) {
+          const newAnnouncement: Announcement = {
+            id: payload.new.id,
+            title: payload.new.title,
+            content: payload.new.content,
+            priority: payload.new.is_urgent ? 'urgent' : 'medium',
+            category: payload.new.type || 'General',
+            created_date: new Date(payload.new.created_at).toISOString().split('T')[0],
+            author: 'Management Office',
+            is_pinned: payload.new.is_urgent,
+            read_status: false,
+            target_audience: ['residents']
+          };
+          setAnnouncements(prev => [newAnnouncement, ...prev]);
+        }
       })
       .subscribe();
 
@@ -236,8 +249,7 @@ export default function Announcements() {
   }
 
   return (
-    <Layout>
-      <div className="space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -464,6 +476,5 @@ export default function Announcements() {
         </Card>
       )}
       </div>
-    </Layout>
   );
 }

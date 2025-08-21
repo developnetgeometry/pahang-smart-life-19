@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { WeatherWidget } from './WeatherWidget';
 import { 
   Building, 
   Calendar, 
@@ -134,6 +135,28 @@ export function FacilityManagerDashboard() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Weather Widget */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <WeatherWidget />
+        <div className="md:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                {language === 'en' ? 'Facility Operations Status' : 'Status Operasi Kemudahan'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground">
+                {language === 'en' 
+                  ? '8 facilities operational. 12 bookings today, 3 maintenance tasks due.' 
+                  : '8 kemudahan beroperasi. 12 tempahan hari ini, 3 tugas penyelenggaraan perlu.'}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

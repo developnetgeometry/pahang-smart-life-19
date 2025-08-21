@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { WeatherWidget } from './WeatherWidget';
 import { 
   Building2,
   Users, 
@@ -12,7 +13,8 @@ import {
   TrendingUp,
   FileText,
   Settings,
-  Calendar
+  Calendar,
+  Activity
 } from 'lucide-react';
 
 export function DistrictCoordinatorDashboard() {
@@ -99,6 +101,28 @@ export function DistrictCoordinatorDashboard() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Weather Widget */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <WeatherWidget />
+        <div className="md:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                {language === 'en' ? 'District Operations Status' : 'Status Operasi Daerah'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground">
+                {language === 'en' 
+                  ? '8 communities active. 5 role requests pending review.' 
+                  : '8 komuniti aktif. 5 permohonan peranan menunggu semakan.'}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Pending Actions */}

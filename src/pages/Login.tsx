@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, MapPin, Shield, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { createTestUsers } from '@/utils/createTestUsers';
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -19,6 +19,10 @@ export default function Login() {
   const [districtId, setDistrictId] = useState('');
   const [location, setLocation] = useState('');
   const [selectedRole, setSelectedRole] = useState('resident');
+  const [businessName, setBusinessName] = useState('');
+  const [businessType, setBusinessType] = useState('');
+  const [licenseNumber, setLicenseNumber] = useState('');
+  const [yearsOfExperience, setYearsOfExperience] = useState('');
   const [districts, setDistricts] = useState<Array<{id: string, name: string}>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -65,6 +69,19 @@ export default function Login() {
           throw new Error(language === 'en' ? 'Location is required' : 'Lokasi diperlukan');
         }
 
+        // Validate service provider specific fields
+        if (selectedRole === 'service_provider') {
+          if (!businessName.trim()) {
+            throw new Error(language === 'en' ? 'Business name is required' : 'Nama perniagaan diperlukan');
+          }
+          if (!businessType.trim()) {
+            throw new Error(language === 'en' ? 'Business type is required' : 'Jenis perniagaan diperlukan');
+          }
+          if (!yearsOfExperience.trim()) {
+            throw new Error(language === 'en' ? 'Years of experience is required' : 'Tahun pengalaman diperlukan');
+          }
+        }
+
         const redirectUrl = `${window.location.origin}/`;
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
@@ -81,18 +98,28 @@ export default function Login() {
         
         if (authData.user) {
           // Create profile record
+          const profileData: any = {
+            id: authData.user.id,
+            email: email,
+            full_name: fullName.trim(),
+            phone: phone.trim() || null,
+            district_id: districtId,
+            address: location.trim(),
+            language: language,
+            is_active: true
+          };
+
+          // Add service provider specific data
+          if (selectedRole === 'service_provider') {
+            profileData.business_name = businessName.trim();
+            profileData.business_type = businessType.trim();
+            profileData.license_number = licenseNumber.trim() || null;
+            profileData.years_of_experience = parseInt(yearsOfExperience) || null;
+          }
+
           const { error: profileError } = await supabase
             .from('profiles')
-            .insert({
-              id: authData.user.id,
-              email: email,
-              full_name: fullName.trim(),
-              phone: phone.trim() || null,
-              district_id: districtId,
-              address: location.trim(),
-              language: language,
-              is_active: true
-            });
+            .insert(profileData);
 
           if (profileError) {
             console.error('Profile creation error:', profileError);
@@ -128,6 +155,10 @@ export default function Login() {
           setDistrictId('');
           setLocation('');
           setSelectedRole('resident');
+          setBusinessName('');
+          setBusinessType('');
+          setLicenseNumber('');
+          setYearsOfExperience('');
           setPassword('');
         }
       }
@@ -355,12 +386,96 @@ export default function Login() {
                           <SelectItem value="service_provider">
                             {language === 'en' ? 'Service Provider' : 'Penyedia Perkhidmatan'}
                           </SelectItem>
-                          <SelectItem value="community_leader">
-                            {language === 'en' ? 'Community Leader' : 'Ketua Komuniti'}
-                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Service Provider specific fields */}
+                    {selectedRole === 'service_provider' && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="businessName">
+                            {language === 'en' ? 'Business Name' : 'Nama Perniagaan'} *
+                          </Label>
+                          <Input
+                            id="businessName"
+                            type="text"
+                            value={businessName}
+                            onChange={(e) => setBusinessName(e.target.value)}
+                            placeholder={language === 'en' ? 'e.g., ABC Plumbing Services' : 'cth: Perkhidmatan Paip ABC'}
+                            required
+                            className="transition-smooth"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="businessType">
+                            {language === 'en' ? 'Business Type' : 'Jenis Perniagaan'} *
+                          </Label>
+                          <Select value={businessType} onValueChange={setBusinessType} required>
+                            <SelectTrigger className="transition-smooth">
+                              <SelectValue placeholder={
+                                language === 'en' ? 'Select business type' : 'Pilih jenis perniagaan'
+                              } />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="plumbing">
+                                {language === 'en' ? 'Plumbing Services' : 'Perkhidmatan Paip'}
+                              </SelectItem>
+                              <SelectItem value="electrical">
+                                {language === 'en' ? 'Electrical Services' : 'Perkhidmatan Elektrik'}
+                              </SelectItem>
+                              <SelectItem value="cleaning">
+                                {language === 'en' ? 'Cleaning Services' : 'Perkhidmatan Pembersihan'}
+                              </SelectItem>
+                              <SelectItem value="maintenance">
+                                {language === 'en' ? 'Maintenance Services' : 'Perkhidmatan Penyelenggaraan'}
+                              </SelectItem>
+                              <SelectItem value="landscaping">
+                                {language === 'en' ? 'Landscaping Services' : 'Perkhidmatan Landskap'}
+                              </SelectItem>
+                              <SelectItem value="security">
+                                {language === 'en' ? 'Security Services' : 'Perkhidmatan Keselamatan'}
+                              </SelectItem>
+                              <SelectItem value="other">
+                                {language === 'en' ? 'Other Services' : 'Perkhidmatan Lain'}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="licenseNumber">
+                            {language === 'en' ? 'License Number (Optional)' : 'Nombor Lesen (Pilihan)'}
+                          </Label>
+                          <Input
+                            id="licenseNumber"
+                            type="text"
+                            value={licenseNumber}
+                            onChange={(e) => setLicenseNumber(e.target.value)}
+                            placeholder={language === 'en' ? 'e.g., LIC123456' : 'cth: LIC123456'}
+                            className="transition-smooth"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="yearsOfExperience">
+                            {language === 'en' ? 'Years of Experience' : 'Tahun Pengalaman'} *
+                          </Label>
+                          <Input
+                            id="yearsOfExperience"
+                            type="number"
+                            min="0"
+                            max="50"
+                            value={yearsOfExperience}
+                            onChange={(e) => setYearsOfExperience(e.target.value)}
+                            placeholder={language === 'en' ? 'e.g., 5' : 'cth: 5'}
+                            required
+                            className="transition-smooth"
+                          />
+                        </div>
+                      </>
+                    )}
                   </>
                 )}
 
@@ -422,34 +537,23 @@ export default function Login() {
               </form>
 
               {/* Test Users Section */}
-              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm font-medium mb-2">
-                  {language === 'en' ? 'Test Credentials (12 Users - All Roles):' : 'Kredensi Ujian (12 Pengguna - Semua Peranan):'}
-                </p>
-                <div className="text-xs text-muted-foreground space-y-1 max-h-40 overflow-y-auto">
-                  <p><strong>State Admin:</strong> stateadmin@test.com / password123</p>
-                  <p><strong>District Coordinator:</strong> districtcoord@test.com / password123</p>
-                  <p><strong>Community Admin:</strong> communityadmin@test.com / password123</p>
-                  <p><strong>Admin:</strong> admin@test.com / password123</p>
-                  <p><strong>Manager:</strong> managernorth@test.com / password123</p>
-                  <p><strong>Facility Manager:</strong> facilitymanager@test.com / password123</p>
-                  <p><strong>Security Officer:</strong> securitynorth@test.com / password123</p>
-                  <p><strong>Maintenance Staff:</strong> maintenancestaff@test.com / password123</p>
-                  <p><strong>Resident:</strong> resident@test.com / password123</p>
-                  <p><strong>Service Provider:</strong> serviceprovider@test.com / password123</p>
-                  <p><strong>Community Leader:</strong> communityleader@test.com / password123</p>
-                  <p><strong>State Service Manager:</strong> stateservicemgr@test.com / password123</p>
-                </div>
-                
-                <div className="text-center p-4 bg-green-50 border border-green-200 rounded-md">
-                  <p className="text-green-800 font-medium">
-                    {language === 'en' ? '✅ All 12 test users are ready!' : '✅ Semua 12 pengguna ujian sudah siap!'}
-                  </p>
-                  <p className="text-green-600 text-sm mt-1">
-                    {language === 'en' ? 'Use any email above with password: password123' : 'Gunakan mana-mana e-mel di atas dengan kata laluan: password123'}
-                  </p>
-                </div>
-              </div>
+               <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                 <p className="text-sm font-medium mb-2">
+                   {language === 'en' ? 'Test Credentials (10 Users - Various Roles):' : 'Kredensi Ujian (10 Pengguna - Pelbagai Peranan):'}
+                 </p>
+                 <div className="text-xs text-muted-foreground space-y-1 max-h-40 overflow-y-auto">
+                   <p><strong>State Admin:</strong> stateadmin@test.com / password123</p>
+                   <p><strong>District Coordinator:</strong> districtcoord@test.com / password123</p>
+                   <p><strong>Community Admin:</strong> communityadmin@test.com / password123</p>
+                   <p><strong>Facility Manager:</strong> facilitymanager@test.com / password123</p>
+                   <p><strong>Security Officer:</strong> securitynorth@test.com / password123</p>
+                   <p><strong>Maintenance Staff:</strong> maintenancestaff@test.com / password123</p>
+                   <p><strong>Resident:</strong> resident@test.com / password123</p>
+                   <p><strong>Service Provider:</strong> serviceprovider@test.com / password123</p>
+                   <p><strong>Community Leader:</strong> communityleader@test.com / password123</p>
+                   <p><strong>State Service Manager:</strong> stateservicemgr@test.com / password123</p>
+                 </div>
+               </div>
             </CardContent>
           </Card>
 

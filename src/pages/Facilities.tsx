@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Layout } from '@/components/layout/Layout';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar, MapPin, Users, Clock, Plus, Search, Car, Dumbbell, Waves, TreePine, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+
+// Import facility images
+import communityGymImage from '@/assets/community-gym.jpg';
+import swimmingPoolImage from '@/assets/swimming-pool.jpg';
+import functionHallImage from '@/assets/function-hall.jpg';
+import playgroundFacilityImage from '@/assets/playground-facility.jpg';
+import prayerHallFacilityImage from '@/assets/prayer-hall-facility.jpg';
+import gardenFacilityImage from '@/assets/garden-facility.jpg';
 
 interface Facility {
   id: string;
@@ -120,6 +128,18 @@ export default function Facilities() {
 
         if (error) throw error;
 
+        // Helper function to get fallback image based on facility name/type
+        const getFallbackImage = (facilityName: string) => {
+          const name = facilityName.toLowerCase();
+          if (name.includes('gym') || name.includes('gim') || name.includes('fitness') || name.includes('kecergasan')) return communityGymImage;
+          if (name.includes('pool') || name.includes('kolam') || name.includes('swimming') || name.includes('renang')) return swimmingPoolImage;
+          if (name.includes('hall') || name.includes('dewan') || name.includes('function') || name.includes('majlis')) return functionHallImage;
+          if (name.includes('playground') || name.includes('taman') || name.includes('kanak') || name.includes('children') || name.includes('play')) return playgroundFacilityImage;
+          if (name.includes('surau') || name.includes('prayer') || name.includes('solat') || name.includes('mosque') || name.includes('masjid')) return prayerHallFacilityImage;
+          if (name.includes('garden') || name.includes('park') || name.includes('landscape') || name.includes('landskap')) return gardenFacilityImage;
+          return '/placeholder.svg';
+        };
+
         // Transform Supabase data to match our interface
         const transformedFacilities: Facility[] = (data || []).map(facility => ({
           id: facility.id,
@@ -129,11 +149,79 @@ export default function Facilities() {
           capacity: facility.capacity || 0,
           availability: facility.is_available ? 'available' : 'maintenance',
           amenities: facility.amenities || [],
-          image: facility.images?.[0] || '/placeholder.svg',
+          image: facility.image || facility.images?.[0] || getFallbackImage(facility.name),
           hourlyRate: facility.hourly_rate ? Number(facility.hourly_rate) : undefined
         }));
 
-        setFacilities(transformedFacilities);
+        // Use demo data if database is empty, otherwise use transformed data
+        if (transformedFacilities.length === 0) {
+          setFacilities([
+            {
+              id: '1',
+              name: language === 'en' ? 'Community Gym' : 'Gim Komuniti',
+              description: language === 'en' ? 'Fully equipped fitness center with modern equipment' : 'Pusat kecergasan lengkap dengan peralatan moden',
+              location: 'Block A, Ground Floor',
+              capacity: 20,
+              availability: 'available',
+              amenities: ['Treadmills', 'Weight Training', 'Air Conditioning', 'Lockers'],
+              image: communityGymImage,
+              hourlyRate: 10
+            },
+            {
+              id: '2',
+              name: language === 'en' ? 'Swimming Pool' : 'Kolam Renang',
+              description: language === 'en' ? 'Olympic-size swimming pool with children\'s area' : 'Kolam renang saiz olimpik dengan kawasan kanak-kanak',
+              location: 'Recreation Area',
+              capacity: 50,
+              availability: 'available',
+              amenities: ['Lifeguard', 'Changing Rooms', 'Pool Equipment', 'Shower'],
+              image: swimmingPoolImage
+            },
+            {
+              id: '3',
+              name: language === 'en' ? 'Function Hall A' : 'Dewan Majlis A',
+              description: language === 'en' ? 'Large multipurpose hall for events and gatherings' : 'Dewan serbaguna besar untuk acara dan perhimpunan',
+              location: 'Block B, Level 2',
+              capacity: 100,
+              availability: 'available',
+              amenities: ['Sound System', 'Projector', 'Tables & Chairs', 'Kitchen Access'],
+              image: functionHallImage,
+              hourlyRate: 50
+            },
+            {
+              id: '4',
+              name: language === 'en' ? 'Children\'s Playground' : 'Taman Kanak-Kanak',
+              description: language === 'en' ? 'Safe playground area for children with modern equipment' : 'Kawasan permainan selamat untuk kanak-kanak dengan peralatan moden',
+              location: 'Recreation Area',
+              capacity: 25,
+              availability: 'available',
+              amenities: ['Swings', 'Slides', 'Climbing frames', 'Soft play area', 'Benches for parents'],
+              image: playgroundFacilityImage
+            },
+            {
+              id: '5',
+              name: language === 'en' ? 'Prayer Hall' : 'Surau Pahang Prima',
+              description: language === 'en' ? 'Prayer hall for Muslim community members' : 'Surau untuk ahli komuniti Muslim',
+              location: 'Block C, Ground Floor',
+              capacity: 100,
+              availability: 'available',
+              amenities: ['Prayer mats', 'Ablution area', 'Air conditioning', 'Sound system for Azan'],
+              image: prayerHallFacilityImage
+            },
+            {
+              id: '6',
+              name: language === 'en' ? 'Community Garden' : 'Taman Komuniti',
+              description: language === 'en' ? 'Beautiful garden area for relaxation and community activities' : 'Kawasan taman yang indah untuk berehat dan aktiviti komuniti',
+              location: 'Central Area',
+              capacity: 50,
+              availability: 'available',
+              amenities: ['Walking paths', 'Benches', 'Landscaping', 'Gazebo'],
+              image: gardenFacilityImage
+            }
+          ]);
+        } else {
+          setFacilities(transformedFacilities);
+        }
       } catch (error) {
         console.error('Error fetching facilities:', error);
         // Fallback to demo data
@@ -146,7 +234,7 @@ export default function Facilities() {
             capacity: 20,
             availability: 'available',
             amenities: ['Treadmills', 'Weight Training', 'Air Conditioning', 'Lockers'],
-            image: '/placeholder.svg',
+            image: communityGymImage,
             hourlyRate: 10
           },
           {
@@ -157,7 +245,7 @@ export default function Facilities() {
             capacity: 50,
             availability: 'available',
             amenities: ['Lifeguard', 'Changing Rooms', 'Pool Equipment', 'Shower'],
-            image: '/placeholder.svg'
+            image: swimmingPoolImage
           },
           {
             id: '3',
@@ -167,7 +255,7 @@ export default function Facilities() {
             capacity: 100,
             availability: 'available',
             amenities: ['Sound System', 'Projector', 'Tables & Chairs', 'Kitchen Access'],
-            image: '/placeholder.svg',
+            image: functionHallImage,
             hourlyRate: 50
           }
         ]);
@@ -277,8 +365,7 @@ export default function Facilities() {
   };
 
   return (
-    <Layout>
-      <div className="space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
@@ -332,8 +419,21 @@ export default function Facilities() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredFacilities.map((facility) => (
           <Card key={facility.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="aspect-video bg-muted flex items-center justify-center">
-              {getIcon(facility.name)}
+            <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
+              {facility.image && facility.image !== '/placeholder.svg' ? (
+                <img 
+                  src={facility.image.startsWith('http') ? facility.image : 
+                       facility.image === 'community-gym.jpg' ? communityGymImage :
+                       facility.image === 'swimming-pool.jpg' ? swimmingPoolImage :
+                       facility.image === 'function-hall.jpg' ? functionHallImage :
+                       facility.image
+                  } 
+                  alt={facility.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                getIcon(facility.name)
+              )}
             </div>
             <CardHeader>
               <div className="flex items-start justify-between">
@@ -473,6 +573,5 @@ export default function Facilities() {
         </DialogContent>
       </Dialog>
       </div>
-    </Layout>
   );
 }

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { WeatherWidget } from './WeatherWidget';
 import { 
   Briefcase, 
   DollarSign, 
@@ -13,7 +14,8 @@ import {
   MessageSquare,
   TrendingUp,
   CheckCircle,
-  Phone
+  Phone,
+  Activity
 } from 'lucide-react';
 
 export function ServiceProviderDashboard() {
@@ -182,6 +184,28 @@ export function ServiceProviderDashboard() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Weather Widget */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <WeatherWidget />
+        <div className="md:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                {language === 'en' ? 'Service Operations Status' : 'Status Operasi Perkhidmatan'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground">
+                {language === 'en' 
+                  ? '23 active contracts. 4.8/5 customer rating. RM 18,500 monthly revenue.' 
+                  : '23 kontrak aktif. Penilaian pelanggan 4.8/5. Pendapatan bulanan RM 18,500.'}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
