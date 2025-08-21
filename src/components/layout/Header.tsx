@@ -1,5 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
-import NotificationBell from '@/components/notifications/NotificationBell';
+import EnhancedNotificationBell from '@/components/communication/EnhancedNotificationBell';
 import { useTranslation } from '@/lib/translations';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -64,7 +64,7 @@ export function Header() {
       </Button>
 
       {/* Notifications */}
-      <NotificationBell />
+            <EnhancedNotificationBell />
 
       {/* User Menu */}
       <DropdownMenu>

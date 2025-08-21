@@ -155,12 +155,16 @@ export const useRealtimeMessaging = (roomId?: string) => {
     }
   }, [roomId, user, stopTyping]);
 
-  // Send message
+  // Send message with notification support
   const sendMessage = useCallback(async (
     messageText: string,
     messageType: 'text' | 'image' | 'file' | 'voice' = 'text',
     fileData?: { url: string },
-    replyToId?: string
+    replyToId?: string,
+    notificationOptions?: {
+      isMarketplaceChat?: boolean;
+      recipientIds?: string[];
+    }
   ) => {
     if (!roomId || !user || !messageText.trim()) return;
 
@@ -207,6 +211,41 @@ export const useRealtimeMessaging = (roomId?: string) => {
 
       // Stop typing indicator
       stopTyping();
+
+      // Send notifications to other room members if specified
+      if (notificationOptions?.recipientIds) {
+        const senderName = data.profiles?.full_name || user.email || 'Someone';
+        const messagePreview = messageText.length > 50 ? `${messageText.substring(0, 50)}...` : messageText;
+        
+        // Send notification via edge function
+        await supabase.functions.invoke('send-push-notification', {
+          body: {
+            title: notificationOptions.isMarketplaceChat 
+              ? `New message about your product` 
+              : `New message from ${senderName}`,
+            body: `${senderName}: ${messagePreview}`,
+            url: `/communication-hub?room=${roomId}`,
+            userIds: notificationOptions.recipientIds,
+            notificationType: 'message'
+          }
+        });
+
+        // Store notification in database
+        const notifications = notificationOptions.recipientIds.map(recipientId => ({
+          recipient_id: recipientId,
+          title: notificationOptions.isMarketplaceChat 
+            ? `New message about your product` 
+            : `New message from ${senderName}`,
+          message: `${senderName}: ${messagePreview}`,
+          notification_type: 'message',
+          category: 'message',
+          created_by: user.id,
+          is_read: false,
+          sent_at: new Date().toISOString(),
+        }));
+
+        await supabase.from('notifications').insert(notifications);
+      }
 
       return data;
     } catch (error) {
