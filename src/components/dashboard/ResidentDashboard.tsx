@@ -397,92 +397,99 @@ export function ResidentDashboard() {
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{language === 'en' ? 'Quick Actions' : 'Tindakan Pantas'}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {quickActions.map((action, index) => (
-              action.isPanic ? (
-                <div key={index} className="relative">
-                  {/* Progress Circle */}
-                  {isPressed && (
-                    <div className="absolute inset-0 -m-1 pointer-events-none">
-                      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r="45"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                          className="text-red-200"
-                        />
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r="45"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                          strokeDasharray={`${2 * Math.PI * 45}`}
-                          strokeDashoffset={`${2 * Math.PI * 45 * (1 - progress / 100)}`}
-                          className="text-red-500 transition-all duration-100 ease-linear"
-                        />
-                      </svg>
+      {/* Quick Actions and Weather */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>{language === 'en' ? 'Quick Actions' : 'Tindakan Pantas'}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {quickActions.map((action, index) => (
+                  action.isPanic ? (
+                    <div key={index} className="relative">
+                      {/* Progress Circle */}
+                      {isPressed && (
+                        <div className="absolute inset-0 -m-1 pointer-events-none">
+                          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="45"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                              fill="none"
+                              className="text-red-200"
+                            />
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="45"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                              fill="none"
+                              strokeDasharray={`${2 * Math.PI * 45}`}
+                              strokeDashoffset={`${2 * Math.PI * 45 * (1 - progress / 100)}`}
+                              className="text-red-500 transition-all duration-100 ease-linear"
+                            />
+                          </svg>
+                        </div>
+                      )}
+                      
+                      <Button
+                        variant="destructive"
+                        className={`
+                          h-auto p-4 flex flex-col items-start gap-2 hover:shadow-md transition-all duration-150 w-full relative
+                          ${isPressed ? 'scale-95 bg-red-700' : ''}
+                          ${isTriggering ? 'animate-pulse' : ''}
+                        `}
+                        onMouseDown={startHold}
+                        onMouseUp={endHold}
+                        onMouseLeave={endHold}
+                        onTouchStart={startHold}
+                        onTouchEnd={endHold}
+                        disabled={isTriggering}
+                      >
+                        <div className="flex items-center gap-2 w-full">
+                          <action.icon className="h-5 w-5" />
+                          <span className="font-medium">{action.title}</span>
+                        </div>
+                        <p className="text-xs text-white/80 text-left">
+                          {isPressed 
+                            ? (language === 'en' ? 'Hold to confirm...' : 'Tahan untuk mengesahkan...')
+                            : action.description
+                          }
+                        </p>
+                      </Button>
                     </div>
-                  )}
-                  
-                  <Button
-                    variant="destructive"
-                    className={`
-                      h-auto p-4 flex flex-col items-start gap-2 hover:shadow-md transition-all duration-150 w-full relative
-                      ${isPressed ? 'scale-95 bg-red-700' : ''}
-                      ${isTriggering ? 'animate-pulse' : ''}
-                    `}
-                    onMouseDown={startHold}
-                    onMouseUp={endHold}
-                    onMouseLeave={endHold}
-                    onTouchStart={startHold}
-                    onTouchEnd={endHold}
-                    disabled={isTriggering}
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      <action.icon className="h-5 w-5" />
-                      <span className="font-medium">{action.title}</span>
-                    </div>
-                    <p className="text-xs text-white/80 text-left">
-                      {isPressed 
-                        ? (language === 'en' ? 'Hold to confirm...' : 'Tahan untuk mengesahkan...')
-                        : action.description
-                      }
-                    </p>
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  key={index}
-                  variant="outline"
-                  className="h-auto p-4 flex flex-col items-start gap-2 hover:shadow-md transition-shadow"
-                  asChild
-                >
-                  <a href={action.action}>
-                    <div className="flex items-center gap-2 w-full">
-                      <action.icon className="h-5 w-5 text-primary" />
-                      <span className="font-medium">{action.title}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground text-left">
-                      {action.description}
-                    </p>
-                  </a>
-                </Button>
-              )
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+                  ) : (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      className="h-auto p-4 flex flex-col items-start gap-2 hover:shadow-md transition-shadow"
+                      asChild
+                    >
+                      <a href={action.action}>
+                        <div className="flex items-center gap-2 w-full">
+                          <action.icon className="h-5 w-5 text-primary" />
+                          <span className="font-medium">{action.title}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-left">
+                          {action.description}
+                        </p>
+                      </a>
+                    </Button>
+                  )
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="lg:col-span-1">
+          <WeatherWidget />
+        </div>
+      </div>
 
       {/* Community Updates */}
       <Card>
@@ -527,10 +534,9 @@ export function ResidentDashboard() {
       </Card>
 
       {/* Additional Widgets */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <QuickServicesWidget language={language} />
         <UpcomingEventsWidget language={language} />
-        <WeatherWidget />
         <CommunityDirectoryWidget language={language} />
       </div>
 
