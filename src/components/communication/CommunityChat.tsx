@@ -252,13 +252,9 @@ export default function CommunityChat({ marketplaceChat }: CommunityChatProps = 
       // Handle file upload logic here - send as message
       if (selectedRoomId && uploadedFile.url) {
         await sendMessage(
-          uploadedFile.name,
+          `File: ${uploadedFile.name}`,
           'file',
-          {
-            url: uploadedFile.url,
-            name: uploadedFile.name,
-            type: uploadedFile.type
-          }
+          { url: uploadedFile.url }
         );
       }
       setShowFileUpload(false);

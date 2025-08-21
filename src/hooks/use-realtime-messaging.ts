@@ -17,8 +17,6 @@ export interface EnhancedMessage {
   reactions?: MessageReaction[];
   read_by?: string[];
   file_url?: string;
-  file_name?: string;
-  file_type?: string;
   sender_profile?: {
     full_name: string;
     avatar_url?: string;
@@ -111,7 +109,7 @@ export const useRealtimeMessaging = (roomId?: string) => {
   const sendMessage = useCallback(async (
     messageText: string,
     messageType: 'text' | 'image' | 'file' | 'voice' = 'text',
-    fileData?: { url: string; name: string; type: string },
+    fileData?: { url: string },
     replyToId?: string
   ) => {
     if (!roomId || !user || !messageText.trim()) return;
@@ -123,8 +121,6 @@ export const useRealtimeMessaging = (roomId?: string) => {
         message_text: messageText,
         message_type: messageType,
         file_url: fileData?.url,
-        file_name: fileData?.name,
-        file_type: fileData?.type,
         reply_to_id: replyToId,
         is_edited: false,
         is_deleted: false,
