@@ -17,6 +17,9 @@ import { supabase } from '@/integrations/supabase/client';
 import communityGymImage from '@/assets/community-gym.jpg';
 import swimmingPoolImage from '@/assets/swimming-pool.jpg';
 import functionHallImage from '@/assets/function-hall.jpg';
+import playgroundFacilityImage from '@/assets/playground-facility.jpg';
+import prayerHallFacilityImage from '@/assets/prayer-hall-facility.jpg';
+import gardenFacilityImage from '@/assets/garden-facility.jpg';
 
 interface Facility {
   id: string;
@@ -128,9 +131,12 @@ export default function Facilities() {
         // Helper function to get fallback image based on facility name/type
         const getFallbackImage = (facilityName: string) => {
           const name = facilityName.toLowerCase();
-          if (name.includes('gym') || name.includes('gim')) return communityGymImage;
-          if (name.includes('pool') || name.includes('kolam')) return swimmingPoolImage;
-          if (name.includes('hall') || name.includes('dewan')) return functionHallImage;
+          if (name.includes('gym') || name.includes('gim') || name.includes('fitness') || name.includes('kecergasan')) return communityGymImage;
+          if (name.includes('pool') || name.includes('kolam') || name.includes('swimming') || name.includes('renang')) return swimmingPoolImage;
+          if (name.includes('hall') || name.includes('dewan') || name.includes('function') || name.includes('majlis')) return functionHallImage;
+          if (name.includes('playground') || name.includes('taman') || name.includes('kanak') || name.includes('children') || name.includes('play')) return playgroundFacilityImage;
+          if (name.includes('surau') || name.includes('prayer') || name.includes('solat') || name.includes('mosque') || name.includes('masjid')) return prayerHallFacilityImage;
+          if (name.includes('garden') || name.includes('park') || name.includes('landscape') || name.includes('landskap')) return gardenFacilityImage;
           return '/placeholder.svg';
         };
 
@@ -181,6 +187,36 @@ export default function Facilities() {
               amenities: ['Sound System', 'Projector', 'Tables & Chairs', 'Kitchen Access'],
               image: functionHallImage,
               hourlyRate: 50
+            },
+            {
+              id: '4',
+              name: language === 'en' ? 'Children\'s Playground' : 'Taman Kanak-Kanak',
+              description: language === 'en' ? 'Safe playground area for children with modern equipment' : 'Kawasan permainan selamat untuk kanak-kanak dengan peralatan moden',
+              location: 'Recreation Area',
+              capacity: 25,
+              availability: 'available',
+              amenities: ['Swings', 'Slides', 'Climbing frames', 'Soft play area', 'Benches for parents'],
+              image: playgroundFacilityImage
+            },
+            {
+              id: '5',
+              name: language === 'en' ? 'Prayer Hall' : 'Surau Pahang Prima',
+              description: language === 'en' ? 'Prayer hall for Muslim community members' : 'Surau untuk ahli komuniti Muslim',
+              location: 'Block C, Ground Floor',
+              capacity: 100,
+              availability: 'available',
+              amenities: ['Prayer mats', 'Ablution area', 'Air conditioning', 'Sound system for Azan'],
+              image: prayerHallFacilityImage
+            },
+            {
+              id: '6',
+              name: language === 'en' ? 'Community Garden' : 'Taman Komuniti',
+              description: language === 'en' ? 'Beautiful garden area for relaxation and community activities' : 'Kawasan taman yang indah untuk berehat dan aktiviti komuniti',
+              location: 'Central Area',
+              capacity: 50,
+              availability: 'available',
+              amenities: ['Walking paths', 'Benches', 'Landscaping', 'Gazebo'],
+              image: gardenFacilityImage
             }
           ]);
         } else {
