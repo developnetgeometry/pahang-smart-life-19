@@ -392,7 +392,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <RequireRoles
-                    roles={["admin", "manager", "security_officer"]}
+                    roles={["security_officer", "state_admin", "community_admin"]}
                   >
                     <Layout>
                       <CCTVManagement />
