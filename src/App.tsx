@@ -44,6 +44,11 @@ import ServiceProviderManagement from "./pages/admin/ServiceProviderManagement";
 import ServiceProviderReview from "./pages/admin/ServiceProviderReview";
 import MyApplications from "./pages/MyApplications";
 import NotFound from "./pages/NotFound";
+// New Management Modules
+import AssetManagement from "./pages/AssetManagement";
+import ServiceRequests from "./pages/ServiceRequests";
+import FinancialManagement from "./pages/FinancialManagement";
+import InventoryManagement from "./pages/InventoryManagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -445,6 +450,54 @@ const App = () => (
                   <Layout>
                     <PanicAlerts />
                   </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Management modules */}
+            <Route
+              path="/service-requests"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ServiceRequests />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/asset-management"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["facility_manager", "community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <AssetManagement />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/financial-management"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <FinancialManagement />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory-management"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["maintenance_staff", "facility_manager", "community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <InventoryManagement />
+                    </Layout>
+                  </RequireRoles>
                 </ProtectedRoute>
               }
             />

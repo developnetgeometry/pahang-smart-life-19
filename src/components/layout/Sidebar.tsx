@@ -33,6 +33,10 @@ import {
   Activity,
   Bell,
   UserCheck,
+  Package,
+  DollarSign,
+  Clipboard,
+  BarChart3,
 } from "lucide-react";
 
 interface NavigationItem {
@@ -95,6 +99,7 @@ export function AppSidebar() {
         { title: t("facilities"), url: "/facilities", icon: Building },
         { title: t("marketplace"), url: "/marketplace", icon: ShoppingCart },
         { title: t("cctvLiveFeed"), url: "/cctv-live", icon: Camera },
+        { title: "Service Requests", url: "/service-requests", icon: Clipboard },
       ],
     });
 
@@ -186,6 +191,36 @@ export function AppSidebar() {
           requiredRoles: ["admin", "manager"],
         }
       );
+    }
+
+    // Asset Management - for facility managers and above
+    if (hasRole("facility_manager") || hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+      operationsItems.push({
+        title: "Asset Management",
+        url: "/asset-management",
+        icon: Package,
+        requiredRoles: ["facility_manager", "community_admin", "district_coordinator", "state_admin"],
+      });
+    }
+
+    // Inventory Management - for maintenance staff and above
+    if (hasRole("maintenance_staff") || hasRole("facility_manager") || hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+      operationsItems.push({
+        title: "Inventory Management",
+        url: "/inventory-management",
+        icon: BarChart3,
+        requiredRoles: ["maintenance_staff", "facility_manager", "community_admin", "district_coordinator", "state_admin"],
+      });
+    }
+
+    // Financial Management - for community admins and above
+    if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+      operationsItems.push({
+        title: "Financial Management",
+        url: "/financial-management",
+        icon: DollarSign,
+        requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
+      });
     }
 
     if (operationsItems.length > 0) {
