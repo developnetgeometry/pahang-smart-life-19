@@ -3,7 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import PanicButton from '@/components/emergency/PanicButton';
+import { useState, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 import { 
   Calendar, 
   Users, 
@@ -16,11 +18,72 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  Building
+  Building,
+  Shield
 } from 'lucide-react';
 
 export function ResidentDashboard() {
   const { language, user } = useAuth();
+  const { toast } = useToast();
+  const [isTriggering, setIsTriggering] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const progressRef = useRef<NodeJS.Timeout | null>(null);
+
+  const triggerPanicAlert = async () => {
+    setIsTriggering(true);
+
+    try {
+      // Get current location
+      let currentLocation = null;
+      if (navigator.geolocation) {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+          });
+          
+          currentLocation = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          };
+        } catch (error) {
+          console.error('Error getting current location:', error);
+        }
+      }
+
+      // Create panic alert in database
+      const { error } = await supabase
+        .from('panic_alerts')
+        .insert({
+          user_id: user?.id,
+          location_latitude: currentLocation?.latitude,
+          location_longitude: currentLocation?.longitude,
+          alert_status: 'active',
+          district_id: '00000000-0000-0000-0000-000000000001'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: language === 'en' ? 'Emergency Alert Sent!' : 'Amaran Kecemasan Dihantar!',
+        description: language === 'en' 
+          ? 'Security has been notified of your emergency.' 
+          : 'Keselamatan telah dimaklumkan tentang kecemasan anda.',
+      });
+
+    } catch (error) {
+      console.error('Error triggering panic alert:', error);
+      toast({
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' 
+          ? 'Failed to send emergency alert. Please try again.' 
+          : 'Gagal menghantar amaran kecemasan. Sila cuba lagi.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsTriggering(false);
+    }
+  };
 
   const personalMetrics = [
     {
@@ -92,6 +155,13 @@ export function ResidentDashboard() {
       description: language === 'en' ? 'Stay updated with community news' : 'Kekal terkini dengan berita komuniti',
       icon: Megaphone,
       action: '/announcements'
+    },
+    {
+      title: language === 'en' ? 'Emergency Alert' : 'Amaran Kecemasan',
+      description: language === 'en' ? 'Send emergency alert to security' : 'Hantar amaran kecemasan kepada keselamatan',
+      icon: Shield,
+      action: 'panic',
+      isPanic: true
     }
   ];
 
@@ -208,22 +278,40 @@ export function ResidentDashboard() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {quickActions.map((action, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                className="h-auto p-4 flex flex-col items-start gap-2 hover:shadow-md transition-shadow"
-                asChild
-              >
-                <a href={action.action}>
+              action.isPanic ? (
+                <Button
+                  key={index}
+                  variant="destructive"
+                  className="h-auto p-4 flex flex-col items-start gap-2 hover:shadow-md transition-shadow"
+                  onClick={triggerPanicAlert}
+                  disabled={isTriggering}
+                >
                   <div className="flex items-center gap-2 w-full">
-                    <action.icon className="h-5 w-5 text-primary" />
+                    <action.icon className="h-5 w-5" />
                     <span className="font-medium">{action.title}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground text-left">
+                  <p className="text-xs text-white/80 text-left">
                     {action.description}
                   </p>
-                </a>
-              </Button>
+                </Button>
+              ) : (
+                <Button
+                  key={index}
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-start gap-2 hover:shadow-md transition-shadow"
+                  asChild
+                >
+                  <a href={action.action}>
+                    <div className="flex items-center gap-2 w-full">
+                      <action.icon className="h-5 w-5 text-primary" />
+                      <span className="font-medium">{action.title}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-left">
+                      {action.description}
+                    </p>
+                  </a>
+                </Button>
+              )
             ))}
           </div>
         </CardContent>
@@ -325,9 +413,6 @@ export function ResidentDashboard() {
         </Card>
       </div>
 
-
-      {/* Emergency Panic Button */}
-      <PanicButton />
     </div>
   );
 }
