@@ -1,6 +1,4 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { useAccessControl } from "@/hooks/use-access-control";
-import { useUserRoles } from "@/hooks/use-user-roles";
 import { useTranslation } from "@/lib/translations";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -14,7 +12,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard,
   Calendar,
@@ -46,8 +43,7 @@ interface NavigationItem {
   title: string;
   url: string;
   icon: React.ComponentType<{ className?: string }>;
-  requiredLevel?: number;
-  requiredFunction?: string;
+  requiredRoles?: string[];
 }
 
 interface NavigationGroup {
@@ -56,23 +52,14 @@ interface NavigationGroup {
 }
 
 export function AppSidebar() {
-  const { language } = useAuth();
+  const { language, hasRole } = useAuth();
   const { t } = useTranslation(language);
   const location = useLocation();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
-  const { userRoles } = useUserRoles();
-  
-  const {
-    canAccessLevel,
-    canAccessFunction,
-    functionalAccess,
-    userLevel,
-    geographicScope
-  } = useAccessControl();
 
-  // Enhanced role-based navigation with hierarchical access
-  const getNavigationForUser = (): NavigationGroup[] => {
+  // Role-based navigation groups - enhanced filtering
+  const getNavigationForUser = () => {
     const nav: NavigationGroup[] = [];
 
     // Dashboard - available to all authenticated users
@@ -91,56 +78,203 @@ export function AppSidebar() {
       ],
     });
 
-    // Community Functions
-    const communityItems = [];
-    if (functionalAccess.community) {
-      communityItems.push(
+    // Community Hub - available to all users
+    nav.push({
+      label: t("communityHub"),
+      items: [
+        {
+          title: t("communication"),
+          url: "/communication-hub",
+          icon: MessageSquare,
+        },
         { title: t("announcements"), url: "/announcements", icon: Megaphone },
         { title: t("discussions"), url: "/discussions", icon: MessageSquare },
-        { title: t("directory"), url: "/directory", icon: Users }
-      );
-    }
-    communityItems.push({
-      title: t("communication"),
-      url: "/communication-hub",
-      icon: MessageSquare,
+      ],
     });
 
-    if (communityItems.length > 0) {
-      nav.push({
-        label: t("communityHub"),
-        items: communityItems,
-      });
-    }
-
-    // Services & Facilities
-    const serviceItems = [];
-    if (functionalAccess.facilities) {
-      serviceItems.push(
-        { title: t("facilities"), url: "/facilities", icon: Building }
-      );
-    }
-    if (functionalAccess.services) {
-      serviceItems.push(
+    // Services & Facilities - available to all users
+    nav.push({
+      label: t("servicesAndFacilities"),
+      items: [
+        { title: t("facilities"), url: "/facilities", icon: Building },
         { title: t("marketplace"), url: "/marketplace", icon: ShoppingCart },
-        { title: "Service Requests", url: "/service-requests", icon: Clipboard }
-      );
-    }
+        { title: t("cctvLiveFeed"), url: "/cctv-live", icon: Camera },
+        { title: "Service Requests", url: "/service-requests", icon: Clipboard },
+      ],
+    });
 
-    if (serviceItems.length > 0) {
-      nav.push({
-        label: t("servicesAndFacilities"),
-        items: serviceItems,
+    // Role Management & Services - for approval and service provider management roles
+    const roleManagementItems = [];
+    
+    // Role Approval Authority - for approval management roles
+    if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+      roleManagementItems.push({
+        title: t("roleApprovalAuthority"),
+        url: "/role-management",
+        icon: UserCheck,
+        requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
       });
     }
 
-    // Security Functions
+    // Service Provider Management - for community admins and above
+    if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+      roleManagementItems.push({
+        title: t("serviceProviders"),
+        url: "/admin/service-providers",
+        icon: Building,
+        requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
+      });
+    }
+
+    if (roleManagementItems.length > 0) {
+      nav.push({
+        label: t("roleManagement"),
+        items: roleManagementItems,
+      });
+    }
+
+    // Administration - only for state_admin and community_admin roles
+    const adminItems = [];
+    if (hasRole("state_admin") || hasRole("community_admin")) {
+      adminItems.push(
+        {
+          title: t("userManagement"),
+          url: "/admin/users",
+          icon: UserPlus,
+          requiredRoles: ["state_admin", "community_admin"],
+        },
+        {
+          title: t("communityManagement"),
+          url: "/admin/communities",
+          icon: Home,
+          requiredRoles: ["state_admin", "community_admin"],
+        }
+      );
+    }
+
+    if (hasRole("state_admin")) {
+      adminItems.push({
+        title: t("districtManagement"),
+        url: "/admin/districts",
+        icon: Settings,
+        requiredRoles: ["state_admin"],
+      });
+    }
+
+    if (adminItems.length > 0) {
+      nav.push({
+        label: t("administration"),
+        items: adminItems,
+      });
+    }
+
+    // Operations Management - for state_admin and community_admin roles
+    const operationsItems = [];
+    if (hasRole("state_admin") || hasRole("community_admin")) {
+      operationsItems.push(
+        {
+          title: t("facilitiesManagement"),
+          url: "/admin/facilities",
+          icon: Building,
+          requiredRoles: ["state_admin", "community_admin"],
+        },
+        {
+          title: t("maintenanceManagement"),
+          url: "/admin/maintenance",
+          icon: Wrench,
+          requiredRoles: ["state_admin", "community_admin"],
+        },
+        {
+          title: t("complaintsManagement"),
+          url: "/admin/complaints",
+          icon: AlertTriangle,
+          requiredRoles: ["state_admin", "community_admin"],
+        }
+      );
+    }
+
+    // Asset Management - for facility managers and above
+    if (hasRole("facility_manager") || hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+      operationsItems.push({
+        title: "Asset Management",
+        url: "/asset-management",
+        icon: Package,
+        requiredRoles: ["facility_manager", "community_admin", "district_coordinator", "state_admin"],
+      });
+    }
+
+    // Inventory Management - for maintenance staff and above
+    if (hasRole("maintenance_staff") || hasRole("facility_manager") || hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+      operationsItems.push({
+        title: "Inventory Management",
+        url: "/inventory-management",
+        icon: BarChart3,
+        requiredRoles: ["maintenance_staff", "facility_manager", "community_admin", "district_coordinator", "state_admin"],
+      });
+    }
+
+    // Financial Management - for community admins and above
+    if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+      operationsItems.push({
+        title: "Financial Management",
+        url: "/financial-management",
+        icon: DollarSign,
+        requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
+      });
+    }
+
+    if (operationsItems.length > 0) {
+      nav.push({
+        label: t("operations"),
+        items: operationsItems,
+      });
+    }
+
+    // Security & Monitoring - for security, state_admin, and community_admin roles
     const securityItems = [];
-    if (functionalAccess.security) {
+    if (hasRole("security_officer") || hasRole("state_admin") || hasRole("community_admin")) {
       securityItems.push(
-        { title: t("cctvLiveFeed"), url: "/cctv-live", icon: Camera },
-        { title: t("visitorSecurity"), url: "/visitor-security", icon: Shield },
-        { title: t("panicAlerts"), url: "/panic-alerts", icon: AlertTriangle }
+        {
+          title: t("panicAlerts"),
+          url: "/panic-alerts",
+          icon: AlertTriangle,
+          requiredRoles: ["security_officer", "state_admin", "community_admin"],
+        },
+        {
+          title: t("visitorSecurity"),
+          url: "/visitor-security",
+          icon: Shield,
+          requiredRoles: ["security_officer", "state_admin", "community_admin"],
+        },
+        {
+          title: t("cctvManagement"),
+          url: "/admin/cctv",
+          icon: Camera,
+          requiredRoles: ["security_officer", "state_admin", "community_admin"],
+        }
+      );
+    }
+
+    if (hasRole("state_admin") || hasRole("community_admin")) {
+      securityItems.push(
+        {
+          title: t("visitorAnalytics"),
+          url: "/visitor-analytics",
+          icon: Activity,
+          requiredRoles: ["state_admin", "community_admin"],
+        },
+        {
+          title: t("smartMonitoring"),
+          url: "/admin/smart-monitoring",
+          icon: Monitor,
+          requiredRoles: ["state_admin", "community_admin"],
+        },
+        {
+          title: t("sensorManagement"),
+          url: "/admin/sensors",
+          icon: Radio,
+          requiredRoles: ["state_admin", "community_admin"],
+        }
       );
     }
 
@@ -151,72 +285,31 @@ export function AppSidebar() {
       });
     }
 
-    // Maintenance Functions
-    const maintenanceItems = [];
-    if (functionalAccess.maintenance && canAccessLevel(5)) {
-      maintenanceItems.push(
-        { title: "Asset Management", url: "/asset-management", icon: Package, requiredLevel: 5 },
-        { title: "Inventory Management", url: "/inventory-management", icon: BarChart3, requiredLevel: 5 }
+    // Service Provider Management - moved to Role Management section above
+
+    // Communication Management - for state_admin and community_admin roles
+    const commMgmtItems = [];
+    if (hasRole("state_admin") || hasRole("community_admin")) {
+      commMgmtItems.push(
+        {
+          title: t("announcementManagement"),
+          url: "/admin/announcements",
+          icon: Megaphone,
+          requiredRoles: ["state_admin", "community_admin"],
+        },
+        {
+          title: t("discussionManagement"),
+          url: "/admin/discussions",
+          icon: MessageSquare,
+          requiredRoles: ["state_admin", "community_admin"],
+        }
       );
     }
 
-    if (maintenanceItems.length > 0) {
+    if (commMgmtItems.length > 0) {
       nav.push({
-        label: "Maintenance",
-        items: maintenanceItems,
-      });
-    }
-
-    // Administration - Level 7+ (Facility Manager and above)
-    const adminItems = [];
-    if (canAccessLevel(7)) {
-      adminItems.push(
-        { title: t("facilitiesManagement"), url: "/admin/facilities", icon: Building, requiredLevel: 7 },
-        { title: t("maintenanceManagement"), url: "/admin/maintenance", icon: Wrench, requiredLevel: 7 }
-      );
-    }
-
-    // Level 8+ (Community Admin and above)
-    if (functionalAccess.administration && canAccessLevel(8)) {
-      adminItems.push(
-        { title: t("userManagement"), url: "/admin/users", icon: UserPlus, requiredLevel: 8 },
-        { title: t("roleApprovalAuthority"), url: "/role-management", icon: UserCheck, requiredLevel: 8 },
-        { title: t("announcementManagement"), url: "/admin/announcements", icon: Megaphone, requiredLevel: 8 },
-        { title: t("complaintsManagement"), url: "/admin/complaints", icon: AlertTriangle, requiredLevel: 8 },
-        { title: t("discussionManagement"), url: "/admin/discussions", icon: MessageSquare, requiredLevel: 8 },
-        { title: t("serviceProviders"), url: "/admin/service-providers", icon: Building, requiredLevel: 8 },
-        { title: "Financial Management", url: "/financial-management", icon: DollarSign, requiredLevel: 8 },
-        { title: t("communityManagement"), url: "/admin/communities", icon: Home, requiredLevel: 8 }
-      );
-    }
-
-    // Security Admin - Level 6+ with security function
-    if (functionalAccess.security && canAccessLevel(6)) {
-      adminItems.push(
-        { title: t("cctvManagement"), url: "/admin/cctv", icon: Camera, requiredLevel: 6 }
-      );
-    }
-
-    // Level 9+ (District Coordinator and above)
-    if (canAccessLevel(9)) {
-      adminItems.push(
-        { title: t("districtManagement"), url: "/admin/districts", icon: Settings, requiredLevel: 9 },
-        { title: t("visitorAnalytics"), url: "/visitor-analytics", icon: Activity, requiredLevel: 9 }
-      );
-    }
-
-    // Level 10 (State Admin only)
-    if (canAccessLevel(10)) {
-      adminItems.push(
-        { title: t("smartMonitoring"), url: "/admin/smart-monitoring", icon: Monitor, requiredLevel: 10 },
-        { title: t("sensorManagement"), url: "/admin/sensors", icon: Radio, requiredLevel: 10 }
-      );
-    }
-
-    if (adminItems.length > 0) {
-      nav.push({
-        label: t("administration"),
-        items: adminItems,
+        label: t("communicationManagement"),
+        items: commMgmtItems,
       });
     }
 
@@ -224,23 +317,10 @@ export function AppSidebar() {
   };
 
   const navigation = getNavigationForUser();
-  
-  // Filter navigation items based on access control
+  const canSee = (item: NavigationItem) =>
+    !item.requiredRoles || item.requiredRoles.some((r) => hasRole?.(r as any));
   const filteredNavigation = navigation
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) => {
-        // Check level access
-        if (item.requiredLevel && !canAccessLevel(item.requiredLevel)) {
-          return false;
-        }
-        // Check functional access
-        if (item.requiredFunction && !canAccessFunction(item.requiredFunction as any)) {
-          return false;
-        }
-        return true;
-      })
-    }))
+    .map((group) => ({ ...group, items: group.items.filter(canSee) }))
     .filter((group) => group.items.length > 0);
 
   return (
@@ -258,15 +338,7 @@ export function AppSidebar() {
               <span className="text-sm font-semibold text-foreground">
                 Smart Community
               </span>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  {geographicScope.type === 'state' ? 'State' : 
-                   geographicScope.type === 'district' ? 'District' : 'Community'} Level
-                </span>
-                <Badge variant="outline" className="text-xs px-1 py-0">
-                  L{userLevel}
-                </Badge>
-              </div>
+              <span className="text-xs text-muted-foreground">Pahang</span>
             </div>
           )}
         </div>
@@ -296,16 +368,7 @@ export function AppSidebar() {
                         }
                       >
                         <item.icon className="h-4 w-4" />
-                        {!isCollapsed && (
-                          <div className="flex items-center justify-between w-full">
-                            <span>{item.title}</span>
-                            {item.requiredLevel && (
-                              <Badge variant="secondary" className="text-xs ml-2">
-                                L{item.requiredLevel}+
-                              </Badge>
-                            )}
-                          </div>
-                        )}
+                        {!isCollapsed && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

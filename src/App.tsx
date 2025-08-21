@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import React from "react";
 import { Layout } from "@/components/layout/Layout";
-import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import MyBookings from "./pages/MyBookings";
@@ -26,6 +25,7 @@ import DistrictManagement from "./pages/admin/DistrictManagement";
 import MaintenanceManagement from "./pages/admin/MaintenanceManagement";
 import ComplaintsManagement from "./pages/admin/ComplaintsManagement";
 import CCTVManagement from "./pages/admin/CCTVManagement";
+import RequireRoles from "@/components/routing/RequireRoles";
 import SmartMonitoring from "./pages/admin/SmartMonitoring";
 import SensorManagement from "./pages/admin/SensorManagement";
 import AnnouncementManagement from "./pages/admin/AnnouncementManagement";
@@ -44,11 +44,11 @@ import ServiceProviderManagement from "./pages/admin/ServiceProviderManagement";
 import ServiceProviderReview from "./pages/admin/ServiceProviderReview";
 import MyApplications from "./pages/MyApplications";
 import NotFound from "./pages/NotFound";
+// New Management Modules
 import AssetManagement from "./pages/AssetManagement";
 import ServiceRequests from "./pages/ServiceRequests";
 import FinancialManagement from "./pages/FinancialManagement";
 import InventoryManagement from "./pages/InventoryManagement";
-import AccessControlTest from "./pages/AccessControlTest";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,6 +58,11 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+}
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -72,7 +77,6 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Public Routes */}
             <Route
               path="/login"
               element={
@@ -81,8 +85,6 @@ const App = () => (
                 </PublicRoute>
               }
             />
-            
-            {/* Protected Routes */}
             <Route
               path="/"
               element={
@@ -94,7 +96,7 @@ const App = () => (
               }
             />
 
-            {/* Personal Routes - All authenticated users */}
+            {/* Resident modules */}
             <Route
               path="/my-bookings"
               element={
@@ -126,16 +128,6 @@ const App = () => (
               }
             />
             <Route
-              path="/my-profile"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <MyProfile />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/my-applications"
               element={
                 <ProtectedRoute>
@@ -155,152 +147,26 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-
-            {/* Community Functions */}
             <Route
-              path="/announcements"
-              element={
-                <ProtectedRoute requiredFunction="community">
-                  <Layout>
-                    <Announcements />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/events"
-              element={
-                <ProtectedRoute requiredFunction="community">
-                  <Layout>
-                    <Events />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/discussions"
-              element={
-                <ProtectedRoute requiredFunction="community">
-                  <Layout>
-                    <Discussions />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/directory"
-              element={
-                <ProtectedRoute requiredFunction="community">
-                  <Layout>
-                    <Directory />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/communication"
-              element={<Navigate to="/communication-hub" replace />}
-            />
-            <Route
-              path="/communication-hub"
+              path="/my-profile"
               element={
                 <ProtectedRoute>
                   <Layout>
-                    <CommunicationHub />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Facility Functions */}
-            <Route
-              path="/facilities"
-              element={
-                <ProtectedRoute requiredFunction="facilities">
-                  <Layout>
-                    <Facilities />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Service Functions */}
-            <Route
-              path="/marketplace"
-              element={
-                <ProtectedRoute requiredFunction="services">
-                  <Layout>
-                    <Marketplace />
+                    <MyProfile />
                   </Layout>
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/service-requests"
+              path="/role-management"
               element={
-                <ProtectedRoute requiredFunction="services">
+                <ProtectedRoute>
                   <Layout>
-                    <ServiceRequests />
+                    <RoleManagement />
                   </Layout>
                 </ProtectedRoute>
               }
             />
-
-            {/* Security Functions */}
-            <Route
-              path="/cctv-live"
-              element={
-                <ProtectedRoute requiredFunction="security">
-                  <Layout>
-                    <CCTVLiveFeed />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/visitor-security"
-              element={
-                <ProtectedRoute requiredFunction="security">
-                  <Layout>
-                    <VisitorSecurity />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/panic-alerts"
-              element={
-                <ProtectedRoute requiredFunction="security">
-                  <Layout>
-                    <PanicAlerts />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Maintenance Functions */}
-            <Route
-              path="/asset-management"
-              element={
-                <ProtectedRoute requiredFunction="maintenance" requiredLevel={5}>
-                  <Layout>
-                    <AssetManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/inventory-management"
-              element={
-                <ProtectedRoute requiredFunction="maintenance" requiredLevel={5}>
-                  <Layout>
-                    <InventoryManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Notifications */}
             <Route
               path="/notifications"
               element={
@@ -321,34 +187,180 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-
-            {/* Administrative Functions - Level-based */}
             <Route
-              path="/role-management"
+              path="/announcements"
               element={
-                <ProtectedRoute requiredFunction="administration" requiredLevel={8}>
+                <ProtectedRoute>
                   <Layout>
-                    <RoleManagement />
+                    <Announcements />
                   </Layout>
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/financial-management"
+              path="/events"
               element={
-                <ProtectedRoute requiredFunction="administration" requiredLevel={8}>
+                <ProtectedRoute>
                   <Layout>
-                    <FinancialManagement />
+                    <Events />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/discussions"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Discussions />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/facilities"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Facilities />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/marketplace"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Marketplace />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/communication"
+              element={<Navigate to="/communication-hub" replace />}
+            />
+            <Route
+              path="/communication-hub"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CommunicationHub />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/directory"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Directory />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/visitor-security"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <VisitorSecurity />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/visitor-analytics"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <VisitorAnalytics />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cctv-live"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CCTVLiveFeed />
                   </Layout>
                 </ProtectedRoute>
               }
             />
 
-            {/* Admin Routes - Level 7+ (Facility Manager+) */}
+            {/* Professional view routes */}
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <UserManagement />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/service-providers"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <ServiceProviderManagement />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/service-providers/review/:id"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <ServiceProviderReview />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/security"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <SecurityDashboard />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/communities"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CommunityManagement />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/districts"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <DistrictManagement />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/admin/facilities"
               element={
-                <ProtectedRoute requiredLevel={7}>
+                <ProtectedRoute>
                   <Layout>
                     <FacilitiesManagement />
                   </Layout>
@@ -358,41 +370,9 @@ const App = () => (
             <Route
               path="/admin/maintenance"
               element={
-                <ProtectedRoute requiredLevel={7}>
+                <ProtectedRoute>
                   <Layout>
                     <MaintenanceManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Admin Routes - Level 8+ (Community Admin+) */}
-            <Route
-              path="/admin/users"
-              element={
-                <ProtectedRoute requiredFunction="administration" requiredLevel={8}>
-                  <Layout>
-                    <UserManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/announcements"
-              element={
-                <ProtectedRoute requiredFunction="administration" requiredLevel={8}>
-                  <Layout>
-                    <AnnouncementManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/communities"
-              element={
-                <ProtectedRoute requiredLevel={8}>
-                  <Layout>
-                    <CommunityManagement />
                   </Layout>
                 </ProtectedRoute>
               }
@@ -400,7 +380,7 @@ const App = () => (
             <Route
               path="/admin/complaints"
               element={
-                <ProtectedRoute requiredFunction="administration" requiredLevel={8}>
+                <ProtectedRoute>
                   <Layout>
                     <ComplaintsManagement />
                   </Layout>
@@ -408,85 +388,23 @@ const App = () => (
               }
             />
             <Route
-              path="/admin/discussions"
-              element={
-                <ProtectedRoute requiredFunction="administration" requiredLevel={8}>
-                  <Layout>
-                    <DiscussionManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/service-providers"
-              element={
-                <ProtectedRoute requiredFunction="administration" requiredLevel={8}>
-                  <Layout>
-                    <ServiceProviderManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/service-providers/review/:id"
-              element={
-                <ProtectedRoute requiredFunction="administration" requiredLevel={8}>
-                  <Layout>
-                    <ServiceProviderReview />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Security Admin Routes - Level 6+ with Security Function */}
-            <Route
               path="/admin/cctv"
               element={
-                <ProtectedRoute requiredFunction="security" requiredLevel={6}>
-                  <Layout>
-                    <CCTVManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Admin Routes - Level 9+ (District Coordinator+) */}
-            <Route
-              path="/admin/districts"
-              element={
-                <ProtectedRoute requiredLevel={9}>
-                  <Layout>
-                    <DistrictManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/visitor-analytics"
-              element={
-                <ProtectedRoute requiredLevel={9}>
-                  <Layout>
-                    <VisitorAnalytics />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Admin Routes - Level 10 (State Admin) */}
-            <Route
-              path="/admin/security"
-              element={
-                <ProtectedRoute requiredLevel={10}>
-                  <Layout>
-                    <SecurityDashboard />
-                  </Layout>
+                <ProtectedRoute>
+                  <RequireRoles
+                    roles={["security_officer", "state_admin", "community_admin"]}
+                  >
+                    <Layout>
+                      <CCTVManagement />
+                    </Layout>
+                  </RequireRoles>
                 </ProtectedRoute>
               }
             />
             <Route
               path="/admin/smart-monitoring"
               element={
-                <ProtectedRoute requiredLevel={10}>
+                <ProtectedRoute>
                   <Layout>
                     <SmartMonitoring />
                   </Layout>
@@ -496,27 +414,95 @@ const App = () => (
             <Route
               path="/admin/sensors"
               element={
-                <ProtectedRoute requiredLevel={10}>
+                <ProtectedRoute>
                   <Layout>
                     <SensorManagement />
                   </Layout>
                 </ProtectedRoute>
               }
             />
-
-            {/* Access Control Testing (Development) */}
             <Route
-              path="/access-control-test"
+              path="/admin/announcements"
               element={
                 <ProtectedRoute>
                   <Layout>
-                    <AccessControlTest />
+                    <AnnouncementManagement />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/discussions"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <DiscussionManagement />
                   </Layout>
                 </ProtectedRoute>
               }
             />
 
-            {/* Catch all route */}
+            {/* Security modules */}
+            <Route
+              path="/panic-alerts"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <PanicAlerts />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Management modules */}
+            <Route
+              path="/service-requests"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ServiceRequests />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/asset-management"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["facility_manager", "community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <AssetManagement />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/financial-management"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <FinancialManagement />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory-management"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["maintenance_staff", "facility_manager", "community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <InventoryManagement />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

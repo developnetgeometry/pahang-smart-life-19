@@ -1,5 +1,3 @@
-//
-import { ptz } from "@/lib/ptzClient";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -116,8 +114,7 @@ export default function CCTVManagement() {
     location: string;
     type: CCTVCamera["type"] | "";
     streamUrl: string;
-    hasPtz: boolean;
-  }>({ name: "", location: "", type: "", streamUrl: "", hasPtz: true });
+  }>({ name: "", location: "", type: "", streamUrl: "" });
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [isAddCameraOpen, setIsAddCameraOpen] = useState(false);
@@ -131,10 +128,6 @@ export default function CCTVManagement() {
   >([]);
   const [rtspConnected, setRtspConnected] = useState(false);
   const [ptzPosition, setPtzPosition] = useState({ pan: 0, tilt: 0, zoom: 1 });
-  const [ptzHost, setPtzHost] = useState<string>("192.168.0.60");
-  const [ptzPort, setPtzPort] = useState<number>(80);
-  const [ptzUser, setPtzUser] = useState<string>("admin");
-  const [ptzPass, setPtzPass] = useState<string>("Netgeometry@200");
   const [activeTab, setActiveTab] = useState("cameras");
   const [isLiveViewOpen, setIsLiveViewOpen] = useState(false);
   const [liveViewCamera, setLiveViewCamera] = useState<CCTVCamera | null>(null);
@@ -146,7 +139,6 @@ export default function CCTVManagement() {
     type: CCTVCamera["type"];
     streamUrl: string;
     isActive: boolean;
-    hasPtz: boolean;
   } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CCTVCamera | null>(null);
   const [isTesting, setIsTesting] = useState(false);
@@ -697,7 +689,7 @@ export default function CCTVManagement() {
         resolution: "1080p",
         stream_url: newCam.streamUrl,
         is_active: true,
-        pan_tilt_zoom: newCam.hasPtz,
+        pan_tilt_zoom: false,
       })
       .select(
         "id, name, location, camera_type, resolution, stream_url, is_active, pan_tilt_zoom, created_at"
@@ -728,13 +720,7 @@ export default function CCTVManagement() {
     };
     setCameras((prev) => [nowCam, ...prev]);
     setIsAddCameraOpen(false);
-    setNewCam({
-      name: "",
-      location: "",
-      type: "",
-      streamUrl: "",
-      hasPtz: true,
-    });
+    setNewCam({ name: "", location: "", type: "", streamUrl: "" });
     toast({ title: t.cameraAddedSuccess });
   };
 
@@ -748,63 +734,32 @@ export default function CCTVManagement() {
     toast({ title: message });
   };
 
-  const handlePtzControl = async (direction: string) => {
-    // Normalize to ONVIF continuousMove vector range [-1,1]
-    let x = 0,
-      y = 0,
-      z = 0;
-    const step = 0.5; // adjust if you need faster/slower
-    if (direction === "up") y = step;
-    if (direction === "down") y = -step;
-    if (direction === "left") x = -step;
-    if (direction === "right") x = step;
-    if (direction === "zoom_in") z = step;
-    if (direction === "zoom_out") z = -step;
-
-    try {
-      await ptz.continuous(
-        { host: ptzHost, port: ptzPort, user: ptzUser, pass: ptzPass },
-        { x, y, z }
-      );
-      // Update local UI position (approximate)
-      const speed = 5;
-      setPtzPosition((prev) => {
-        switch (direction) {
-          case "up":
-            return { ...prev, tilt: Math.min(prev.tilt + speed, 90) };
-          case "down":
-            return { ...prev, tilt: Math.max(prev.tilt - speed, -90) };
-          case "left":
-            return { ...prev, pan: Math.max(prev.pan - speed, -180) };
-          case "right":
-            return { ...prev, pan: Math.min(prev.pan + speed, 180) };
-          case "zoom_in":
-            return { ...prev, zoom: Math.min(prev.zoom + 0.1, 10) };
-          case "zoom_out":
-            return { ...prev, zoom: Math.max(prev.zoom - 0.1, 1) };
-          default:
-            return prev;
-        }
-      });
-      // Short move then stop to avoid continuous motion
-      setTimeout(
-        () =>
-          ptz.stop(
-            { host: ptzHost, port: ptzPort, user: ptzUser, pass: ptzPass },
-            { panTilt: true, zoom: true }
-          ),
-        300
-      );
-    } catch (e: any) {
-      toast({
-        title: "PTZ error",
-        description: e?.message || "Failed to send PTZ command",
-      });
-    }
+  const handlePtzControl = (direction: string) => {
+    const speed = 5;
+    setPtzPosition((prev) => {
+      switch (direction) {
+        case "up":
+          return { ...prev, tilt: Math.min(prev.tilt + speed, 90) };
+        case "down":
+          return { ...prev, tilt: Math.max(prev.tilt - speed, -90) };
+        case "left":
+          return { ...prev, pan: Math.max(prev.pan - speed, -180) };
+        case "right":
+          return { ...prev, pan: Math.min(prev.pan + speed, 180) };
+        default:
+          return prev;
+      }
+    });
   };
 
-  const handleZoom = async (direction: "in" | "out") => {
-    await handlePtzControl(direction === "in" ? "zoom_in" : "zoom_out");
+  const handleZoom = (direction: "in" | "out") => {
+    setPtzPosition((prev) => ({
+      ...prev,
+      zoom:
+        direction === "in"
+          ? Math.min(prev.zoom + 0.1, 10)
+          : Math.max(prev.zoom - 0.1, 1),
+    }));
   };
 
   const handlePreset = (preset: string) => {
@@ -896,13 +851,7 @@ export default function CCTVManagement() {
             onOpenChange={(open) => {
               setIsAddCameraOpen(open);
               if (!open)
-                setNewCam({
-                  name: "",
-                  location: "",
-                  type: "",
-                  streamUrl: "",
-                  hasPtz: true,
-                });
+                setNewCam({ name: "", location: "", type: "", streamUrl: "" });
             }}
           >
             <DialogTrigger asChild>
@@ -980,16 +929,6 @@ export default function CCTVManagement() {
                         ...prev,
                         streamUrl: e.target.value,
                       }))
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="new-has-ptz">PTZ</Label>
-                  <Switch
-                    id="new-has-ptz"
-                    checked={newCam.hasPtz}
-                    onCheckedChange={(v) =>
-                      setNewCam((p) => ({ ...p, hasPtz: v }))
                     }
                   />
                 </div>
@@ -1148,7 +1087,6 @@ export default function CCTVManagement() {
                             type: camera.type,
                             streamUrl: camera.streamUrl,
                             isActive: camera.status === "online",
-                            hasPtz: !!camera.hasPtz,
                           });
                           setIsEditCameraOpen(true);
                         }}
@@ -1261,7 +1199,6 @@ export default function CCTVManagement() {
                           type: camera.type,
                           streamUrl: camera.streamUrl,
                           isActive: camera.status === "online",
-                          hasPtz: !!camera.hasPtz,
                         });
                         setIsEditCameraOpen(true);
                       }}
@@ -1391,8 +1328,8 @@ export default function CCTVManagement() {
                           <div className="text-xs mb-1">
                             {t.pan} / {t.tilt}
                           </div>
-                          <div className="grid grid-cols-3 gap-1 w-24">
-                            <div />
+                          <div className="grid grid-cols-3 gap-1 w-20">
+                            <div></div>
                             <Button
                               size="sm"
                               variant="outline"
@@ -1401,7 +1338,7 @@ export default function CCTVManagement() {
                             >
                               <ChevronUp className="h-3 w-3" />
                             </Button>
-                            <div />
+                            <div></div>
                             <Button
                               size="sm"
                               variant="outline"
@@ -1426,7 +1363,7 @@ export default function CCTVManagement() {
                             >
                               <ChevronRight className="h-3 w-3" />
                             </Button>
-                            <div />
+                            <div></div>
                             <Button
                               size="sm"
                               variant="outline"
@@ -1435,7 +1372,7 @@ export default function CCTVManagement() {
                             >
                               <ChevronDown className="h-3 w-3" />
                             </Button>
-                            <div />
+                            <div></div>
                           </div>
                         </div>
 
@@ -1446,18 +1383,18 @@ export default function CCTVManagement() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-6 px-2 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                              className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
                               onClick={() => handleZoom("out")}
                             >
-                              -
+                              <ZoomOut className="h-3 w-3" />
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-6 px-2 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                              className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
                               onClick={() => handleZoom("in")}
                             >
-                              +
+                              <ZoomIn className="h-3 w-3" />
                             </Button>
                           </div>
                           <div className="text-xs text-center mt-1">
@@ -1467,8 +1404,12 @@ export default function CCTVManagement() {
 
                         {/* Position */}
                         <div className="text-xs space-y-1 mb-3">
-                          <div>Pan: {ptzPosition.pan}°</div>
-                          <div>Tilt: {ptzPosition.tilt}°</div>
+                          <div>
+                            {t.pan}: {ptzPosition.pan}°
+                          </div>
+                          <div>
+                            {t.tilt}: {ptzPosition.tilt}°
+                          </div>
                         </div>
 
                         {/* Presets */}
@@ -1500,71 +1441,6 @@ export default function CCTVManagement() {
 
             {/* Camera Controls */}
             <div className="lg:w-80 space-y-4">
-              {/* PTZ Credentials */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">PTZ Credentials</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <div className="text-xs mb-1">Host</div>
-                      <Input
-                        value={ptzHost}
-                        onChange={(e) => setPtzHost(e.target.value)}
-                        placeholder="192.168.0.60"
-                      />
-                    </div>
-                    <div>
-                      <div className="text-xs mb-1">Port</div>
-                      <Input
-                        type="number"
-                        value={ptzPort}
-                        onChange={(e) =>
-                          setPtzPort(Number(e.target.value) || 80)
-                        }
-                        placeholder="80"
-                      />
-                    </div>
-                    <div>
-                      <div className="text-xs mb-1">User</div>
-                      <Input
-                        value={ptzUser}
-                        onChange={(e) => setPtzUser(e.target.value)}
-                        placeholder="admin"
-                      />
-                    </div>
-                    <div>
-                      <div className="text-xs mb-1">Password</div>
-                      <Input
-                        type="password"
-                        value={ptzPass}
-                        onChange={(e) => setPtzPass(e.target.value)}
-                        placeholder="••••••"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 pt-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        ptz.stop(
-                          {
-                            host: ptzHost,
-                            port: ptzPort,
-                            user: ptzUser,
-                            pass: ptzPass,
-                          },
-                          { panTilt: true, zoom: true }
-                        )
-                      }
-                    >
-                      Stop
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
               {/* RTSP Connection */}
               {liveViewCamera && (
                 <Card>
