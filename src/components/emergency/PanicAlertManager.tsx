@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
+import EmergencyLocationViewer from './EmergencyLocationViewer';
 import { 
   AlertTriangle, 
   MapPin, 
@@ -45,6 +46,7 @@ export default function PanicAlertManager() {
   const [loading, setLoading] = useState(true);
   const [selectedAlert, setSelectedAlert] = useState<PanicAlert | null>(null);
   const [responseNotes, setResponseNotes] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address?: string | null } | null>(null);
 
   useEffect(() => {
     fetchPanicAlerts();
@@ -202,16 +204,11 @@ export default function PanicAlertManager() {
 
   const openMaps = (alert: PanicAlert) => {
     if (alert.location_latitude && alert.location_longitude) {
-      // Try OpenStreetMap first (works better in development)
-      const osmUrl = `https://www.openstreetmap.org/?mlat=${alert.location_latitude}&mlon=${alert.location_longitude}&zoom=16&layers=M`;
-      
-      try {
-        window.open(osmUrl, '_blank', 'noopener,noreferrer');
-      } catch (error) {
-        // Fallback to Apple Maps
-        const appleUrl = `https://maps.apple.com/?ll=${alert.location_latitude},${alert.location_longitude}&z=16`;
-        window.open(appleUrl, '_blank', 'noopener,noreferrer');
-      }
+      setSelectedLocation({
+        lat: alert.location_latitude,
+        lng: alert.location_longitude,
+        address: alert.location_address
+      });
     }
   };
 
@@ -427,7 +424,7 @@ export default function PanicAlertManager() {
                       >
                         <Navigation className="w-3 h-3" />
                       </Button>
-                    )}
+                     )}
                   </div>
                 </div>
               );
@@ -441,6 +438,14 @@ export default function PanicAlertManager() {
           </div>
         </CardContent>
       </Card>
+
+      <EmergencyLocationViewer
+        latitude={selectedLocation?.lat || 0}
+        longitude={selectedLocation?.lng || 0}
+        address={selectedLocation?.address}
+        isOpen={!!selectedLocation}
+        onClose={() => setSelectedLocation(null)}
+      />
     </div>
   );
 }
