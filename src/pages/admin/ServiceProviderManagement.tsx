@@ -90,7 +90,8 @@ export default function ServiceProviderManagement() {
 
   const fetchApplications = async () => {
     try {
-      const { data, error } = await supabase
+      // Build query - remove district filter for now to see all applications
+      let query = supabase
         .from('service_provider_applications')
         .select(`
           id,
@@ -105,12 +106,18 @@ export default function ServiceProviderManagement() {
           service_categories,
           services_offered,
           applicant:profiles!applicant_id(full_name)
-        `)
-        .eq('district_id', user?.active_community_id)
-        .order('created_at', { ascending: false });
+        `);
+
+      // Only filter by district if user has an active community set
+      if (user?.active_community_id) {
+        query = query.eq('district_id', user.active_community_id);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       setApplications(data || []);
+      console.log('Fetched applications:', data);
     } catch (error) {
       console.error('Error fetching applications:', error);
       toast.error('Failed to load applications');
@@ -121,7 +128,8 @@ export default function ServiceProviderManagement() {
 
   const fetchProviders = async () => {
     try {
-      const { data, error } = await supabase
+      // Build query - remove district filter for now to see all providers
+      let query = supabase
         .from('service_provider_profiles')
         .select(`
           id,
@@ -136,12 +144,18 @@ export default function ServiceProviderManagement() {
           total_reviews,
           service_categories,
           user:profiles!user_id(full_name)
-        `)
-        .eq('district_id', user?.active_community_id)
-        .order('business_name');
+        `);
+
+      // Only filter by district if user has an active community set
+      if (user?.active_community_id) {
+        query = query.eq('district_id', user.active_community_id);
+      }
+
+      const { data, error } = await query.order('business_name');
 
       if (error) throw error;
       setProviders(data || []);
+      console.log('Fetched providers:', data);
     } catch (error) {
       console.error('Error fetching providers:', error);
     }
