@@ -34,6 +34,10 @@ export interface NotificationPreferences {
   events?: boolean;
   maintenance?: boolean;
   security?: boolean;
+  messages?: boolean;
+  mentions?: boolean;
+  emergencies?: boolean;
+  marketplace?: boolean;
 }
 
 export const useNotificationSystem = () => {
@@ -66,6 +70,10 @@ export const useNotificationSystem = () => {
         events: true,
         maintenance: true,
         security: true,
+        messages: true,
+        mentions: true,
+        emergencies: true,
+        marketplace: true,
       });
     } catch (error) {
       console.error('Error fetching preferences:', error);

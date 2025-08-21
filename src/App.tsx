@@ -174,7 +174,7 @@ const App = () => (
               }
             />
             <Route
-              path="/communication"
+              path="/communication-hub"
               element={
                 <ProtectedRoute>
                   <CommunicationHub />
