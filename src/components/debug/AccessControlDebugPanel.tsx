@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AccessControlTester, roleTestScenarios, testMarketplaceAccess, testRouteProtection } from '@/utils/access-control-tests';
+import { AccessControlTester, roleTestScenarios, testMarketplaceAccess, testRouteProtection, runRoleCombinationTests } from '@/utils/access-control-tests';
 import { 
   Shield, 
   User, 
@@ -50,6 +50,7 @@ export function AccessControlDebugPanel() {
       AccessControlTester.testFunctionalSpecialization();
       testMarketplaceAccess();
       testRouteProtection();
+      runRoleCombinationTests();
       
       setTestResults(results);
     } catch (error) {

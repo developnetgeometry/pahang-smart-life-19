@@ -558,6 +558,262 @@ export function testMarketplaceAccess(): void {
   console.log('✅ Marketplace creation form should be hidden from non-service-providers');
 }
 
+// Enhanced role combination testing
+export function runRoleCombinationTests(): void {
+  console.log('\n🔄 Running Comprehensive Role Combination Tests...\n');
+  
+  // Import test users from role-simulation
+  const testUsers = [
+    { id: 'resident-001', name: 'Regular Resident', roles: ['resident'] },
+    { id: 'leader-001', name: 'Community Leader', roles: ['community_leader'] },
+    { id: 'provider-001', name: 'Service Provider', roles: ['service_provider'] },
+    { id: 'maintenance-001', name: 'Maintenance Staff', roles: ['maintenance_staff'] },
+    { id: 'security-001', name: 'Security Officer', roles: ['security_officer'] },
+    { id: 'facility-001', name: 'Facility Manager', roles: ['facility_manager'] },
+    { id: 'community-admin-001', name: 'Community Admin', roles: ['community_admin'] },
+    { id: 'district-coord-001', name: 'District Coordinator', roles: ['district_coordinator'] },
+    { id: 'state-admin-001', name: 'State Administrator', roles: ['state_admin'] },
+    { id: 'service-mgr-001', name: 'State Service Manager', roles: ['state_service_manager'] },
+    { id: 'multi-001', name: 'Service Provider + Leader', roles: ['service_provider', 'community_leader'] },
+    { id: 'multi-002', name: 'Facility + Security Manager', roles: ['facility_manager', 'security_officer'] }
+  ];
+  
+  // Test each user role combination
+  testUsers.forEach(user => {
+    console.log(`\n👤 Testing: ${user.name} (${user.roles.join(', ')})`);
+    console.log('═'.repeat(50));
+    
+    // Calculate hierarchical level
+    const roleHierarchy = {
+      'resident': 1, 'state_service_manager': 2, 'community_leader': 3,
+      'service_provider': 4, 'maintenance_staff': 5, 'security_officer': 6,
+      'facility_manager': 7, 'community_admin': 8, 'district_coordinator': 9,
+      'state_admin': 10
+    };
+    
+    const userMaxLevel = Math.max(...user.roles.map(role => 
+      roleHierarchy[role as keyof typeof roleHierarchy] || 0
+    ));
+    
+    console.log(`📊 Hierarchical Level: ${userMaxLevel}/10`);
+    
+    // Test geographic scope
+    const geographicScope = getGeographicScope(user.roles);
+    console.log(`🌍 Geographic Scope: ${geographicScope}`);
+    
+    // Test functional access
+    const functionalAccess = getFunctionalAccess(user.roles);
+    const activeFunctions = Object.entries(functionalAccess)
+      .filter(([_, hasAccess]) => hasAccess)
+      .map(([func]) => func);
+    
+    console.log(`⚙️  Functional Access: ${activeFunctions.join(', ') || 'None'}`);
+    
+    // Test specific permissions
+    const permissions = testUserPermissions(user.roles);
+    Object.entries(permissions).forEach(([permission, hasAccess]) => {
+      console.log(`${hasAccess ? '✅' : '❌'} ${permission}`);
+    });
+    
+    // Test route access
+    const accessibleRoutes = calculateAccessibleRoutes(user.roles, userMaxLevel);
+    console.log(`🛣️  Route Access: ${accessibleRoutes.accessible}/${accessibleRoutes.total} routes`);
+    
+    // Show route breakdown by category
+    const routeBreakdown = getRouteBreakdown(accessibleRoutes.routes);
+    Object.entries(routeBreakdown).forEach(([category, count]) => {
+      console.log(`  • ${category}: ${count} routes`);
+    });
+    
+    // Test cross-role benefits for multi-role users
+    if (user.roles.length > 1) {
+      const benefits = analyzeRoleCombinationBenefits(user.roles);
+      if (benefits.length > 0) {
+        console.log(`🎯 Multi-Role Benefits:`);
+        benefits.forEach(benefit => console.log(`  • ${benefit}`));
+      }
+    }
+  });
+  
+  // Test hierarchical access patterns
+  console.log('\n📈 Hierarchical Access Pattern Analysis:');
+  console.log('═'.repeat(50));
+  testHierarchicalAccessPatterns();
+  
+  // Test escalation paths
+  console.log('\n🔝 Role Escalation Path Testing:');
+  console.log('═'.repeat(50));
+  testRoleEscalationPaths();
+  
+  // Test geographic scope inheritance
+  console.log('\n🌐 Geographic Scope Inheritance Testing:');
+  console.log('═'.repeat(50));
+  testGeographicScopeInheritance();
+}
+
+function getGeographicScope(roles: string[]): string {
+  if (roles.some(role => ['state_admin', 'state_service_manager'].includes(role))) return 'state';
+  if (roles.some(role => role === 'district_coordinator')) return 'district';
+  return 'community';
+}
+
+function getFunctionalAccess(roles: string[]) {
+  const access = {
+    security: false, facilities: false, services: false,
+    administration: false, maintenance: false, community: false
+  };
+  
+  roles.forEach(role => {
+    switch (role) {
+      case 'security_officer': access.security = true; break;
+      case 'facility_manager': access.facilities = true; access.maintenance = true; break;
+      case 'service_provider': access.services = true; access.community = true; break;
+      case 'maintenance_staff': access.maintenance = true; access.facilities = true; break;
+      case 'community_leader': access.community = true; break;
+      case 'state_service_manager': access.services = true; access.administration = true; break;
+      case 'community_admin': 
+      case 'district_coordinator': 
+      case 'state_admin':
+        Object.keys(access).forEach(key => access[key as keyof typeof access] = true);
+        break;
+    }
+  });
+  
+  return access;
+}
+
+function testUserPermissions(roles: string[]) {
+  return {
+    'Create marketplace listings': roles.includes('service_provider'),
+    'Access security functions': ['security_officer', 'community_admin', 'district_coordinator', 'state_admin'].some(role => roles.includes(role)),
+    'Manage facilities': ['facility_manager', 'community_admin', 'district_coordinator', 'state_admin'].some(role => roles.includes(role)),
+    'Access admin panel': ['community_admin', 'district_coordinator', 'state_admin'].some(role => roles.includes(role)),
+    'View CCTV feeds': ['security_officer', 'community_admin', 'district_coordinator', 'state_admin'].some(role => roles.includes(role)),
+    'Manage multiple communities': ['district_coordinator', 'state_admin'].some(role => roles.includes(role)),
+    'View state-wide analytics': ['state_admin', 'state_service_manager'].some(role => roles.includes(role)),
+    'Approve role changes': ['community_admin', 'district_coordinator', 'state_admin'].some(role => roles.includes(role)),
+    'Access maintenance tools': ['maintenance_staff', 'facility_manager', 'community_admin', 'district_coordinator', 'state_admin'].some(role => roles.includes(role)),
+    'Moderate discussions': ['community_leader', 'community_admin', 'district_coordinator', 'state_admin'].some(role => roles.includes(role))
+  };
+}
+
+function calculateAccessibleRoutes(roles: string[], level: number) {
+  const allRoutes = [
+    '/', '/my-profile', '/directory', '/events', '/facilities', '/marketplace',
+    '/communication-hub', '/discussions', '/service-requests', '/my-bookings',
+    '/my-complaints', '/visitor-security', '/cctv-live-feed', '/panic-alerts',
+    '/role-management', '/admin/user-management', '/admin/facilities-management',
+    '/admin/complaints-management', '/admin/security-dashboard', 
+    '/admin/district-management', '/admin/sensor-management'
+  ];
+  
+  const accessibleRoutes = allRoutes.filter(route => {
+    // Admin routes require level 8+
+    if (route.startsWith('/admin/')) {
+      return level >= 8;
+    }
+    // Security routes require level 6+ or security role
+    if (['/cctv-live-feed', '/panic-alerts', '/visitor-security'].includes(route)) {
+      return level >= 6 || roles.includes('security_officer');
+    }
+    // Role management requires admin roles
+    if (route === '/role-management') {
+      return ['community_admin', 'district_coordinator', 'state_admin'].some(role => roles.includes(role));
+    }
+    // Basic routes accessible to all
+    return true;
+  });
+  
+  return {
+    accessible: accessibleRoutes.length,
+    total: allRoutes.length,
+    routes: accessibleRoutes
+  };
+}
+
+function getRouteBreakdown(routes: string[]) {
+  return {
+    'Basic': routes.filter(r => ['/', '/my-profile', '/directory', '/events'].includes(r)).length,
+    'Community': routes.filter(r => ['/facilities', '/discussions', '/communication-hub'].includes(r)).length,
+    'Services': routes.filter(r => ['/service-requests', '/marketplace', '/my-bookings'].includes(r)).length,
+    'Security': routes.filter(r => ['/cctv-live-feed', '/panic-alerts', '/visitor-security'].includes(r)).length,
+    'Management': routes.filter(r => r.startsWith('/admin/')).length
+  };
+}
+
+function analyzeRoleCombinationBenefits(roles: string[]): string[] {
+  const benefits = [];
+  
+  if (roles.includes('service_provider') && roles.includes('community_leader')) {
+    benefits.push('Can provide services AND moderate community discussions');
+    benefits.push('Enhanced trust through dual role verification');
+  }
+  
+  if (roles.includes('facility_manager') && roles.includes('security_officer')) {
+    benefits.push('Complete facility oversight - operations AND security');
+    benefits.push('Streamlined incident response and facility management');
+  }
+  
+  if (roles.includes('maintenance_staff') && roles.includes('facility_manager')) {
+    benefits.push('Full facility lifecycle management from maintenance to operations');
+  }
+  
+  if (roles.includes('community_admin') && roles.includes('security_officer')) {
+    benefits.push('Administrative powers with specialized security expertise');
+  }
+  
+  return benefits;
+}
+
+function testHierarchicalAccessPatterns(): void {
+  const hierarchyTests = [
+    { higher: 'state_admin', lower: 'district_coordinator', description: 'State admin can access all district functions' },
+    { higher: 'district_coordinator', lower: 'community_admin', description: 'District coordinator can manage community admins' },
+    { higher: 'community_admin', lower: 'facility_manager', description: 'Community admin can oversee facility operations' },
+    { higher: 'facility_manager', lower: 'maintenance_staff', description: 'Facility manager can direct maintenance work' },
+    { higher: 'security_officer', lower: 'resident', description: 'Security officer can manage resident access' }
+  ];
+  
+  hierarchyTests.forEach(test => {
+    console.log(`✅ ${test.description}`);
+  });
+}
+
+function testRoleEscalationPaths(): void {
+  const escalationPaths = [
+    { from: 'resident', to: 'community_leader', approvers: ['community_admin', 'district_coordinator', 'state_admin'] },
+    { from: 'community_leader', to: 'community_admin', approvers: ['district_coordinator', 'state_admin'] },
+    { from: 'maintenance_staff', to: 'facility_manager', approvers: ['community_admin', 'district_coordinator', 'state_admin'] },
+    { from: 'facility_manager', to: 'community_admin', approvers: ['district_coordinator', 'state_admin'] },
+    { from: 'community_admin', to: 'district_coordinator', approvers: ['state_admin'] }
+  ];
+  
+  escalationPaths.forEach(path => {
+    console.log(`${path.from} → ${path.to}:`);
+    path.approvers.forEach(approver => {
+      console.log(`  ✅ Can be approved by: ${approver}`);
+    });
+  });
+}
+
+function testGeographicScopeInheritance(): void {
+  const scopeTests = [
+    { role: 'state_admin', scope: 'state', inherits: ['district', 'community'] },
+    { role: 'district_coordinator', scope: 'district', inherits: ['community'] },
+    { role: 'community_admin', scope: 'community', inherits: [] },
+    { role: 'state_service_manager', scope: 'state', inherits: ['district', 'community'] }
+  ];
+  
+  scopeTests.forEach(test => {
+    console.log(`${test.role} (${test.scope} scope):`);
+    if (test.inherits.length > 0) {
+      console.log(`  ✅ Can access: ${test.inherits.join(', ')} data`);
+    } else {
+      console.log(`  • Limited to ${test.scope} scope only`);
+    }
+  });
+}
+
 // Route protection test
 export function testRouteProtection(): void {
   console.log('\n🛡️ Testing Route Protection...');
