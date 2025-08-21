@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { WeatherWidget } from './WeatherWidget';
 import { 
   Wrench, 
   Clock, 
@@ -176,6 +177,28 @@ export function MaintenanceStaffDashboard() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Weather Widget */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <WeatherWidget />
+        <div className="md:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                {language === 'en' ? 'Maintenance Operations Status' : 'Status Operasi Penyelenggaraan'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground">
+                {language === 'en' 
+                  ? '8 open work orders. 94% completion rate this month.' 
+                  : '8 arahan kerja terbuka. Kadar penyelesaian 94% bulan ini.'}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

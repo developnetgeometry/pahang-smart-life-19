@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { WeatherWidget } from './WeatherWidget';
 import { 
   MapPin, 
   Users, 
@@ -216,6 +217,28 @@ export function StateServiceManagerDashboard() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Weather Widget */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <WeatherWidget />
+        <div className="md:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                {language === 'en' ? 'Service Operations Status' : 'Status Operasi Perkhidmatan'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground">
+                {language === 'en' 
+                  ? 'All service regions operational. 67 active providers across 4 regions.' 
+                  : 'Semua wilayah perkhidmatan beroperasi. 67 penyedia aktif merentasi 4 wilayah.'}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Performance Issues Alert */}

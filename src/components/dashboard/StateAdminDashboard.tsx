@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { WeatherWidget } from './WeatherWidget';
 import { useState } from 'react';
 import { 
   MapPin, 
@@ -142,6 +143,28 @@ export function StateAdminDashboard() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Weather Widget */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <WeatherWidget />
+        <div className="md:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                {language === 'en' ? 'State Administration Status' : 'Status Pentadbiran Negeri'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground">
+                {language === 'en' 
+                  ? '15 districts operational. 12,450 active residents across all regions.' 
+                  : '15 daerah beroperasi. 12,450 penduduk aktif di semua wilayah.'}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Critical Alerts */}
