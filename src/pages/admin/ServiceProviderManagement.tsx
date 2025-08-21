@@ -91,7 +91,7 @@ export default function ServiceProviderManagement() {
   const fetchApplications = async () => {
     try {
       console.log('Fetching applications...');
-      // Build query - remove district filter for now to see all applications
+      // Build query - simplified without the profile join for now
       let query = supabase
         .from('service_provider_applications')
         .select(`
@@ -105,8 +105,7 @@ export default function ServiceProviderManagement() {
           priority,
           created_at,
           service_categories,
-          services_offered,
-          applicant:profiles!applicant_id(full_name)
+          services_offered
         `);
 
       // Only filter by district if user has an active community set
@@ -118,8 +117,15 @@ export default function ServiceProviderManagement() {
 
       console.log('Applications query result:', { data, error });
       if (error) throw error;
-      setApplications(data || []);
-      console.log('Set applications:', data);
+      
+      // Transform data to match expected format
+      const transformedData = (data || []).map(app => ({
+        ...app,
+        applicant: { full_name: app.contact_person }
+      }));
+      
+      setApplications(transformedData);
+      console.log('Set applications:', transformedData);
     } catch (error) {
       console.error('Error fetching applications:', error);
       toast.error('Failed to load applications');
@@ -130,7 +136,8 @@ export default function ServiceProviderManagement() {
 
   const fetchProviders = async () => {
     try {
-      // Build query - remove district filter for now to see all providers
+      console.log('Fetching providers...');
+      // Build query - simplified without the profile join for now
       let query = supabase
         .from('service_provider_profiles')
         .select(`
@@ -144,8 +151,7 @@ export default function ServiceProviderManagement() {
           compliance_status,
           average_rating,
           total_reviews,
-          service_categories,
-          user:profiles!user_id(full_name)
+          service_categories
         `);
 
       // Only filter by district if user has an active community set
@@ -155,9 +161,17 @@ export default function ServiceProviderManagement() {
 
       const { data, error } = await query.order('business_name');
 
+      console.log('Providers query result:', { data, error });
       if (error) throw error;
-      setProviders(data || []);
-      console.log('Fetched providers:', data);
+      
+      // Transform data to match expected format
+      const transformedData = (data || []).map(provider => ({
+        ...provider,
+        user: { full_name: provider.business_name }
+      }));
+      
+      setProviders(transformedData);
+      console.log('Set providers:', transformedData);
     } catch (error) {
       console.error('Error fetching providers:', error);
     }
