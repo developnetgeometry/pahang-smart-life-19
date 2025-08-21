@@ -37,7 +37,7 @@ interface MarketplaceItem {
 }
 
 export default function Marketplace() {
-  const { language } = useAuth();
+  const { language, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createGroupChat } = useChatRooms();
@@ -47,6 +47,18 @@ export default function Marketplace() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Form state for new listing
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    category: '',
+    condition: '',
+    price: '',
+    location: '',
+    contact: ''
+  });
 
   const text = {
     en: {
@@ -278,11 +290,128 @@ export default function Marketplace() {
     return matchesSearch && matchesCategory && matchesCondition;
   });
 
-  const handleCreateListing = () => {
-    toast({
-      title: t.createSuccess,
-    });
-    setIsCreateOpen(false);
+  const handleCreateListing = async () => {
+    if (!user) {
+      toast({
+        title: language === 'en' ? 'Authentication Required' : 'Pengesahan Diperlukan',
+        description: language === 'en' ? 'Please login to create a listing' : 'Sila log masuk untuk mencipta senarai',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Validate required fields
+    if (!formData.title || !formData.category || !formData.condition || !formData.price) {
+      toast({
+        title: language === 'en' ? 'Validation Error' : 'Ralat Pengesahan',
+        description: language === 'en' ? 'Please fill in all required fields' : 'Sila isi semua medan yang diperlukan',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      // Get user's district from their profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('district_id')
+        .eq('id', user.id)
+        .single();
+
+      const { error } = await supabase
+        .from('marketplace_items')
+        .insert({
+          seller_id: user.id,
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          price: parseFloat(formData.price),
+          condition: formData.condition,
+          location: formData.location,
+          district_id: profile?.district_id,
+          is_available: true,
+          is_active: true
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: t.createSuccess,
+      });
+
+      // Reset form and close dialog
+      setFormData({
+        title: '',
+        description: '',
+        category: '',
+        condition: '',
+        price: '',
+        location: '',
+        contact: ''
+      });
+      setIsCreateOpen(false);
+
+      // Refresh the marketplace items
+      const fetchMarketplaceItems = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('marketplace_items')
+            .select('*')
+            .eq('is_active', true)
+            .order('created_at', { ascending: false });
+
+          if (error) throw error;
+
+          // Transform data to match our interface (reusing existing logic)
+          const getFallbackImage = (title: string, category: string) => {
+            const titleLower = title.toLowerCase();
+            if (titleLower.includes('iphone') || category === 'electronics') return iphoneMarketplaceImage;
+            if (titleLower.includes('table') || titleLower.includes('dining') || category === 'furniture') return diningTableMarketplaceImage;
+            if (titleLower.includes('book') || category === 'books') return programmingBooksMarketplaceImage;
+            return '/placeholder.svg';
+          };
+
+          const transformedItems: MarketplaceItem[] = (data || []).map(item => ({
+            id: item.id,
+            title: item.title,
+            description: item.description || '',
+            price: Number(item.price),
+            category: item.category,
+            condition: item.condition as 'new' | 'like-new' | 'good' | 'fair',
+            seller: 'Anonymous User',
+            sellerRating: 4.5,
+            location: item.location || '',
+            postedDate: new Date(item.created_at).toISOString().split('T')[0],
+            images: item.image ? [
+              item.image.startsWith('http') ? item.image : 
+              item.image === 'iphone-marketplace.jpg' ? iphoneMarketplaceImage :
+              item.image === 'dining-table-marketplace.jpg' ? diningTableMarketplaceImage :
+              item.image === 'programming-books-marketplace.jpg' ? programmingBooksMarketplaceImage :
+              getFallbackImage(item.title, item.category)
+            ] : [getFallbackImage(item.title, item.category)],
+            isFavorite: false
+          }));
+
+          setMarketplaceItems(transformedItems.length > 0 ? transformedItems : mockItems);
+        } catch (error) {
+          console.error('Error refreshing marketplace items:', error);
+        }
+      };
+
+      await fetchMarketplaceItems();
+
+    } catch (error) {
+      console.error('Error creating listing:', error);
+      toast({
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' ? 'Failed to create listing' : 'Gagal mencipta senarai',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleContactSeller = async (item: MarketplaceItem) => {
@@ -350,13 +479,18 @@ export default function Marketplace() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="title">{t.itemTitle}</Label>
-                <Input id="title" placeholder={t.itemTitle} />
+                <Label htmlFor="title">{t.itemTitle}*</Label>
+                <Input 
+                  id="title" 
+                  placeholder={t.itemTitle}
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="category">{t.category}</Label>
-                  <Select>
+                  <Label htmlFor="category">{t.category}*</Label>
+                  <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder={t.selectCategory} />
                     </SelectTrigger>
@@ -370,8 +504,8 @@ export default function Marketplace() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="condition">{t.condition}</Label>
-                  <Select>
+                  <Label htmlFor="condition">{t.condition}*</Label>
+                  <Select value={formData.condition} onValueChange={(value) => setFormData(prev => ({ ...prev, condition: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder={t.selectCondition} />
                     </SelectTrigger>
@@ -386,8 +520,14 @@ export default function Marketplace() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="price">{t.itemPrice}</Label>
-                <Input id="price" type="number" placeholder="0" />
+                <Label htmlFor="price">{t.itemPrice}*</Label>
+                <Input 
+                  id="price" 
+                  type="number" 
+                  placeholder="0"
+                  value={formData.price}
+                  onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">{t.itemDescription}</Label>
@@ -395,27 +535,41 @@ export default function Marketplace() {
                   id="description" 
                   placeholder={t.itemDescription}
                   rows={3}
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="image">Item Image</Label>
+                <Label htmlFor="location">Location</Label>
                 <Input 
-                  id="image" 
-                  type="file" 
-                  accept="image/*"
-                  className="file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground file:cursor-pointer hover:file:bg-primary/90"
+                  id="location" 
+                  placeholder="e.g., Block A, Unit 10-2"
+                  value={formData.location}
+                  onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contact">{t.contactInfo}</Label>
-                <Input id="contact" placeholder="Phone number or email" />
+                <Input 
+                  id="contact" 
+                  placeholder="Phone number or email"
+                  value={formData.contact}
+                  onChange={(e) => setFormData(prev => ({ ...prev, contact: e.target.value }))}
+                />
               </div>
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+                <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>
                   {t.cancel}
                 </Button>
-                <Button onClick={handleCreateListing}>
-                  {t.create}
+                <Button onClick={handleCreateListing} disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {language === 'en' ? 'Creating...' : 'Mencipta...'}
+                    </>
+                  ) : (
+                    t.create
+                  )}
                 </Button>
               </div>
             </div>
