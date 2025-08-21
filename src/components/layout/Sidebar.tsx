@@ -219,6 +219,24 @@ export function AppSidebar() {
       });
     }
 
+    // Service Provider Management - only for community admins
+    const serviceProviderItems = [];
+    if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+      serviceProviderItems.push({
+        title: "Service Providers",
+        url: "/admin/service-providers",
+        icon: Building,
+        requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
+      });
+    }
+
+    if (serviceProviderItems.length > 0) {
+      nav.push({
+        label: "Service Management",
+        items: serviceProviderItems,
+      });
+    }
+
     // Communication Management - for admin and manager roles
     const commMgmtItems = [];
     if (hasRole("admin") || hasRole("manager")) {
