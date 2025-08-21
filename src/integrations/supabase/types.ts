@@ -4518,6 +4518,21 @@ export type Database = {
         Args: { module_name: string }
         Returns: string
       }
+      get_pending_role_requests_for_approver: {
+        Args: { approver_user_id: string }
+        Returns: {
+          created_at: string
+          district_name: string
+          justification: string
+          reason: string
+          request_id: string
+          requester_email: string
+          requester_name: string
+          requirements: Database["public"]["Enums"]["approval_requirement"][]
+          user_current_role: Database["public"]["Enums"]["user_role"]
+          user_requested_role: Database["public"]["Enums"]["user_role"]
+        }[]
+      }
       get_required_approver_role: {
         Args: {
           current_user_role: Database["public"]["Enums"]["user_role"]
