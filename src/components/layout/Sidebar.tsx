@@ -245,12 +245,6 @@ export function AppSidebar() {
           url: "/visitor-security",
           icon: Shield,
           requiredRoles: ["security_officer", "state_admin", "community_admin"],
-        },
-        {
-          title: t("cctvManagement"),
-          url: "/admin/cctv",
-          icon: Camera,
-          requiredRoles: ["security_officer", "state_admin", "community_admin"],
         }
       );
     }
