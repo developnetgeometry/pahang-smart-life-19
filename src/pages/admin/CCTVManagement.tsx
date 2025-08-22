@@ -1178,48 +1178,51 @@ export default function CCTVManagement() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
                     <Button
                       size="sm"
                       variant="outline"
-                      className="w-full"
+                      className="flex-1"
                       onClick={() => handleViewLiveCamera(camera)}
                     >
-                      <Eye className="h-4 w-4 mr-2" />
+                      <Eye className="h-4 w-4 mr-1" />
                       {t.liveView}
                     </Button>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => {
-                          setEditCam({
-                            id: camera.id,
-                            name: camera.name,
-                            location: camera.location,
-                            type: camera.type,
-                            streamUrl: camera.streamUrl,
-                            isActive: camera.status === "online",
-                          });
-                          setIsEditCameraOpen(true);
-                        }}
-                      >
-                        <Settings className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={camera.recording ? "destructive" : "default"}
-                        className="flex-1"
-                        onClick={() => handleToggleRecording(camera)}
-                      >
-                        {camera.recording ? (
-                          <Pause className="h-4 w-4" />
-                        ) : (
-                          <Play className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setEditCam({
+                          id: camera.id,
+                          name: camera.name,
+                          location: camera.location,
+                          type: camera.type,
+                          streamUrl: camera.streamUrl,
+                          isActive: camera.status === "online",
+                        });
+                        setIsEditCameraOpen(true);
+                      }}
+                    >
+                      <Settings className="h-4 w-4 mr-1" />
+                      {t.settings}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={camera.recording ? "destructive" : "default"}
+                      onClick={() => handleToggleRecording(camera)}
+                    >
+                      {camera.recording ? (
+                        <>
+                          <Pause className="h-4 w-4 mr-1" />
+                          {t.stopRecording}
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4 mr-1" />
+                          {t.startRecording}
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
