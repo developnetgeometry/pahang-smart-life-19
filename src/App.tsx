@@ -452,6 +452,18 @@ const App = () => (
               }
             />
 
+            {/* CCTV Live Feed for residents */}
+            <Route
+              path="/cctv-live-feed"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CCTVLiveFeed />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
             {/* Security modules */}
             <Route
               path="/panic-alerts"

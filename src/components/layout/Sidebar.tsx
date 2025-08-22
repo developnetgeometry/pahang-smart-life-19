@@ -99,6 +99,7 @@ export function AppSidebar() {
         { title: t("facilities"), url: "/facilities", icon: Building },
         { title: t("marketplace"), url: "/marketplace", icon: ShoppingCart },
         { title: "Service Requests", url: "/service-requests", icon: Clipboard },
+        { title: t("cctvManagement"), url: "/cctv-live-feed", icon: Camera },
       ],
     });
 
