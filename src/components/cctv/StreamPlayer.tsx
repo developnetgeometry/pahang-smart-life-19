@@ -38,13 +38,11 @@ export default function StreamPlayer({
 }: Props) {
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [imageLoading, setImageLoading] = useState(false);
 
   const gateway = import.meta.env.VITE_STREAM_GATEWAY_URL as string | undefined;
   const mjpegProxy = import.meta.env.VITE_MJPEG_PROXY_URL as string | undefined;
 
   const strategy = useMemo(() => {
-    if (!src) return "none" as const;
     if (isHls(src)) return "hls" as const;
     if (isMp4(src)) return "mp4" as const;
     if (isMjpeg(src)) return "mjpeg" as const;
@@ -55,17 +53,6 @@ export default function StreamPlayer({
   useEffect(() => {
     setError(null);
   }, [src, strategy]);
-
-  if (!src) {
-    return (
-      <div className={`flex items-center justify-center bg-gray-900 text-white p-4 ${className || ""}`}>
-        <div className="text-center">
-          <div className="text-gray-400 mb-2">📹</div>
-          <div className="text-sm">No stream URL configured</div>
-        </div>
-      </div>
-    );
-  }
 
   if (strategy === "hls") {
     return (
@@ -88,7 +75,6 @@ export default function StreamPlayer({
         controls={controls}
         muted={muted}
         playsInline
-        onError={() => setError("Failed to load MP4 stream")}
       />
     );
   }
@@ -97,41 +83,14 @@ export default function StreamPlayer({
     const proxied = mjpegProxy
       ? `${mjpegProxy}?url=${encodeURIComponent(src)}`
       : src;
-    
-    if (error) {
-      return (
-        <div className={`flex items-center justify-center bg-gray-900 text-white p-4 ${className || ""}`}>
-          <div className="text-center">
-            <div className="text-red-400 mb-2">⚠️</div>
-            <div className="text-sm">{error}</div>
-          </div>
-        </div>
-      );
-    }
-
     return (
-      <div className={`relative ${className}`}>
-        {imageLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900 text-white z-10">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
-              <div className="text-sm">Loading MJPEG stream...</div>
-            </div>
-          </div>
-        )}
-        <img
-          ref={imgRef}
-          src={proxied}
-          className="w-full h-full object-contain"
-          alt="MJPEG stream"
-          onLoad={() => setImageLoading(false)}
-          onLoadStart={() => setImageLoading(true)}
-          onError={() => {
-            setImageLoading(false);
-            setError("Failed to load MJPEG stream - check URL and network connection");
-          }}
-        />
-      </div>
+      <img
+        ref={imgRef}
+        src={proxied}
+        className={className}
+        alt="MJPEG stream"
+        onError={() => setError("Failed to load MJPEG stream")}
+      />
     );
   }
 
@@ -150,20 +109,16 @@ export default function StreamPlayer({
     }
     return (
       <div
-        className={`flex items-center justify-center text-sm text-white bg-gray-900 p-4 ${
+        className={`flex items-center justify-center text-sm text-muted-foreground ${
           className || ""
         }`}
       >
-        <div className="text-center">
-          <div className="text-yellow-400 mb-2">⚠️</div>
-          <div>RTSP streams require a gateway server.</div>
-          <div className="text-xs mt-1 opacity-75">Configure VITE_STREAM_GATEWAY_URL</div>
-        </div>
+        RTSP isn’t supported in browsers directly. Configure
+        VITE_STREAM_GATEWAY_URL to an HLS gateway.
       </div>
     );
   }
 
-  // Auto-detection fallback
   if (isHls(src)) {
     return (
       <HlsPlayer
@@ -175,7 +130,6 @@ export default function StreamPlayer({
       />
     );
   }
-  
   if (isMp4(src)) {
     return (
       <video
@@ -185,50 +139,19 @@ export default function StreamPlayer({
         controls={controls}
         muted={muted}
         playsInline
-        onError={() => setError("Failed to load video stream")}
       />
     );
   }
-  
-  // Try as MJPEG with optional proxy
   const tryProxy = mjpegProxy
     ? `${mjpegProxy}?url=${encodeURIComponent(src)}`
     : src;
-    
-  if (error) {
-    return (
-      <div className={`flex items-center justify-center bg-gray-900 text-white p-4 ${className || ""}`}>
-        <div className="text-center">
-          <div className="text-red-400 mb-2">⚠️</div>
-          <div className="text-sm mb-2">{error}</div>
-          <div className="text-xs opacity-75">Stream URL: {src}</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={`relative ${className}`}>
-      {imageLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900 text-white z-10">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
-            <div className="text-sm">Loading stream...</div>
-          </div>
-        </div>
-      )}
-      <img
-        ref={imgRef}
-        src={tryProxy}
-        className="w-full h-full object-contain"
-        alt="Stream"
-        onLoad={() => setImageLoading(false)}
-        onLoadStart={() => setImageLoading(true)}
-        onError={() => {
-          setImageLoading(false);
-          setError("Failed to load stream - check URL format and network connection");
-        }}
-      />
-    </div>
+    <img
+      ref={imgRef}
+      src={tryProxy}
+      className={className}
+      alt="Stream"
+      onError={() => setError("Failed to load stream")}
+    />
   );
 }

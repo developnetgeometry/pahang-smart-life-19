@@ -401,9 +401,13 @@ const App = () => (
               path="/admin/cctv"
               element={
                 <ProtectedRoute>
-                  <Layout>
-                    <CCTVManagement />
-                  </Layout>
+                  <RequireRoles
+                    roles={["security_officer", "state_admin", "community_admin"]}
+                  >
+                    <Layout>
+                      <CCTVManagement />
+                    </Layout>
+                  </RequireRoles>
                 </ProtectedRoute>
               }
             />
