@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Cloud, Sun, CloudRain, CloudSnow, Wind, Droplets, Thermometer, Eye } from 'lucide-react';
+import { Cloud, Sun, CloudRain, CloudSnow, Wind, Droplets, Thermometer, Eye, Sunset, Sunrise, CloudDrizzle } from 'lucide-react';
 
 interface WeatherData {
   location: string;
@@ -12,31 +12,69 @@ interface WeatherData {
   windSpeed: number;
   visibility: number;
   icon: string;
+  feels_like: number;
+  uv_index: number;
+  sunrise: string;
+  sunset: string;
 }
+
+interface ForecastData {
+  day: string;
+  high: number;
+  low: number;
+  condition: string;
+  icon: string;
+}
+
+const WEATHER_API_KEY = ''; // You'll need to add your OpenWeatherMap API key
 
 export function WeatherWidget() {
   const { language } = useAuth();
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [forecast, setForecast] = useState<ForecastData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Mock weather data for Kuantan, Pahang
-    const mockWeather: WeatherData = {
-      location: 'Kuantan, Pahang',
-      temperature: 29,
-      condition: language === 'en' ? 'Partly Cloudy' : 'Separuh Mendung',
-      humidity: 78,
-      windSpeed: 12,
-      visibility: 10,
-      icon: 'partly-cloudy'
-    };
+  const fetchWeatherData = async () => {
+    try {
+      // Kuantan, Pahang coordinates
+      const lat = 3.8077;
+      const lon = 103.326;
+      
+      // For demo purposes, using mock data that simulates real weather API
+      const mockWeatherData: WeatherData = {
+        location: 'Kuantan, Pahang',
+        temperature: Math.round(26 + Math.random() * 8), // 26-34°C range
+        condition: ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Rain'][Math.floor(Math.random() * 4)],
+        humidity: Math.round(65 + Math.random() * 25), // 65-90%
+        windSpeed: Math.round(5 + Math.random() * 15), // 5-20 km/h
+        visibility: Math.round(8 + Math.random() * 7), // 8-15 km
+        icon: 'sunny',
+        feels_like: Math.round(28 + Math.random() * 10),
+        uv_index: Math.round(3 + Math.random() * 8),
+        sunrise: '07:02',
+        sunset: '19:16'
+      };
 
-    // Simulate API call delay
-    setTimeout(() => {
-      setWeather(mockWeather);
+      const mockForecast: ForecastData[] = [
+        { day: 'Today', high: 32, low: 24, condition: 'Sunny', icon: 'sunny' },
+        { day: 'Tomorrow', high: 31, low: 23, condition: 'Partly Cloudy', icon: 'partly-cloudy' },
+        { day: 'Sun', high: 29, low: 22, condition: 'Rainy', icon: 'rainy' },
+        { day: 'Mon', high: 30, low: 23, condition: 'Cloudy', icon: 'cloudy' },
+        { day: 'Tue', high: 33, low: 25, condition: 'Sunny', icon: 'sunny' }
+      ];
+
+      setWeather(mockWeatherData);
+      setForecast(mockForecast);
       setLoading(false);
-    }, 1000);
-  }, [language]);
+    } catch (error) {
+      console.error('Error fetching weather:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWeatherData();
+  }, []);
 
   const getWeatherIcon = (condition: string) => {
     switch (condition.toLowerCase()) {
@@ -44,16 +82,56 @@ export function WeatherWidget() {
       case 'clear':
         return Sun;
       case 'partly-cloudy':
+      case 'partly cloudy':
+        return Cloud;
       case 'cloudy':
         return Cloud;
       case 'rainy':
       case 'rain':
+      case 'light rain':
         return CloudRain;
+      case 'drizzle':
+        return CloudDrizzle;
       case 'snow':
         return CloudSnow;
       default:
         return Sun;
     }
+  };
+
+  const getBackgroundClass = () => {
+    const hour = new Date().getHours();
+    const condition = weather?.condition.toLowerCase() || '';
+    
+    // Time-based backgrounds
+    if (hour >= 6 && hour < 12) {
+      // Morning
+      if (condition.includes('sunny') || condition.includes('clear')) {
+        return 'bg-gradient-to-br from-orange-200 via-yellow-200 to-orange-300';
+      } else if (condition.includes('rain')) {
+        return 'bg-gradient-to-br from-gray-300 via-blue-200 to-gray-400';
+      }
+      return 'bg-gradient-to-br from-blue-200 via-indigo-200 to-purple-300';
+    } else if (hour >= 12 && hour < 18) {
+      // Afternoon
+      if (condition.includes('sunny') || condition.includes('clear')) {
+        return 'bg-gradient-to-br from-blue-300 via-cyan-200 to-blue-400';
+      } else if (condition.includes('rain')) {
+        return 'bg-gradient-to-br from-gray-400 via-slate-300 to-gray-500';
+      }
+      return 'bg-gradient-to-br from-blue-300 via-sky-200 to-indigo-300';
+    } else if (hour >= 18 && hour < 22) {
+      // Evening
+      return 'bg-gradient-to-br from-orange-400 via-red-300 to-pink-400';
+    } else {
+      // Night
+      return 'bg-gradient-to-br from-indigo-900 via-purple-800 to-blue-900';
+    }
+  };
+
+  const getTextColorClass = () => {
+    const hour = new Date().getHours();
+    return hour >= 22 || hour < 6 ? 'text-white' : 'text-gray-800';
   };
 
   if (loading) {
@@ -83,72 +161,125 @@ export function WeatherWidget() {
 
   if (!weather) return null;
 
-  const WeatherIcon = getWeatherIcon(weather.icon);
+  const WeatherIcon = getWeatherIcon(weather.condition);
+  const textColorClass = getTextColorClass();
 
   return (
-    <Card className="hover:shadow-elegant transition-spring">
+    <Card className={`hover:shadow-elegant transition-spring overflow-hidden ${getBackgroundClass()}`}>
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
+        <CardTitle className={`flex items-center space-x-2 ${textColorClass}`}>
           <Cloud className="w-5 h-5" />
           <span>{language === 'en' ? 'Weather' : 'Cuaca'}</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         {/* Main weather display */}
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-3xl font-bold text-foreground">
+            <div className={`text-4xl font-bold ${textColorClass}`}>
               {weather.temperature}°C
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className={`text-sm ${textColorClass} opacity-90`}>
               {weather.condition}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className={`text-xs ${textColorClass} opacity-75`}>
               {weather.location}
             </p>
+            <p className={`text-xs ${textColorClass} opacity-75 mt-1`}>
+              {language === 'en' ? 'Feels like' : 'Terasa seperti'} {weather.feels_like}°C
+            </p>
           </div>
-          <div className="p-3 bg-gradient-primary rounded-full">
-            <WeatherIcon className="w-8 h-8 text-white" />
+          <div className="text-center">
+            <div className="p-4 bg-white/20 backdrop-blur-sm rounded-full mb-2">
+              <WeatherIcon className={`w-12 h-12 ${textColorClass}`} />
+            </div>
           </div>
         </div>
 
-        {/* Weather details */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center space-y-1">
-            <Droplets className="w-4 h-4 mx-auto text-blue-500" />
-            <p className="text-xs text-muted-foreground">
+        {/* Additional weather info */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center space-x-2">
+            <Sunrise className={`w-4 h-4 ${textColorClass} opacity-75`} />
+            <div>
+              <p className={`text-xs ${textColorClass} opacity-75`}>
+                {language === 'en' ? 'Sunrise' : 'Matahari Terbit'}
+              </p>
+              <p className={`text-sm font-medium ${textColorClass}`}>{weather.sunrise}</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Sunset className={`w-4 h-4 ${textColorClass} opacity-75`} />
+            <div>
+              <p className={`text-xs ${textColorClass} opacity-75`}>
+                {language === 'en' ? 'Sunset' : 'Matahari Terbenam'}
+              </p>
+              <p className={`text-sm font-medium ${textColorClass}`}>{weather.sunset}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Weather details grid */}
+        <div className="grid grid-cols-4 gap-3">
+          <div className="text-center">
+            <Droplets className={`w-4 h-4 mx-auto ${textColorClass} opacity-75`} />
+            <p className={`text-xs ${textColorClass} opacity-75 mt-1`}>
               {language === 'en' ? 'Humidity' : 'Kelembapan'}
             </p>
-            <p className="text-sm font-medium">{weather.humidity}%</p>
+            <p className={`text-sm font-medium ${textColorClass}`}>{weather.humidity}%</p>
           </div>
-          <div className="text-center space-y-1">
-            <Wind className="w-4 h-4 mx-auto text-green-500" />
-            <p className="text-xs text-muted-foreground">
+          <div className="text-center">
+            <Wind className={`w-4 h-4 mx-auto ${textColorClass} opacity-75`} />
+            <p className={`text-xs ${textColorClass} opacity-75 mt-1`}>
               {language === 'en' ? 'Wind' : 'Angin'}
             </p>
-            <p className="text-sm font-medium">{weather.windSpeed} km/h</p>
+            <p className={`text-sm font-medium ${textColorClass}`}>{weather.windSpeed} km/h</p>
           </div>
-          <div className="text-center space-y-1">
-            <Eye className="w-4 h-4 mx-auto text-purple-500" />
-            <p className="text-xs text-muted-foreground">
+          <div className="text-center">
+            <Eye className={`w-4 h-4 mx-auto ${textColorClass} opacity-75`} />
+            <p className={`text-xs ${textColorClass} opacity-75 mt-1`}>
               {language === 'en' ? 'Visibility' : 'Jarak Pandang'}
             </p>
-            <p className="text-sm font-medium">{weather.visibility} km</p>
+            <p className={`text-sm font-medium ${textColorClass}`}>{weather.visibility} km</p>
+          </div>
+          <div className="text-center">
+            <Sun className={`w-4 h-4 mx-auto ${textColorClass} opacity-75`} />
+            <p className={`text-xs ${textColorClass} opacity-75 mt-1`}>
+              {language === 'en' ? 'UV Index' : 'Indeks UV'}
+            </p>
+            <p className={`text-sm font-medium ${textColorClass}`}>{weather.uv_index}</p>
           </div>
         </div>
 
-        {/* Air quality indicator */}
-        <div className="bg-muted/50 rounded-lg p-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">
-              {language === 'en' ? 'Air Quality' : 'Kualiti Udara'}
-            </span>
-            <span className="text-sm font-medium text-green-600">
-              {language === 'en' ? 'Good' : 'Baik'}
-            </span>
-          </div>
-          <div className="w-full bg-muted rounded-full h-2 mt-2">
-            <div className="bg-green-500 h-2 rounded-full w-3/4" />
+        {/* 5-day forecast */}
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+          <h4 className={`text-sm font-semibold ${textColorClass} mb-3`}>
+            {language === 'en' ? '5-Day Forecast' : 'Ramalan 5 Hari'}
+          </h4>
+          <div className="space-y-2">
+            {forecast.map((day, index) => {
+              const ForecastIcon = getWeatherIcon(day.icon);
+              return (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <ForecastIcon className={`w-5 h-5 ${textColorClass} opacity-75`} />
+                    <span className={`text-sm ${textColorClass} font-medium min-w-[60px]`}>
+                      {day.day}
+                    </span>
+                    <span className={`text-xs ${textColorClass} opacity-75`}>
+                      {day.condition}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className={`text-sm font-semibold ${textColorClass}`}>
+                      {day.high}°
+                    </span>
+                    <span className={`text-sm ${textColorClass} opacity-75`}>
+                      {day.low}°
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </CardContent>
