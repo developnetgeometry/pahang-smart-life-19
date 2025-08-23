@@ -15,6 +15,7 @@ import { WeatherWidget } from './WeatherWidget';
 import { CommunityDirectoryWidget } from './CommunityDirectoryWidget';
 import { MaintenanceTrackerWidget } from './MaintenanceTrackerWidget';
 import { PrayerTimesWidget } from './PrayerTimesWidget';
+import { ResidentLocationMap } from './ResidentLocationMap';
 import { MapPin } from 'lucide-react';
 import { 
   Calendar, 
@@ -523,6 +524,9 @@ export function ResidentDashboard() {
           })}
         </CardContent>
       </Card>
+
+      {/* Resident Location Map */}
+      <ResidentLocationMap />
 
       {/* Additional Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
