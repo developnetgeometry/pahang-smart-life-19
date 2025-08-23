@@ -14,6 +14,7 @@ import { UpcomingEventsWidget } from './UpcomingEventsWidget';
 import { WeatherWidget } from './WeatherWidget';
 import { CommunityDirectoryWidget } from './CommunityDirectoryWidget';
 import { MaintenanceTrackerWidget } from './MaintenanceTrackerWidget';
+import { PrayerTimesWidget } from './PrayerTimesWidget';
 import { MapPin } from 'lucide-react';
 import { 
   Calendar, 
@@ -550,10 +551,11 @@ export function ResidentDashboard() {
       </Card>
 
       {/* Additional Widgets */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <QuickServicesWidget language={language} />
         <UpcomingEventsWidget language={language} />
         <CommunityDirectoryWidget language={language} />
+        <PrayerTimesWidget />
       </div>
 
 
