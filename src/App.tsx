@@ -8,14 +8,11 @@ import React from "react";
 import { Layout } from "@/components/layout/Layout";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
-import MyBookings from "./pages/MyBookings";
-import MyVisitors from "./pages/MyVisitors";
 import MyComplaints from "./pages/MyComplaints";
 import MyProfile from "./pages/MyProfile";
 import Announcements from "./pages/Announcements";
 import Events from "./pages/Events";
 import Discussions from "./pages/Discussions";
-import Facilities from "./pages/Facilities";
 import Marketplace from "./pages/Marketplace";
 import CCTVLiveFeed from "./pages/CCTVLiveFeed";
 import UserManagement from "./pages/admin/UserManagement";
@@ -97,26 +94,6 @@ const App = () => (
             />
 
             {/* Resident modules */}
-            <Route
-              path="/my-bookings"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <MyBookings />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/my-visitors"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <MyVisitors />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="/my-complaints"
               element={
@@ -213,16 +190,6 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <Discussions />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/facilities"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Facilities />
                   </Layout>
                 </ProtectedRoute>
               }

@@ -72,8 +72,6 @@ export function AppSidebar() {
     nav.push({
       label: t("myActivities"),
       items: [
-        { title: t("myBookings"), url: "/my-bookings", icon: Calendar },
-        { title: t("myVisitors"), url: "/my-visitors", icon: Users },
         { title: t("myComplaints"), url: "/my-complaints", icon: FileText },
       ],
     });
@@ -96,7 +94,6 @@ export function AppSidebar() {
     nav.push({
       label: t("servicesAndFacilities"),
       items: [
-        { title: t("facilities"), url: "/facilities", icon: Building },
         { title: t("marketplace"), url: "/marketplace", icon: ShoppingCart },
         { title: "Service Requests", url: "/service-requests", icon: Clipboard },
         { title: t("cctvManagement"), url: "/cctv-live-feed", icon: Camera },
