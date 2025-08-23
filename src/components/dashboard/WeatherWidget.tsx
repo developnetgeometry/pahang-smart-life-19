@@ -103,35 +103,102 @@ export function WeatherWidget() {
     const hour = new Date().getHours();
     const condition = weather?.condition.toLowerCase() || '';
     
-    // Time-based backgrounds
-    if (hour >= 6 && hour < 12) {
-      // Morning
-      if (condition.includes('sunny') || condition.includes('clear')) {
-        return 'bg-gradient-to-br from-orange-200 via-yellow-200 to-orange-300';
+    // Night time (10 PM - 6 AM) - Dark with stars
+    if (hour >= 22 || hour < 6) {
+      if (condition.includes('clear') || condition.includes('sunny')) {
+        return 'bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden';
       } else if (condition.includes('rain')) {
-        return 'bg-gradient-to-br from-gray-300 via-blue-200 to-gray-400';
+        return 'bg-gradient-to-br from-gray-800 via-slate-700 to-gray-900 relative overflow-hidden';
       }
-      return 'bg-gradient-to-br from-blue-200 via-indigo-200 to-purple-300';
-    } else if (hour >= 12 && hour < 18) {
-      // Afternoon
+      return 'bg-gradient-to-br from-slate-800 via-gray-800 to-slate-900 relative overflow-hidden';
+    }
+    // Morning (6 AM - 12 PM)
+    else if (hour >= 6 && hour < 12) {
       if (condition.includes('sunny') || condition.includes('clear')) {
-        return 'bg-gradient-to-br from-blue-300 via-cyan-200 to-blue-400';
+        return 'bg-gradient-to-br from-amber-300 via-orange-300 to-yellow-400 relative overflow-hidden';
       } else if (condition.includes('rain')) {
-        return 'bg-gradient-to-br from-gray-400 via-slate-300 to-gray-500';
+        return 'bg-gradient-to-br from-gray-400 via-slate-400 to-blue-400 relative overflow-hidden';
       }
-      return 'bg-gradient-to-br from-blue-300 via-sky-200 to-indigo-300';
-    } else if (hour >= 18 && hour < 22) {
-      // Evening
-      return 'bg-gradient-to-br from-orange-400 via-red-300 to-pink-400';
-    } else {
-      // Night
-      return 'bg-gradient-to-br from-indigo-900 via-purple-800 to-blue-900';
+      return 'bg-gradient-to-br from-blue-300 via-sky-300 to-cyan-400 relative overflow-hidden';
+    }
+    // Afternoon (12 PM - 6 PM)
+    else if (hour >= 12 && hour < 18) {
+      if (condition.includes('sunny') || condition.includes('clear')) {
+        return 'bg-gradient-to-br from-sky-400 via-blue-400 to-cyan-500 relative overflow-hidden';
+      } else if (condition.includes('rain')) {
+        return 'bg-gradient-to-br from-gray-500 via-slate-500 to-blue-500 relative overflow-hidden';
+      }
+      return 'bg-gradient-to-br from-blue-400 via-indigo-400 to-purple-500 relative overflow-hidden';
+    }
+    // Evening (6 PM - 10 PM)
+    else {
+      if (condition.includes('clear') || condition.includes('sunny')) {
+        return 'bg-gradient-to-br from-orange-500 via-red-400 to-pink-500 relative overflow-hidden';
+      } else if (condition.includes('rain')) {
+        return 'bg-gradient-to-br from-gray-600 via-slate-600 to-purple-600 relative overflow-hidden';
+      }
+      return 'bg-gradient-to-br from-orange-400 via-pink-400 to-purple-500 relative overflow-hidden';
     }
   };
 
   const getTextColorClass = () => {
+    return 'text-white';
+  };
+
+  const getWeatherAnimation = () => {
     const hour = new Date().getHours();
-    return hour >= 22 || hour < 6 ? 'text-white' : 'text-gray-800';
+    const condition = weather?.condition.toLowerCase() || '';
+    
+    // Night animations
+    if (hour >= 22 || hour < 6) {
+      return (
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Stars */}
+          <div className="absolute top-4 left-8 w-1 h-1 bg-white rounded-full animate-pulse"></div>
+          <div className="absolute top-8 right-12 w-1 h-1 bg-white rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></div>
+          <div className="absolute top-12 left-20 w-0.5 h-0.5 bg-white rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+          <div className="absolute top-6 right-20 w-0.5 h-0.5 bg-white rounded-full animate-pulse" style={{animationDelay: '1.5s'}}></div>
+          <div className="absolute top-16 left-12 w-1 h-1 bg-white rounded-full animate-pulse" style={{animationDelay: '2s'}}></div>
+          
+          {/* Moon */}
+          <div className="absolute top-6 right-8 w-8 h-8 bg-yellow-100 rounded-full shadow-lg"></div>
+        </div>
+      );
+    }
+    // Sunny day animations
+    else if (condition.includes('sunny') || condition.includes('clear')) {
+      return (
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Sun rays */}
+          <div className="absolute top-4 right-4 w-12 h-12">
+            <div className="absolute inset-0 animate-spin" style={{animationDuration: '20s'}}>
+              <div className="absolute top-0 left-1/2 w-0.5 h-3 bg-yellow-200 transform -translate-x-1/2"></div>
+              <div className="absolute top-1 right-1 w-0.5 h-2 bg-yellow-200 transform rotate-45"></div>
+              <div className="absolute top-1/2 right-0 w-3 h-0.5 bg-yellow-200 transform -translate-y-1/2"></div>
+              <div className="absolute bottom-1 right-1 w-0.5 h-2 bg-yellow-200 transform -rotate-45"></div>
+              <div className="absolute bottom-0 left-1/2 w-0.5 h-3 bg-yellow-200 transform -translate-x-1/2"></div>
+              <div className="absolute bottom-1 left-1 w-0.5 h-2 bg-yellow-200 transform rotate-45"></div>
+              <div className="absolute top-1/2 left-0 w-3 h-0.5 bg-yellow-200 transform -translate-y-1/2"></div>
+              <div className="absolute top-1 left-1 w-0.5 h-2 bg-yellow-200 transform -rotate-45"></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    // Rainy animations  
+    else if (condition.includes('rain')) {
+      return (
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Rain drops */}
+          <div className="absolute top-0 left-4 w-0.5 h-4 bg-blue-200 opacity-70 animate-bounce" style={{animationDelay: '0s'}}></div>
+          <div className="absolute top-0 left-12 w-0.5 h-3 bg-blue-200 opacity-70 animate-bounce" style={{animationDelay: '0.5s'}}></div>
+          <div className="absolute top-0 right-8 w-0.5 h-4 bg-blue-200 opacity-70 animate-bounce" style={{animationDelay: '1s'}}></div>
+          <div className="absolute top-0 right-16 w-0.5 h-3 bg-blue-200 opacity-70 animate-bounce" style={{animationDelay: '1.5s'}}></div>
+        </div>
+      );
+    }
+    
+    return null;
   };
 
   if (loading) {
@@ -166,13 +233,16 @@ export function WeatherWidget() {
 
   return (
     <Card className={`hover:shadow-elegant transition-spring overflow-hidden ${getBackgroundClass()}`}>
+      {/* Weather animations */}
+      {getWeatherAnimation()}
+      
       <CardHeader>
-        <CardTitle className={`flex items-center space-x-2 ${textColorClass}`}>
+        <CardTitle className={`flex items-center space-x-2 ${textColorClass} relative z-10`}>
           <Cloud className="w-5 h-5" />
           <span>{language === 'en' ? 'Weather' : 'Cuaca'}</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 relative z-10">
         {/* Main weather display */}
         <div className="flex items-center justify-between">
           <div>
