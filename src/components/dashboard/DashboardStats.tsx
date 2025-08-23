@@ -21,27 +21,21 @@ export function DashboardStats() {
         if (user.id.startsWith('demo-') || user.id === '11111111-1111-1111-1111-111111111111') {
           // Show realistic demo data
           setStats({
-            bookings: 3, // Active bookings for demo user
             pendingComplaints: 2, // Pending complaints for demo user  
             announcements: 5, // Total announcements in district
-            facilities: 5, // Available facilities
             totalProfiles: 247 // Total community members
           });
         } else {
           // Real user mode - filter by user
-          const [bookingsRes, complaintsRes, announcementsRes, facilitiesRes, profilesRes] = await Promise.all([
-            supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+          const [complaintsRes, announcementsRes, profilesRes] = await Promise.all([
             supabase.from('complaints').select('id', { count: 'exact', head: true }).eq('complainant_id', user.id).eq('status', 'pending'),
             supabase.from('announcements').select('id', { count: 'exact', head: true }),
-            supabase.from('facilities').select('id', { count: 'exact', head: true }),
             supabase.from('profiles').select('id', { count: 'exact', head: true })
           ]);
 
           setStats({
-            bookings: bookingsRes.count || 0,
             pendingComplaints: complaintsRes.count || 0,
             announcements: announcementsRes.count || 0,
-            facilities: facilitiesRes.count || 0,
             totalProfiles: profilesRes.count || 0
           });
         }
@@ -56,14 +50,6 @@ export function DashboardStats() {
   }, [user]);
 
   const residentStats = stats ? [
-    {
-      title: language === 'en' ? 'Active Bookings' : 'Tempahan Aktif',
-      value: stats.bookings.toString(),
-      icon: Calendar,
-      description: language === 'en' ? 'This month' : 'Bulan ini',
-      trend: language === 'en' ? 'Personal bookings' : 'Tempahan peribadi',
-      color: 'bg-gradient-primary'
-    },
     {
       title: language === 'en' ? 'Pending Complaints' : 'Aduan Pending',
       value: stats.pendingComplaints.toString(),
@@ -100,14 +86,6 @@ export function DashboardStats() {
       color: 'bg-gradient-primary'
     },
     {
-      title: language === 'en' ? 'Available Facilities' : 'Kemudahan Tersedia',
-      value: stats.facilities.toString(),
-      icon: Building,
-      description: language === 'en' ? 'Community facilities' : 'Kemudahan komuniti',
-      trend: language === 'en' ? 'Ready for booking' : 'Sedia untuk tempahan',
-      color: 'bg-gradient-sunset'
-    },
-    {
       title: language === 'en' ? 'Total Announcements' : 'Jumlah Pengumuman',
       value: stats.announcements.toString(),
       icon: Activity,
@@ -132,8 +110,8 @@ export function DashboardStats() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[1, 2, 3, 4].map((i) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3].map((i) => (
           <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
         ))}
       </div>
@@ -141,7 +119,7 @@ export function DashboardStats() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {displayStats.map((stat, index) => (
         <Card key={index} className="relative overflow-hidden hover:shadow-elegant transition-spring group">
           <div className={`absolute top-0 left-0 w-1 h-full ${stat.color}`} />

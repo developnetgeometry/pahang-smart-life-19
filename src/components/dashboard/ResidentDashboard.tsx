@@ -226,19 +226,6 @@ export function ResidentDashboard() {
 
   const personalMetrics = [
     {
-      title: language === 'en' ? 'My Bookings' : 'Tempahan Saya',
-      value: '1',
-      icon: Calendar,
-      trend: 'Pool - 8PM today',
-      status: 'active'
-    },
-    {
-      title: language === 'en' ? 'Visitors Today' : 'Pelawat Hari Ini',
-      value: '2',
-      icon: Users,
-      trend: 'Expected arrivals'
-    },
-    {
       title: language === 'en' ? 'Active Complaints' : 'Aduan Aktif',
       value: '0',
       icon: FileText,
@@ -300,18 +287,6 @@ export function ResidentDashboard() {
 
   const quickActions = [
     {
-      title: language === 'en' ? 'Book Facility' : 'Tempah Kemudahan',
-      description: language === 'en' ? 'Reserve community facilities' : 'Tempah kemudahan komuniti',
-      icon: Building,
-      action: '/facilities'
-    },
-    {
-      title: language === 'en' ? 'Register Visitor' : 'Daftar Pelawat',
-      description: language === 'en' ? 'Pre-register your visitors' : 'Pra-daftar pelawat anda',
-      icon: UserPlus,
-      action: '/my-visitors'
-    },
-    {
       title: language === 'en' ? 'Submit Complaint' : 'Hantar Aduan',
       description: language === 'en' ? 'Report issues or concerns' : 'Laporkan isu atau masalah',
       icon: FileText,
@@ -328,20 +303,20 @@ export function ResidentDashboard() {
 
   const recentActivities = [
     {
-      type: 'booking',
-      title: language === 'en' ? 'Pool booking confirmed' : 'Tempahan kolam disahkan',
+      type: 'announcement',
+      title: language === 'en' ? 'New community announcement posted' : 'Pengumuman komuniti baharu disiarkan',
       time: 'Today 2:30 PM',
-      status: 'confirmed'
+      status: 'completed'
     },
     {
-      type: 'visitor',
-      title: language === 'en' ? 'Visitor registered: John Doe' : 'Pelawat didaftarkan: John Doe',
+      type: 'complaint',
+      title: language === 'en' ? 'Complaint resolved' : 'Aduan diselesaikan',
       time: 'Yesterday 4:15 PM',
-      status: 'approved'
+      status: 'completed'
     },
     {
       type: 'announcement',
-      title: language === 'en' ? 'New facility booking confirmed' : 'Tempahan kemudahan baru disahkan',
+      title: language === 'en' ? 'Security protocol updated' : 'Protokol keselamatan dikemaskini',
       time: '3 days ago',
       status: 'completed'
     }
@@ -380,9 +355,8 @@ export function ResidentDashboard() {
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'booking': return Calendar;
-      case 'visitor': return Users;
       case 'announcement': return Megaphone;
+      case 'complaint': return FileText;
       default: return CheckCircle;
     }
   };
@@ -399,7 +373,7 @@ export function ResidentDashboard() {
       </div>
 
       {/* Personal Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {personalMetrics.map((metric, index) => (
           <Card key={index} className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -424,7 +398,7 @@ export function ResidentDashboard() {
               <CardTitle>{language === 'en' ? 'Quick Actions' : 'Tindakan Pantas'}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 {quickActions.map((action, index) => (
                   action.isPanic ? (
                     <div key={index} className="relative">

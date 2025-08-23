@@ -32,14 +32,11 @@ export function CommunityAdminDashboard() {
     pendingRegistrations: 0,
     activeComplaints: 0,
     completedComplaints: 0,
-    totalBookings: 0,
     upcomingEvents: 0,
-    recentAnnouncements: 0,
-    facilityUsage: [] as any[]
+    recentAnnouncements: 0
   });
   const [pendingRoleRequests, setPendingRoleRequests] = useState<any[]>([]);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
-  const [facilityUsage, setFacilityUsage] = useState<any[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
 
   useEffect(() => {
@@ -59,19 +56,15 @@ export function CommunityAdminDashboard() {
           { data: residents, count: residentsCount },
           { data: activeComplaints, count: activeComplaintsCount },
           { data: completedComplaints, count: completedComplaintsCount },
-          { data: bookings, count: bookingsCount },
           { data: events, count: eventsCount },
           { data: announcements, count: announcementsCount },
-          { data: facilities },
           { data: roleRequests, count: roleRequestsCount }
         ] = await Promise.all([
           supabase.from('profiles').select('*', { count: 'exact' }).eq('district_id', districtId),
           supabase.from('complaints').select('*', { count: 'exact' }).in('status', ['pending', 'in_progress']).eq('district_id', districtId),
           supabase.from('complaints').select('*', { count: 'exact' }).eq('status', 'resolved').eq('district_id', districtId),
-          supabase.from('bookings').select('*', { count: 'exact' }).gte('booking_date', new Date().toISOString().split('T')[0]),
           supabase.from('events').select('*', { count: 'exact' }).eq('district_id', districtId).gte('start_date', new Date().toISOString().split('T')[0]),
           supabase.from('announcements').select('*', { count: 'exact' }).eq('district_id', districtId).eq('is_published', true),
-          supabase.from('facilities').select('*').eq('district_id', districtId),
           supabase.from('role_change_requests').select(`
             *,
             profiles!role_change_requests_requester_id_fkey(full_name, email)
@@ -83,10 +76,8 @@ export function CommunityAdminDashboard() {
           pendingRegistrations: roleRequestsCount || 0,
           activeComplaints: activeComplaintsCount || 0,
           completedComplaints: completedComplaintsCount || 0,
-          totalBookings: bookingsCount || 0,
           upcomingEvents: eventsCount || 0,
-          recentAnnouncements: announcementsCount || 0,
-          facilityUsage: facilities || []
+          recentAnnouncements: announcementsCount || 0
         });
 
         setPendingRoleRequests(roleRequests || []);
@@ -94,7 +85,6 @@ export function CommunityAdminDashboard() {
         // Fetch additional dashboard sections
         await Promise.all([
           fetchRecentActivities(districtId),
-          fetchFacilityUsage(districtId),
           fetchUpcomingEvents(districtId)
         ]);
       } catch (error) {
@@ -121,12 +111,6 @@ export function CommunityAdminDashboard() {
       value: loading ? '...' : dashboardData.activeComplaints.toString(),
       icon: AlertTriangle,
       trend: loading ? '...' : `${dashboardData.completedComplaints} ${language === 'en' ? 'resolved' : 'diselesaikan'}`
-    },
-    {
-      title: language === 'en' ? 'Bookings' : 'Tempahan',
-      value: loading ? '...' : dashboardData.totalBookings.toString(),
-      icon: Building,
-      trend: loading ? '...' : `${language === 'en' ? 'upcoming bookings' : 'tempahan akan datang'}`
     },
     {
       title: language === 'en' ? 'Events' : 'Acara',
@@ -164,10 +148,9 @@ export function CommunityAdminDashboard() {
 
   const fetchRecentActivities = async (districtId: string) => {
     try {
-      // Fetch recent complaints, bookings, and announcements
-      const [complaintsData, bookingsData, announcementsData] = await Promise.all([
+      // Fetch recent complaints and announcements
+      const [complaintsData, announcementsData] = await Promise.all([
         supabase.from('complaints').select('*').eq('district_id', districtId).order('created_at', { ascending: false }).limit(2),
-        supabase.from('bookings').select('*').eq('created_at', new Date().toISOString().split('T')[0]).order('created_at', { ascending: false }).limit(2),
         supabase.from('announcements').select('*').eq('district_id', districtId).eq('is_published', true).order('created_at', { ascending: false }).limit(2)
       ]);
 
@@ -181,18 +164,6 @@ export function CommunityAdminDashboard() {
             message: language === 'en' ? `New complaint: ${complaint.title}` : `Aduan baru: ${complaint.title}`,
             time: new Date(complaint.created_at).toLocaleString(),
             icon: AlertTriangle
-          });
-        });
-      }
-
-      // Add bookings as activities
-      if (bookingsData.data) {
-        bookingsData.data.forEach(booking => {
-          activities.push({
-            type: 'Booking',
-            message: language === 'en' ? 'New facility booking received' : 'Tempahan kemudahan baharu diterima',
-            time: new Date(booking.created_at).toLocaleString(),
-            icon: Building
           });
         });
       }
@@ -218,33 +189,7 @@ export function CommunityAdminDashboard() {
   };
 
   const fetchFacilityUsage = async (districtId: string) => {
-    try {
-      const { data: facilities } = await supabase
-        .from('facilities')
-        .select(`
-          *,
-          bookings(id, booking_date)
-        `)
-        .eq('district_id', districtId);
-
-      if (facilities) {
-        const usage = facilities.map(facility => {
-          const bookingsCount = facility.bookings?.length || 0;
-          const maxBookings = 50; // Assume max capacity
-          const utilization = Math.min((bookingsCount / maxBookings) * 100, 100);
-          
-          return {
-            name: facility.name,
-            bookings: bookingsCount,
-            utilization: Math.round(utilization)
-          };
-        });
-
-        setFacilityUsage(usage);
-      }
-    } catch (error) {
-      console.error('Error fetching facility usage:', error);
-    }
+    // Facility usage functionality removed
   };
 
   const fetchUpcomingEvents = async (districtId: string) => {
@@ -287,7 +232,7 @@ export function CommunityAdminDashboard() {
       </div>
 
       {/* Community Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {communityMetrics.map((metric, index) => (
           <Card key={index} className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -384,52 +329,6 @@ export function CommunityAdminDashboard() {
             ) : (
               <div className="text-center py-4 text-muted-foreground">
                 {language === 'en' ? 'No recent activities' : 'Tiada aktiviti terkini'}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Facility Usage */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building className="h-5 w-5" />
-              {language === 'en' ? 'Facility Usage' : 'Penggunaan Kemudahan'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {loading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="space-y-2 animate-pulse">
-                    <div className="flex items-center justify-between">
-                      <div className="h-4 bg-muted rounded w-1/3" />
-                      <div className="h-3 bg-muted rounded w-16" />
-                    </div>
-                    <div className="h-2 bg-muted rounded" />
-                  </div>
-                ))}
-              </div>
-            ) : facilityUsage.length > 0 ? (
-              facilityUsage.map((facility, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{facility.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {facility.bookings} {language === 'en' ? 'bookings' : 'tempahan'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Progress value={facility.utilization} className="flex-1" />
-                    <span className="text-xs text-muted-foreground w-12">
-                      {facility.utilization}%
-                    </span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-4 text-muted-foreground">
-                {language === 'en' ? 'No facility data available' : 'Tiada data kemudahan tersedia'}
               </div>
             )}
           </CardContent>

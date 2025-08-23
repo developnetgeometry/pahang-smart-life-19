@@ -23,25 +23,11 @@ export function QuickActions() {
 
   const residentActions = [
     {
-      title: language === 'en' ? 'Book Facility' : 'Tempah Kemudahan',
-      description: language === 'en' ? 'Reserve community facilities' : 'Tempah kemudahan komuniti',
-      icon: Calendar,
-      color: 'bg-gradient-primary',
-      href: '/facilities'
-    },
-    {
       title: language === 'en' ? 'Report Issue' : 'Lapor Masalah',
       description: language === 'en' ? 'Submit maintenance request' : 'Hantar permintaan penyelenggaraan',
       icon: FileText,
       color: 'bg-gradient-sunset',
       href: '/my-complaints'
-    },
-    {
-      title: language === 'en' ? 'Register Visitor' : 'Daftar Pelawat',
-      description: language === 'en' ? 'Pre-register your guests' : 'Pra-daftar tetamu anda',
-      icon: UserPlus,
-      color: 'bg-gradient-community',
-      href: '/my-visitors'
     },
     {
       title: language === 'en' ? 'Emergency Alert' : 'Amaran Kecemasan',
@@ -59,13 +45,6 @@ export function QuickActions() {
       icon: Megaphone,
       color: 'bg-gradient-primary',
       href: '/admin/announcements'
-    },
-    {
-      title: language === 'en' ? 'Manage Facilities' : 'Urus Kemudahan',
-      description: language === 'en' ? 'Update facility status' : 'Kemas kini status kemudahan',
-      icon: Building,
-      color: 'bg-gradient-community',
-      href: '/admin/facilities'
     },
     {
       title: language === 'en' ? 'Security Dashboard' : 'Papan Pemuka Keselamatan',
@@ -113,7 +92,7 @@ export function QuickActions() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {actions.map((action, index) => (
             <Button
               key={index}

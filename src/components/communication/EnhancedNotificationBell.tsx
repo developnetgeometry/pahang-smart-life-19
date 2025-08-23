@@ -38,8 +38,6 @@ export default function EnhancedNotificationBell() {
         return AlertTriangle;
       case 'event':
         return Calendar;
-      case 'booking':
-        return Calendar;
       case 'announcement':
         return Users;
       default:
@@ -55,7 +53,6 @@ export default function EnhancedNotificationBell() {
       case 'message':
         return 'text-blue-500';
       case 'event':
-      case 'booking':
         return 'text-green-500';
       case 'announcement':
         return 'text-purple-500';
@@ -72,8 +69,6 @@ export default function EnhancedNotificationBell() {
     // Navigate based on notification type or reference
     if (notification.reference_table === 'chat_messages' && notification.reference_id) {
       navigate(`/communication-hub?room=${notification.reference_id}`);
-    } else if (notification.notification_type === 'booking') {
-      navigate('/my-bookings');
     } else if (notification.notification_type === 'event') {
       navigate('/');
     } else if (notification.notification_type === 'complaint') {
