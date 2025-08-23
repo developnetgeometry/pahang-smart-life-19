@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Mosque, Clock, Bell, BellOff } from 'lucide-react';
+import { Building, Clock, Bell, BellOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface PrayerTimes {
@@ -221,7 +221,7 @@ export function PrayerTimesWidget() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Mosque className="w-5 h-5" />
+            <Building className="w-5 h-5" />
             <span>{language === 'en' ? 'Prayer Times' : 'Waktu Solat'}</span>
           </CardTitle>
         </CardHeader>
@@ -254,7 +254,7 @@ export function PrayerTimesWidget() {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Mosque className="w-5 h-5" />
+            <Building className="w-5 h-5" />
             <span>{language === 'en' ? 'Prayer Times' : 'Waktu Solat'}</span>
           </div>
           <Button
