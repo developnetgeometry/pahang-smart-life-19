@@ -20,11 +20,11 @@ export function Layout({ children }: LayoutProps) {
         <AppSidebar />
         
         <div className="flex flex-1 flex-col overflow-hidden">
-          <header className="flex h-16 items-center border-b border-border px-4">
+          <header className="flex h-16 items-center border-b border-border px-4 bg-card shadow-sm">
             <SidebarTrigger className="mr-4" />
             <Header />
           </header>
-          <main className="flex-1 overflow-y-auto p-6">
+          <main className="flex-1 overflow-y-auto p-6 bg-background">
             {children}
           </main>
         </div>

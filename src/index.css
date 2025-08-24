@@ -1,125 +1,120 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Malaysian Smart Community Design System */
+/* Modern Government Design System */
 
 @layer base {
   :root {
-    /* Malaysian Government Blue Theme */
-    --background: 210 15% 97%;
-    --foreground: 215 25% 15%;
+    /* Government Theme - Light Mode */
+    --background: 249 250 251; /* Light Gray #F9FAFB */
+    --foreground: 55 65 81; /* Dark Gray #374151 */
 
-    --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 55 65 81; /* Dark Gray #374151 */
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover-foreground: 55 65 81;
 
-    /* Malaysian Blue Primary */
-    --primary: 214 100% 25%;
-    --primary-foreground: 0 0% 98%;
-    --primary-glow: 214 85% 35%;
+    /* Government Blue Primary - #2563EB */
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 217 91% 70%;
 
-    /* Warm Secondary Colors */
-    --secondary: 210 25% 95%;
-    --secondary-foreground: 215 25% 20%;
+    /* Secondary Gray - #6B7280 */
+    --secondary: 209 14% 37%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 25% 95%;
-    --muted-foreground: 215 15% 45%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 156 163 175;
 
-    /* Gold Accent (Malaysian Flag) */
-    --accent: 45 100% 50%;
-    --accent-foreground: 215 25% 15%;
+    /* Sky Blue Accent - #3B82F6 */
+    --accent: 213 94% 68%;
+    --accent-foreground: 0 0% 100%;
 
     /* Status Colors */
-    --destructive: 0 75% 55%;
+    --destructive: 0 84% 60%; /* Red #DC2626 */
     --destructive-foreground: 0 0% 98%;
     --success: 142 70% 45%;
     --success-foreground: 0 0% 98%;
     --warning: 35 90% 55%;
     --warning-foreground: 215 25% 15%;
 
-    --border: 214 20% 88%;
-    --input: 214 20% 92%;
-    --ring: 214 100% 25%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    /* Community Platform Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(214 100% 25%), hsl(214 85% 35%));
-    --gradient-community: linear-gradient(135deg, hsl(142 70% 45%), hsl(180 65% 45%));
-    --gradient-sunset: linear-gradient(135deg, hsl(35 90% 55%), hsl(45 100% 50%));
-    --gradient-hero: linear-gradient(135deg, hsl(214 100% 25%) 0%, hsl(214 85% 35%) 50%, hsl(180 65% 45%) 100%);
+    /* Government Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 70%));
+    --gradient-government: linear-gradient(135deg, hsl(217 91% 60%), hsl(213 94% 68%));
+    --gradient-hero: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(213 94% 68%) 100%);
 
     /* Shadows */
-    --shadow-elegant: 0 10px 30px -5px hsl(214 100% 25% / 0.15);
-    --shadow-community: 0 8px 25px -5px hsl(142 70% 45% / 0.2);
-    --shadow-glow: 0 0 40px hsl(214 85% 35% / 0.3);
+    --shadow-elegant: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-government: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-spring: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Government Sidebar - Dark Blue #1E3A8A */
+    --sidebar-background: 219 84% 27%;
+    --sidebar-foreground: 0 0% 100%; /* White */
+    --sidebar-primary: 213 94% 68%; /* Sky Blue #3B82F6 */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 219 84% 32%; /* Slightly lighter dark blue */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 219 84% 32%;
+    --sidebar-ring: 213 94% 68%;
   }
 
   .dark {
-    /* Dark Malaysian Theme */
-    --background: 215 25% 8%;
-    --foreground: 210 15% 92%;
+    /* Government Theme - Dark Mode */
+    --background: 17 24 39; /* Dark slate */
+    --foreground: 248 250 252;
 
-    --card: 215 25% 10%;
-    --card-foreground: 210 15% 92%;
+    --card: 30 41 59;
+    --card-foreground: 248 250 252;
 
-    --popover: 215 25% 10%;
-    --popover-foreground: 210 15% 92%;
+    --popover: 30 41 59;
+    --popover-foreground: 248 250 252;
 
-    --primary: 214 85% 45%;
-    --primary-foreground: 215 25% 8%;
-    --primary-glow: 214 70% 55%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 17 24 39;
+    --primary-glow: 217 91% 70%;
 
-    --secondary: 215 20% 15%;
-    --secondary-foreground: 210 15% 85%;
+    --secondary: 71 84% 6%;
+    --secondary-foreground: 248 250 252;
 
-    --muted: 215 20% 15%;
-    --muted-foreground: 215 15% 65%;
+    --muted: 71 84% 6%;
+    --muted-foreground: 156 163 175;
 
-    --accent: 45 100% 60%;
-    --accent-foreground: 215 25% 8%;
+    --accent: 213 94% 68%;
+    --accent-foreground: 17 24 39;
 
     --success: 142 60% 50%;
-    --success-foreground: 215 25% 8%;
+    --success-foreground: 17 24 39;
     --warning: 35 80% 60%;
-    --warning-foreground: 215 25% 8%;
+    --warning-foreground: 17 24 39;
     --destructive: 0 65% 60%;
-    --destructive-foreground: 210 15% 92%;
+    --destructive-foreground: 248 250 252;
 
-    --border: 215 20% 20%;
-    --input: 215 20% 18%;
-    --ring: 214 85% 45%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --border: 71 84% 15%;
+    --input: 71 84% 15%;
+    --ring: 217 91% 60%;
+
+    /* Dark Mode Sidebar - Even Darker Blue */
+    --sidebar-background: 219 84% 17%; /* Darker blue for dark mode */
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 213 94% 68%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 219 84% 22%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 219 84% 22%;
+    --sidebar-ring: 213 94% 68%;
   }
 }
 
@@ -129,6 +124,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   }
 }
