@@ -39,7 +39,6 @@ export default function MyProfile() {
     // Butiran Tambahan
     occupation_id: '',
     type_sector: '',
-    ict_knowledge: '',
     education_level: '',
     income_range: '',
     distance: '',
@@ -473,25 +472,6 @@ export default function MyProfile() {
                     </Select>
                   ) : (
                     <p className="text-sm p-2 bg-muted rounded">{formData.type_sector}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ict_knowledge">Pengetahuan ICT (1-5)</Label>
-                  {isEditing ? (
-                    <Select value={formData.ict_knowledge} onValueChange={(value) => setFormData({...formData, ict_knowledge: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih tahap" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1 - Asas</SelectItem>
-                        <SelectItem value="2">2 - Rendah</SelectItem>
-                        <SelectItem value="3">3 - Sederhana</SelectItem>
-                        <SelectItem value="4">4 - Baik</SelectItem>
-                        <SelectItem value="5">5 - Cemerlang</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.ict_knowledge}</p>
                   )}
                 </div>
                 <div className="space-y-2">
