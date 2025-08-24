@@ -488,6 +488,9 @@ export function ResidentDashboard() {
         </div>
       </div>
 
+      {/* Resident Location Map */}
+      <ResidentLocationMap />
+
       {/* Community Updates */}
       <Card>
         <CardHeader>
@@ -529,9 +532,6 @@ export function ResidentDashboard() {
           })}
         </CardContent>
       </Card>
-
-      {/* Resident Location Map */}
-      <ResidentLocationMap />
 
       {/* Additional Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
