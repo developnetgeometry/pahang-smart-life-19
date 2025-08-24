@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   PartyPopper,
   Megaphone, 
@@ -15,88 +16,51 @@ import {
   MapPin,
   Clock
 } from 'lucide-react';
-import communityGym from '@/assets/community-gym.jpg';
-import gardenFacility from '@/assets/garden-facility.jpg';
-import swimmingPool from '@/assets/swimming-pool.jpg';
-import functionHall from '@/assets/function-hall.jpg';
 
 interface Activity {
   id: string;
-  type: 'event' | 'announcement' | 'community' | 'sports';
+  activity_type: string;
   title: string;
   description: string;
-  date: string;
-  time: string;
+  date_time: string;
   location: string;
-  image: string;
-  priority: 'high' | 'medium' | 'low';
-  status: 'upcoming' | 'ongoing' | 'completed';
+  image_url: string;
+  priority: string;
+  status: string;
 }
 
 export function ActivitiesSlideshow() {
   const { language } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(true);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Sample activities data - in real app, this would come from Supabase
-  const activities: Activity[] = [
-    {
-      id: '1',
-      type: 'event',
-      title: language === 'en' ? 'Chinese New Year Celebration' : 'Sambutan Tahun Baru Cina',
-      description: language === 'en' 
-        ? 'Join us for a spectacular celebration with lion dance, traditional performances, and delicious food!'
-        : 'Sertai kami untuk sambutan yang spektakular dengan tarian singa, persembahan tradisional, dan makanan lazat!',
-      date: '2024-02-12',
-      time: '7:00 PM - 10:00 PM',
-      location: language === 'en' ? 'Community Hall, Level G' : 'Dewan Komuniti, Aras G',
-      image: functionHall,
-      priority: 'high',
-      status: 'upcoming'
-    },
-    {
-      id: '2', 
-      type: 'sports',
-      title: language === 'en' ? 'Community Badminton Tournament' : 'Kejohanan Badminton Komuniti',
-      description: language === 'en'
-        ? 'Annual badminton championship open to all residents. Prizes for winners!'
-        : 'Kejohanan badminton tahunan terbuka untuk semua penduduk. Hadiah untuk pemenang!',
-      date: '2024-02-18',
-      time: '9:00 AM - 6:00 PM', 
-      location: language === 'en' ? 'Sports Hall' : 'Dewan Sukan',
-      image: communityGym,
-      priority: 'medium',
-      status: 'upcoming'
-    },
-    {
-      id: '3',
-      type: 'community',
-      title: language === 'en' ? 'Gotong-Royong Day' : 'Hari Gotong-Royong',
-      description: language === 'en'
-        ? 'Community cleaning and beautification day. Let\'s work together to keep our neighborhood beautiful!'
-        : 'Hari pembersihan dan percantikan komuniti. Mari bekerjasama untuk mengekalkan kawasan kita cantik!',
-      date: '2024-02-25',
-      time: '8:00 AM - 12:00 PM',
-      location: language === 'en' ? 'Various Areas' : 'Pelbagai Kawasan',
-      image: gardenFacility,
-      priority: 'high',
-      status: 'upcoming'
-    },
-    {
-      id: '4',
-      type: 'announcement',
-      title: language === 'en' ? 'New Swimming Pool Hours' : 'Waktu Baharu Kolam Renang',
-      description: language === 'en'
-        ? 'Extended swimming pool hours during weekends. New facilities and equipment available!'
-        : 'Waktu kolam renang dipanjangkan pada hujung minggu. Kemudahan dan peralatan baharu tersedia!',
-      date: '2024-02-15',
-      time: language === 'en' ? 'All Day' : 'Sepanjang Hari',
-      location: language === 'en' ? 'Swimming Pool Area' : 'Kawasan Kolam Renang',
-      image: swimmingPool,
-      priority: 'medium',
-      status: 'ongoing'
-    }
-  ];
+  // Fetch activities from database
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('community_activities')
+          .select('*')
+          .eq('is_published', true)
+          .order('date_time', { ascending: true })
+          .limit(5);
+
+        if (error) {
+          console.error('Error fetching activities:', error);
+        } else {
+          setActivities(data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching activities:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchActivities();
+  }, []);
 
   // Auto-advance slides
   useEffect(() => {
@@ -118,7 +82,7 @@ export function ActivitiesSlideshow() {
   };
 
   const getTypeIcon = (type: string) => {
-    switch (type) {
+    switch (type?.toLowerCase()) {
       case 'event': return PartyPopper;
       case 'announcement': return Megaphone;
       case 'community': return Users;
@@ -128,7 +92,7 @@ export function ActivitiesSlideshow() {
   };
 
   const getTypeColor = (type: string) => {
-    switch (type) {
+    switch (type?.toLowerCase()) {
       case 'event': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
       case 'announcement': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
       case 'community': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
@@ -138,7 +102,7 @@ export function ActivitiesSlideshow() {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case 'upcoming': return 'bg-blue-500';
       case 'ongoing': return 'bg-green-500';
       case 'completed': return 'bg-gray-500';
@@ -146,10 +110,21 @@ export function ActivitiesSlideshow() {
     }
   };
 
-  const currentActivity = activities[currentSlide];
-  const TypeIcon = getTypeIcon(currentActivity?.type || '');
+  if (loading) {
+    return (
+      <Card className="w-full relative overflow-hidden bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+        <CardContent className="p-0">
+          <div className="relative h-80 flex items-center justify-center">
+            <p className="text-muted-foreground">
+              {language === 'en' ? 'Loading activities...' : 'Memuatkan aktiviti...'}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  if (!currentActivity) {
+  if (activities.length === 0) {
     return (
       <Card className="w-full relative overflow-hidden bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
         <CardContent className="p-0">
@@ -163,6 +138,9 @@ export function ActivitiesSlideshow() {
     );
   }
 
+  const currentActivity = activities[currentSlide];
+  const TypeIcon = getTypeIcon(currentActivity?.activity_type || '');
+
   return (
     <Card className="w-full relative overflow-hidden bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
       <CardContent className="p-0">
@@ -171,7 +149,7 @@ export function ActivitiesSlideshow() {
           <div 
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{ 
-              backgroundImage: `url(${currentActivity.image})`,
+              backgroundImage: `url(${currentActivity.image_url})`,
               filter: 'brightness(0.3)'
             }}
           />
@@ -180,9 +158,9 @@ export function ActivitiesSlideshow() {
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30 flex items-center">
             <div className="flex-1 p-8 text-white">
               <div className="flex items-center gap-3 mb-4">
-                <Badge className={getTypeColor(currentActivity.type)}>
+                <Badge className={getTypeColor(currentActivity.activity_type)}>
                   <TypeIcon className="w-3 h-3 mr-1" />
-                  {currentActivity.type?.toUpperCase() || ''}
+                  {currentActivity.activity_type?.toUpperCase() || ''}
                 </Badge>
                 <div className={`w-2 h-2 rounded-full ${getStatusColor(currentActivity.status)}`} />
                 <span className="text-sm capitalize">{currentActivity.status}</span>
@@ -199,11 +177,15 @@ export function ActivitiesSlideshow() {
               <div className="flex items-center gap-6 text-sm text-gray-300">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  <span>{new Date(currentActivity.date).toLocaleDateString()}</span>
+                  <span>{new Date(currentActivity.date_time).toLocaleDateString()}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  <span>{currentActivity.time}</span>
+                  <span>{new Date(currentActivity.date_time).toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                  })}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
