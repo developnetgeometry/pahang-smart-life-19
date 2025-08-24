@@ -774,6 +774,83 @@ export type Database = {
           },
         ]
       }
+      community_activities: {
+        Row: {
+          activity_type: string
+          created_at: string | null
+          created_by: string | null
+          current_participants: number | null
+          date_time: string | null
+          description: string | null
+          district_id: string | null
+          end_time: string | null
+          id: string
+          image_url: string | null
+          is_published: boolean | null
+          location: string | null
+          max_participants: number | null
+          priority: string | null
+          registration_deadline: string | null
+          registration_required: boolean | null
+          status: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string | null
+          created_by?: string | null
+          current_participants?: number | null
+          date_time?: string | null
+          description?: string | null
+          district_id?: string | null
+          end_time?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean | null
+          location?: string | null
+          max_participants?: number | null
+          priority?: string | null
+          registration_deadline?: string | null
+          registration_required?: boolean | null
+          status?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          current_participants?: number | null
+          date_time?: string | null
+          description?: string | null
+          district_id?: string | null
+          end_time?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean | null
+          location?: string | null
+          max_participants?: number | null
+          priority?: string | null
+          registration_deadline?: string | null
+          registration_required?: boolean | null
+          status?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_activities_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_groups: {
         Row: {
           category: string | null
@@ -842,6 +919,65 @@ export type Database = {
             columns: ["leader_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_updates: {
+        Row: {
+          affected_areas: string[] | null
+          created_at: string | null
+          created_by: string | null
+          details: Json | null
+          district_id: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          message: string
+          priority: string | null
+          start_date: string | null
+          title: string
+          update_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          affected_areas?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          details?: Json | null
+          district_id?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          message: string
+          priority?: string | null
+          start_date?: string | null
+          title: string
+          update_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          affected_areas?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          details?: Json | null
+          district_id?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          message?: string
+          priority?: string | null
+          start_date?: string | null
+          title?: string
+          update_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_updates_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
             referencedColumns: ["id"]
           },
         ]
@@ -915,6 +1051,53 @@ export type Database = {
           },
           {
             foreignKeyName: "complaints_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_metrics: {
+        Row: {
+          created_at: string | null
+          district_id: string | null
+          icon_name: string | null
+          id: string
+          metric_type: string
+          metric_value: string
+          status: string | null
+          trend_text: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          district_id?: string | null
+          icon_name?: string | null
+          id?: string
+          metric_type: string
+          metric_value: string
+          status?: string | null
+          trend_text?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          district_id?: string | null
+          icon_name?: string | null
+          id?: string
+          metric_type?: string
+          metric_value?: string
+          status?: string | null
+          trend_text?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_metrics_district_id_fkey"
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
@@ -3411,6 +3594,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "quality_inspections_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recent_activities: {
+        Row: {
+          activity_type: string
+          created_at: string | null
+          description: string | null
+          district_id: string | null
+          id: string
+          reference_id: string | null
+          reference_table: string | null
+          status: string | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          reference_id?: string | null
+          reference_table?: string | null
+          status?: string | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          reference_id?: string | null
+          reference_table?: string | null
+          status?: string | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recent_activities_district_id_fkey"
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
