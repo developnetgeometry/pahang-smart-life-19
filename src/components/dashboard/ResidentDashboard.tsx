@@ -16,6 +16,7 @@ import { CommunityDirectoryWidget } from './CommunityDirectoryWidget';
 import { MaintenanceTrackerWidget } from './MaintenanceTrackerWidget';
 import { PrayerTimesWidget } from './PrayerTimesWidget';
 import { ResidentLocationMap } from './ResidentLocationMap';
+import { ActivitiesSlideshow } from './ActivitiesSlideshow';
 import { MapPin } from 'lucide-react';
 import { 
   Calendar, 
@@ -372,6 +373,9 @@ export function ResidentDashboard() {
           {language === 'en' ? `${user?.district || 'Your Community'} - Unit A-5-12` : `${user?.district || 'Komuniti Anda'} - Unit A-5-12`}
         </p>
       </div>
+
+      {/* Activities Slideshow */}
+      <ActivitiesSlideshow />
 
       {/* Personal Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
