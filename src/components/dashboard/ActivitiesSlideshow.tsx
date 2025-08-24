@@ -147,7 +147,21 @@ export function ActivitiesSlideshow() {
   };
 
   const currentActivity = activities[currentSlide];
-  const TypeIcon = getTypeIcon(currentActivity?.type);
+  const TypeIcon = getTypeIcon(currentActivity?.type || '');
+
+  if (!currentActivity) {
+    return (
+      <Card className="w-full relative overflow-hidden bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+        <CardContent className="p-0">
+          <div className="relative h-80 flex items-center justify-center">
+            <p className="text-muted-foreground">
+              {language === 'en' ? 'No activities available' : 'Tiada aktiviti tersedia'}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full relative overflow-hidden bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
@@ -157,7 +171,7 @@ export function ActivitiesSlideshow() {
           <div 
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{ 
-              backgroundImage: `url(${currentActivity?.image})`,
+              backgroundImage: `url(${currentActivity.image})`,
               filter: 'brightness(0.3)'
             }}
           />
@@ -166,34 +180,34 @@ export function ActivitiesSlideshow() {
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30 flex items-center">
             <div className="flex-1 p-8 text-white">
               <div className="flex items-center gap-3 mb-4">
-                <Badge className={getTypeColor(currentActivity?.type)}>
+                <Badge className={getTypeColor(currentActivity.type)}>
                   <TypeIcon className="w-3 h-3 mr-1" />
-                  {currentActivity?.type.toUpperCase()}
+                  {currentActivity.type?.toUpperCase() || ''}
                 </Badge>
-                <div className={`w-2 h-2 rounded-full ${getStatusColor(currentActivity?.status)}`} />
-                <span className="text-sm capitalize">{currentActivity?.status}</span>
+                <div className={`w-2 h-2 rounded-full ${getStatusColor(currentActivity.status)}`} />
+                <span className="text-sm capitalize">{currentActivity.status}</span>
               </div>
               
               <h2 className="text-3xl font-bold mb-3 leading-tight">
-                {currentActivity?.title}
+                {currentActivity.title}
               </h2>
               
               <p className="text-lg mb-4 text-gray-200 line-clamp-2">
-                {currentActivity?.description}
+                {currentActivity.description}
               </p>
               
               <div className="flex items-center gap-6 text-sm text-gray-300">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  <span>{new Date(currentActivity?.date).toLocaleDateString()}</span>
+                  <span>{new Date(currentActivity.date).toLocaleDateString()}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  <span>{currentActivity?.time}</span>
+                  <span>{currentActivity.time}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
-                  <span>{currentActivity?.location}</span>
+                  <span>{currentActivity.location}</span>
                 </div>
               </div>
             </div>
