@@ -482,8 +482,9 @@ export function ResidentDashboard() {
             </CardContent>
           </Card>
         </div>
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 grid grid-cols-1 md:grid-cols-2 gap-4">
           <WeatherWidget />
+          <PrayerTimesWidget />
         </div>
       </div>
 
@@ -533,11 +534,10 @@ export function ResidentDashboard() {
       <ResidentLocationMap />
 
       {/* Additional Widgets */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <QuickServicesWidget language={language} />
         <UpcomingEventsWidget language={language} />
         <CommunityDirectoryWidget language={language} />
-        <PrayerTimesWidget />
       </div>
 
 
