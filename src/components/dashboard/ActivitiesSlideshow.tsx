@@ -35,6 +35,7 @@ export function ActivitiesSlideshow() {
   const [isAutoPlay, setIsAutoPlay] = useState(true);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [imageLoadError, setImageLoadError] = useState<string | null>(null);
 
   // Fetch activities from database
   useEffect(() => {
@@ -61,6 +62,11 @@ export function ActivitiesSlideshow() {
 
     fetchActivities();
   }, []);
+
+  // Reset image error when slide changes
+  useEffect(() => {
+    setImageLoadError(null);
+  }, [currentSlide]);
 
   // Auto-advance slides
   useEffect(() => {
@@ -146,16 +152,27 @@ export function ActivitiesSlideshow() {
       <CardContent className="p-0">
         <div className="relative h-80 overflow-hidden">
           {/* Background Image */}
-          <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ 
-              backgroundImage: `url(${currentActivity.image_url})`,
-              filter: 'brightness(0.3)'
-            }}
-          />
+          {currentActivity.image_url && !imageLoadError ? (
+            <>
+              <img
+                src={currentActivity.image_url}
+                alt={currentActivity.title}
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ filter: 'brightness(0.3)' }}
+                onError={() => setImageLoadError(currentActivity.id)}
+                onLoad={() => setImageLoadError(null)}
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30" />
+            </>
+          ) : (
+            <div 
+              className="absolute inset-0 bg-gradient-to-r from-primary/80 to-accent/80"
+              style={{ filter: 'brightness(0.7)' }}
+            />
+          )}
           
           {/* Overlay Content */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30 flex items-center">
+          <div className="absolute inset-0 flex items-center">
             <div className="flex-1 p-8 text-white">
               <div className="flex items-center gap-3 mb-4">
                 <Badge className={getTypeColor(currentActivity.activity_type)}>
