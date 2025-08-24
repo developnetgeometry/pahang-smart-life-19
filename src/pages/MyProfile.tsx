@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +21,7 @@ export default function MyProfile() {
   const { user, language, updateProfile } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     // Maklumat Peribadi
     fullname: user?.display_name || '',
@@ -57,6 +60,69 @@ export default function MyProfile() {
     agree_declare: false
   });
 
+  // Load profile data from database
+  const loadProfile = async () => {
+    if (!user?.id) return;
+    
+    setLoading(true);
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading profile:', error);
+        toast.error('Ralat memuat profil');
+        return;
+      }
+
+      if (profile) {
+        setFormData({
+          fullname: profile.full_name || user.display_name || '',
+          identity_no: profile.identity_no || '',
+          identity_no_type: profile.identity_no_type || 'ic',
+          gender: profile.gender || '',
+          dob: profile.dob || '',
+          age: profile.age?.toString() || '',
+          mobile_no: profile.mobile_no || user.phone || '',
+          email: profile.email || user.email || '',
+          address: profile.address || '',
+          socio_id: profile.socio_id || '',
+          race_id: profile.race_id || '',
+          ethnic_id: profile.ethnic_id || '',
+          nationality_id: profile.nationality_id || '',
+          oku_status: profile.oku_status || false,
+          occupation_id: profile.occupation_id || '',
+          type_sector: profile.type_sector || '',
+          education_level: profile.education_level || '',
+          income_range: profile.income_range || '',
+          community_status: profile.community_status || false,
+          status_membership: profile.status_membership || '',
+          status_entrepreneur: profile.status_entrepreneur || false,
+          register_method: profile.register_method || '',
+          registration_status: profile.registration_status || false,
+          supervision: profile.supervision || '',
+          membership_id: profile.membership_id || '',
+          user_id: user.id,
+          pdpa_declare: profile.pdpa_declare || false,
+          agree_declare: profile.agree_declare || false
+        });
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      toast.error('Ralat memuat profil');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load profile data on component mount
+  useEffect(() => {
+    loadProfile();
+  }, [user?.id]);
+
   // Auto-calculate age from dob
   useEffect(() => {
     if (formData.dob) {
@@ -75,38 +141,129 @@ export default function MyProfile() {
 
   if (!user) return null;
 
-  const handleSave = () => {
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Maklumat Peribadi</h1>
+            <p className="text-muted-foreground">Memuat maklumat peribadi...</p>
+          </div>
+        </div>
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1">
+            <Card>
+              <CardContent className="p-6 text-center">
+                <div className="w-24 h-24 bg-muted rounded-full mx-auto mb-4 animate-pulse"></div>
+                <div className="h-6 bg-muted rounded mx-auto mb-2 animate-pulse"></div>
+                <div className="h-4 bg-muted rounded mx-auto animate-pulse"></div>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="lg:col-span-2">
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <div className="h-6 bg-muted rounded animate-pulse"></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="h-10 bg-muted rounded animate-pulse"></div>
+                  <div className="h-10 bg-muted rounded animate-pulse"></div>
+                  <div className="h-10 bg-muted rounded animate-pulse"></div>
+                  <div className="h-10 bg-muted rounded animate-pulse"></div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSave = async () => {
     // Validation for required fields
     const requiredFields = ['fullname', 'identity_no', 'gender', 'dob', 'mobile_no', 'email', 'nationality_id'];
     const missingFields = requiredFields.filter(field => !formData[field]);
     
     if (missingFields.length > 0) {
-      alert(`Sila lengkapkan medan wajib: ${missingFields.join(', ')}`);
+      toast.error(`Sila lengkapkan medan wajib: ${missingFields.join(', ')}`);
       return;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      alert('Format emel tidak sah');
+      toast.error('Format emel tidak sah');
       return;
     }
 
     // Phone validation
     const phoneRegex = /^[\d\s\-\+\(\)]{10,}$/;
     if (!phoneRegex.test(formData.mobile_no)) {
-      alert('Format nombor telefon tidak sah');
+      toast.error('Format nombor telefon tidak sah');
       return;
     }
 
     // Identity number validation
     if (formData.identity_no.length < 12) {
-      alert('Nombor kad pengenalan tidak sah');
+      toast.error('Nombor kad pengenalan tidak sah');
       return;
     }
 
-    updateProfile(formData);
-    setIsEditing(false);
+    setLoading(true);
+    try {
+      // Prepare data for database
+      const profileData = {
+        id: user.id, // Required for upsert
+        full_name: formData.fullname,
+        email: formData.email,
+        identity_no: formData.identity_no,
+        identity_no_type: formData.identity_no_type,
+        gender: formData.gender,
+        dob: formData.dob,
+        age: parseInt(formData.age) || null,
+        mobile_no: formData.mobile_no,
+        address: formData.address,
+        socio_id: formData.socio_id,
+        race_id: formData.race_id,
+        ethnic_id: formData.ethnic_id,
+        nationality_id: formData.nationality_id,
+        oku_status: formData.oku_status,
+        occupation_id: formData.occupation_id,
+        type_sector: formData.type_sector,
+        education_level: formData.education_level,
+        income_range: formData.income_range,
+        community_status: formData.community_status,
+        status_membership: formData.status_membership,
+        status_entrepreneur: formData.status_entrepreneur,
+        register_method: formData.register_method,
+        registration_status: formData.registration_status,
+        supervision: formData.supervision,
+        membership_id: formData.membership_id,
+        pdpa_declare: formData.pdpa_declare,
+        agree_declare: formData.agree_declare,
+        updated_by: user.id,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(profileData, {
+          onConflict: 'id'
+        });
+
+      if (error) {
+        console.error('Error saving profile:', error);
+        toast.error('Ralat menyimpan profil');
+        return;
+      }
+
+      toast.success('Profil berjaya dikemaskini');
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast.error('Ralat menyimpan profil');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getInitials = (name: string) => {
@@ -124,13 +281,14 @@ export default function MyProfile() {
           </p>
         </div>
         <Button 
-          onClick={() => setIsEditing(!isEditing)}
+          onClick={isEditing ? handleSave : () => setIsEditing(true)}
           variant={isEditing ? "default" : "outline"}
+          disabled={loading}
         >
           {isEditing ? (
             <>
               <Save className="w-4 h-4 mr-2" />
-              Simpan
+              {loading ? 'Menyimpan...' : 'Simpan'}
             </>
           ) : (
             <>

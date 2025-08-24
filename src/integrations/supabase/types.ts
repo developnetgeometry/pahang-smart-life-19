@@ -3170,63 +3170,147 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
+          age: number | null
+          agree_declare: boolean | null
           avatar_url: string | null
+          community_status: boolean | null
           created_at: string | null
+          created_by: string | null
           district_id: string | null
+          dob: string | null
+          education_level: string | null
           email: string | null
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
+          ethnic_id: string | null
           full_name: string | null
+          gender: string | null
           id: string
+          identity_no: string | null
+          identity_no_type: string | null
+          income_range: string | null
           is_active: boolean | null
+          join_date: string | null
           language: string | null
           language_preference: string | null
+          membership_id: string | null
+          mobile_no: string | null
+          nationality_id: string | null
+          occupation_id: string | null
+          oku_status: boolean | null
+          pdpa_declare: boolean | null
           phone: string | null
           primary_role: Database["public"]["Enums"]["app_role"] | null
+          race_id: string | null
+          register_method: string | null
+          registration_status: boolean | null
+          socio_id: string | null
+          status_entrepreneur: boolean | null
+          status_membership: string | null
+          supervision: string | null
           theme: string | null
           theme_preference: string | null
+          type_sector: string | null
           unit_number: string | null
           updated_at: string | null
+          updated_by: string | null
           vehicle_plate_number: string | null
         }
         Insert: {
+          address?: string | null
+          age?: number | null
+          agree_declare?: boolean | null
           avatar_url?: string | null
+          community_status?: boolean | null
           created_at?: string | null
+          created_by?: string | null
           district_id?: string | null
+          dob?: string | null
+          education_level?: string | null
           email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
+          ethnic_id?: string | null
           full_name?: string | null
+          gender?: string | null
           id: string
+          identity_no?: string | null
+          identity_no_type?: string | null
+          income_range?: string | null
           is_active?: boolean | null
+          join_date?: string | null
           language?: string | null
           language_preference?: string | null
+          membership_id?: string | null
+          mobile_no?: string | null
+          nationality_id?: string | null
+          occupation_id?: string | null
+          oku_status?: boolean | null
+          pdpa_declare?: boolean | null
           phone?: string | null
           primary_role?: Database["public"]["Enums"]["app_role"] | null
+          race_id?: string | null
+          register_method?: string | null
+          registration_status?: boolean | null
+          socio_id?: string | null
+          status_entrepreneur?: boolean | null
+          status_membership?: string | null
+          supervision?: string | null
           theme?: string | null
           theme_preference?: string | null
+          type_sector?: string | null
           unit_number?: string | null
           updated_at?: string | null
+          updated_by?: string | null
           vehicle_plate_number?: string | null
         }
         Update: {
+          address?: string | null
+          age?: number | null
+          agree_declare?: boolean | null
           avatar_url?: string | null
+          community_status?: boolean | null
           created_at?: string | null
+          created_by?: string | null
           district_id?: string | null
+          dob?: string | null
+          education_level?: string | null
           email?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
+          ethnic_id?: string | null
           full_name?: string | null
+          gender?: string | null
           id?: string
+          identity_no?: string | null
+          identity_no_type?: string | null
+          income_range?: string | null
           is_active?: boolean | null
+          join_date?: string | null
           language?: string | null
           language_preference?: string | null
+          membership_id?: string | null
+          mobile_no?: string | null
+          nationality_id?: string | null
+          occupation_id?: string | null
+          oku_status?: boolean | null
+          pdpa_declare?: boolean | null
           phone?: string | null
           primary_role?: Database["public"]["Enums"]["app_role"] | null
+          race_id?: string | null
+          register_method?: string | null
+          registration_status?: boolean | null
+          socio_id?: string | null
+          status_entrepreneur?: boolean | null
+          status_membership?: string | null
+          supervision?: string | null
           theme?: string | null
           theme_preference?: string | null
+          type_sector?: string | null
           unit_number?: string | null
           updated_at?: string | null
+          updated_by?: string | null
           vehicle_plate_number?: string | null
         }
         Relationships: [
