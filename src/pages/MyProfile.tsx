@@ -41,7 +41,6 @@ export default function MyProfile() {
     type_sector: '',
     education_level: '',
     income_range: '',
-    distance: '',
     
     // Status & Keahlian
     community_status: false,
@@ -510,20 +509,6 @@ export default function MyProfile() {
                     </Select>
                   ) : (
                     <p className="text-sm p-2 bg-muted rounded">{formData.income_range}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="distance">Jarak Ke Lokasi (km)</Label>
-                  {isEditing ? (
-                    <Input
-                      id="distance"
-                      type="number"
-                      value={formData.distance}
-                      onChange={(e) => setFormData({...formData, distance: e.target.value})}
-                      placeholder="0"
-                    />
-                  ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.distance} km</p>
                   )}
                 </div>
               </div>
