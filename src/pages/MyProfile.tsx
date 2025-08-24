@@ -238,34 +238,12 @@ export default function MyProfile() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="identity_no">No. Kad Pengenalan *</Label>
-                  {isEditing ? (
-                    <Input
-                      id="identity_no"
-                      value={formData.identity_no}
-                      onChange={(e) => setFormData({...formData, identity_no: e.target.value})}
-                      required
-                    />
-                  ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.identity_no}</p>
-                  )}
+                  <Label htmlFor="identity_no">No. Kad Pengenalan * (Tidak boleh diubah)</Label>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.identity_no || 'Belum diisi'}</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="identity_no_type">Jenis Kad Pengenalan</Label>
-                  {isEditing ? (
-                    <Select value={formData.identity_no_type} onValueChange={(value) => setFormData({...formData, identity_no_type: value})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ic">MyKad</SelectItem>
-                        <SelectItem value="passport">Pasport</SelectItem>
-                        <SelectItem value="other">Lain-lain</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.identity_no_type === 'ic' ? 'MyKad' : formData.identity_no_type === 'passport' ? 'Pasport' : 'Lain-lain'}</p>
-                  )}
+                  <Label htmlFor="identity_no_type">Jenis Kad Pengenalan (Tidak boleh diubah)</Label>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.identity_no_type === 'ic' ? 'MyKad' : formData.identity_no_type === 'passport' ? 'Pasport' : 'Lain-lain'}</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="gender">Jantina *</Label>
@@ -284,21 +262,11 @@ export default function MyProfile() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dob">Tarikh Lahir *</Label>
-                  {isEditing ? (
-                    <Input
-                      id="dob"
-                      type="date"
-                      value={formData.dob}
-                      onChange={(e) => setFormData({...formData, dob: e.target.value})}
-                      required
-                    />
-                  ) : (
-                    <p className="text-sm p-2 bg-muted rounded flex items-center">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      {formData.dob}
-                    </p>
-                  )}
+                  <Label htmlFor="dob">Tarikh Lahir * (Tidak boleh diubah)</Label>
+                  <p className="text-sm p-2 bg-muted rounded flex items-center text-muted-foreground">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    {formData.dob || 'Belum diisi'}
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label>Umur</Label>
@@ -361,56 +329,16 @@ export default function MyProfile() {
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="race_id">Bangsa</Label>
-                  {isEditing ? (
-                    <Select value={formData.race_id} onValueChange={(value) => setFormData({...formData, race_id: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih bangsa" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="melayu">Melayu</SelectItem>
-                        <SelectItem value="cina">Cina</SelectItem>
-                        <SelectItem value="india">India</SelectItem>
-                        <SelectItem value="other">Lain-lain</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.race_id}</p>
-                  )}
+                  <Label htmlFor="race_id">Bangsa (Tidak boleh diubah)</Label>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.race_id || 'Belum diisi'}</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="ethnic_id">Etnik</Label>
-                  {isEditing ? (
-                    <Select value={formData.ethnic_id} onValueChange={(value) => setFormData({...formData, ethnic_id: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih etnik" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="melayu">Melayu</SelectItem>
-                        <SelectItem value="cina">Cina</SelectItem>
-                        <SelectItem value="india">India</SelectItem>
-                        <SelectItem value="other">Lain-lain</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.ethnic_id}</p>
-                  )}
+                  <Label htmlFor="ethnic_id">Etnik (Tidak boleh diubah)</Label>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.ethnic_id || 'Belum diisi'}</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="nationality_id">Warganegara *</Label>
-                  {isEditing ? (
-                    <Select value={formData.nationality_id} onValueChange={(value) => setFormData({...formData, nationality_id: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih warganegara" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="malaysia">Malaysia</SelectItem>
-                        <SelectItem value="other">Bukan Warganegara</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.nationality_id}</p>
-                  )}
+                  <Label htmlFor="nationality_id">Warganegara * (Tidak boleh diubah)</Label>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.nationality_id || 'Belum diisi'}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
@@ -561,54 +489,22 @@ export default function MyProfile() {
                   <Label htmlFor="status_entrepreneur">Status Usahawan</Label>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="register_method">Kaedah Pendaftaran</Label>
-                  {isEditing ? (
-                    <Select value={formData.register_method} onValueChange={(value) => setFormData({...formData, register_method: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih kaedah pendaftaran" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="online">Dalam Talian</SelectItem>
-                        <SelectItem value="manual">Manual</SelectItem>
-                        <SelectItem value="kiosk">Kiosk</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.register_method}</p>
-                  )}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="registration_status"
-                    checked={formData.registration_status}
-                    onCheckedChange={(checked) => setFormData({...formData, registration_status: checked})}
-                    disabled={!isEditing}
-                  />
-                  <Label htmlFor="registration_status">Status Pendaftaran</Label>
+                  <Label htmlFor="register_method">Kaedah Pendaftaran (Tidak boleh diubah)</Label>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.register_method || 'Belum diisi'}</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="supervision">Penyeliaan</Label>
-                  {isEditing ? (
-                    <Input
-                      id="supervision"
-                      value={formData.supervision}
-                      onChange={(e) => setFormData({...formData, supervision: e.target.value})}
-                    />
-                  ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.supervision}</p>
-                  )}
+                  <Label htmlFor="registration_status">Status Pendaftaran (Tidak boleh diubah)</Label>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">
+                    {formData.registration_status ? 'Aktif' : 'Tidak Aktif'}
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="membership_id">Membership ID</Label>
-                  {isEditing ? (
-                    <Input
-                      id="membership_id"
-                      value={formData.membership_id}
-                      onChange={(e) => setFormData({...formData, membership_id: e.target.value})}
-                    />
-                  ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.membership_id}</p>
-                  )}
+                  <Label htmlFor="supervision">Penyeliaan (Tidak boleh diubah)</Label>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.supervision || 'Belum diisi'}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="membership_id">Membership ID (Tidak boleh diubah)</Label>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.membership_id || 'Belum diisi'}</p>
                 </div>
                 <div className="space-y-2">
                   <Label>User ID</Label>
