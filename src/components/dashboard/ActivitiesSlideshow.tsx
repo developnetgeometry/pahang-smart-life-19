@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -14,7 +15,8 @@ import {
   Play,
   Pause,
   MapPin,
-  Clock
+  Clock,
+  Eye
 } from 'lucide-react';
 
 interface Activity {
@@ -36,6 +38,7 @@ export function ActivitiesSlideshow() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [imageLoadError, setImageLoadError] = useState<string | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   // Fetch activities from database
   useEffect(() => {
@@ -204,12 +207,22 @@ export function ActivitiesSlideshow() {
                     hour12: true 
                   })}</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{currentActivity.location}</span>
-                </div>
-              </div>
-            </div>
+                 <div className="flex items-center gap-1">
+                   <MapPin className="w-4 h-4" />
+                   <span>{currentActivity.location}</span>
+                 </div>
+               </div>
+               
+               <Button
+                 variant="secondary"
+                 size="sm"
+                 className="mt-4 bg-white/20 text-white border-white/30 hover:bg-white/30"
+                 onClick={() => setShowDetailsModal(true)}
+               >
+                 <Eye className="w-4 h-4 mr-2" />
+                 {language === 'en' ? 'View Details' : 'Lihat Butiran'}
+               </Button>
+             </div>
             
             {/* Navigation Controls */}
             <div className="absolute top-4 right-4 flex items-center gap-2">
@@ -257,6 +270,95 @@ export function ActivitiesSlideshow() {
           ))}
         </div>
       </CardContent>
+      
+      {/* Details Modal */}
+      <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TypeIcon className="w-5 h-5" />
+              {currentActivity.title}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Activity Image */}
+            {currentActivity.image_url && !imageLoadError && (
+              <img
+                src={currentActivity.image_url}
+                alt={currentActivity.title}
+                className="w-full h-64 object-cover rounded-lg"
+                onError={() => setImageLoadError(currentActivity.id)}
+              />
+            )}
+            
+            {/* Activity Type and Status */}
+            <div className="flex items-center gap-3">
+              <Badge className={getTypeColor(currentActivity.activity_type)}>
+                <TypeIcon className="w-3 h-3 mr-1" />
+                {currentActivity.activity_type?.toUpperCase() || ''}
+              </Badge>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${getStatusColor(currentActivity.status)}`} />
+                <span className="text-sm capitalize">{currentActivity.status}</span>
+              </div>
+            </div>
+            
+            {/* Full Description */}
+            <div>
+              <h3 className="font-semibold mb-2">
+                {language === 'en' ? 'Description' : 'Penerangan'}
+              </h3>
+              <p className="text-muted-foreground whitespace-pre-line">
+                {currentActivity.description}
+              </p>
+            </div>
+            
+            {/* Activity Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">
+                    {language === 'en' ? 'Date' : 'Tarikh'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(currentActivity.date_time).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">
+                    {language === 'en' ? 'Time' : 'Masa'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(currentActivity.date_time).toLocaleTimeString('en-US', { 
+                      hour: '2-digit', 
+                      minute: '2-digit',
+                      hour12: true 
+                    })}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 md:col-span-2">
+                <MapPin className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">
+                    {language === 'en' ? 'Location' : 'Lokasi'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {currentActivity.location}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
