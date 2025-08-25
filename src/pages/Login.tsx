@@ -213,12 +213,23 @@ export default function Login() {
 
 
   return (
-    <div className="min-h-screen relative bg-gradient-hero flex items-center justify-center p-4">
-      <div className="absolute top-4 right-4 flex gap-2">
+    <div 
+      className="min-h-screen relative flex items-center justify-center p-4"
+      style={{
+        backgroundImage: `url('/lovable-uploads/7687f368-63da-4bc0-a610-d88851aebf13.png')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Dark overlay for better text readability */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]"></div>
+      <div className="absolute top-4 right-4 flex gap-2 z-10">
         <Button
           variant={language === 'en' ? 'default' : 'outline'}
           size="sm"
           onClick={() => switchLanguage('en')}
+          className="bg-white/10 border-white/20 text-white hover:bg-white/20"
         >
           EN
         </Button>
@@ -226,11 +237,12 @@ export default function Login() {
           variant={language === 'ms' ? 'default' : 'outline'}
           size="sm"
           onClick={() => switchLanguage('ms')}
+          className="bg-white/10 border-white/20 text-white hover:bg-white/20"
         >
           BM
         </Button>
       </div>
-      <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
+      <div className="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
         {/* Left side - Hero content */}
         <div className="text-center lg:text-left space-y-6 text-white">
           <div className="space-y-4">
