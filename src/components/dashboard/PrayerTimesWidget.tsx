@@ -219,12 +219,12 @@ export function PrayerTimesWidget() {
   };
 
   const getTimeOfDayBackground = () => {
-    const now = new Date();
-    const hour = now.getHours();
+    // Evening image: during Zohor and Asar prayers
+    // Night image: during Subuh, Maghrib, and Isyak prayers
+    const eveningPrayers = ['Dhuhr', 'Zohor', 'Asr', 'Asar'];
+    const nightPrayers = ['Fajr', 'Subuh', 'Maghrib', 'Isha', 'Isyak'];
     
-    // Evening: 17:00 - 20:00 (5 PM - 8 PM)
-    // Night: 20:00 - 17:00 (8 PM - 5 PM next day)
-    if (hour >= 17 && hour < 20) {
+    if (eveningPrayers.includes(currentPrayer)) {
       return mekahEveningImage;
     } else {
       return mekahNightImage;
