@@ -277,65 +277,72 @@ export function ActivitiesSlideshow() {
       
       {/* Details Modal */}
       <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <TypeIcon className="w-5 h-5" />
+        <DialogContent className="max-w-md sm:max-w-lg lg:max-w-2xl max-h-[90vh] overflow-y-auto bg-card border border-border shadow-elegant">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <TypeIcon className="w-5 h-5 text-primary" />
               {currentActivity.title}
             </DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4">
+          <div className="space-y-4 sm:space-y-6">
             {/* Activity Image */}
             {currentActivity.image_url && !imageLoadError && (
-              <img
-                src={currentActivity.image_url}
-                alt={currentActivity.title}
-                className="w-full h-64 object-cover rounded-lg"
-                onError={() => setImageLoadError(currentActivity.id)}
-              />
+              <div className="relative overflow-hidden rounded-lg">
+                <img
+                  src={currentActivity.image_url}
+                  alt={currentActivity.title}
+                  className="w-full h-48 sm:h-64 object-cover"
+                  onError={() => setImageLoadError(currentActivity.id)}
+                />
+              </div>
             )}
             
             {/* Activity Type and Status */}
-            <div className="flex items-center gap-3">
-              <Badge className={getTypeColor(currentActivity.activity_type)}>
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge className={`${getTypeColor(currentActivity.activity_type)} text-xs sm:text-sm`}>
                 <TypeIcon className="w-3 h-3 mr-1" />
                 {currentActivity.activity_type?.toUpperCase() || ''}
               </Badge>
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${getStatusColor(currentActivity.status)}`} />
-                <span className="text-sm capitalize">{currentActivity.status}</span>
+                <span className="text-sm capitalize font-medium">{currentActivity.status}</span>
               </div>
             </div>
             
             {/* Full Description */}
-            <div>
-              <h3 className="font-semibold mb-2">
+            <div className="space-y-2">
+              <h3 className="font-semibold text-base sm:text-lg text-foreground">
                 {t('description')}
               </h3>
-              <p className="text-muted-foreground whitespace-pre-line">
+              <p className="text-sm sm:text-base text-muted-foreground whitespace-pre-line leading-relaxed">
                 {currentActivity.description}
               </p>
             </div>
             
             {/* Activity Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                <Calendar className="w-5 h-5 text-primary mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground">
                     {t('date')}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(currentActivity.date_time).toLocaleDateString()}
+                    {new Date(currentActivity.date_time).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                <Clock className="w-5 h-5 text-primary mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground">
                     {t('time')}
                   </p>
                   <p className="text-sm text-muted-foreground">
@@ -348,10 +355,10 @@ export function ActivitiesSlideshow() {
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 md:col-span-2">
-                <MapPin className="w-4 h-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                <MapPin className="w-5 h-5 text-primary mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground">
                     {t('location')}
                   </p>
                   <p className="text-sm text-muted-foreground">
