@@ -73,16 +73,16 @@ export function ActivitiesSlideshow() {
     setImageLoadError(null);
   }, [currentSlide]);
 
-  // Auto-advance slides
+  // Auto-advance slides - pause when modal is open
   useEffect(() => {
-    if (!isAutoPlay) return;
+    if (!isAutoPlay || showDetailsModal) return;
     
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % activities.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [isAutoPlay, activities.length]);
+  }, [isAutoPlay, activities.length, showDetailsModal]);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % activities.length);
