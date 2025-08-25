@@ -67,7 +67,6 @@ const ROLE_LABELS = {
   'resident': 'Resident',
   'community_leader': 'Community Leader', 
   'service_provider': 'Service Provider',
-  'facility_manager': 'Facility Manager',
   'security': 'Security Officer',
   'community_admin': 'Community Admin',
   'district_coordinator': 'District Coordinator',

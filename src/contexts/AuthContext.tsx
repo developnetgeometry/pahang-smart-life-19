@@ -10,7 +10,6 @@ export type UserRole =
   | 'district_coordinator'
   | 'community_admin'
   | 'community_leader'
-  | 'facility_manager'
   | 'maintenance_staff'
   | 'service_provider'
   | 'state_service_manager';

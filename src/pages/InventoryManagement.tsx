@@ -416,7 +416,7 @@ export default function InventoryManagement() {
     return matchesSearch && matchesCategory && matchesStock;
   });
 
-  const canManage = hasRole('maintenance_staff') || hasRole('facility_manager') || 
+  const canManage = hasRole('maintenance_staff') || hasRole('community_admin') || 
                    hasRole('community_admin') || hasRole('district_coordinator') || 
                    hasRole('state_admin');
 

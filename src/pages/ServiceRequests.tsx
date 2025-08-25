@@ -255,7 +255,7 @@ export default function ServiceRequests() {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  const canManage = hasRole('maintenance_staff') || hasRole('facility_manager') || 
+  const canManage = hasRole('maintenance_staff') || hasRole('community_admin') || 
                    hasRole('community_admin') || hasRole('district_coordinator') || 
                    hasRole('state_admin');
 

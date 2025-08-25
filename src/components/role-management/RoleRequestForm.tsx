@@ -16,13 +16,12 @@ interface RoleRequestFormProps {
   onSuccess?: () => void;
 }
 
-type UserRole = 'resident' | 'community_leader' | 'service_provider' | 'facility_manager' | 'security' | 'community_admin' | 'district_coordinator' | 'state_admin' | 'admin';
+type UserRole = 'resident' | 'community_leader' | 'service_provider' | 'security' | 'community_admin' | 'district_coordinator' | 'state_admin' | 'admin';
 
 const ROLE_LABELS = {
   'resident': 'Resident',
   'community_leader': 'Community Leader', 
   'service_provider': 'Service Provider',
-  'facility_manager': 'Facility Manager',
   'security': 'Security Officer',
   'community_admin': 'Community Admin',
   'district_coordinator': 'District Coordinator',
@@ -141,10 +140,9 @@ export const RoleRequestForm: React.FC<RoleRequestFormProps> = ({ onSuccess }) =
 
   const getAvailableRoles = (currentRole: UserRole): UserRole[] => {
     const roleHierarchy: Record<UserRole, UserRole[]> = {
-      'resident': ['community_leader', 'service_provider', 'facility_manager', 'security'],
+      'resident': ['community_leader', 'service_provider', 'security'],
       'community_leader': ['community_admin'],
-      'service_provider': ['facility_manager'],
-      'facility_manager': ['community_admin'],
+      'service_provider': ['community_admin'],
       'security': ['community_admin'],
       'community_admin': ['district_coordinator'],
       'district_coordinator': ['state_admin'],

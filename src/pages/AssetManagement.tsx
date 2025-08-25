@@ -203,7 +203,7 @@ export default function AssetManagement() {
     return matchesSearch && matchesCategory && matchesCondition;
   });
 
-  const canManage = hasRole('facility_manager') || hasRole('community_admin') || 
+  const canManage = hasRole('community_admin') || 
                    hasRole('district_coordinator') || hasRole('state_admin');
 
   const getConditionBadge = (condition: string) => {

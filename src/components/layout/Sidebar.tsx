@@ -191,22 +191,22 @@ export function AppSidebar() {
     }
 
     // Asset Management - for facility managers and above
-    if (hasRole("facility_manager") || hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+    if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
       operationsItems.push({
         title: "Asset Management",
         url: "/asset-management",
         icon: Package,
-        requiredRoles: ["facility_manager", "community_admin", "district_coordinator", "state_admin"],
+        requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
       });
     }
 
     // Inventory Management - for maintenance staff and above
-    if (hasRole("maintenance_staff") || hasRole("facility_manager") || hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+    if (hasRole("maintenance_staff") || hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
       operationsItems.push({
         title: "Inventory Management",
         url: "/inventory-management",
         icon: BarChart3,
-        requiredRoles: ["maintenance_staff", "facility_manager", "community_admin", "district_coordinator", "state_admin"],
+        requiredRoles: ["maintenance_staff", "community_admin", "district_coordinator", "state_admin"],
       });
     }
 

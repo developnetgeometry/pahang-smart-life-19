@@ -38,24 +38,6 @@ const testUsers = [
     district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
   },
   {
-    email: 'managernorth@test.com',
-    password: 'password123',
-    role: 'facility_manager' as const,
-    full_name: 'Siti Nurhaliza',
-    phone: '013-1001005',
-    unit_number: 'B-2-05',
-    district_id: '00000000-0000-0000-0000-000000000001', // Pahang Prima North
-  },
-  {
-    email: 'facilitymanager@test.com',
-    password: 'password123',
-    role: 'facility_manager' as const,
-    full_name: 'Kumar Selvam',
-    phone: '013-1001006',
-    unit_number: 'Facility Office',
-    district_id: '2384b1ce-dbb1-4449-8e78-136d11dbc28e', // Pahang Prima South
-  },
-  {
     email: 'securitynorth@test.com',
     password: 'password123',
     role: 'security_officer' as const,

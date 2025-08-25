@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { StateAdminDashboard } from '@/components/dashboard/StateAdminDashboard';
 import { DistrictCoordinatorDashboard } from '@/components/dashboard/DistrictCoordinatorDashboard';
 import { CommunityAdminDashboard } from '@/components/dashboard/CommunityAdminDashboard';
-import { FacilityManagerDashboard } from '@/components/dashboard/FacilityManagerDashboard';
+
 import { SecurityOfficerDashboard } from '@/components/dashboard/SecurityOfficerDashboard';
 import { MaintenanceStaffDashboard } from '@/components/dashboard/MaintenanceStaffDashboard';
 import { ServiceProviderDashboard } from '@/components/dashboard/ServiceProviderDashboard';
@@ -17,7 +17,7 @@ const Index = () => {
   if (hasRole('state_admin')) return <StateAdminDashboard />;
   if (hasRole('district_coordinator')) return <DistrictCoordinatorDashboard />;
   if (hasRole('community_admin')) return <CommunityAdminDashboard />;
-  if (hasRole('facility_manager')) return <FacilityManagerDashboard />;
+  
   if (hasRole('security_officer')) return <SecurityOfficerDashboard />;
   if (hasRole('maintenance_staff')) return <MaintenanceStaffDashboard />;
   if (hasRole('service_provider')) return <ServiceProviderDashboard />;

@@ -448,7 +448,7 @@ const App = () => (
               path="/asset-management"
               element={
                 <ProtectedRoute>
-                  <RequireRoles roles={["facility_manager", "community_admin", "district_coordinator", "state_admin"]}>
+                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
                     <Layout>
                       <AssetManagement />
                     </Layout>
@@ -472,7 +472,7 @@ const App = () => (
               path="/inventory-management"
               element={
                 <ProtectedRoute>
-                  <RequireRoles roles={["maintenance_staff", "facility_manager", "community_admin", "district_coordinator", "state_admin"]}>
+                  <RequireRoles roles={["maintenance_staff", "community_admin", "district_coordinator", "state_admin"]}>
                     <Layout>
                       <InventoryManagement />
                     </Layout>

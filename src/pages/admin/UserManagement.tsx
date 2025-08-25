@@ -193,7 +193,7 @@ export default function UserManagement() {
     { value: 'district_coordinator', label: 'District Coordinator' },
     { value: 'security_officer', label: t.security },
     { value: 'maintenance_staff', label: t.maintenance },
-    { value: 'facility_manager', label: 'Facility Manager' },
+    { value: 'security_officer', label: 'Security Officer' },
     { value: 'service_provider', label: 'Service Provider' },
     { value: 'community_leader', label: 'Community Leader' }
   ];
@@ -212,7 +212,7 @@ export default function UserManagement() {
       case 'district_coordinator': return 'bg-indigo-100 text-indigo-800';
       case 'security_officer': return 'bg-blue-100 text-blue-800';
       case 'maintenance_staff': return 'bg-orange-100 text-orange-800';
-      case 'facility_manager': return 'bg-teal-100 text-teal-800';
+      case 'security_officer': return 'bg-blue-100 text-blue-800';
       case 'service_provider': return 'bg-cyan-100 text-cyan-800';
       case 'community_leader': return 'bg-emerald-100 text-emerald-800';
       case 'resident': return 'bg-green-100 text-green-800';
@@ -236,7 +236,7 @@ export default function UserManagement() {
       case 'district_coordinator': return 'District Coordinator';
       case 'security_officer': return t.security;
       case 'maintenance_staff': return t.maintenance;
-      case 'facility_manager': return 'Facility Manager';
+      case 'security_officer': return 'Security Officer';
       case 'service_provider': return 'Service Provider';
       case 'community_leader': return 'Community Leader';
       case 'resident': return t.resident;
