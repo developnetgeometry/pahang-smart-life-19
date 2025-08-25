@@ -12,7 +12,8 @@ export type UserRole =
   | 'community_leader'
   | 'maintenance_staff'
   | 'service_provider'
-  | 'state_service_manager';
+  | 'state_service_manager'
+  | 'facility_manager';
 
 // ViewRole removed - using role-based navigation instead
 export type Language = 'en' | 'ms';
@@ -79,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const [{ data: profile }, { data: roleRows }] = await Promise.all([
         supabase
           .from('profiles')
-          .select('full_name, email, district_id')
+          .select('full_name, email, district_id, language_preference')
           .eq('id', userId)
           .maybeSingle(),
         supabase
@@ -94,12 +95,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .from('districts')
           .select('name')
           .eq('id', profile.district_id)
-          .maybeSingle();
+          .single();
         districtName = district?.name || '';
       }
 
       const roleList: UserRole[] = (roleRows || []).map(r => r.role as UserRole);
       const primaryRole: UserRole = roleList[0] || 'resident';
+      
+      // Update language from profile if available
+      const profileLanguage = profile?.language_preference as Language;
+      if (profileLanguage && profileLanguage !== language) {
+        setLanguage(profileLanguage);
+        localStorage.setItem('language_preference', profileLanguage);
+      }
 
       const userObj: User = {
         id: userId,
@@ -112,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         available_roles: roleList.length ? roleList : ['resident'],
         phone: '',
         address: '',
-        language_preference: language,
+        language_preference: profileLanguage || language,
         theme_preference: theme,
         unit_type: undefined,
         ownership_status: undefined,

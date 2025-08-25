@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/lib/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   PartyPopper,
@@ -33,6 +34,7 @@ interface Activity {
 
 export function ActivitiesSlideshow() {
   const { language } = useAuth();
+  const { t } = useTranslation(language);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(true);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -125,7 +127,7 @@ export function ActivitiesSlideshow() {
         <CardContent className="p-0">
           <div className="relative h-80 flex items-center justify-center">
             <p className="text-muted-foreground">
-              {language === 'en' ? 'Loading activities...' : 'Memuatkan aktiviti...'}
+              {t('loadingActivities')}
             </p>
           </div>
         </CardContent>
@@ -139,7 +141,7 @@ export function ActivitiesSlideshow() {
         <CardContent className="p-0">
           <div className="relative h-80 flex items-center justify-center">
             <p className="text-muted-foreground">
-              {language === 'en' ? 'No activities available' : 'Tiada aktiviti tersedia'}
+              {t('noActivitiesAvailable')}
             </p>
           </div>
         </CardContent>
@@ -220,7 +222,7 @@ export function ActivitiesSlideshow() {
                  onClick={() => setShowDetailsModal(true)}
                >
                  <Eye className="w-4 h-4 mr-2" />
-                 {language === 'en' ? 'View Details' : 'Lihat Butiran'}
+                 {t('viewDetails')}
                </Button>
              </div>
             
@@ -307,7 +309,7 @@ export function ActivitiesSlideshow() {
             {/* Full Description */}
             <div>
               <h3 className="font-semibold mb-2">
-                {language === 'en' ? 'Description' : 'Penerangan'}
+                {t('description')}
               </h3>
               <p className="text-muted-foreground whitespace-pre-line">
                 {currentActivity.description}
@@ -320,7 +322,7 @@ export function ActivitiesSlideshow() {
                 <Calendar className="w-4 h-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium">
-                    {language === 'en' ? 'Date' : 'Tarikh'}
+                    {t('date')}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {new Date(currentActivity.date_time).toLocaleDateString()}
@@ -332,7 +334,7 @@ export function ActivitiesSlideshow() {
                 <Clock className="w-4 h-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium">
-                    {language === 'en' ? 'Time' : 'Masa'}
+                    {t('time')}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {new Date(currentActivity.date_time).toLocaleTimeString('en-US', { 
@@ -348,7 +350,7 @@ export function ActivitiesSlideshow() {
                 <MapPin className="w-4 h-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium">
-                    {language === 'en' ? 'Location' : 'Lokasi'}
+                    {t('location')}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {currentActivity.location}

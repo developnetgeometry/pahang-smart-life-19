@@ -89,6 +89,36 @@ export const translations = {
     'lightTheme': 'Light',
     'darkTheme': 'Dark',
     
+    // Communication & Chat
+    'chats': 'Chats',
+    'newChat': 'New Chat',
+    'newGroup': 'New Group',
+    'searchChats': 'Search chats...',
+    'loadingChats': 'Loading chats...',
+    'noChatsFound': 'No chats found',
+    'startVideoCall': 'Start video call',
+    'loadingMessages': 'Loading messages...',
+    'noMessagesYet': 'No messages yet',
+    'editMessage': 'Edit message...',
+    'typeAMessage': 'Type a message...',
+    'selectChatToStart': 'Select a chat to start messaging',
+    'uploadFile': 'Upload File',
+    'notifications': 'Notifications',
+    'markAllRead': 'Mark all read',
+    'loadingNotifications': 'Loading notifications...',
+    'noNotificationsYet': 'No notifications yet',
+    'high': 'High',
+    'viewAllNotifications': 'View all notifications',
+    
+    // Activities & Announcements
+    'viewDetails': 'View Details',
+    'loadingActivities': 'Loading activities...',
+    'noActivitiesAvailable': 'No activities available',
+    'description': 'Description',
+    'date': 'Date',
+    'time': 'Time',
+    'location': 'Location',
+    
     // System
     'smartCommunity': 'Integrated Smart City System',
     'pahangState': 'Pahang State',
@@ -182,6 +212,36 @@ export const translations = {
     'malay': 'Bahasa Malaysia',
     'lightTheme': 'Terang',
     'darkTheme': 'Gelap',
+    
+    // Communication & Chat
+    'chats': 'Sembang',
+    'newChat': 'Sembang Baru',
+    'newGroup': 'Kumpulan Baru',
+    'searchChats': 'Cari sembang...',
+    'loadingChats': 'Memuatkan sembang...',
+    'noChatsFound': 'Tiada sembang dijumpai',
+    'startVideoCall': 'Mula panggilan video',
+    'loadingMessages': 'Memuatkan mesej...',
+    'noMessagesYet': 'Belum ada mesej',
+    'editMessage': 'Edit mesej...',
+    'typeAMessage': 'Taip mesej...',
+    'selectChatToStart': 'Pilih sembang untuk mula berkirim mesej',
+    'uploadFile': 'Muat Naik Fail',
+    'notifications': 'Notifikasi',
+    'markAllRead': 'Tandai semua dibaca',
+    'loadingNotifications': 'Memuat notifikasi...',
+    'noNotificationsYet': 'Belum ada notifikasi',
+    'high': 'Tinggi',
+    'viewAllNotifications': 'Lihat semua notifikasi',
+    
+    // Activities & Announcements
+    'viewDetails': 'Lihat Butiran',
+    'loadingActivities': 'Memuatkan aktiviti...',
+    'noActivitiesAvailable': 'Tiada aktiviti tersedia',
+    'description': 'Penerangan',
+    'date': 'Tarikh',
+    'time': 'Masa',
+    'location': 'Lokasi',
     
     // System
     'smartCommunity': 'Sistem Bandar Pintar Bersepadu',
