@@ -244,7 +244,7 @@ export const translations = {
     'location': 'Lokasi',
     
     // System
-    'smartCommunity': 'Sistem Bandar Pintar Bersepadu',
+    'smartCommunity': 'Sistem Komuniti Pintar',
     'pahangState': 'Negeri Pahang',
     'poweredBy': 'Dikuasakan oleh Inisiatif Bandar Pintar'
   }
