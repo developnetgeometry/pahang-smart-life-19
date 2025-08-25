@@ -57,7 +57,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [language, setLanguage] = useState<Language>('ms');
+  const [language, setLanguage] = useState<Language>(() => {
+    const saved = localStorage.getItem('language_preference');
+    return (saved as Language) || 'ms';
+  });
   const [theme, setTheme] = useState<Theme>('light');
   const [roles, setRoles] = useState<UserRole[]>([]);
 
@@ -159,9 +162,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRoles([]);
   };
 
-  const switchLanguage = (lang: Language) => {
+  const switchLanguage = async (lang: Language) => {
     setLanguage(lang);
-    if (user) setUser({ ...user, language_preference: lang });
+    if (user) {
+      setUser({ ...user, language_preference: lang });
+      // Persist language preference to localStorage
+      localStorage.setItem('language_preference', lang);
+      
+      // Update user profile in database
+      try {
+        await supabase
+          .from('profiles')
+          .update({ language_preference: lang })
+          .eq('id', user.id);
+      } catch (error) {
+        console.error('Failed to update language preference:', error);
+      }
+    }
   };
 
   const switchTheme = (newTheme: Theme) => {
