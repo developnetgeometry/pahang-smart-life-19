@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Building, Clock, Bell, BellOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import mekahEveningImage from '@/assets/mekah-clock-tower-evening.jpg';
+import mekahNightImage from '@/assets/mekah-clock-tower-night.jpg';
 
 interface PrayerTimes {
   fajr: string;
@@ -216,6 +218,19 @@ export function PrayerTimesWidget() {
     }));
   };
 
+  const getTimeOfDayBackground = () => {
+    const now = new Date();
+    const hour = now.getHours();
+    
+    // Evening: 17:00 - 20:00 (5 PM - 8 PM)
+    // Night: 20:00 - 17:00 (8 PM - 5 PM next day)
+    if (hour >= 17 && hour < 20) {
+      return mekahEveningImage;
+    } else {
+      return mekahNightImage;
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -250,9 +265,17 @@ export function PrayerTimesWidget() {
   ];
 
   return (
-    <Card className="hover:shadow-elegant transition-spring">
+    <Card 
+      className="hover:shadow-elegant transition-spring relative overflow-hidden"
+      style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${getTimeOfDayBackground()})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex items-center justify-between text-white">
           <div className="flex items-center space-x-2">
             <Building className="w-5 h-5" />
             <span>{language === 'en' ? 'Prayer Times' : 'Waktu Solat'}</span>
@@ -261,6 +284,7 @@ export function PrayerTimesWidget() {
             variant="ghost"
             size="sm"
             onClick={() => setShowSettings(!showSettings)}
+            className="text-white hover:bg-white/20"
           >
             {showSettings ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
           </Button>
@@ -269,7 +293,7 @@ export function PrayerTimesWidget() {
       <CardContent className="space-y-4">
         {/* Current Prayer Status */}
         {nextPrayer.name && (
-          <div className="bg-gradient-primary text-white p-3 rounded-lg">
+          <div className="bg-white/20 backdrop-blur-sm text-white p-3 rounded-lg border border-white/30">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm opacity-90">
@@ -287,11 +311,11 @@ export function PrayerTimesWidget() {
         )}
 
         {/* Prayer Times List */}
-        <div className="space-y-2">
+        <div className="space-y-2 bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
           {prayerList.map((prayer) => (
-            <div key={prayer.name} className="flex justify-between items-center py-2 border-b border-muted last:border-0">
+            <div key={prayer.name} className="flex justify-between items-center py-2 border-b border-white/20 last:border-0">
               <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium">
+                <span className="text-sm font-medium text-white">
                   {language === 'en' ? prayer.nameEn : prayer.nameMy}
                 </span>
                 {showSettings && (
@@ -302,7 +326,7 @@ export function PrayerTimesWidget() {
                   />
                 )}
               </div>
-              <Badge variant="outline" className="text-sm">
+              <Badge variant="outline" className="text-sm bg-white/20 text-white border-white/30">
                 {prayer.time}
               </Badge>
             </div>
@@ -310,7 +334,7 @@ export function PrayerTimesWidget() {
         </div>
 
         {/* Hijri Date */}
-        <div className="text-center text-xs text-muted-foreground border-t pt-3">
+        <div className="text-center text-xs text-white/80 border-t border-white/20 pt-3">
           {prayerTimes.hijriDate}
         </div>
 
@@ -320,7 +344,7 @@ export function PrayerTimesWidget() {
             variant="outline"
             size="sm"
             onClick={requestNotificationPermission}
-            className="w-full"
+            className="w-full bg-white/10 text-white border-white/30 hover:bg-white/20"
           >
             <Bell className="w-4 h-4 mr-2" />
             {language === 'en' ? 'Enable Notifications' : 'Aktifkan Notifikasi'}
