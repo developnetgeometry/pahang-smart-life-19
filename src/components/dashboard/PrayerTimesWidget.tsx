@@ -219,37 +219,14 @@ export function PrayerTimesWidget() {
   };
 
   const getTimeOfDayBackground = () => {
-    if (!prayerTimes) return mekahNightImage;
-
-    const now = new Date();
-    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-    // Check if current time is between Dhuhr and Asr (evening image)
-    // or between Fajr-Sunrise, Maghrib-Isha (night image)
-    const dhuhrTime = prayerTimes.dhuhr;
-    const asrTime = prayerTimes.asr;
-    const maghribTime = prayerTimes.maghrib;
-    const ishaTime = prayerTimes.isha;
-
-    // Convert times to minutes for easier comparison
-    const timeToMinutes = (time: string) => {
-      const [hours, minutes] = time.split(':').map(Number);
-      return hours * 60 + minutes;
-    };
-
-    const currentMinutes = timeToMinutes(currentTime);
-    const dhuhrMinutes = timeToMinutes(dhuhrTime);
-    const asrMinutes = timeToMinutes(asrTime);
-    const maghribMinutes = timeToMinutes(maghribTime);
-    const ishaMinutes = timeToMinutes(ishaTime);
-
-    // Evening image: between Dhuhr and Asr (including Asr time)
-    if (currentMinutes >= dhuhrMinutes && currentMinutes <= asrMinutes + 60) {
-      return mekahEveningImage;
-    }
+    // Evening image: if current or next prayer is Zohor/Asar  
+    // Night image: for all other prayers (Subuh, Maghrib, Isyak)
+    const eveningPrayers = ['Dhuhr', 'Zohor', 'Asr', 'Asar'];
+    const isEveningTime = eveningPrayers.some(prayer => 
+      currentPrayer.includes(prayer) || nextPrayer.name.includes(prayer)
+    );
     
-    // Night image for all other times
-    return mekahNightImage;
+    return isEveningTime ? mekahEveningImage : mekahNightImage;
   };
 
   if (loading) {
