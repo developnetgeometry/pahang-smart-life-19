@@ -178,63 +178,65 @@ export function ActivitiesSlideshow() {
           
           {/* Overlay Content */}
           <div className="absolute inset-0 flex items-center">
-            <div className="flex-1 p-8 text-white">
-              <div className="flex items-center gap-3 mb-4">
-                <Badge className={getTypeColor(currentActivity.activity_type)}>
+            <div className="flex-1 p-4 sm:p-6 lg:p-8 text-white">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <Badge className={`${getTypeColor(currentActivity.activity_type)} w-fit`}>
                   <TypeIcon className="w-3 h-3 mr-1" />
-                  {currentActivity.activity_type?.toUpperCase() || ''}
+                  <span className="text-xs sm:text-sm">{currentActivity.activity_type?.toUpperCase() || ''}</span>
                 </Badge>
-                <div className={`w-2 h-2 rounded-full ${getStatusColor(currentActivity.status)}`} />
-                <span className="text-sm capitalize">{currentActivity.status}</span>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${getStatusColor(currentActivity.status)}`} />
+                  <span className="text-xs sm:text-sm capitalize">{currentActivity.status}</span>
+                </div>
               </div>
               
-              <h2 className="text-3xl font-bold mb-3 leading-tight">
+              <h2 className="text-lg sm:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3 leading-tight">
                 {currentActivity.title}
               </h2>
               
-              <p className="text-lg mb-4 text-gray-200 line-clamp-2">
+              <p className="text-sm sm:text-base lg:text-lg mb-3 sm:mb-4 text-gray-200 line-clamp-2 sm:line-clamp-3">
                 {currentActivity.description}
               </p>
               
-              <div className="flex items-center gap-6 text-sm text-gray-300">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 lg:gap-6 text-xs sm:text-sm text-gray-300 mb-3 sm:mb-4">
                 <div className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
+                  <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span>{new Date(currentActivity.date_time).toLocaleDateString()}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
+                  <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span>{new Date(currentActivity.date_time).toLocaleTimeString('en-US', { 
                     hour: '2-digit', 
                     minute: '2-digit',
                     hour12: true 
                   })}</span>
                 </div>
-                 <div className="flex items-center gap-1">
-                   <MapPin className="w-4 h-4" />
-                   <span>{currentActivity.location}</span>
-                 </div>
-               </div>
+                <div className="flex items-center gap-1">
+                  <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="truncate">{currentActivity.location}</span>
+                </div>
+              </div>
                
-               <Button
-                 variant="secondary"
-                 size="sm"
-                 className="mt-4 bg-white/20 text-white border-white/30 hover:bg-white/30"
-                 onClick={() => setShowDetailsModal(true)}
-               >
-                 <Eye className="w-4 h-4 mr-2" />
-                 {t('viewDetails')}
-               </Button>
-             </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="bg-white/20 text-white border-white/30 hover:bg-white/30 text-xs sm:text-sm"
+                onClick={() => setShowDetailsModal(true)}
+              >
+                <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                {t('viewDetails')}
+              </Button>
+            </div>
             
             {/* Navigation Controls */}
-            <div className="absolute top-4 right-4 flex items-center gap-2">
+            <div className="absolute top-2 sm:top-4 right-2 sm:right-4 flex items-center gap-1 sm:gap-2">
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-white hover:bg-white/20 h-8 w-8 p-0"
+                className="text-white hover:bg-white/20 h-6 w-6 sm:h-8 sm:w-8 p-0"
                 onClick={() => setIsAutoPlay(!isAutoPlay)}
               >
-                {isAutoPlay ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                {isAutoPlay ? <Pause className="w-3 h-3 sm:w-4 sm:h-4" /> : <Play className="w-3 h-3 sm:w-4 sm:h-4" />}
               </Button>
             </div>
             
@@ -242,30 +244,30 @@ export function ActivitiesSlideshow() {
             <Button
               variant="ghost"
               size="sm"
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 h-10 w-10 p-0"
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 h-8 w-8 sm:h-10 sm:w-10 p-0"
               onClick={prevSlide}
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
             
             <Button
               variant="ghost"
               size="sm"
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 h-10 w-10 p-0"
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 h-8 w-8 sm:h-10 sm:w-10 p-0"
               onClick={nextSlide}
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
           </div>
         </div>
         
         {/* Slide Indicators */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+        <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-1 sm:gap-2">
           {activities.map((_, index) => (
             <button
               key={index}
-              className={`w-2 h-2 rounded-full transition-all ${
-                index === currentSlide ? 'bg-white w-6' : 'bg-white/50'
+              className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all ${
+                index === currentSlide ? 'bg-white w-4 sm:w-6' : 'bg-white/50'
               }`}
               onClick={() => setCurrentSlide(index)}
             />
