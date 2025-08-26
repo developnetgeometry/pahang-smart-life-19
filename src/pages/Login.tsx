@@ -318,6 +318,27 @@ export default function Login() {
                 {mode === 'signUp' && (
                   <>
                     <div className="space-y-2">
+                      <Label htmlFor="role">
+                        {language === 'en' ? 'Select Role' : 'Pilih Peranan'} *
+                      </Label>
+                      <Select value={selectedRole} onValueChange={setSelectedRole} required>
+                        <SelectTrigger className="transition-smooth">
+                          <SelectValue placeholder={
+                            language === 'en' ? 'Choose your role' : 'Pilih peranan anda'
+                          } />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="resident">
+                            {language === 'en' ? 'Resident' : 'Penduduk'}
+                          </SelectItem>
+                          <SelectItem value="service_provider">
+                            {language === 'en' ? 'Service Provider' : 'Penyedia Perkhidmatan'}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
                       <Label htmlFor="fullName">
                         {language === 'en' ? 'Full Name' : 'Nama Penuh'} *
                       </Label>
@@ -379,27 +400,6 @@ export default function Login() {
                         required
                         className="transition-smooth"
                       />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="role">
-                        {language === 'en' ? 'Select Role' : 'Pilih Peranan'} *
-                      </Label>
-                      <Select value={selectedRole} onValueChange={setSelectedRole} required>
-                        <SelectTrigger className="transition-smooth">
-                          <SelectValue placeholder={
-                            language === 'en' ? 'Choose your role' : 'Pilih peranan anda'
-                          } />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="resident">
-                            {language === 'en' ? 'Resident' : 'Penduduk'}
-                          </SelectItem>
-                          <SelectItem value="service_provider">
-                            {language === 'en' ? 'Service Provider' : 'Penyedia Perkhidmatan'}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
                     </div>
 
                     {/* Service Provider specific fields */}
