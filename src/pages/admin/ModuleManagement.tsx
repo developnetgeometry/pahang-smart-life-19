@@ -67,8 +67,6 @@ export default function ModuleManagement() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const canManageAllCommunities = hasRole('state_admin');
-  const canManageDistrictCommunities = hasRole('district_coordinator');
   const canManageOwnCommunity = hasRole('community_admin');
 
   useEffect(() => {
@@ -82,7 +80,7 @@ export default function ModuleManagement() {
         `);
         
         // Community admins can only see their own community
-        if (!canManageAllCommunities && !canManageDistrictCommunities && canManageOwnCommunity) {
+        if (canManageOwnCommunity) {
           const { data: userProfile } = await supabase
             .from('profiles')
             .select('community_id')
@@ -91,19 +89,6 @@ export default function ModuleManagement() {
           
           if (userProfile?.community_id) {
             query = query.eq('id', userProfile.community_id);
-          }
-        }
-        
-        // District coordinators can see communities in their district
-        if (!canManageAllCommunities && canManageDistrictCommunities) {
-          const { data: userProfile } = await supabase
-            .from('profiles')
-            .select('district_id')
-            .eq('id', (await supabase.auth.getUser()).data.user?.id)
-            .single();
-          
-          if (userProfile?.district_id) {
-            query = query.eq('district_id', userProfile.district_id);
           }
         }
 
@@ -130,12 +115,12 @@ export default function ModuleManagement() {
       }
     };
 
-    if (canManageAllCommunities || canManageDistrictCommunities || canManageOwnCommunity) {
+    if (canManageOwnCommunity) {
       fetchCommunities();
     } else {
       setLoading(false);
     }
-  }, [canManageAllCommunities, canManageDistrictCommunities, canManageOwnCommunity]);
+  }, [canManageOwnCommunity]);
 
   useEffect(() => {
     const fetchModuleFeatures = async () => {
@@ -247,7 +232,7 @@ export default function ModuleManagement() {
     }
   };
 
-  if (!canManageAllCommunities && !canManageDistrictCommunities && !canManageOwnCommunity) {
+  if (!canManageOwnCommunity) {
     return (
       <div className="container mx-auto py-6">
         <Card>
@@ -278,7 +263,7 @@ export default function ModuleManagement() {
       <div>
         <h1 className="text-2xl font-bold text-foreground mb-2">Module Management</h1>
         <p className="text-muted-foreground">
-          Enable or disable community modules for communities
+          Enable or disable community modules for your community
         </p>
       </div>
 
