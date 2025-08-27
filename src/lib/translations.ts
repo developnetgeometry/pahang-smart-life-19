@@ -85,7 +85,7 @@ export const translations = {
     
     // Language & Theme
     'english': 'English',
-    'malay': 'Bahasa Malaysia',
+    'malay': 'Malay',
     'lightTheme': 'Light',
     'darkTheme': 'Dark',
     
