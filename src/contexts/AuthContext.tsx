@@ -84,9 +84,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .eq('id', userId)
           .maybeSingle(),
         supabase
-          .from('user_roles')
+          .from('enhanced_user_roles')
           .select('role')
-          .eq('user_id', userId),
+          .eq('user_id', userId)
+          .eq('is_active', true),
       ]);
 
       let districtName = '';
