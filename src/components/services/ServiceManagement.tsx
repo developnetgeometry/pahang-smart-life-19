@@ -204,7 +204,7 @@ export const ServiceManagement: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <>
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">My Services</h2>
         <Button onClick={openAddDialog} size="sm">
@@ -497,6 +497,6 @@ export const ServiceManagement: React.FC = () => {
           </Form>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 };
