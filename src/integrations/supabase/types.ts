@@ -140,6 +140,8 @@ export type Database = {
           author_id: string | null
           community_id: string | null
           content: string
+          content_en: string | null
+          content_ms: string | null
           created_at: string | null
           district_id: string | null
           expire_at: string | null
@@ -150,6 +152,8 @@ export type Database = {
           publish_at: string | null
           scope: string | null
           title: string
+          title_en: string | null
+          title_ms: string | null
           type: Database["public"]["Enums"]["announcement_type"] | null
           updated_at: string | null
         }
@@ -157,6 +161,8 @@ export type Database = {
           author_id?: string | null
           community_id?: string | null
           content: string
+          content_en?: string | null
+          content_ms?: string | null
           created_at?: string | null
           district_id?: string | null
           expire_at?: string | null
@@ -167,6 +173,8 @@ export type Database = {
           publish_at?: string | null
           scope?: string | null
           title: string
+          title_en?: string | null
+          title_ms?: string | null
           type?: Database["public"]["Enums"]["announcement_type"] | null
           updated_at?: string | null
         }
@@ -174,6 +182,8 @@ export type Database = {
           author_id?: string | null
           community_id?: string | null
           content?: string
+          content_en?: string | null
+          content_ms?: string | null
           created_at?: string | null
           district_id?: string | null
           expire_at?: string | null
@@ -184,6 +194,8 @@ export type Database = {
           publish_at?: string | null
           scope?: string | null
           title?: string
+          title_en?: string | null
+          title_ms?: string | null
           type?: Database["public"]["Enums"]["announcement_type"] | null
           updated_at?: string | null
         }
@@ -5310,6 +5322,24 @@ export type Database = {
       }
       create_direct_chat: {
         Args: { other_user_id: string }
+        Returns: string
+      }
+      get_announcement_content: {
+        Args: {
+          p_content_en: string
+          p_content_fallback: string
+          p_content_ms: string
+          p_language?: string
+        }
+        Returns: string
+      }
+      get_announcement_title: {
+        Args: {
+          p_language?: string
+          p_title_en: string
+          p_title_fallback: string
+          p_title_ms: string
+        }
         Returns: string
       }
       get_approval_requirements: {
