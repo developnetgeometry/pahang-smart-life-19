@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
-import { Bell, Plus, Edit, Trash2, Pin, Users, MapPin, Building2, Search, Filter } from 'lucide-react';
+import { Bell, Plus, Edit, Trash2, Pin, Users, MapPin, Building2, Search, Filter, Upload, ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Announcement {
@@ -27,6 +27,7 @@ interface Announcement {
   scheduled_date?: string;
   views: number;
   engagement: number;
+  image_url?: string;
 }
 
 export default function AnnouncementManagement() {
@@ -77,9 +78,10 @@ export default function AnnouncementManagement() {
     category: '',
     target_audience: 'community' as const,
     target_location: '',
-    is_pinned: false,
-    status: 'published' as const,
-    scheduled_date: ''
+      is_pinned: false,
+      status: 'published' as const,
+      scheduled_date: '',
+      image_url: ''
   });
 
   const text = {
@@ -123,7 +125,9 @@ export default function AnnouncementManagement() {
       totalAnnouncements: 'Total Announcements',
       publishedToday: 'Published Today',
       totalViews: 'Total Views',
-      avgEngagement: 'Avg Engagement'
+      avgEngagement: 'Avg Engagement',
+      imageUpload: 'Upload Image',
+      selectImage: 'Select Image File'
     },
     ms: {
       title: 'Pengurusan Pengumuman',
@@ -165,7 +169,9 @@ export default function AnnouncementManagement() {
       totalAnnouncements: 'Jumlah Pengumuman',
       publishedToday: 'Diterbitkan Hari Ini',
       totalViews: 'Jumlah Tontonan',
-      avgEngagement: 'Purata Penglibatan'
+      avgEngagement: 'Purata Penglibatan',
+      imageUpload: 'Muat Naik Gambar',
+      selectImage: 'Pilih Fail Gambar'
     }
   };
 
@@ -221,7 +227,8 @@ export default function AnnouncementManagement() {
       target_location: '',
       is_pinned: false,
       status: 'published',
-      scheduled_date: ''
+      scheduled_date: '',
+      image_url: ''
     });
     toast.success('Announcement created successfully');
   };
@@ -245,6 +252,16 @@ export default function AnnouncementManagement() {
     publishedToday: announcements.filter(a => a.status === 'published' && a.created_date === new Date().toISOString().split('T')[0]).length,
     totalViews: announcements.reduce((sum, a) => sum + a.views, 0),
     avgEngagement: Math.round(announcements.reduce((sum, a) => sum + a.engagement, 0) / announcements.length)
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // For demo purposes, create a URL for preview
+      const imageUrl = URL.createObjectURL(file);
+      setNewAnnouncement({...newAnnouncement, image_url: imageUrl});
+      // In production, you would upload to Supabase Storage here
+    }
   };
 
   return (
@@ -284,6 +301,47 @@ export default function AnnouncementManagement() {
                   onChange={(e) => setNewAnnouncement({...newAnnouncement, content: e.target.value})}
                   rows={4}
                 />
+              </div>
+              
+              {/* Image Upload Section */}
+              <div className="space-y-2">
+                <Label>{t.imageUpload}</Label>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      id="image-upload"
+                    />
+                    <Label
+                      htmlFor="image-upload"
+                      className="flex items-center gap-2 px-4 py-2 border border-input rounded-md cursor-pointer hover:bg-accent hover:text-accent-foreground"
+                    >
+                      <Upload className="w-4 h-4" />
+                      {t.selectImage}
+                    </Label>
+                  </div>
+                  {newAnnouncement.image_url && (
+                    <div className="relative">
+                      <img
+                        src={newAnnouncement.image_url}
+                        alt="Preview"
+                        className="w-20 h-20 object-cover rounded-md border"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="absolute -top-2 -right-2 h-6 w-6 p-0"
+                        onClick={() => setNewAnnouncement({...newAnnouncement, image_url: ''})}
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -429,8 +487,8 @@ export default function AnnouncementManagement() {
         {filteredAnnouncements.map((announcement) => (
           <Card key={announcement.id}>
             <CardHeader>
-              <div className="flex justify-between items-start">
-                <div className="space-y-2">
+              <div className="flex justify-between items-start gap-4">
+                <div className="space-y-2 flex-1">
                   <div className="flex items-center gap-2">
                     <CardTitle className="text-lg">{announcement.title}</CardTitle>
                     {announcement.is_pinned && (
@@ -455,6 +513,18 @@ export default function AnnouncementManagement() {
                     <Badge variant="outline">{announcement.category}</Badge>
                   </div>
                 </div>
+                
+                {/* Image Preview */}
+                {announcement.image_url && (
+                  <div className="flex-shrink-0">
+                    <img
+                      src={announcement.image_url}
+                      alt={announcement.title}
+                      className="w-24 h-24 object-cover rounded-lg border"
+                    />
+                  </div>
+                )}
+                
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"

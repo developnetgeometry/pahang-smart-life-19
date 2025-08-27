@@ -143,6 +143,7 @@ export type Database = {
           district_id: string | null
           expire_at: string | null
           id: string
+          image_url: string | null
           is_published: boolean | null
           is_urgent: boolean | null
           publish_at: string | null
@@ -157,6 +158,7 @@ export type Database = {
           district_id?: string | null
           expire_at?: string | null
           id?: string
+          image_url?: string | null
           is_published?: boolean | null
           is_urgent?: boolean | null
           publish_at?: string | null
@@ -171,6 +173,7 @@ export type Database = {
           district_id?: string | null
           expire_at?: string | null
           id?: string
+          image_url?: string | null
           is_published?: boolean | null
           is_urgent?: boolean | null
           publish_at?: string | null
