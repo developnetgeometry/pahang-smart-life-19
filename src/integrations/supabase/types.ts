@@ -913,6 +913,50 @@ export type Database = {
           },
         ]
       }
+      community_features: {
+        Row: {
+          community_id: string | null
+          created_at: string | null
+          enabled_at: string | null
+          enabled_by: string | null
+          id: string
+          is_enabled: boolean
+          module_name: string
+          notes: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          community_id?: string | null
+          created_at?: string | null
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: string
+          is_enabled?: boolean
+          module_name: string
+          notes?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          community_id?: string | null
+          created_at?: string | null
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: string
+          is_enabled?: boolean
+          module_name?: string
+          notes?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "district_features_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_groups: {
         Row: {
           category: string | null
@@ -1394,50 +1438,6 @@ export type Database = {
           },
           {
             foreignKeyName: "discussions_district_id_fkey"
-            columns: ["district_id"]
-            isOneToOne: false
-            referencedRelation: "districts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      district_features: {
-        Row: {
-          created_at: string | null
-          district_id: string
-          enabled_at: string | null
-          enabled_by: string | null
-          id: string
-          is_enabled: boolean
-          module_name: string
-          notes: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          district_id: string
-          enabled_at?: string | null
-          enabled_by?: string | null
-          id?: string
-          is_enabled?: boolean
-          module_name: string
-          notes?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          district_id?: string
-          enabled_at?: string | null
-          enabled_by?: string | null
-          id?: string
-          is_enabled?: boolean
-          module_name?: string
-          notes?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "district_features_district_id_fkey"
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
@@ -5531,6 +5531,10 @@ export type Database = {
       }
       has_role_level_or_higher: {
         Args: { check_user_id?: string; min_level: number }
+        Returns: boolean
+      }
+      is_module_enabled_for_community: {
+        Args: { community_id?: string; module_name: string }
         Returns: boolean
       }
       is_module_enabled_for_district: {

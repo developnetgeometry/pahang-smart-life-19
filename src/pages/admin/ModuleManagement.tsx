@@ -10,9 +10,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Settings, Shield, Users, Building, MessageSquare, Calendar, ShoppingCart, Camera, UserCheck, Phone } from 'lucide-react';
 
-interface District {
+interface Community {
   id: string;
   name: string;
+  district_id: string;
 }
 
 interface ModuleFeature {
@@ -60,22 +61,41 @@ const getCategoryColor = (category: string) => {
 
 export default function ModuleManagement() {
   const { hasRole } = useAuth();
-  const [districts, setDistricts] = useState<District[]>([]);
-  const [selectedDistrict, setSelectedDistrict] = useState<string>('');
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [selectedCommunity, setSelectedCommunity] = useState<string>('');
   const [moduleFeatures, setModuleFeatures] = useState<ModuleFeature[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const canManageAllDistricts = hasRole('state_admin');
-  const canManageOwnDistrict = hasRole('district_coordinator');
+  const canManageAllCommunities = hasRole('state_admin');
+  const canManageDistrictCommunities = hasRole('district_coordinator');
+  const canManageOwnCommunity = hasRole('community_admin');
 
   useEffect(() => {
-    const fetchDistricts = async () => {
+    const fetchCommunities = async () => {
       try {
-        let query = supabase.from('districts').select('id, name');
+        let query = supabase.from('communities').select(`
+          id, 
+          name, 
+          district_id,
+          districts!inner(name)
+        `);
         
-        // District coordinators can only see their own district
-        if (!canManageAllDistricts && canManageOwnDistrict) {
+        // Community admins can only see their own community
+        if (!canManageAllCommunities && !canManageDistrictCommunities && canManageOwnCommunity) {
+          const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('community_id')
+            .eq('id', (await supabase.auth.getUser()).data.user?.id)
+            .single();
+          
+          if (userProfile?.community_id) {
+            query = query.eq('id', userProfile.community_id);
+          }
+        }
+        
+        // District coordinators can see communities in their district
+        if (!canManageAllCommunities && canManageDistrictCommunities) {
           const { data: userProfile } = await supabase
             .from('profiles')
             .select('district_id')
@@ -83,42 +103,50 @@ export default function ModuleManagement() {
             .single();
           
           if (userProfile?.district_id) {
-            query = query.eq('id', userProfile.district_id);
+            query = query.eq('district_id', userProfile.district_id);
           }
         }
 
         const { data, error } = await query.order('name');
         
         if (error) throw error;
-        setDistricts(data || []);
         
-        // Auto-select first district if only one available
-        if (data && data.length === 1) {
-          setSelectedDistrict(data[0].id);
+        // Transform data to include district name in community name
+        const transformedCommunities = (data || []).map(community => ({
+          id: community.id,
+          name: `${community.name} (${community.districts?.name || 'Unknown District'})`,
+          district_id: community.district_id
+        }));
+        
+        setCommunities(transformedCommunities);
+        
+        // Auto-select first community if only one available
+        if (transformedCommunities && transformedCommunities.length === 1) {
+          setSelectedCommunity(transformedCommunities[0].id);
         }
       } catch (error) {
-        console.error('Error fetching districts:', error);
-        toast.error('Failed to load districts');
+        console.error('Error fetching communities:', error);
+        toast.error('Failed to load communities');
       }
     };
 
-    if (canManageAllDistricts || canManageOwnDistrict) {
-      fetchDistricts();
+    if (canManageAllCommunities || canManageDistrictCommunities || canManageOwnCommunity) {
+      fetchCommunities();
     } else {
       setLoading(false);
     }
-  }, [canManageAllDistricts, canManageOwnDistrict]);
+  }, [canManageAllCommunities, canManageDistrictCommunities, canManageOwnCommunity]);
 
   useEffect(() => {
     const fetchModuleFeatures = async () => {
-      if (!selectedDistrict) return;
+      if (!selectedCommunity) return;
 
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from('district_features')
+          .from('community_features')
           .select('*')
-          .eq('district_id', selectedDistrict);
+          .eq('community_id', selectedCommunity);
 
         if (error) throw error;
 
@@ -146,7 +174,7 @@ export default function ModuleManagement() {
     };
 
     fetchModuleFeatures();
-  }, [selectedDistrict]);
+  }, [selectedCommunity]);
 
   const handleToggleModule = async (moduleFeature: ModuleFeature, enabled: boolean) => {
     try {
@@ -155,7 +183,7 @@ export default function ModuleManagement() {
       if (moduleFeature.id) {
         // Update existing record
         const { error } = await supabase
-          .from('district_features')
+          .from('community_features')
           .update({
             is_enabled: enabled,
             enabled_by: (await supabase.auth.getUser()).data.user?.id,
@@ -167,9 +195,9 @@ export default function ModuleManagement() {
       } else {
         // Create new record
         const { error } = await supabase
-          .from('district_features')
+          .from('community_features')
           .insert({
-            district_id: selectedDistrict,
+            community_id: selectedCommunity,
             module_name: moduleFeature.module_name,
             is_enabled: enabled,
             enabled_by: (await supabase.auth.getUser()).data.user?.id,
@@ -199,7 +227,7 @@ export default function ModuleManagement() {
     try {
       if (moduleFeature.id) {
         const { error } = await supabase
-          .from('district_features')
+          .from('community_features')
           .update({ notes })
           .eq('id', moduleFeature.id);
 
@@ -219,7 +247,7 @@ export default function ModuleManagement() {
     }
   };
 
-  if (!canManageAllDistricts && !canManageOwnDistrict) {
+  if (!canManageAllCommunities && !canManageDistrictCommunities && !canManageOwnCommunity) {
     return (
       <div className="container mx-auto py-6">
         <Card>
@@ -250,27 +278,27 @@ export default function ModuleManagement() {
       <div>
         <h1 className="text-2xl font-bold text-foreground mb-2">Module Management</h1>
         <p className="text-muted-foreground">
-          Enable or disable community modules for districts
+          Enable or disable community modules for communities
         </p>
       </div>
 
-      {districts.length > 1 && (
+      {communities.length > 1 && (
         <Card>
           <CardHeader>
-            <CardTitle>Select District</CardTitle>
+            <CardTitle>Select Community</CardTitle>
             <CardDescription>
-              Choose the district to manage module features for
+              Choose the community to manage module features for
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
+            <Select value={selectedCommunity} onValueChange={setSelectedCommunity}>
               <SelectTrigger className="w-full max-w-md">
-                <SelectValue placeholder="Select a district" />
+                <SelectValue placeholder="Select a community" />
               </SelectTrigger>
               <SelectContent>
-                {districts.map(district => (
-                  <SelectItem key={district.id} value={district.id}>
-                    {district.name}
+                {communities.map(community => (
+                  <SelectItem key={community.id} value={community.id}>
+                    {community.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -279,7 +307,7 @@ export default function ModuleManagement() {
         </Card>
       )}
 
-      {selectedDistrict && (
+      {selectedCommunity && (
         <div className="space-y-6">
           {Object.entries(groupedModules).map(([category, modules]) => {
             const CategoryIcon = getCategoryIcon(category);
@@ -291,7 +319,7 @@ export default function ModuleManagement() {
                     <div>
                       <CardTitle className="capitalize">{category} Modules</CardTitle>
                       <CardDescription>
-                        Manage {category} related features for this district
+                        Manage {category} related features for this community
                       </CardDescription>
                     </div>
                   </div>
