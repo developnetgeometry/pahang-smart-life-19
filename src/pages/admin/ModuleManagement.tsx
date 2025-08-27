@@ -71,6 +71,7 @@ export default function ModuleManagement() {
 
   useEffect(() => {
     const fetchCommunities = async () => {
+      console.log('ModuleManagement: Starting to fetch communities, canManageOwnCommunity:', canManageOwnCommunity);
       try {
         let query = supabase.from('communities').select(`
           id, 
@@ -87,12 +88,16 @@ export default function ModuleManagement() {
             .eq('id', (await supabase.auth.getUser()).data.user?.id)
             .single();
           
+          console.log('ModuleManagement: User profile:', userProfile);
+          
           if (userProfile?.community_id) {
             query = query.eq('id', userProfile.community_id);
           }
         }
 
         const { data, error } = await query.order('name');
+        
+        console.log('ModuleManagement: Communities query result:', { data, error });
         
         if (error) throw error;
         
@@ -103,29 +108,39 @@ export default function ModuleManagement() {
           district_id: community.district_id
         }));
         
+        console.log('ModuleManagement: Transformed communities:', transformedCommunities);
         setCommunities(transformedCommunities);
         
         // Auto-select first community if only one available
         if (transformedCommunities && transformedCommunities.length === 1) {
+          console.log('ModuleManagement: Auto-selecting community:', transformedCommunities[0].id);
           setSelectedCommunity(transformedCommunities[0].id);
         }
       } catch (error) {
         console.error('Error fetching communities:', error);
         toast.error('Failed to load communities');
+      } finally {
+        console.log('ModuleManagement: Setting loading to false');
+        setLoading(false);
       }
     };
 
     if (canManageOwnCommunity) {
       fetchCommunities();
     } else {
+      console.log('ModuleManagement: User cannot manage community, setting loading to false');
       setLoading(false);
     }
   }, [canManageOwnCommunity]);
 
   useEffect(() => {
     const fetchModuleFeatures = async () => {
-      if (!selectedCommunity) return;
+      if (!selectedCommunity) {
+        console.log('ModuleManagement: No selected community, skipping module features fetch');
+        return;
+      }
 
+      console.log('ModuleManagement: Fetching module features for community:', selectedCommunity);
       try {
         setLoading(true);
         const { data, error } = await supabase
@@ -133,6 +148,7 @@ export default function ModuleManagement() {
           .select('*')
           .eq('community_id', selectedCommunity);
 
+        console.log('ModuleManagement: Community features result:', { data, error });
         if (error) throw error;
 
         // Create module features array with all available modules
@@ -149,6 +165,7 @@ export default function ModuleManagement() {
           };
         });
 
+        console.log('ModuleManagement: Final module features:', features);
         setModuleFeatures(features);
       } catch (error) {
         console.error('Error fetching module features:', error);
