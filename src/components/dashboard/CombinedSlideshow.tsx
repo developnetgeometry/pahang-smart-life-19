@@ -40,6 +40,10 @@ interface Announcement {
   id: string;
   title: string;
   content: string;
+  title_en?: string | null;
+  title_ms?: string | null;
+  content_en?: string | null;
+  content_ms?: string | null;
   type: string;
   is_published: boolean;
   is_urgent: boolean;
@@ -65,6 +69,29 @@ export function CombinedSlideshow() {
   const [imageLoadError, setImageLoadError] = useState<string | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
+  // Helper function to get localized content
+  const getLocalizedTitle = (item: Announcement): string => {
+    if (language === 'en' && item.title_en && item.title_en.trim() !== '') {
+      return item.title_en;
+    }
+    if (language === 'ms' && item.title_ms && item.title_ms.trim() !== '') {
+      return item.title_ms;
+    }
+    // Fallback to any available translation or original title
+    return item.title_en || item.title_ms || item.title;
+  };
+
+  const getLocalizedContent = (item: Announcement): string => {
+    if (language === 'en' && item.content_en && item.content_en.trim() !== '') {
+      return item.content_en;
+    }
+    if (language === 'ms' && item.content_ms && item.content_ms.trim() !== '') {
+      return item.content_ms;
+    }
+    // Fallback to any available translation or original content
+    return item.content_en || item.content_ms || item.content;
+  };
+
   // Fetch both activities and announcements
   useEffect(() => {
     const fetchData = async () => {
@@ -77,10 +104,10 @@ export function CombinedSlideshow() {
           .order('date_time', { ascending: true })
           .limit(3);
 
-        // Fetch announcements - simplified without profiles for now
+        // Fetch announcements with translation fields
         const { data: announcementsData, error: announcementsError } = await supabase
           .from('announcements')
-          .select('*')
+          .select('id, title, content, title_en, title_ms, content_en, content_ms, type, is_published, is_urgent, publish_at, expire_at, image_url, created_at')
           .eq('is_published', true)
           .or(`expire_at.is.null,expire_at.gt.${new Date().toISOString()}`)
           .order('is_urgent', { ascending: false })
@@ -302,11 +329,11 @@ export function CombinedSlideshow() {
               </div>
               
               <h2 className="text-lg sm:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3 leading-tight">
-                {currentItem.title}
+                {currentItem.itemType === 'announcement' ? getLocalizedTitle(currentItem) : currentItem.title}
               </h2>
               
               <p className="text-sm sm:text-base lg:text-lg mb-3 sm:mb-4 text-gray-200 line-clamp-2 sm:line-clamp-3">
-                {currentItem.itemType === 'activity' ? currentItem.description : currentItem.content}
+                {currentItem.itemType === 'activity' ? currentItem.description : getLocalizedContent(currentItem)}
               </p>
               
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 lg:gap-6 text-xs sm:text-sm text-gray-300 mb-3 sm:mb-4">
@@ -412,7 +439,7 @@ export function CombinedSlideshow() {
           <DialogHeader className="space-y-3">
             <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
               <TypeIcon className="w-5 h-5 text-primary" />
-              {currentItem.title}
+              {currentItem.itemType === 'announcement' ? getLocalizedTitle(currentItem) : currentItem.title}
             </DialogTitle>
           </DialogHeader>
           
@@ -461,7 +488,7 @@ export function CombinedSlideshow() {
                 {currentItem.itemType === 'activity' ? 'Description' : 'Content'}
               </h3>
               <p className="text-sm sm:text-base text-muted-foreground whitespace-pre-line leading-relaxed">
-                {currentItem.itemType === 'activity' ? currentItem.description : currentItem.content}
+                {currentItem.itemType === 'activity' ? currentItem.description : getLocalizedContent(currentItem)}
               </p>
             </div>
             
