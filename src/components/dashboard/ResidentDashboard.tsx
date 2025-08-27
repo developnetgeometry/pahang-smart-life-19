@@ -377,23 +377,6 @@ export function ResidentDashboard() {
       {/* Combined Activities and Announcements Slideshow */}
       <CombinedSlideshow />
 
-      {/* Personal Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {personalMetrics.map((metric, index) => (
-          <Card key={index} className="hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
-              <metric.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${getStatusColor(metric.status || '')}`}>
-                {metric.value}
-              </div>
-              <p className="text-xs text-muted-foreground">{metric.trend}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
 
       {/* Quick Actions and Weather */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
