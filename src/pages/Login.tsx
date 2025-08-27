@@ -533,13 +533,6 @@ export default function Login() {
                   )}
                 </Button>
 
-                {mode === 'signUp' && (
-                  <p className="text-xs text-muted-foreground text-center">
-                    {language === 'en'
-                      ? 'Tip: Disable Confirm email in Supabase Auth settings for testing, or check your inbox for the confirmation link.'
-                      : 'Tip: Matikan pengesahan e-mel di tetapan Supabase Auth untuk ujian, atau semak e-mel pengesahan.'}
-                  </p>
-                )}
 
                 <div className="text-center">
                   <Button variant="link" className="text-muted-foreground">
