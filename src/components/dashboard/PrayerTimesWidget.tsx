@@ -45,6 +45,7 @@ export function PrayerTimesWidget() {
   });
   const [showSettings, setShowSettings] = useState(false);
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [locationName, setLocationName] = useState<string>('');
 
   const getCurrentLocation = () => {
     return new Promise<{ lat: number; lon: number }>((resolve, reject) => {
@@ -91,6 +92,19 @@ export function PrayerTimesWidget() {
     return 'PHG01';
   };
 
+  const getLocationName = async (lat: number, lon: number) => {
+    try {
+      const response = await fetch(
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${language === 'en' ? 'en' : 'ms'}`
+      );
+      const data = await response.json();
+      return data.city || data.locality || (language === 'en' ? 'Unknown Location' : 'Lokasi Tidak Diketahui');
+    } catch (error) {
+      console.error('Error getting location name:', error);
+      return language === 'en' ? 'Unknown Location' : 'Lokasi Tidak Diketahui';
+    }
+  };
+
   useEffect(() => {
     fetchPrayerTimes();
     // Check prayer times every minute
@@ -112,6 +126,10 @@ export function PrayerTimesWidget() {
       // Get user's current location
       const currentLocation = await getCurrentLocation();
       setLocation(currentLocation);
+
+      // Get location name
+      const name = await getLocationName(currentLocation.lat, currentLocation.lon);
+      setLocationName(name);
 
       // Get appropriate zone code based on location
       const zoneCode = getZoneFromCoordinates(currentLocation.lat, currentLocation.lon);
@@ -326,9 +344,16 @@ export function PrayerTimesWidget() {
     >
       <CardHeader>
         <CardTitle className="flex items-center justify-between text-white">
-          <div className="flex items-center space-x-2">
-            <Building className="w-5 h-5" />
-            <span>{language === 'en' ? 'Prayer Times' : 'Waktu Solat'}</span>
+          <div className="flex flex-col space-y-1">
+            <div className="flex items-center space-x-2">
+              <Building className="w-5 h-5" />
+              <span>{language === 'en' ? 'Prayer Times' : 'Waktu Solat'}</span>
+            </div>
+            {locationName && (
+              <p className="text-sm text-white/80 font-normal">
+                {locationName}
+              </p>
+            )}
           </div>
           <Button
             variant="ghost"
