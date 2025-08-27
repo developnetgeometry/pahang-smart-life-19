@@ -417,7 +417,7 @@ const App = () => (
               path="/admin/modules"
               element={
                 <ProtectedRoute>
-                  <RequireRoles roles={["district_coordinator", "state_admin"]}>
+                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
                     <Layout>
                       <ModuleManagement />
                     </Layout>
