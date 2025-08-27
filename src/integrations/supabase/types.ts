@@ -795,6 +795,47 @@ export type Database = {
           },
         ]
       }
+      communities: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          description: string | null
+          district_id: string | null
+          id: string
+          name: string
+          postal_code: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          name: string
+          postal_code?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          name?: string
+          postal_code?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communities_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_activities: {
         Row: {
           activity_type: string
