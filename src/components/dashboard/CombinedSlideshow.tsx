@@ -262,6 +262,23 @@ export function CombinedSlideshow() {
                   </span>
                 </Badge>
                 
+                {currentItem.itemType === 'announcement' && (
+                  <Badge className={`w-fit text-xs ${
+                    currentItem.type === 'maintenance' || currentItem.type === 'security' 
+                      ? 'bg-blue-600/90 text-white' 
+                      : currentItem.type === 'emergency' 
+                      ? 'bg-orange-600/90 text-white'
+                      : 'bg-green-600/90 text-white'
+                  }`}>
+                    {currentItem.type === 'maintenance' || currentItem.type === 'security' 
+                      ? 'DISTRICT LEVEL' 
+                      : currentItem.type === 'emergency' 
+                      ? 'STATE LEVEL'
+                      : 'COMMUNITY LEVEL'
+                    }
+                  </Badge>
+                )}
+                
                 {currentItem.itemType === 'activity' && (
                   <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${
