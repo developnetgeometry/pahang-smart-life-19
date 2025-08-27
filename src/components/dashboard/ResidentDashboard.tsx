@@ -524,34 +524,7 @@ export function ResidentDashboard() {
       </div>
 
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activities */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" />
-              {language === 'en' ? 'Recent Activities' : 'Aktiviti Terkini'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {recentActivities.map((activity, index) => {
-              const IconComponent = getActivityIcon(activity.type);
-              return (
-                <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
-                  <IconComponent className="h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{activity.title}</p>
-                    <p className="text-xs text-muted-foreground">{activity.time}</p>
-                  </div>
-                  <Badge className={getStatusColor(activity.status)}>
-                    {activity.status}
-                  </Badge>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
         {/* My Services */}
         <div>
           <ServiceManagement />
