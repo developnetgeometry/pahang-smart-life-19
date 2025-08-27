@@ -524,12 +524,6 @@ export function ResidentDashboard() {
       </div>
 
 
-      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-        {/* My Services */}
-        <div>
-          <ServiceManagement />
-        </div>
-      </div>
 
       {/* Community Update Details Dialog */}
       <Dialog open={!!selectedUpdate} onOpenChange={() => setSelectedUpdate(null)}>
