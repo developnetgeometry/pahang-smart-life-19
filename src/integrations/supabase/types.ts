@@ -138,6 +138,7 @@ export type Database = {
       announcements: {
         Row: {
           author_id: string | null
+          community_id: string | null
           content: string
           created_at: string | null
           district_id: string | null
@@ -147,12 +148,14 @@ export type Database = {
           is_published: boolean | null
           is_urgent: boolean | null
           publish_at: string | null
+          scope: string | null
           title: string
           type: Database["public"]["Enums"]["announcement_type"] | null
           updated_at: string | null
         }
         Insert: {
           author_id?: string | null
+          community_id?: string | null
           content: string
           created_at?: string | null
           district_id?: string | null
@@ -162,12 +165,14 @@ export type Database = {
           is_published?: boolean | null
           is_urgent?: boolean | null
           publish_at?: string | null
+          scope?: string | null
           title: string
           type?: Database["public"]["Enums"]["announcement_type"] | null
           updated_at?: string | null
         }
         Update: {
           author_id?: string | null
+          community_id?: string | null
           content?: string
           created_at?: string | null
           district_id?: string | null
@@ -177,6 +182,7 @@ export type Database = {
           is_published?: boolean | null
           is_urgent?: boolean | null
           publish_at?: string | null
+          scope?: string | null
           title?: string
           type?: Database["public"]["Enums"]["announcement_type"] | null
           updated_at?: string | null
@@ -3360,6 +3366,7 @@ export type Database = {
           age: number | null
           agree_declare: boolean | null
           avatar_url: string | null
+          community_id: string | null
           community_status: boolean | null
           created_at: string | null
           created_by: string | null
@@ -3408,6 +3415,7 @@ export type Database = {
           age?: number | null
           agree_declare?: boolean | null
           avatar_url?: string | null
+          community_id?: string | null
           community_status?: boolean | null
           created_at?: string | null
           created_by?: string | null
@@ -3456,6 +3464,7 @@ export type Database = {
           age?: number | null
           agree_declare?: boolean | null
           avatar_url?: string | null
+          community_id?: string | null
           community_status?: boolean | null
           created_at?: string | null
           created_by?: string | null
@@ -5339,6 +5348,10 @@ export type Database = {
           requested_user_role: Database["public"]["Enums"]["user_role"]
         }
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      get_user_community: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_user_district: {
         Args: Record<PropertyKey, never>
