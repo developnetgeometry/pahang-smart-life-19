@@ -280,6 +280,12 @@ export function CombinedSlideshow() {
                 )}
                 
                 {currentItem.itemType === 'activity' && (
+                  <Badge className="bg-green-600/90 text-white w-fit text-xs">
+                    COMMUNITY LEVEL
+                  </Badge>
+                )}
+                
+                {currentItem.itemType === 'activity' && (
                   <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${
                       currentItem.status?.toLowerCase() === 'upcoming' ? 'bg-blue-500' :
