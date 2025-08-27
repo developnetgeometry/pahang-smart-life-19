@@ -16,8 +16,7 @@ import { CommunityDirectoryWidget } from './CommunityDirectoryWidget';
 import { MaintenanceTrackerWidget } from './MaintenanceTrackerWidget';
 import { PrayerTimesWidget } from './PrayerTimesWidget';
 import { ResidentLocationMap } from './ResidentLocationMap';
-import { ActivitiesSlideshow } from './ActivitiesSlideshow';
-import { AnnouncementsSlideshow } from './AnnouncementsSlideshow';
+import { CombinedSlideshow } from './CombinedSlideshow';
 import { MapPin } from 'lucide-react';
 import { 
   Calendar, 
@@ -375,11 +374,8 @@ export function ResidentDashboard() {
         </p>
       </div>
 
-      {/* Activities and Announcements Slideshows */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ActivitiesSlideshow />
-        <AnnouncementsSlideshow />
-      </div>
+      {/* Combined Activities and Announcements Slideshow */}
+      <CombinedSlideshow />
 
       {/* Personal Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
