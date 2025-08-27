@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/lib/translations";
 import { NavLink, useLocation } from "react-router-dom";
+import { useModuleAccess } from "@/hooks/use-module-access";
 import {
   Sidebar,
   SidebarContent,
@@ -57,6 +58,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const { isModuleEnabled } = useModuleAccess();
 
   // Role-based navigation groups - enhanced filtering
   const getNavigationForUser = () => {
@@ -69,36 +71,69 @@ export function AppSidebar() {
     });
 
     // Personal Activities - available to all users
+    const personalItems = [
+      { title: t("myComplaints"), url: "/my-complaints", icon: FileText },
+    ];
+    
+    // Add bookings if module is enabled
+    if (isModuleEnabled('bookings')) {
+      personalItems.push({ title: "My Bookings", url: "/my-bookings", icon: Calendar });
+    }
+    
     nav.push({
       label: t("myActivities"),
-      items: [
-        { title: t("myComplaints"), url: "/my-complaints", icon: FileText },
-      ],
+      items: personalItems,
     });
 
     // Community Hub - available to all users
+    const communityItems = [
+      {
+        title: t("communication"),
+        url: "/communication-hub",
+        icon: MessageSquare,
+      },
+      { title: t("announcements"), url: "/announcements", icon: Megaphone },
+    ];
+    
+    // Add discussions if module is enabled
+    if (isModuleEnabled('discussions')) {
+      communityItems.push({ title: t("discussions"), url: "/discussions", icon: MessageSquare });
+    }
+    
     nav.push({
       label: t("communityHub"),
-      items: [
-        {
-          title: t("communication"),
-          url: "/communication-hub",
-          icon: MessageSquare,
-        },
-        { title: t("announcements"), url: "/announcements", icon: Megaphone },
-        { title: t("discussions"), url: "/discussions", icon: MessageSquare },
-      ],
+      items: communityItems,
     });
 
     // Services & Facilities - available to all users
-    nav.push({
-      label: t("servicesAndFacilities"),
-      items: [
-        { title: t("marketplace"), url: "/marketplace", icon: ShoppingCart },
-        { title: "Service Requests", url: "/service-requests", icon: Clipboard },
-        { title: t("cctvManagement"), url: "/cctv-live-feed", icon: Camera },
-      ],
-    });
+    const servicesItems = [];
+    
+    // Add marketplace if module is enabled
+    if (isModuleEnabled('marketplace')) {
+      servicesItems.push({ title: t("marketplace"), url: "/marketplace", icon: ShoppingCart });
+    }
+    
+    // Add facilities if module is enabled
+    if (isModuleEnabled('facilities')) {
+      servicesItems.push({ title: "Facilities", url: "/facilities", icon: Building });
+    }
+    
+    // Add service requests if module is enabled
+    if (isModuleEnabled('service_requests')) {
+      servicesItems.push({ title: "Service Requests", url: "/service-requests", icon: Clipboard });
+    }
+    
+    // Add CCTV if module is enabled
+    if (isModuleEnabled('cctv')) {
+      servicesItems.push({ title: t("cctvManagement"), url: "/cctv-live-feed", icon: Camera });
+    }
+    
+    if (servicesItems.length > 0) {
+      nav.push({
+        label: t("servicesAndFacilities"),
+        items: servicesItems,
+      });
+    }
 
     // Role Management & Services - for approval and service provider management roles
     const roleManagementItems = [];
@@ -147,6 +182,15 @@ export function AppSidebar() {
           requiredRoles: ["state_admin", "community_admin"],
         }
       );
+    }
+
+    if (hasRole("state_admin") || hasRole("district_coordinator")) {
+      adminItems.push({
+        title: "Module Management",
+        url: "/admin/modules",
+        icon: Settings,
+        requiredRoles: ["state_admin", "district_coordinator"],
+      });
     }
 
     if (hasRole("state_admin")) {

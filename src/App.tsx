@@ -46,6 +46,9 @@ import AssetManagement from "./pages/AssetManagement";
 import ServiceRequests from "./pages/ServiceRequests";
 import FinancialManagement from "./pages/FinancialManagement";
 import InventoryManagement from "./pages/InventoryManagement";
+import ModuleManagement from "./pages/admin/ModuleManagement";
+import Facilities from "./pages/Facilities";
+import MyBookings from "./pages/MyBookings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -408,6 +411,18 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/admin/modules"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <ModuleManagement />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
 
             {/* CCTV Management for residents */}
             <Route
@@ -434,6 +449,26 @@ const App = () => (
             />
 
             {/* Management modules */}
+            <Route
+              path="/facilities"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Facilities />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-bookings"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <MyBookings />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/service-requests"
               element={

@@ -1360,6 +1360,50 @@ export type Database = {
           },
         ]
       }
+      district_features: {
+        Row: {
+          created_at: string | null
+          district_id: string
+          enabled_at: string | null
+          enabled_by: string | null
+          id: string
+          is_enabled: boolean
+          module_name: string
+          notes: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          district_id: string
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: string
+          is_enabled?: boolean
+          module_name: string
+          notes?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          district_id?: string
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: string
+          is_enabled?: boolean
+          module_name?: string
+          notes?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "district_features_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       districts: {
         Row: {
           address: string | null
@@ -5353,6 +5397,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      get_enabled_modules_for_user: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          category: string
+          display_name: string
+          module_name: string
+        }[]
+      }
       get_module_id: {
         Args: { module_name: string }
         Returns: string
@@ -5438,6 +5490,10 @@ export type Database = {
       }
       has_role_level_or_higher: {
         Args: { check_user_id?: string; min_level: number }
+        Returns: boolean
+      }
+      is_module_enabled_for_district: {
+        Args: { district_id?: string; module_name: string }
         Returns: boolean
       }
       update_user_presence: {
