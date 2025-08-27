@@ -184,12 +184,12 @@ export function AppSidebar() {
       );
     }
 
-    if (hasRole("state_admin") || hasRole("district_coordinator")) {
+    if (hasRole("community_admin")) {
       adminItems.push({
         title: "Module Management",
         url: "/admin/modules",
         icon: Settings,
-        requiredRoles: ["state_admin", "district_coordinator"],
+        requiredRoles: ["community_admin"],
       });
     }
 
