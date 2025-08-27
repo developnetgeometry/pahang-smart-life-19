@@ -266,15 +266,15 @@ export function CombinedSlideshow() {
                   <Badge className={`w-fit text-xs ${
                     currentItem.type === 'maintenance' || currentItem.type === 'security' 
                       ? 'bg-blue-600/90 text-white' 
-                      : currentItem.type === 'emergency' 
-                      ? 'bg-orange-600/90 text-white'
-                      : 'bg-green-600/90 text-white'
+                      : currentItem.type === 'event' || currentItem.type === 'general'
+                      ? 'bg-green-600/90 text-white'
+                      : 'bg-orange-600/90 text-white'
                   }`}>
                     {currentItem.type === 'maintenance' || currentItem.type === 'security' 
                       ? 'DISTRICT LEVEL' 
-                      : currentItem.type === 'emergency' 
-                      ? 'STATE LEVEL'
-                      : 'COMMUNITY LEVEL'
+                      : currentItem.type === 'event' || currentItem.type === 'general'
+                      ? 'COMMUNITY LEVEL'
+                      : 'STATE LEVEL'
                     }
                   </Badge>
                 )}
