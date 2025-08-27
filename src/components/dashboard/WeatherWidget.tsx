@@ -33,16 +33,59 @@ export function WeatherWidget() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [forecast, setForecast] = useState<ForecastData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [locationName, setLocationName] = useState<string>('');
+
+  const getCurrentLocation = () => {
+    return new Promise<{ lat: number; lon: number }>((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported'));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          // Fallback to Kuantan coordinates
+          resolve({ lat: 3.8077, lon: 103.326 });
+        },
+        { timeout: 10000, maximumAge: 300000 }
+      );
+    });
+  };
+
+  const getLocationName = async (lat: number, lon: number) => {
+    try {
+      const response = await fetch(
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${language === 'en' ? 'en' : 'ms'}`
+      );
+      const data = await response.json();
+      return data.city || data.locality || 'Unknown Location';
+    } catch (error) {
+      console.error('Error getting location name:', error);
+      return 'Unknown Location';
+    }
+  };
 
   const fetchWeatherData = async () => {
     try {
-      // Kuantan, Pahang coordinates
-      const lat = 3.8077;
-      const lon = 103.326;
+      // Get user's current location
+      const currentLocation = await getCurrentLocation();
+      setLocation(currentLocation);
+
+      // Get location name
+      const name = await getLocationName(currentLocation.lat, currentLocation.lon);
+      setLocationName(name);
       
-      // For demo purposes, using mock data that simulates real weather API
+      // For demo purposes, using mock data but now with real location
       const mockWeatherData: WeatherData = {
-        location: 'Kuantan, Pahang',
+        location: name,
         temperature: Math.round(26 + Math.random() * 8), // 26-34°C range
         condition: ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Rain'][Math.floor(Math.random() * 4)],
         humidity: Math.round(65 + Math.random() * 25), // 65-90%

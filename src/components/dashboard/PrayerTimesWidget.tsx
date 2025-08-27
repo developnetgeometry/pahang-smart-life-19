@@ -44,6 +44,52 @@ export function PrayerTimesWidget() {
     isha: true
   });
   const [showSettings, setShowSettings] = useState(false);
+  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
+
+  const getCurrentLocation = () => {
+    return new Promise<{ lat: number; lon: number }>((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported'));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          // Fallback to Kuantan coordinates
+          resolve({ lat: 3.2244, lon: 101.4497 });
+        },
+        { timeout: 10000, maximumAge: 300000 }
+      );
+    });
+  };
+
+  const getZoneFromCoordinates = (lat: number, lon: number) => {
+    // Malaysia prayer zone mapping based on coordinates
+    // This is a simplified mapping for major states
+    if (lat >= 6.0 && lat <= 6.8 && lon >= 100.0 && lon <= 100.8) return 'KDH01'; // Kedah
+    if (lat >= 5.2 && lat <= 6.0 && lon >= 100.2 && lon <= 101.2) return 'PNG01'; // Penang
+    if (lat >= 4.0 && lat <= 5.5 && lon >= 100.0 && lon <= 101.5) return 'PRK01'; // Perak
+    if (lat >= 3.0 && lat <= 4.2 && lon >= 101.0 && lon <= 102.0) return 'SGR01'; // Selangor
+    if (lat >= 3.1 && lat <= 3.3 && lon >= 101.5 && lon <= 101.8) return 'WLY01'; // KL
+    if (lat >= 2.0 && lat <= 4.5 && lon >= 101.5 && lon <= 104.5) return 'PHG01'; // Pahang
+    if (lat >= 1.2 && lat <= 3.0 && lon >= 102.0 && lon <= 104.5) return 'JHR01'; // Johor
+    if (lat >= 2.0 && lat <= 3.5 && lon >= 101.8 && lon <= 103.0) return 'NGS01'; // Negeri Sembilan
+    if (lat >= 2.0 && lat <= 3.0 && lon >= 102.0 && lon <= 103.0) return 'MLK01'; // Melaka
+    if (lat >= 1.0 && lat <= 7.0 && lon >= 109.0 && lon <= 119.5) return 'SWK01'; // Sarawak
+    if (lat >= 4.0 && lat <= 7.5 && lon >= 115.0 && lon <= 119.5) return 'SBH01'; // Sabah
+    if (lat >= 4.5 && lat <= 6.0 && lon >= 102.0 && lon <= 103.5) return 'TRG01'; // Terengganu
+    if (lat >= 4.5 && lat <= 6.5 && lon >= 101.5 && lon <= 103.0) return 'KTN01'; // Kelantan
+    
+    // Default fallback to Pahang if no match
+    return 'PHG01';
+  };
 
   useEffect(() => {
     fetchPrayerTimes();
@@ -63,13 +109,19 @@ export function PrayerTimesWidget() {
 
   const fetchPrayerTimes = async () => {
     try {
-      // Using e-solat API for Pahang (zone code: PHG01 for Kuantan)
+      // Get user's current location
+      const currentLocation = await getCurrentLocation();
+      setLocation(currentLocation);
+
+      // Get appropriate zone code based on location
+      const zoneCode = getZoneFromCoordinates(currentLocation.lat, currentLocation.lon);
+      
       const today = new Date();
       const year = today.getFullYear();
       const month = String(today.getMonth() + 1).padStart(2, '0');
       
       const response = await fetch(
-        `https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=month&zone=PHG01&year=${year}&month=${month}&_=${Date.now()}`
+        `https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=month&zone=${zoneCode}&year=${year}&month=${month}&_=${Date.now()}`
       );
       
       const data = await response.json();
