@@ -14,6 +14,8 @@ interface Community {
   id: string;
   name: string;
   district_id: string;
+  description?: string;
+  district_name?: string;
 }
 
 interface ModuleFeature {
@@ -60,80 +62,77 @@ const getCategoryColor = (category: string) => {
 };
 
 export default function ModuleManagement() {
-  const { hasRole } = useAuth();
-  const [communities, setCommunities] = useState<Community[]>([]);
-  const [selectedCommunity, setSelectedCommunity] = useState<string>('');
+  const { user, hasRole } = useAuth();
+  const [userCommunity, setUserCommunity] = useState<Community | null>(null);
   const [moduleFeatures, setModuleFeatures] = useState<ModuleFeature[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const canManageOwnCommunity = hasRole('community_admin');
 
+  // Fetch user's community - single community system
   useEffect(() => {
-    const fetchCommunities = async () => {
+    const fetchUserCommunity = async () => {
+      if (!canManageOwnCommunity || !user) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        let query = supabase.from('communities').select(`
-          id, 
-          name, 
-          district_id,
-          districts!inner(name)
-        `);
+        // Get user's community from their profile
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('community_id')
+          .eq('id', user.id)
+          .single();
         
-        // Community admins can only see their own community
-        if (canManageOwnCommunity) {
-          const { data: userProfile } = await supabase
-            .from('profiles')
-            .select('community_id')
-            .eq('id', (await supabase.auth.getUser()).data.user?.id)
+        if (profileError) throw profileError;
+        
+        if (profile?.community_id) {
+          // Get community details with district name
+          const { data: community, error: communityError } = await supabase
+            .from('communities')
+            .select(`
+              id, 
+              name, 
+              district_id,
+              description,
+              districts!inner(name)
+            `)
+            .eq('id', profile.community_id)
             .single();
           
-          if (userProfile?.community_id) {
-            query = query.eq('id', userProfile.community_id);
-          }
-        }
-
-        const { data, error } = await query.order('name');
-        
-        if (error) throw error;
-        
-        // Transform data to include district name in community name
-        const transformedCommunities = (data || []).map(community => ({
-          id: community.id,
-          name: `${community.name} (${community.districts?.name || 'Unknown District'})`,
-          district_id: community.district_id
-        }));
-        
-        setCommunities(transformedCommunities);
-        
-        // Auto-select first community if only one available
-        if (transformedCommunities && transformedCommunities.length === 1) {
-          setSelectedCommunity(transformedCommunities[0].id);
+          if (communityError) throw communityError;
+          
+          setUserCommunity({
+            id: community.id,
+            name: community.name,
+            district_id: community.district_id,
+            description: community.description,
+            district_name: community.districts?.name
+          });
         }
       } catch (error) {
-        console.error('Error fetching communities:', error);
-        toast.error('Failed to load communities');
+        console.error('Error fetching user community:', error);
+        toast.error('Failed to load community information');
       } finally {
         setLoading(false);
       }
     };
 
-    if (canManageOwnCommunity) {
-      fetchCommunities();
-    } else {
-      setLoading(false);
-    }
-  }, [canManageOwnCommunity]);
+    fetchUserCommunity();
+  }, [user, canManageOwnCommunity]);
 
+  // Fetch module features when user community is loaded
   useEffect(() => {
     const fetchModuleFeatures = async () => {
-      if (!selectedCommunity) return;
+      if (!userCommunity) return;
 
       try {
-        setLoading(true);
         const { data, error } = await supabase
           .from('community_features')
           .select('*')
-          .eq('community_id', selectedCommunity);
+          .eq('community_id', userCommunity.id);
 
         if (error) throw error;
 
@@ -155,15 +154,15 @@ export default function ModuleManagement() {
       } catch (error) {
         console.error('Error fetching module features:', error);
         toast.error('Failed to load module features');
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchModuleFeatures();
-  }, [selectedCommunity]);
+  }, [userCommunity]);
 
   const handleToggleModule = async (moduleFeature: ModuleFeature, enabled: boolean) => {
+    if (!userCommunity) return;
+    
     try {
       setSaving(true);
       
@@ -173,7 +172,7 @@ export default function ModuleManagement() {
           .from('community_features')
           .update({
             is_enabled: enabled,
-            enabled_by: (await supabase.auth.getUser()).data.user?.id,
+            enabled_by: user?.id,
             enabled_at: new Date().toISOString()
           })
           .eq('id', moduleFeature.id);
@@ -184,10 +183,10 @@ export default function ModuleManagement() {
         const { error } = await supabase
           .from('community_features')
           .insert({
-            community_id: selectedCommunity,
+            community_id: userCommunity.id,
             module_name: moduleFeature.module_name,
             is_enabled: enabled,
-            enabled_by: (await supabase.auth.getUser()).data.user?.id,
+            enabled_by: user?.id,
             enabled_at: new Date().toISOString()
           });
 
@@ -262,39 +261,47 @@ export default function ModuleManagement() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div>
+      <div className="mb-8">
         <h1 className="text-2xl font-bold text-foreground mb-2">Module Management</h1>
         <p className="text-muted-foreground">
           Enable or disable community modules for your community
         </p>
+        {userCommunity && (
+          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+            <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-2">
+              <Building className="h-5 w-5" />
+              Managing: {userCommunity.name}
+            </h2>
+            {userCommunity.description && (
+              <p className="text-blue-700 dark:text-blue-300 mt-1">{userCommunity.description}</p>
+            )}
+            {userCommunity.district_name && (
+              <p className="text-blue-600 dark:text-blue-400 text-sm mt-1">
+                District: {userCommunity.district_name}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
-      {communities.length > 1 && (
+      {!userCommunity ? (
         <Card>
-          <CardHeader>
-            <CardTitle>Select Community</CardTitle>
-            <CardDescription>
-              Choose the community to manage module features for
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Select value={selectedCommunity} onValueChange={setSelectedCommunity}>
-              <SelectTrigger className="w-full max-w-md">
-                <SelectValue placeholder="Select a community" />
-              </SelectTrigger>
-              <SelectContent>
-                {communities.map(community => (
-                  <SelectItem key={community.id} value={community.id}>
-                    {community.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <CardContent className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">
+                {loading ? 'Loading Community...' : 'No Community Found'}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {loading 
+                  ? 'Please wait while we load your community information.'
+                  : 'You are not assigned to any community. Please contact your administrator.'
+                }
+              </p>
+            </div>
           </CardContent>
         </Card>
-      )}
-
-      {selectedCommunity && (
+      ) : (
         <div className="space-y-6">
           {Object.entries(groupedModules).map(([category, modules]) => {
             const CategoryIcon = getCategoryIcon(category);
