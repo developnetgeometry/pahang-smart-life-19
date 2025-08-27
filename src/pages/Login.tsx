@@ -8,7 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, MapPin, Shield, Users } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Loader2, MapPin, Shield, Users, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { createTestUsers } from '@/utils/createTestUsers';
@@ -25,6 +27,7 @@ export default function Login() {
   const [licenseNumber, setLicenseNumber] = useState('');
   const [yearsOfExperience, setYearsOfExperience] = useState('');
   const [pdpaAccepted, setPdpaAccepted] = useState(false);
+  const [showPdpaDialog, setShowPdpaDialog] = useState(false);
   const [districts, setDistricts] = useState<Array<{id: string, name: string}>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -543,8 +546,206 @@ export default function Login() {
                       </Label>
                       <p className="text-xs text-muted-foreground">
                         {language === 'en' 
-                          ? "By checking this box, you consent to the collection and processing of your personal data in accordance with PDPA guidelines."
-                          : "Dengan menandai kotak ini, anda memberikan persetujuan untuk pengumpulan dan pemprosesan data peribadi anda mengikut garis panduan PDPA."}
+                          ? "By checking this box, you consent to the collection and processing of your personal data in accordance with PDPA guidelines. "
+                          : "Dengan menandai kotak ini, anda memberikan persetujuan untuk pengumpulan dan pemprosesan data peribadi anda mengikut garis panduan PDPA. "}
+                        <Dialog open={showPdpaDialog} onOpenChange={setShowPdpaDialog}>
+                          <DialogTrigger asChild>
+                            <Button variant="link" className="h-auto p-0 text-xs text-primary underline">
+                              {language === 'en' ? 'Read full PDPA' : 'Baca PDPA penuh'}
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl max-h-[80vh]">
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2">
+                                <FileText className="w-5 h-5" />
+                                {language === 'en' 
+                                  ? 'Personal Data Protection Act (PDPA)' 
+                                  : 'Akta Perlindungan Data Peribadi (PDPA)'}
+                              </DialogTitle>
+                              <DialogDescription>
+                                {language === 'en' 
+                                  ? 'Smart Community Management System - Data Protection Notice'
+                                  : 'Sistem Pengurusan Komuniti Pintar - Notis Perlindungan Data'}
+                              </DialogDescription>
+                            </DialogHeader>
+                            <ScrollArea className="h-[60vh] w-full rounded-md border p-4">
+                              <div className="space-y-4 text-sm">
+                                {language === 'en' ? (
+                                  <>
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">1. Introduction</h3>
+                                      <p>This Personal Data Protection Notice explains how we collect, use, disclose, and protect your personal data in compliance with Malaysia's Personal Data Protection Act 2010 (PDPA).</p>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">2. Data Controller</h3>
+                                      <p>Pahang State Smart Community Management System is the data controller responsible for your personal data.</p>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">3. Personal Data We Collect</h3>
+                                      <ul className="list-disc list-inside space-y-1 ml-4">
+                                        <li>Identity information (full name, email, phone number)</li>
+                                        <li>Location data (district, address, specific location)</li>
+                                        <li>Role and professional information (for service providers)</li>
+                                        <li>Communication records and messages</li>
+                                        <li>System usage data and access logs</li>
+                                        <li>CCTV footage and security-related data</li>
+                                      </ul>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">4. Purpose of Data Collection</h3>
+                                      <ul className="list-disc list-inside space-y-1 ml-4">
+                                        <li>User registration and account management</li>
+                                        <li>Community services and facility management</li>
+                                        <li>Security monitoring and emergency response</li>
+                                        <li>Communication between residents and service providers</li>
+                                        <li>Maintenance scheduling and complaint handling</li>
+                                        <li>System administration and improvement</li>
+                                      </ul>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">5. Data Sharing and Disclosure</h3>
+                                      <p>We may share your personal data with:</p>
+                                      <ul className="list-disc list-inside space-y-1 ml-4">
+                                        <li>Authorized community administrators and security personnel</li>
+                                        <li>Service providers within your community</li>
+                                        <li>Government agencies when legally required</li>
+                                        <li>Emergency services during critical situations</li>
+                                      </ul>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">6. Data Security</h3>
+                                      <p>We implement appropriate technical and organizational measures to protect your personal data against unauthorized access, alteration, disclosure, or destruction.</p>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">7. Your Rights</h3>
+                                      <p>Under PDPA, you have the right to:</p>
+                                      <ul className="list-disc list-inside space-y-1 ml-4">
+                                        <li>Access your personal data</li>
+                                        <li>Correct inaccurate personal data</li>
+                                        <li>Withdraw consent (where applicable)</li>
+                                        <li>Request deletion of personal data</li>
+                                        <li>Lodge complaints with the Personal Data Protection Department</li>
+                                      </ul>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">8. Data Retention</h3>
+                                      <p>We retain your personal data only for as long as necessary to fulfill the purposes outlined in this notice or as required by law.</p>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">9. Contact Information</h3>
+                                      <p>For any questions regarding this notice or your personal data, please contact our Data Protection Officer through the system's support channels.</p>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">10. Updates to This Notice</h3>
+                                      <p>We may update this notice from time to time. Users will be notified of significant changes through the system.</p>
+                                    </section>
+                                  </>
+                                ) : (
+                                  <>
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">1. Pengenalan</h3>
+                                      <p>Notis Perlindungan Data Peribadi ini menerangkan bagaimana kami mengumpul, menggunakan, mendedahkan, dan melindungi data peribadi anda selaras dengan Akta Perlindungan Data Peribadi Malaysia 2010 (PDPA).</p>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">2. Pengawal Data</h3>
+                                      <p>Sistem Pengurusan Komuniti Pintar Negeri Pahang adalah pengawal data yang bertanggungjawab ke atas data peribadi anda.</p>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">3. Data Peribadi Yang Kami Kumpul</h3>
+                                      <ul className="list-disc list-inside space-y-1 ml-4">
+                                        <li>Maklumat identiti (nama penuh, emel, nombor telefon)</li>
+                                        <li>Data lokasi (daerah, alamat, lokasi khusus)</li>
+                                        <li>Maklumat peranan dan profesional (untuk penyedia perkhidmatan)</li>
+                                        <li>Rekod komunikasi dan mesej</li>
+                                        <li>Data penggunaan sistem dan log akses</li>
+                                        <li>Rakaman CCTV dan data berkaitan keselamatan</li>
+                                      </ul>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">4. Tujuan Pengumpulan Data</h3>
+                                      <ul className="list-disc list-inside space-y-1 ml-4">
+                                        <li>Pendaftaran pengguna dan pengurusan akaun</li>
+                                        <li>Perkhidmatan komuniti dan pengurusan kemudahan</li>
+                                        <li>Pemantauan keselamatan dan tindak balas kecemasan</li>
+                                        <li>Komunikasi antara penduduk dan penyedia perkhidmatan</li>
+                                        <li>Penjadualan penyelenggaraan dan pengendalian aduan</li>
+                                        <li>Pentadbiran dan penambahbaikan sistem</li>
+                                      </ul>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">5. Perkongsian dan Pendedahan Data</h3>
+                                      <p>Kami mungkin berkongsi data peribadi anda dengan:</p>
+                                      <ul className="list-disc list-inside space-y-1 ml-4">
+                                        <li>Pentadbir komuniti dan kakitangan keselamatan yang dibenarkan</li>
+                                        <li>Penyedia perkhidmatan dalam komuniti anda</li>
+                                        <li>Agensi kerajaan apabila diperlukan secara undang-undang</li>
+                                        <li>Perkhidmatan kecemasan semasa situasi kritikal</li>
+                                      </ul>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">6. Keselamatan Data</h3>
+                                      <p>Kami melaksanakan langkah teknikal dan organisasi yang sesuai untuk melindungi data peribadi anda daripada akses, pengubahan, pendedahan, atau pemusnahan tanpa kebenaran.</p>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">7. Hak Anda</h3>
+                                      <p>Di bawah PDPA, anda mempunyai hak untuk:</p>
+                                      <ul className="list-disc list-inside space-y-1 ml-4">
+                                        <li>Mengakses data peribadi anda</li>
+                                        <li>Membetulkan data peribadi yang tidak tepat</li>
+                                        <li>Menarik balik persetujuan (jika berkenaan)</li>
+                                        <li>Meminta pemadaman data peribadi</li>
+                                        <li>Membuat aduan kepada Jabatan Perlindungan Data Peribadi</li>
+                                      </ul>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">8. Pengekalan Data</h3>
+                                      <p>Kami menyimpan data peribadi anda hanya selama yang diperlukan untuk memenuhi tujuan yang digariskan dalam notis ini atau seperti yang dikehendaki undang-undang.</p>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">9. Maklumat Hubungan</h3>
+                                      <p>Untuk sebarang pertanyaan mengenai notis ini atau data peribadi anda, sila hubungi Pegawai Perlindungan Data kami melalui saluran sokongan sistem.</p>
+                                    </section>
+
+                                    <section>
+                                      <h3 className="font-semibold text-base mb-2">10. Kemas Kini Kepada Notis Ini</h3>
+                                      <p>Kami mungkin mengemaskini notis ini dari semasa ke semasa. Pengguna akan dimaklumkan tentang perubahan penting melalui sistem.</p>
+                                    </section>
+                                  </>
+                                )}
+                                
+                                <div className="border-t pt-4 mt-6">
+                                  <p className="text-xs text-muted-foreground">
+                                    {language === 'en' 
+                                      ? 'Last updated: January 2024. This notice is effective immediately upon registration.'
+                                      : 'Kemaskini terakhir: Januari 2024. Notis ini berkuat kuasa serta-merta selepas pendaftaran.'}
+                                  </p>
+                                </div>
+                              </div>
+                            </ScrollArea>
+                            <div className="flex justify-end pt-4">
+                              <Button onClick={() => setShowPdpaDialog(false)}>
+                                {language === 'en' ? 'Close' : 'Tutup'}
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </p>
                     </div>
                   </div>
