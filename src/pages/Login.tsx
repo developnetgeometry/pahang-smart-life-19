@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, MapPin, Shield, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -23,6 +24,7 @@ export default function Login() {
   const [businessType, setBusinessType] = useState('');
   const [licenseNumber, setLicenseNumber] = useState('');
   const [yearsOfExperience, setYearsOfExperience] = useState('');
+  const [pdpaAccepted, setPdpaAccepted] = useState(false);
   const [districts, setDistricts] = useState<Array<{id: string, name: string}>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -80,6 +82,11 @@ export default function Login() {
           if (!yearsOfExperience.trim()) {
             throw new Error(language === 'en' ? 'Years of experience is required' : 'Tahun pengalaman diperlukan');
           }
+        }
+
+        // Validate PDPA acceptance
+        if (!pdpaAccepted) {
+          throw new Error(language === 'en' ? 'You must read and accept the PDPA to register' : 'Anda mesti membaca dan menerima PDPA untuk mendaftar');
         }
 
         const redirectUrl = `${window.location.origin}/`;
@@ -159,6 +166,7 @@ export default function Login() {
           setBusinessType('');
           setLicenseNumber('');
           setYearsOfExperience('');
+          setPdpaAccepted(false);
           setPassword('');
         }
       }
@@ -515,6 +523,32 @@ export default function Login() {
                     className="transition-smooth"
                   />
                 </div>
+
+                {mode === 'signUp' && (
+                  <div className="flex items-start space-x-2 p-3 border rounded-lg">
+                    <Checkbox 
+                      id="pdpa" 
+                      checked={pdpaAccepted}
+                      onCheckedChange={(checked) => setPdpaAccepted(checked === true)}
+                      required
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <Label 
+                        htmlFor="pdpa"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {language === 'en' 
+                          ? "I have read and agree to the Personal Data Protection Act (PDPA)" 
+                          : "Saya telah membaca dan bersetuju dengan Akta Perlindungan Data Peribadi (PDPA)"}
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {language === 'en' 
+                          ? "By checking this box, you consent to the collection and processing of your personal data in accordance with PDPA guidelines."
+                          : "Dengan menandai kotak ini, anda memberikan persetujuan untuk pengumpulan dan pemprosesan data peribadi anda mengikut garis panduan PDPA."}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <Button 
                   type="submit" 
