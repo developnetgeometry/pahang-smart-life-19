@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ChevronLeft, ChevronRight, ExternalLink, Phone, Mail, Globe, Star, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Advertisement {
@@ -28,11 +28,10 @@ interface AdvertisementCarouselProps {
 
 export default function AdvertisementCarousel({ language }: AdvertisementCarouselProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [selectedAd, setSelectedAd] = useState<Advertisement | null>(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const text = {
     en: {
@@ -116,9 +115,8 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
     // Track the click
     await handleAdClick(ad.id);
     
-    // Show the modal with details
-    setSelectedAd(ad);
-    setShowDetailsModal(true);
+    // Navigate to the advertisement detail page
+    navigate(`/advertisement/${ad.id}`);
   };
 
   const handleBuyNow = async (ad: Advertisement) => {
@@ -312,122 +310,6 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
         </div>
       )}
 
-      {/* Advertisement Details Modal */}
-      <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-        <DialogContent className="sm:max-w-[525px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {selectedAd?.is_featured && (
-                <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-              )}
-              {selectedAd?.business_name}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedAd?.title}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedAd && (
-            <div className="space-y-6">
-              {/* Image */}
-              {selectedAd.image_url && (
-                <div className="w-full h-48 overflow-hidden rounded-lg">
-                  <img
-                    src={selectedAd.image_url}
-                    alt={selectedAd.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              
-              {/* Description */}
-              {selectedAd.description && (
-                <div>
-                  <h3 className="font-semibold text-sm mb-2">
-                    {language === 'en' ? 'Service Description' : 'Penerangan Perkhidmatan'}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">{selectedAd.description}</p>
-                </div>
-              )}
-              
-              {/* Tags */}
-              {selectedAd.tags && selectedAd.tags.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-sm mb-2">
-                    {language === 'en' ? 'Services' : 'Perkhidmatan'}
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedAd.tags.map((tag, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {/* Contact Information */}
-              <div>
-                <h3 className="font-semibold text-sm mb-3">
-                  {language === 'en' ? 'Contact Information' : 'Maklumat Hubungan'}
-                </h3>
-                <div className="space-y-3">
-                  {selectedAd.contact_phone && (
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start"
-                      onClick={() => {
-                        window.location.href = `tel:${selectedAd.contact_phone}`;
-                      }}
-                    >
-                      <Phone className="h-4 w-4 mr-2" />
-                      {selectedAd.contact_phone}
-                    </Button>
-                  )}
-                  
-                  {selectedAd.contact_email && (
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start"
-                      onClick={() => {
-                        window.location.href = `mailto:${selectedAd.contact_email}`;
-                      }}
-                    >
-                      <Mail className="h-4 w-4 mr-2" />
-                      {selectedAd.contact_email}
-                    </Button>
-                  )}
-                  
-                  {selectedAd.website_url && (
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start"
-                      onClick={() => {
-                        window.open(selectedAd.website_url, '_blank');
-                      }}
-                    >
-                      <Globe className="h-4 w-4 mr-2" />
-                      {language === 'en' ? 'Visit Website' : 'Lawati Laman Web'}
-                    </Button>
-                  )}
-                </div>
-              </div>
-              
-              {/* Category */}
-              <div className="flex items-center justify-between text-sm text-muted-foreground border-t pt-4">
-                <span>
-                  {language === 'en' ? 'Category' : 'Kategori'}: 
-                  <span className="font-medium ml-1 capitalize">{selectedAd.category}</span>
-                </span>
-                <span>
-                  {language === 'en' ? 'Clicks' : 'Klik'}: 
-                  <span className="font-medium ml-1">{selectedAd.click_count}</span>
-                </span>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
