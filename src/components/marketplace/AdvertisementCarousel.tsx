@@ -32,6 +32,7 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
 
   const text = {
     en: {
@@ -169,6 +170,19 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
     }
   };
 
+  // Auto-advance slideshow
+  useEffect(() => {
+    if (advertisements.length <= 1 || isPaused) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => 
+        prevIndex === advertisements.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 4000); // Change slide every 4 seconds
+
+    return () => clearInterval(interval);
+  }, [advertisements.length, isPaused]);
+
   const nextSlide = () => {
     setCurrentIndex((prevIndex) => 
       prevIndex === advertisements.length - 1 ? 0 : prevIndex + 1
@@ -214,7 +228,11 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
   const currentAd = advertisements[currentIndex];
 
   return (
-    <div className="space-y-4">
+    <div 
+      className="space-y-4"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">{t.title}</h2>
