@@ -126,19 +126,27 @@ export const PrecisionLocationMap: React.FC<PrecisionLocationMapProps> = ({
   }, []);
 
   const initializeMap = async () => {
-    if (!mapContainer.current) return;
+    if (!mapContainer.current) {
+      console.log('PrecisionMap: Map container not found');
+      return;
+    }
+    console.log('PrecisionMap: Starting map initialization');
 
     try {
+      console.log('PrecisionMap: Fetching Mapbox token...');
       const { data: tokenData } = await supabase.functions.invoke('get-mapbox-token');
       
       if (!tokenData?.token) {
+        console.log('PrecisionMap: No token received, showing token input');
         setShowTokenInput(true);
         return;
       }
 
+      console.log('PrecisionMap: Token received, initializing map');
       setMapboxToken(tokenData.token);
       mapboxgl.accessToken = tokenData.token;
       
+      console.log('PrecisionMap: Creating map instance...');
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/satellite-streets-v12', // Satellite view for better precision
@@ -148,21 +156,32 @@ export const PrecisionLocationMap: React.FC<PrecisionLocationMapProps> = ({
         bearing: -17.6
       });
 
+      console.log('PrecisionMap: Map instance created, adding controls');
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
       map.current.on('load', () => {
+        console.log('PrecisionMap: Map loaded successfully');
         setIsMapReady(true);
         addLocationMarkers();
       });
 
+      map.current.on('error', (e) => {
+        console.error('PrecisionMap: Map error:', e);
+      });
+
     } catch (error) {
-      console.error('Error initializing map:', error);
+      console.error('PrecisionMap: Error initializing map:', error);
       setShowTokenInput(true);
     }
   };
 
   const addLocationMarkers = () => {
-    if (!map.current || !isMapReady) return;
+    if (!map.current || !isMapReady) {
+      console.log('PrecisionMap: Cannot add markers - map not ready or missing');
+      return;
+    }
+
+    console.log('PrecisionMap: Adding location markers, total locations:', allLocations.length);
 
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
@@ -173,6 +192,8 @@ export const PrecisionLocationMap: React.FC<PrecisionLocationMapProps> = ({
       location.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
       location.unit?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    console.log('PrecisionMap: Filtered locations to display:', filteredLocations.length);
 
     filteredLocations.forEach((location) => {
       const markerElement = document.createElement('div');
