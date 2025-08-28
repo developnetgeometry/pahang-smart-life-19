@@ -167,6 +167,11 @@ export const PrecisionLocationMap: React.FC<PrecisionLocationMapProps> = ({
 
       map.current.on('error', (e) => {
         console.error('PrecisionMap: Map error:', e);
+        // Fallback to streets style if satellite fails
+        if (map.current && e.error.message.includes('satellite')) {
+          console.log('PrecisionMap: Falling back to streets style...');
+          map.current.setStyle('mapbox://styles/mapbox/streets-v12');
+        }
       });
 
     } catch (error) {
