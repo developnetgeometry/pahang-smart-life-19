@@ -2900,9 +2900,12 @@ export type Database = {
           images: string[] | null
           is_active: boolean | null
           is_available: boolean | null
+          is_in_stock: boolean | null
           location: string | null
+          low_stock_threshold: number | null
           price: number
           seller_id: string | null
+          stock_quantity: number | null
           title: string
           updated_at: string | null
         }
@@ -2917,9 +2920,12 @@ export type Database = {
           images?: string[] | null
           is_active?: boolean | null
           is_available?: boolean | null
+          is_in_stock?: boolean | null
           location?: string | null
+          low_stock_threshold?: number | null
           price: number
           seller_id?: string | null
+          stock_quantity?: number | null
           title: string
           updated_at?: string | null
         }
@@ -2934,9 +2940,12 @@ export type Database = {
           images?: string[] | null
           is_active?: boolean | null
           is_available?: boolean | null
+          is_in_stock?: boolean | null
           location?: string | null
+          low_stock_threshold?: number | null
           price?: number
           seller_id?: string | null
+          stock_quantity?: number | null
           title?: string
           updated_at?: string | null
         }
@@ -3241,6 +3250,93 @@ export type Database = {
           scheduled_at?: string | null
           sent_at?: string | null
           title?: string
+        }
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          order_id: string
+          quantity: number
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          order_id: string
+          quantity: number
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          order_id?: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          notes: string | null
+          payment_status: string
+          shipping_address: Json | null
+          status: string
+          stripe_session_id: string | null
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          payment_status?: string
+          shipping_address?: Json | null
+          status?: string
+          stripe_session_id?: string | null
+          total_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          payment_status?: string
+          shipping_address?: Json | null
+          status?: string
+          stripe_session_id?: string | null
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -4850,6 +4946,41 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopping_cart: {
+        Row: {
+          added_at: string
+          id: string
+          item_id: string
+          quantity: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          item_id: string
+          quantity?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          item_id?: string
+          quantity?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_cart_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
             referencedColumns: ["id"]
           },
         ]

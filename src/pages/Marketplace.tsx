@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRoles } from '@/hooks/use-user-roles';
+import { useShoppingCart } from '@/hooks/use-shopping-cart';
 import AdvertisementCarousel from '@/components/marketplace/AdvertisementCarousel';
+import ShoppingCart from '@/components/marketplace/ShoppingCart';
+import CartIcon from '@/components/marketplace/CartIcon';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ShoppingBag, Plus, Search, Heart, MessageCircle, Star, MapPin, Clock, Loader2 } from 'lucide-react';
+import { ShoppingBag, Plus, Search, Heart, MessageCircle, Star, MapPin, Clock, Loader2, ShoppingCart as ShoppingCartIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useChatRooms } from '@/hooks/use-chat-rooms';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,9 +44,12 @@ interface MarketplaceItem {
 export default function Marketplace() {
   const { language, user } = useAuth();
   const { hasRole } = useUserRoles();
+  const { addToCart } = useShoppingCart();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createGroupChat } = useChatRooms();
+  
+  const [showCart, setShowCart] = useState(false);
   
   // Mock items defined first for immediate use
   const mockItems: MarketplaceItem[] = [
@@ -432,6 +438,13 @@ export default function Marketplace() {
     }
   };
 
+  const handleAddToCart = async (item: MarketplaceItem) => {
+    const success = await addToCart(item.id, 1);
+    if (success) {
+      // Optional: Show success feedback
+    }
+  };
+
   const handleContactSeller = async (item: MarketplaceItem) => {
     try {
       // Create a chat room for the marketplace item
@@ -477,23 +490,23 @@ export default function Marketplace() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Advertisement Section */}
-      <AdvertisementCarousel language={language} />
-      
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header with Cart */}
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
-          <p className="text-muted-foreground">{t.subtitle}</p>
+          <h1 className="text-3xl font-bold text-foreground">{t.title}</h1>
+          <p className="text-muted-foreground mt-2">{t.subtitle}</p>
         </div>
-        {user && (
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                {t.newListing}
-              </Button>
-            </DialogTrigger>
+        <div className="flex items-center gap-4">
+          <CartIcon onClick={() => setShowCart(!showCart)} />
+          {user && (
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t.newListing}
+                </Button>
+              </DialogTrigger>
             <DialogContent className="sm:max-w-[525px]">
               <DialogHeader>
                 <DialogTitle>{t.createTitle}</DialogTitle>
@@ -598,7 +611,18 @@ export default function Marketplace() {
             </DialogContent>
           </Dialog>
         )}
+        </div>
       </div>
+
+      {/* Cart Sidebar */}
+      {showCart && (
+        <div className="mb-6">
+          <ShoppingCart language={language} />
+        </div>
+      )}
+
+      {/* Advertisement Carousel */}
+      <AdvertisementCarousel language={language} />
 
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
@@ -718,10 +742,25 @@ export default function Marketplace() {
                 </div>
               </div>
 
-              <Button className="w-full" onClick={() => handleContactSeller(item)}>
-                <MessageCircle className="h-4 w-4 mr-2" />
-                {t.contact}
-              </Button>
+              <div className="flex gap-2 mt-4">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => handleAddToCart(item)}
+                  className="flex-1"
+                >
+                  <ShoppingCartIcon className="h-4 w-4 mr-2" />
+                  {language === 'en' ? 'Add to Cart' : 'Tambah ke Troli'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleContactSeller(item)}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  {language === 'en' ? 'Contact' : 'Hubungi'}
+                </Button>
+              </div>
             </CardContent>
             </Card>
           ))}
