@@ -15,7 +15,7 @@ import { WeatherWidget } from './WeatherWidget';
 import { CommunityDirectoryWidget } from './CommunityDirectoryWidget';
 import { MaintenanceTrackerWidget } from './MaintenanceTrackerWidget';
 import { PrayerTimesWidget } from './PrayerTimesWidget';
-import InteractiveLocationViewer from '../location/InteractiveLocationViewer';
+import InteractiveUnitEditor from '@/components/location/InteractiveUnitEditor';
 import { CombinedSlideshow } from './CombinedSlideshow';
 import { MapPin } from 'lucide-react';
 import { 
@@ -472,10 +472,11 @@ export function ResidentDashboard() {
       </div>
 
       {/* Interactive Location Viewer */}
-      <InteractiveLocationViewer
+      <InteractiveUnitEditor
         imageUrl="/lovable-uploads/0709b4db-2289-4ac3-a185-7de4c3dce5b0.png"
         title={language === 'en' ? 'Community Map' : 'Peta Komuniti'}
         showSearch={true}
+        isAdminMode={false}
       />
 
       {/* Community Updates */}

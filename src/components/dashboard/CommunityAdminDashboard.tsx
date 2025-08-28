@@ -23,7 +23,7 @@ import {
   XCircle,
   MapPin
 } from 'lucide-react';
-import UnitManagement from '@/components/admin/UnitManagement';
+import InteractiveUnitEditor from '@/components/location/InteractiveUnitEditor';
 
 export function CommunityAdminDashboard() {
   const { language, user } = useAuth();
@@ -475,7 +475,12 @@ export function CommunityAdminDashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <UnitManagement />
+          <InteractiveUnitEditor 
+            imageUrl="/lovable-uploads/0709b4db-2289-4ac3-a185-7de4c3dce5b0.png"
+            title="Interactive Unit Management"
+            showSearch={true}
+            isAdminMode={true}
+          />
         </CardContent>
       </Card>
 
