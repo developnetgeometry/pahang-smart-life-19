@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRoles } from '@/hooks/use-user-roles';
+import AdvertisementCarousel from '@/components/marketplace/AdvertisementCarousel';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -465,6 +466,9 @@ export default function Marketplace() {
 
   return (
     <div className="space-y-6">
+      {/* Advertisement Section */}
+      <AdvertisementCarousel language={language} />
+      
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>

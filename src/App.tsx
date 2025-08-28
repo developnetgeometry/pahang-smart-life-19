@@ -15,6 +15,7 @@ import Announcements from "./pages/Announcements";
 import Events from "./pages/Events";
 import Discussions from "./pages/Discussions";
 import Marketplace from "./pages/Marketplace";
+import AdvertisementManagement from "./pages/AdvertisementManagement";
 import CCTVLiveFeed from "./pages/CCTVLiveFeed";
 import UserManagement from "./pages/admin/UserManagement";
 import SecurityDashboard from "./pages/admin/SecurityDashboard";
@@ -206,6 +207,18 @@ const App = () => (
                   <Layout>
                     <Marketplace />
                   </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/advertisements"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["service_provider"]}>
+                    <Layout>
+                      <AdvertisementManagement />
+                    </Layout>
+                  </RequireRoles>
                 </ProtectedRoute>
               }
             />

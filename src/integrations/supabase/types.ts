@@ -135,6 +135,80 @@ export type Database = {
           },
         ]
       }
+      advertisements: {
+        Row: {
+          advertiser_id: string
+          business_name: string
+          category: string
+          click_count: number | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          description: string | null
+          district_id: string | null
+          end_date: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          is_featured: boolean
+          start_date: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          advertiser_id: string
+          business_name: string
+          category?: string
+          click_count?: number | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          district_id?: string | null
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_featured?: boolean
+          start_date?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          advertiser_id?: string
+          business_name?: string
+          category?: string
+          click_count?: number | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          district_id?: string | null
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_featured?: boolean
+          start_date?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advertisements_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcements: {
         Row: {
           author_id: string | null

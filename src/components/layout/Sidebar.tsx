@@ -113,6 +113,16 @@ export function AppSidebar() {
       servicesItems.push({ title: t("marketplace"), url: "/marketplace", icon: ShoppingCart });
     }
     
+    // Service Provider specific items
+    if (hasRole("service_provider") && isModuleEnabled('marketplace')) {
+      servicesItems.push({ 
+        title: "Advertisement Management", 
+        url: "/advertisements", 
+        icon: Megaphone,
+        requiredRoles: ["service_provider"]
+      });
+    }
+    
     // Add facilities if module is enabled
     if (isModuleEnabled('facilities')) {
       servicesItems.push({ title: "Facilities", url: "/facilities", icon: Building });
