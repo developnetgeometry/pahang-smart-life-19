@@ -1094,6 +1094,7 @@ export default function CCTVManagement() {
                       >
                         <Settings className="h-4 w-4" />
                       </Button>
+                      {(hasRole('admin') || hasRole('security_officer') || hasRole('manager') || hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin') || hasRole('facility_manager')) && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
@@ -1151,6 +1152,7 @@ export default function CCTVManagement() {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
