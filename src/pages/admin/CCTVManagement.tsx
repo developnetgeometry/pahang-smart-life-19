@@ -1424,7 +1424,8 @@ export default function CCTVManagement() {
               </Card>
             </div>
 
-            {/* Camera Controls */}
+            {/* Camera Controls - Admin Only */}
+            {(hasRole('admin') || hasRole('security_officer') || hasRole('manager') || hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin') || hasRole('facility_manager')) && (
             <div className="lg:w-80 space-y-4">
               {/* RTSP Connection */}
               {liveViewCamera && (
@@ -1574,6 +1575,7 @@ export default function CCTVManagement() {
                 </CardContent>
               </Card>
             </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
