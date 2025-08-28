@@ -838,6 +838,7 @@ export default function CCTVManagement() {
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
+        {(hasRole('admin') || hasRole('security_officer') || hasRole('manager') || hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin') || hasRole('facility_manager')) && (
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -947,6 +948,7 @@ export default function CCTVManagement() {
             </DialogContent>
           </Dialog>
         </div>
+        )}
       </div>
 
       {/* Inline Live Feed for Selected or First Camera */}
