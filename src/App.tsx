@@ -53,6 +53,7 @@ import InventoryManagement from "./pages/InventoryManagement";
 import ModuleManagement from "./pages/admin/ModuleManagement";
 import Facilities from "./pages/Facilities";
 import MyBookings from "./pages/MyBookings";
+import PrecisionMapping from "./pages/PrecisionMapping";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -549,6 +550,16 @@ const App = () => (
                       <InventoryManagement />
                     </Layout>
                   </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/precision-mapping"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <PrecisionMapping />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
