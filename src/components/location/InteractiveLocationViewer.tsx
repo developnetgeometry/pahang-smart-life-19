@@ -106,6 +106,8 @@ const InteractiveLocationViewer: React.FC<InteractiveLocationViewerProps> = ({
   );
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (e.target === imageRef.current) {
       setIsDragging(true);
       setDragStart({
@@ -116,7 +118,9 @@ const InteractiveLocationViewer: React.FC<InteractiveLocationViewerProps> = ({
   }, [position]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
     if (isDragging) {
+      e.stopPropagation();
       setPosition({
         x: e.clientX - dragStart.x,
         y: e.clientY - dragStart.y
@@ -130,6 +134,7 @@ const InteractiveLocationViewer: React.FC<InteractiveLocationViewerProps> = ({
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     const newScale = Math.max(0.5, Math.min(5, scale * delta));
     setScale(newScale);
@@ -210,12 +215,13 @@ const InteractiveLocationViewer: React.FC<InteractiveLocationViewerProps> = ({
       <CardContent className="p-0 h-full">
         <div 
           ref={containerRef}
-          className="relative w-full h-full overflow-hidden cursor-grab active:cursor-grabbing"
+          className="relative w-full h-full overflow-hidden cursor-grab active:cursor-grabbing select-none"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
           onWheel={handleWheel}
+          style={{ touchAction: 'none' }}
         >
           <div 
             className="relative"
