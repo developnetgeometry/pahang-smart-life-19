@@ -16,6 +16,7 @@ import Events from "./pages/Events";
 import Discussions from "./pages/Discussions";
 import Marketplace from "./pages/Marketplace";
 import MarketplaceItemDetail from "./pages/MarketplaceItemDetail";
+import AdvertisementDetail from "./pages/AdvertisementDetail";
 import AdvertisementManagement from "./pages/AdvertisementManagement";
 import CCTVLiveFeed from "./pages/CCTVLiveFeed";
 import UserManagement from "./pages/admin/UserManagement";
@@ -217,6 +218,16 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <MarketplaceItemDetail />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/advertisement/:id"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AdvertisementDetail />
                   </Layout>
                 </ProtectedRoute>
               }
