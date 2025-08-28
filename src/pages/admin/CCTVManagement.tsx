@@ -106,7 +106,7 @@ interface Recording {
 type CctvRow = Database["public"]["Tables"]["cctv_cameras"]["Row"];
 
 export default function CCTVManagement() {
-  const { language } = useAuth();
+  const { language, hasRole } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [newCam, setNewCam] = useState<{
@@ -1188,6 +1188,7 @@ export default function CCTVManagement() {
                       <Eye className="h-4 w-4 mr-1" />
                       {t.liveView}
                     </Button>
+                    {(hasRole('admin') || hasRole('security_officer') || hasRole('manager') || hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin') || hasRole('facility_manager')) && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -1206,6 +1207,7 @@ export default function CCTVManagement() {
                       <Settings className="h-4 w-4 mr-1" />
                       {t.settings}
                     </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
