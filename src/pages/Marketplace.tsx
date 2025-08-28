@@ -149,15 +149,23 @@ export default function Marketplace() {
 
   const t = text[language];
 
-  // Fetch marketplace items from Supabase
+  // Fetch marketplace items from Supabase with timeout
   useEffect(() => {
     const fetchMarketplaceItems = async () => {
       try {
-        const { data, error } = await supabase
+        // Add timeout to prevent hanging queries
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Query timeout')), 5000)
+        );
+
+        const queryPromise = supabase
           .from('marketplace_items')
           .select('*')
           .eq('is_active', true)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(20); // Limit results for better performance
+
+        const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
         if (error) throw error;
 
@@ -195,14 +203,16 @@ export default function Marketplace() {
         setMarketplaceItems(transformedItems.length > 0 ? transformedItems : mockItems);
       } catch (error) {
         console.error('Error fetching marketplace items:', error);
-        // Fallback to demo data with images
+        // Fallback to demo data immediately on error/timeout
         setMarketplaceItems(mockItems);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMarketplaceItems();
+    // Add a small delay to prevent initial render blocking
+    const timer = setTimeout(fetchMarketplaceItems, 100);
+    return () => clearTimeout(timer);
   }, [language]);
 
   const mockItems: MarketplaceItem[] = [

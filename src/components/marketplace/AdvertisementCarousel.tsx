@@ -57,25 +57,36 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
   useEffect(() => {
     const fetchAdvertisements = async () => {
       try {
-        const { data, error } = await supabase
+        // Add timeout and limit results for better performance
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Query timeout')), 3000)
+        );
+
+        const queryPromise = supabase
           .from('advertisements')
           .select('*')
           .eq('is_active', true)
           .order('is_featured', { ascending: false })
           .order('created_at', { ascending: false })
-          .limit(10);
+          .limit(5); // Limit to 5 ads for better performance
+
+        const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
         if (error) throw error;
 
         setAdvertisements(data || []);
       } catch (error) {
         console.error('Error fetching advertisements:', error);
+        // Silently fail and show no ads rather than blocking the page
+        setAdvertisements([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAdvertisements();
+    // Add delay to prevent blocking initial page render
+    const timer = setTimeout(fetchAdvertisements, 200);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleAdClick = async (adId: string) => {
