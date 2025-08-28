@@ -1,0 +1,100 @@
+-- Insert sample advertisements for demonstration
+-- First, we need to get a service provider user ID. Let's create a sample one if it doesn't exist.
+
+-- Insert sample advertisements (using a placeholder UUID that should be replaced with actual service provider IDs)
+INSERT INTO public.advertisements (
+  advertiser_id,
+  title,
+  description,
+  business_name,
+  contact_phone,
+  contact_email,
+  website_url,
+  category,
+  tags,
+  image_url,
+  is_active,
+  is_featured,
+  start_date,
+  end_date
+) VALUES 
+(
+  'bfe88021-d76b-4f65-8b43-1b879ad4617a', -- Using the current user ID from network requests
+  'Professional Plumbing Services',
+  'Expert plumbing repairs, installations, and maintenance. Available 24/7 for emergency services. Licensed and insured.',
+  'Ahmad Plumbing Solutions',
+  '+60123456789',
+  'ahmad@plumbingsolutions.my',
+  'https://ahmadplumbing.my',
+  'services',
+  ARRAY['plumbing', 'repair', 'emergency', '24/7'],
+  'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=500&h=300&fit=crop',
+  true,
+  true,
+  now(),
+  now() + INTERVAL '30 days'
+),
+(
+  'bfe88021-d76b-4f65-8b43-1b879ad4617a',
+  'Fresh Groceries Delivery',
+  'Daily fresh groceries delivered to your doorstep. Organic vegetables, fruits, and household essentials.',
+  'Segar Mart Express',
+  '+60187654321',
+  'orders@segarmart.my',
+  'https://segarmart.my',
+  'retail',
+  ARRAY['groceries', 'delivery', 'fresh', 'organic'],
+  'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&h=300&fit=crop',
+  true,
+  false,
+  now(),
+  now() + INTERVAL '60 days'
+),
+(
+  'bfe88021-d76b-4f65-8b43-1b879ad4617a',
+  'Home Cleaning Services',
+  'Professional house cleaning services. Regular weekly, bi-weekly or monthly cleaning packages available.',
+  'Sparkle Clean Pro',
+  '+60198765432',
+  'booking@sparkleclick.my',
+  'https://sparkleclick.my',
+  'services',
+  ARRAY['cleaning', 'house', 'professional', 'weekly'],
+  'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=500&h=300&fit=crop',
+  true,
+  false,
+  now(),
+  now() + INTERVAL '45 days'
+),
+(
+  'bfe88021-d76b-4f65-8b43-1b879ad4617a',
+  'Computer Repair & IT Support',
+  'Expert computer repair, laptop servicing, and IT support for homes and small businesses. Same day service available.',
+  'TechFix Solutions',
+  '+60176543210',
+  'support@techfixsolutions.my',
+  'https://techfixsolutions.my',
+  'technology',
+  ARRAY['computer', 'repair', 'IT', 'laptop', 'support'],
+  'https://images.unsplash.com/photo-1487611459768-bd414656ea10?w=500&h=300&fit=crop',
+  true,
+  true,
+  now(),
+  now() + INTERVAL '90 days'
+),
+(
+  'bfe88021-d76b-4f65-8b43-1b879ad4617a',
+  'Homemade Catering Services',
+  'Delicious homemade Malaysian cuisine for events, parties, and daily meals. Halal certified and affordable.',
+  'Dapur Kak Siti',
+  '+60123987654',
+  'orders@dapurkaksiti.my',
+  null,
+  'food',
+  ARRAY['catering', 'halal', 'malaysian', 'homemade', 'events'],
+  'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=500&h=300&fit=crop',
+  true,
+  false,
+  now(),
+  now() + INTERVAL '30 days'
+);
