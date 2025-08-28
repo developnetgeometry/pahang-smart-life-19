@@ -57,26 +57,46 @@ export const useUnits = () => {
 
   const createUnit = async (unitData: Omit<Unit, 'id' | 'created_at' | 'updated_at' | 'created_by'>) => {
     try {
+      if (!user?.id) {
+        toast.error('You must be logged in to create units');
+        return false;
+      }
+
       // Get user's district_id from profile
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('district_id')
-        .eq('id', user?.id)
+        .eq('id', user.id)
         .single();
+
+      if (profileError) {
+        console.error('Error getting user profile:', profileError);
+        toast.error('Unable to fetch your profile information');
+        return false;
+      }
+
+      if (!profile?.district_id) {
+        toast.error('Your profile is missing district information. Please contact an administrator.');
+        return false;
+      }
 
       const { data, error } = await supabase
         .from('units')
         .insert([{
           ...unitData,
-          created_by: user?.id,
-          district_id: profile?.district_id
+          created_by: user.id,
+          district_id: profile.district_id
         }])
         .select()
         .single();
 
       if (error) {
         console.error('Error creating unit:', error);
-        toast.error('Failed to create unit');
+        if (error.code === '42501') {
+          toast.error('You do not have permission to create units. Please check your role permissions.');
+        } else {
+          toast.error('Failed to create unit');
+        }
         return false;
       }
 
