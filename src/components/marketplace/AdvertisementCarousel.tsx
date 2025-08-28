@@ -110,16 +110,23 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
   };
 
   const handleBuyNow = async (ad: Advertisement) => {
+    console.log('Buy Now button clicked!', { ad, user });
+    
     try {
       if (!user) {
+        console.log('User not authenticated, redirecting to login');
         // Redirect to login if user is not authenticated
         window.location.href = '/login';
         return;
       }
 
+      console.log('User authenticated, proceeding with purchase');
+      
       // Track the click
       handleAdClick(ad.id);
 
+      console.log('Calling Stripe edge function...');
+      
       // Create Stripe checkout session
       const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
         body: {
@@ -130,17 +137,25 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
         }
       });
 
+      console.log('Stripe response:', { data, error });
+
       if (error) {
         console.error('Stripe checkout error:', error);
+        alert(`Stripe Error: ${error.message}`);
         throw error;
       }
 
       if (data?.url) {
+        console.log('Opening Stripe checkout URL:', data.url);
         // Open Stripe checkout in a new tab
         window.open(data.url, '_blank');
+      } else {
+        console.error('No checkout URL received from Stripe');
+        alert('Failed to create checkout session - no URL received');
       }
     } catch (error) {
       console.error('Error initiating purchase:', error);
+      alert(`Purchase Error: ${error.message || 'Unknown error occurred'}`);
     }
   };
 
