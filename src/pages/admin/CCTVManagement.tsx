@@ -1076,6 +1076,7 @@ export default function CCTVManagement() {
                       <Badge className={getStatusColor(camera.status)}>
                         {t[camera.status as keyof typeof t] || camera.status}
                       </Badge>
+                      {(hasRole('admin') || hasRole('security_officer') || hasRole('manager') || hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin') || hasRole('facility_manager')) && (
                       <Button
                         size="icon"
                         variant="ghost"
@@ -1094,6 +1095,7 @@ export default function CCTVManagement() {
                       >
                         <Settings className="h-4 w-4" />
                       </Button>
+                      )}
                       {(hasRole('admin') || hasRole('security_officer') || hasRole('manager') || hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin') || hasRole('facility_manager')) && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
