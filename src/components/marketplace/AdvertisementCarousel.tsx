@@ -109,6 +109,29 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
     }
   };
 
+  const handleViewDetails = async (ad: Advertisement) => {
+    // Track the click
+    await handleAdClick(ad.id);
+    
+    // Create a detailed view with contact information
+    const detailsModal = `
+      Business: ${ad.business_name}
+      Service: ${ad.title}
+      Description: ${ad.description || 'No description available'}
+      
+      Contact Information:
+      ${ad.contact_phone ? `Phone: ${ad.contact_phone}` : ''}
+      ${ad.contact_email ? `Email: ${ad.contact_email}` : ''}
+      ${ad.website_url ? `Website: ${ad.website_url}` : ''}
+      
+      Category: ${ad.category}
+      ${ad.tags && ad.tags.length > 0 ? `Tags: ${ad.tags.join(', ')}` : ''}
+    `;
+    
+    // Show details in an alert for now (you can replace with a proper modal later)
+    alert(detailsModal);
+  };
+
   const handleBuyNow = async (ad: Advertisement) => {
     console.log('Buy Now button clicked!', { ad, user });
     
@@ -275,7 +298,7 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={() => handleAdClick(currentAd.id)}
+                  onClick={() => handleViewDetails(currentAd)}
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
                   {language === 'en' ? 'View Details' : 'Lihat Butiran'}
