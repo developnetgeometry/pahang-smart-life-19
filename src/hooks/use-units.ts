@@ -77,7 +77,7 @@ export const useUnits = () => {
       if (error) {
         console.error('Error creating unit:', error);
         toast.error('Failed to create unit');
-        return null;
+        return false;
       }
 
       setUnits(prev => [...prev, {
@@ -85,11 +85,11 @@ export const useUnits = () => {
         unit_type: data.unit_type as 'residential' | 'commercial' | 'facility'
       }]);
       toast.success('Unit created successfully');
-      return data;
+      return true;
     } catch (error) {
       console.error('Error creating unit:', error);
       toast.error('Failed to create unit');
-      return null;
+      return false;
     }
   };
 
@@ -105,7 +105,7 @@ export const useUnits = () => {
       if (error) {
         console.error('Error updating unit:', error);
         toast.error('Failed to update unit');
-        return null;
+        return false;
       }
 
       setUnits(prev => prev.map(unit => unit.id === id ? {
@@ -113,11 +113,11 @@ export const useUnits = () => {
         unit_type: data.unit_type as 'residential' | 'commercial' | 'facility'
       } : unit));
       toast.success('Unit updated successfully');
-      return data;
+      return true;
     } catch (error) {
       console.error('Error updating unit:', error);
       toast.error('Failed to update unit');
-      return null;
+      return false;
     }
   };
 
