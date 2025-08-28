@@ -746,19 +746,10 @@ export default function Marketplace() {
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={() => handleAddToCart(item)}
-                  className="flex-1"
+                  onClick={() => navigate(`/marketplace/item/${item.id}`)}
+                  className="w-full"
                 >
-                  <ShoppingCartIcon className="h-4 w-4 mr-2" />
-                  {language === 'en' ? 'Add to Cart' : 'Tambah ke Troli'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleContactSeller(item)}
-                >
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  {language === 'en' ? 'Contact' : 'Hubungi'}
+                  {language === 'en' ? 'View Details' : 'Lihat Butiran'}
                 </Button>
               </div>
             </CardContent>
