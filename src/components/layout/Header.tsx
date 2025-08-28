@@ -1,6 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import EnhancedNotificationBell from '@/components/communication/EnhancedNotificationBell';
 import { useTranslation } from '@/lib/translations';
+import { useUserRoles } from '@/hooks/use-user-roles';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -24,8 +25,31 @@ import {
 
 export function Header() {
   const { user, language, switchLanguage, theme, switchTheme, logout } = useAuth();
+  const { userRoles } = useUserRoles();
   const { t } = useTranslation(language || 'ms');
   const navigate = useNavigate();
+
+  // Get the highest priority role for display
+  const getPrimaryRole = () => {
+    const roleHierarchy = [
+      'state_admin',
+      'district_coordinator', 
+      'community_admin',
+      'state_service_manager',
+      'security_officer',
+      'maintenance_staff',
+      'service_provider',
+      'community_leader',
+      'resident'
+    ];
+    
+    for (const role of roleHierarchy) {
+      if (userRoles.includes(role as any)) {
+        return role;
+      }
+    }
+    return 'resident';
+  };
 
   if (!user) return null;
 
@@ -89,7 +113,7 @@ export function Header() {
                   {user.district}
                 </Badge>
                 <Badge variant="outline" className="text-xs">
-                  {user.user_role}
+                  {getPrimaryRole().replace('_', ' ')}
                 </Badge>
               </div>
             </div>
