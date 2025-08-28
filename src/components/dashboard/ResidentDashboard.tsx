@@ -474,7 +474,6 @@ export function ResidentDashboard() {
       {/* Interactive Location Viewer */}
       <InteractiveLocationViewer
         imageUrl="/lovable-uploads/0709b4db-2289-4ac3-a185-7de4c3dce5b0.png"
-        locations={[]}
         title={language === 'en' ? 'Community Map' : 'Peta Komuniti'}
         showSearch={true}
       />

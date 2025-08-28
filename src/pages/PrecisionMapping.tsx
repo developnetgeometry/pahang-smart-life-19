@@ -155,7 +155,6 @@ const PrecisionMapping = () => {
         <div className="lg:col-span-2">
           <InteractiveLocationViewer
             imageUrl="/lovable-uploads/0709b4db-2289-4ac3-a185-7de4c3dce5b0.png"
-            locations={[]}
             title="Precision Community Mapping"
             showSearch={true}
           />

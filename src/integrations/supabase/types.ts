@@ -5253,6 +5253,84 @@ export type Database = {
           },
         ]
       }
+      units: {
+        Row: {
+          address: string | null
+          community_id: string | null
+          coordinates_x: number
+          coordinates_y: number
+          created_at: string
+          created_by: string | null
+          district_id: string | null
+          email: string | null
+          height: number | null
+          id: string
+          notes: string | null
+          occupancy_status: string | null
+          owner_name: string
+          phone_number: string | null
+          unit_number: string
+          unit_type: string
+          updated_at: string
+          width: number | null
+        }
+        Insert: {
+          address?: string | null
+          community_id?: string | null
+          coordinates_x: number
+          coordinates_y: number
+          created_at?: string
+          created_by?: string | null
+          district_id?: string | null
+          email?: string | null
+          height?: number | null
+          id?: string
+          notes?: string | null
+          occupancy_status?: string | null
+          owner_name: string
+          phone_number?: string | null
+          unit_number: string
+          unit_type?: string
+          updated_at?: string
+          width?: number | null
+        }
+        Update: {
+          address?: string | null
+          community_id?: string | null
+          coordinates_x?: number
+          coordinates_y?: number
+          created_at?: string
+          created_by?: string | null
+          district_id?: string | null
+          email?: string | null
+          height?: number | null
+          id?: string
+          notes?: string | null
+          occupancy_status?: string | null
+          owner_name?: string
+          phone_number?: string | null
+          unit_number?: string
+          unit_type?: string
+          updated_at?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "units_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_presence: {
         Row: {
           current_room_id: string | null

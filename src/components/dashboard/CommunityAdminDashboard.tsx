@@ -20,8 +20,10 @@ import {
   MessageSquare,
   UserPlus,
   CheckCircle,
-  XCircle
+  XCircle,
+  MapPin
 } from 'lucide-react';
+import UnitManagement from '@/components/admin/UnitManagement';
 
 export function CommunityAdminDashboard() {
   const { language, user } = useAuth();
@@ -457,6 +459,25 @@ export function CommunityAdminDashboard() {
           </CardContent>
         </Card>
       )}
+
+      {/* Unit Management Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MapPin className="h-5 w-5" />
+            {language === 'en' ? 'Unit Management' : 'Pengurusan Unit'}
+          </CardTitle>
+          <CardDescription>
+            {language === 'en' 
+              ? 'Manage community units and resident information on the interactive map'
+              : 'Urus unit komuniti dan maklumat penduduk di peta interaktif'
+            }
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <UnitManagement />
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <Card>

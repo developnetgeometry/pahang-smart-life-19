@@ -5,104 +5,35 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ZoomIn, ZoomOut, RotateCcw, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-
-interface UnitLocation {
-  id: string;
-  name: string;
-  owner: string;
-  unitNumber: string;
-  type: 'residential' | 'commercial' | 'facility';
-  coordinates: {
-    x: number; // X coordinate on the image (percentage)
-    y: number; // Y coordinate on the image (percentage)
-  };
-  width?: number; // Width of clickable area (percentage)
-  height?: number; // Height of clickable area (percentage)
-}
+import { useUnits, Unit } from '@/hooks/use-units';
 
 interface InteractiveLocationViewerProps {
   imageUrl: string;
-  locations: UnitLocation[];
   title?: string;
   showSearch?: boolean;
 }
 
 const InteractiveLocationViewer: React.FC<InteractiveLocationViewerProps> = ({
   imageUrl,
-  locations,
   title = "Community Map",
   showSearch = true
 }) => {
+  const { units, loading } = useUnits();
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [selectedUnit, setSelectedUnit] = useState<UnitLocation | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  // Mock locations data for demonstration
-  const mockLocations: UnitLocation[] = [
-    {
-      id: '1',
-      name: 'Unit A-101',
-      owner: 'Ahmad Rahman',
-      unitNumber: 'A-101',
-      type: 'residential',
-      coordinates: { x: 25, y: 30 },
-      width: 8,
-      height: 6
-    },
-    {
-      id: '2',
-      name: 'Unit A-102',
-      owner: 'Siti Nurhaliza',
-      unitNumber: 'A-102',
-      type: 'residential',
-      coordinates: { x: 35, y: 30 },
-      width: 8,
-      height: 6
-    },
-    {
-      id: '3',
-      name: 'Unit B-201',
-      owner: 'Lim Wei Ming',
-      unitNumber: 'B-201',
-      type: 'residential',
-      coordinates: { x: 60, y: 25 },
-      width: 8,
-      height: 6
-    },
-    {
-      id: '4',
-      name: 'Community Hall',
-      owner: 'Management Office',
-      unitNumber: 'CH-001',
-      type: 'facility',
-      coordinates: { x: 45, y: 60 },
-      width: 15,
-      height: 10
-    },
-    {
-      id: '5',
-      name: 'Mini Market',
-      owner: 'Kedai Runcit Sdn Bhd',
-      unitNumber: 'C-001',
-      type: 'commercial',
-      coordinates: { x: 20, y: 70 },
-      width: 12,
-      height: 8
-    }
-  ];
-
-  const allLocations = locations.length > 0 ? locations : mockLocations;
-
-  const filteredLocations = allLocations.filter(location =>
-    location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    location.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    location.unitNumber.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter units based on search term
+  const filteredUnits = units.filter(unit =>
+    unit.unit_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    unit.owner_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    unit.address?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -153,12 +84,12 @@ const InteractiveLocationViewer: React.FC<InteractiveLocationViewerProps> = ({
     setPosition({ x: 0, y: 0 });
   };
 
-  const handleUnitClick = (e: React.MouseEvent, unit: UnitLocation) => {
+  const handleUnitClick = (e: React.MouseEvent, unit: Unit) => {
     e.stopPropagation();
     setSelectedUnit(unit);
   };
 
-  const getUnitTypeColor = (type: UnitLocation['type']) => {
+  const getUnitTypeColor = (type: Unit['unit_type']) => {
     switch (type) {
       case 'residential': return 'bg-blue-500/20 border-blue-500 hover:bg-blue-500/30';
       case 'commercial': return 'bg-green-500/20 border-green-500 hover:bg-green-500/30';
@@ -167,7 +98,7 @@ const InteractiveLocationViewer: React.FC<InteractiveLocationViewerProps> = ({
     }
   };
 
-  const getUnitTypeBadge = (type: UnitLocation['type']) => {
+  const getUnitTypeBadge = (type: Unit['unit_type']) => {
     switch (type) {
       case 'residential': return 'bg-blue-500';
       case 'commercial': return 'bg-green-500';
@@ -183,7 +114,7 @@ const InteractiveLocationViewer: React.FC<InteractiveLocationViewerProps> = ({
           <div>
             <CardTitle className="text-lg font-semibold">{title}</CardTitle>
             <Badge variant="secondary" className="mt-1">
-              {filteredLocations.length} Units
+              {loading ? 'Loading...' : `${filteredUnits.length} Units`}
             </Badge>
           </div>
           <div className="flex items-center gap-2">
@@ -245,23 +176,23 @@ const InteractiveLocationViewer: React.FC<InteractiveLocationViewerProps> = ({
             />
             
             {/* Unit markers */}
-            {imageLoaded && filteredLocations.map((unit) => (
+            {imageLoaded && !loading && filteredUnits.map((unit) => (
               <div
                 key={unit.id}
-                className={`absolute border-2 cursor-pointer transition-all duration-200 ${getUnitTypeColor(unit.type)}`}
+                className={`absolute border-2 cursor-pointer transition-all duration-200 ${getUnitTypeColor(unit.unit_type)}`}
                 style={{
-                  left: `${unit.coordinates.x}%`,
-                  top: `${unit.coordinates.y}%`,
+                  left: `${unit.coordinates_x}%`,
+                  top: `${unit.coordinates_y}%`,
                   width: `${unit.width || 6}%`,
                   height: `${unit.height || 4}%`,
                   transform: 'translate(-50%, -50%)'
                 }}
                 onClick={(e) => handleUnitClick(e, unit)}
-                title={`${unit.name} - ${unit.owner}`}
+                title={`${unit.unit_number} - ${unit.owner_name}`}
               >
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-xs font-semibold text-white bg-black/70 px-1 py-0.5 rounded">
-                    {unit.unitNumber}
+                    {unit.unit_number}
                   </span>
                 </div>
               </div>
@@ -269,12 +200,14 @@ const InteractiveLocationViewer: React.FC<InteractiveLocationViewerProps> = ({
           </div>
 
           {/* Loading indicator */}
-          {!imageLoaded && (
+          {(!imageLoaded || loading) && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                <p className="text-sm text-gray-500">Loading community map...</p>
-              </div>
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+              <p className="text-sm text-gray-500">
+                {loading ? 'Loading units...' : 'Loading community map...'}
+              </p>
+            </div>
             </div>
           )}
 
@@ -309,25 +242,57 @@ const InteractiveLocationViewer: React.FC<InteractiveLocationViewerProps> = ({
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {selectedUnit?.name}
-              <Badge className={getUnitTypeBadge(selectedUnit?.type || 'residential')}>
-                {selectedUnit?.type}
+              {selectedUnit?.unit_number}
+              <Badge className={getUnitTypeBadge(selectedUnit?.unit_type || 'residential')}>
+                {selectedUnit?.unit_type}
               </Badge>
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <h4 className="font-semibold text-sm text-gray-600 mb-1">Owner</h4>
-              <p className="text-lg">{selectedUnit?.owner}</p>
+              <p className="text-lg">{selectedUnit?.owner_name}</p>
             </div>
             <div>
               <h4 className="font-semibold text-sm text-gray-600 mb-1">Unit Number</h4>
-              <p>{selectedUnit?.unitNumber}</p>
+              <p>{selectedUnit?.unit_number}</p>
             </div>
             <div>
               <h4 className="font-semibold text-sm text-gray-600 mb-1">Type</h4>
-              <p className="capitalize">{selectedUnit?.type}</p>
+              <p className="capitalize">{selectedUnit?.unit_type}</p>
             </div>
+            {selectedUnit?.address && (
+              <div>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">Address</h4>
+                <p>{selectedUnit.address}</p>
+              </div>
+            )}
+            {selectedUnit?.phone_number && (
+              <div>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">Phone</h4>
+                <p>{selectedUnit.phone_number}</p>
+              </div>
+            )}
+            {selectedUnit?.email && (
+              <div>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">Email</h4>
+                <p>{selectedUnit.email}</p>
+              </div>
+            )}
+            {selectedUnit?.occupancy_status && (
+              <div>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">Status</h4>
+                <Badge variant={selectedUnit.occupancy_status === 'occupied' ? 'default' : 'secondary'}>
+                  {selectedUnit.occupancy_status}
+                </Badge>
+              </div>
+            )}
+            {selectedUnit?.notes && (
+              <div>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">Notes</h4>
+                <p className="text-sm">{selectedUnit.notes}</p>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
