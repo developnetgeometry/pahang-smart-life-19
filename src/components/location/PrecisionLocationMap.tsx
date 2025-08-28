@@ -119,8 +119,16 @@ export const PrecisionLocationMap: React.FC<PrecisionLocationMapProps> = ({
     initializeMap();
     
     return () => {
-      if (map.current) {
-        map.current.remove();
+      try {
+        if (map.current && map.current.getContainer()) {
+          console.log('PrecisionMap: Cleaning up map...');
+          map.current.remove();
+          map.current = null;
+        }
+      } catch (error) {
+        console.log('PrecisionMap: Error during cleanup (safe to ignore):', error);
+        // Safe to ignore - map was likely not fully initialized
+        map.current = null;
       }
     };
   }, []);
