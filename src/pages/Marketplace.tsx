@@ -44,12 +44,59 @@ export default function Marketplace() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createGroupChat } = useChatRooms();
+  
+  // Mock items defined first for immediate use
+  const mockItems: MarketplaceItem[] = [
+    {
+      id: '1',
+      title: language === 'en' ? 'iPhone 13 Pro Max' : 'iPhone 13 Pro Max',
+      description: language === 'en' ? 'Excellent condition, comes with original box and charger' : 'Keadaan sangat baik, disertakan dengan kotak asal dan pengecas',
+      price: 3500,
+      category: 'electronics',
+      condition: 'like-new',
+      seller: 'John Doe',
+      sellerRating: 4.8,
+      location: 'Block A, Unit 15-2',
+      postedDate: '2024-01-15',
+      images: [iphoneMarketplaceImage],
+      isFavorite: false
+    },
+    {
+      id: '2',
+      title: language === 'en' ? 'IKEA Dining Table Set' : 'Set Meja Makan IKEA',
+      description: language === 'en' ? '6-seater dining table with chairs, good condition' : 'Meja makan 6 tempat duduk dengan kerusi, keadaan baik',
+      price: 800,
+      category: 'furniture',
+      condition: 'good',
+      seller: 'Sarah Chen',
+      sellerRating: 4.5,
+      location: 'Block B, Unit 8-1',
+      postedDate: '2024-01-12',
+      images: [diningTableMarketplaceImage],
+      isFavorite: true
+    },
+    {
+      id: '3',
+      title: language === 'en' ? 'Programming Books Collection' : 'Koleksi Buku Pengaturcaraan',
+      description: language === 'en' ? 'Various programming books, perfect for students' : 'Pelbagai buku pengaturcaraan, sesuai untuk pelajar',
+      price: 150,
+      category: 'books',
+      condition: 'good',
+      seller: 'Mike Wong',
+      sellerRating: 4.9,
+      location: 'Block C, Unit 12-5',
+      postedDate: '2024-01-10',
+      images: [programmingBooksMarketplaceImage],
+      isFavorite: false
+    }
+  ];
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedCondition, setSelectedCondition] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceItem[]>(mockItems); // Initialize with mock data for immediate display
+  const [loading, setLoading] = useState(false); // Changed to false for immediate UI display
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Check if user is a service provider
@@ -214,51 +261,6 @@ export default function Marketplace() {
     const timer = setTimeout(fetchMarketplaceItems, 100);
     return () => clearTimeout(timer);
   }, [language]);
-
-  const mockItems: MarketplaceItem[] = [
-    {
-      id: '1',
-      title: language === 'en' ? 'iPhone 13 Pro Max' : 'iPhone 13 Pro Max',
-      description: language === 'en' ? 'Excellent condition, comes with original box and charger' : 'Keadaan sangat baik, disertakan dengan kotak asal dan pengecas',
-      price: 3500,
-      category: 'electronics',
-      condition: 'like-new',
-      seller: 'John Doe',
-      sellerRating: 4.8,
-      location: 'Block A, Unit 15-2',
-      postedDate: '2024-01-15',
-      images: [iphoneMarketplaceImage],
-      isFavorite: false
-    },
-    {
-      id: '2',
-      title: language === 'en' ? 'IKEA Dining Table Set' : 'Set Meja Makan IKEA',
-      description: language === 'en' ? '6-seater dining table with chairs, good condition' : 'Meja makan 6 tempat duduk dengan kerusi, keadaan baik',
-      price: 800,
-      category: 'furniture',
-      condition: 'good',
-      seller: 'Sarah Chen',
-      sellerRating: 4.5,
-      location: 'Block B, Unit 8-1',
-      postedDate: '2024-01-12',
-      images: [diningTableMarketplaceImage],
-      isFavorite: true
-    },
-    {
-      id: '3',
-      title: language === 'en' ? 'Programming Books Collection' : 'Koleksi Buku Pengaturcaraan',
-      description: language === 'en' ? 'Various programming books, perfect for students' : 'Pelbagai buku pengaturcaraan, sesuai untuk pelajar',
-      price: 150,
-      category: 'books',
-      condition: 'good',
-      seller: 'Mike Wong',
-      sellerRating: 4.9,
-      location: 'Block C, Unit 12-5',
-      postedDate: '2024-01-10',
-      images: [programmingBooksMarketplaceImage],
-      isFavorite: false
-    }
-  ];
 
   const categories = [
     { value: 'all', label: t.allCategories },
