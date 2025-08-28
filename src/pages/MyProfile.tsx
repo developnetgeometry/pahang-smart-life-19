@@ -15,6 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { HouseholdAccountManager } from '@/components/household/HouseholdAccountManager';
 import { User, Phone, Mail, MapPin, Car, Shield, Settings, Camera, Edit, Save, Bell, Calendar, Users, FileText, CheckCircle, Heart } from 'lucide-react';
 
 export default function MyProfile() {
@@ -401,6 +402,9 @@ export default function MyProfile() {
 
         {/* Right Column - Profile Details */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Household Account Management */}
+          <HouseholdAccountManager />
+          
           {/* Maklumat Peribadi */}
           <Card>
             <CardHeader>

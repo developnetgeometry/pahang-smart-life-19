@@ -11,7 +11,9 @@ export type EnhancedUserRole =
   | 'community_admin'
   | 'district_coordinator'
   | 'state_admin'
-  | 'state_service_manager';
+  | 'state_service_manager'
+  | 'spouse'
+  | 'tenant';
 
 export function useUserRoles() {
   const { user } = useAuth();

@@ -33,6 +33,7 @@ export function Header() {
   const getPrimaryRole = () => {
     const roleHierarchy = [
       'state_admin',
+      'spouse', // Spouse should show higher than regular resident
       'district_coordinator', 
       'community_admin',
       'state_service_manager',
@@ -40,7 +41,8 @@ export function Header() {
       'maintenance_staff',
       'service_provider',
       'community_leader',
-      'resident'
+      'resident',
+      'tenant' // Tenant is the lowest priority
     ];
     
     for (const role of roleHierarchy) {
