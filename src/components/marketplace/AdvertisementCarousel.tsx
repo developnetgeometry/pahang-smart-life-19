@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, ExternalLink, Phone, Mail, Globe } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, Phone, Mail, Globe, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Advertisement {
@@ -189,7 +189,9 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="text-lg font-semibold">{currentAd.title}</h3>
                     {currentAd.is_featured && (
-                      <Badge variant="secondary">{t.featured}</Badge>
+                      <div className="flex items-center">
+                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                      </div>
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground mb-2">{currentAd.business_name}</p>
