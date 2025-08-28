@@ -15,7 +15,7 @@ import { WeatherWidget } from './WeatherWidget';
 import { CommunityDirectoryWidget } from './CommunityDirectoryWidget';
 import { MaintenanceTrackerWidget } from './MaintenanceTrackerWidget';
 import { PrayerTimesWidget } from './PrayerTimesWidget';
-import { ResidentLocationMap } from './ResidentLocationMap';
+import { PrecisionLocationMap } from '../location/PrecisionLocationMap';
 import { CombinedSlideshow } from './CombinedSlideshow';
 import { MapPin } from 'lucide-react';
 import { 
@@ -471,8 +471,19 @@ export function ResidentDashboard() {
         </div>
       </div>
 
-      {/* Resident Location Map */}
-      <ResidentLocationMap />
+      {/* Precision Location Map */}
+      <PrecisionLocationMap
+        centerCoordinate={[103.3333, 3.8167]}
+        showSearch={true}
+        showLegend={true}
+        height="h-[500px]"
+        onLocationSelect={(location) => {
+          toast({
+            title: language === 'en' ? 'Location Selected' : 'Lokasi Dipilih',
+            description: location.name + ' - ' + location.address,
+          });
+        }}
+      />
 
       {/* Community Updates */}
       <Card>
