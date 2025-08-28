@@ -305,16 +305,6 @@ export default function Marketplace() {
       return;
     }
 
-    // Check if user is a service provider
-    if (!isServiceProvider) {
-      toast({
-        title: language === 'en' ? 'Access Denied' : 'Akses Ditolak',
-        description: language === 'en' ? 'Only service providers can create listings' : 'Hanya penyedia perkhidmatan boleh mencipta senarai',
-        variant: 'destructive'
-      });
-      return;
-    }
-
     // Validate required fields
     if (!formData.title || !formData.category || !formData.condition || !formData.price) {
       toast({
@@ -480,7 +470,7 @@ export default function Marketplace() {
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
-        {isServiceProvider && (
+        {user && (
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
               <Button>
