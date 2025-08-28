@@ -117,9 +117,28 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
         return;
       }
 
+      // Track the click
       handleAdClick(ad.id);
-      // Redirect to Stripe payment link
-      window.location.href = 'https://buy.stripe.com/test_00waEYf3peCi9ZBcId18c00';
+
+      // Create Stripe checkout session
+      const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
+        body: {
+          advertisementId: ad.id,
+          businessName: ad.business_name,
+          title: ad.title,
+          price: 2999 // Default price 29.99 RM in cents - you can make this dynamic
+        }
+      });
+
+      if (error) {
+        console.error('Stripe checkout error:', error);
+        throw error;
+      }
+
+      if (data?.url) {
+        // Open Stripe checkout in a new tab
+        window.open(data.url, '_blank');
+      }
     } catch (error) {
       console.error('Error initiating purchase:', error);
     }
