@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { PrecisionLocationMap } from '@/components/location/PrecisionLocationMap';
+import InteractiveLocationViewer from '@/components/location/InteractiveLocationViewer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -153,12 +153,11 @@ const PrecisionMapping = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Map */}
         <div className="lg:col-span-2">
-          <PrecisionLocationMap
-            centerCoordinate={[103.3333, 3.8167]}
+          <InteractiveLocationViewer
+            imageUrl="/lovable-uploads/7687f368-63da-4bc0-a610-d88851aebf13.png"
+            locations={[]}
+            title="Precision Community Mapping"
             showSearch={true}
-            showLegend={true}
-            onLocationSelect={handleLocationSelect}
-            height="h-[600px]"
           />
         </div>
 
