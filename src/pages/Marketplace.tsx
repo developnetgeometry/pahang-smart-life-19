@@ -39,6 +39,7 @@ interface MarketplaceItem {
   postedDate: string;
   images: string[];
   isFavorite: boolean;
+  sellerType: 'resident' | 'service_provider';
 }
 
 export default function Marketplace() {
@@ -65,7 +66,8 @@ export default function Marketplace() {
       location: 'Block A, Unit 15-2',
       postedDate: '2024-01-15',
       images: [iphoneMarketplaceImage],
-      isFavorite: false
+      isFavorite: false,
+      sellerType: 'resident'
     },
     {
       id: '2',
@@ -79,7 +81,8 @@ export default function Marketplace() {
       location: 'Block B, Unit 8-1',
       postedDate: '2024-01-12',
       images: [diningTableMarketplaceImage],
-      isFavorite: true
+      isFavorite: true,
+      sellerType: 'resident'
     },
     {
       id: '3',
@@ -93,7 +96,8 @@ export default function Marketplace() {
       location: 'Block C, Unit 12-5',
       postedDate: '2024-01-10',
       images: [programmingBooksMarketplaceImage],
-      isFavorite: false
+      isFavorite: false,
+      sellerType: 'service_provider'
     }
   ];
 
@@ -250,7 +254,8 @@ export default function Marketplace() {
             item.image === 'programming-books-marketplace.jpg' ? programmingBooksMarketplaceImage :
             getFallbackImage(item.title, item.category)
           ] : [getFallbackImage(item.title, item.category)],
-          isFavorite: false
+          isFavorite: false,
+          sellerType: item.seller_type as 'resident' | 'service_provider'
         }));
 
         setMarketplaceItems(transformedItems.length > 0 ? transformedItems : mockItems);
@@ -337,12 +342,23 @@ export default function Marketplace() {
     setIsSubmitting(true);
     
     try {
-      // Get user's district from their profile
+      // Get user's district and role information
       const { data: profile } = await supabase
         .from('profiles')
         .select('district_id')
         .eq('id', user.id)
         .single();
+
+      // Check if user is a service provider
+      const { data: userRole } = await supabase
+        .from('enhanced_user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'service_provider')
+        .eq('is_active', true)
+        .single();
+
+      const sellerType = userRole ? 'service_provider' : 'resident';
 
       const { error } = await supabase
         .from('marketplace_items')
@@ -355,6 +371,7 @@ export default function Marketplace() {
           condition: formData.condition,
           location: formData.location,
           district_id: profile?.district_id,
+          seller_type: sellerType,
           is_available: true,
           is_active: true
         });
@@ -415,7 +432,8 @@ export default function Marketplace() {
               item.image === 'programming-books-marketplace.jpg' ? programmingBooksMarketplaceImage :
               getFallbackImage(item.title, item.category)
             ] : [getFallbackImage(item.title, item.category)],
-            isFavorite: false
+            isFavorite: false,
+            sellerType: item.seller_type as 'resident' | 'service_provider'
           }));
 
           setMarketplaceItems(transformedItems.length > 0 ? transformedItems : mockItems);

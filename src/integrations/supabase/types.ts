@@ -2905,6 +2905,7 @@ export type Database = {
           low_stock_threshold: number | null
           price: number
           seller_id: string | null
+          seller_type: string
           stock_quantity: number | null
           title: string
           updated_at: string | null
@@ -2925,6 +2926,7 @@ export type Database = {
           low_stock_threshold?: number | null
           price: number
           seller_id?: string | null
+          seller_type?: string
           stock_quantity?: number | null
           title: string
           updated_at?: string | null
@@ -2945,6 +2947,7 @@ export type Database = {
           low_stock_threshold?: number | null
           price?: number
           seller_id?: string | null
+          seller_type?: string
           stock_quantity?: number | null
           title?: string
           updated_at?: string | null

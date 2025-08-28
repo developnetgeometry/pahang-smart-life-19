@@ -30,6 +30,7 @@ interface MarketplaceItem {
   postedDate: string;
   images: string[];
   isFavorite: boolean;
+  sellerType: 'resident' | 'service_provider';
 }
 
 export default function MarketplaceItemDetail() {
@@ -105,7 +106,8 @@ export default function MarketplaceItemDetail() {
       location: 'Block A, Unit 15-2',
       postedDate: '2024-01-15',
       images: [iphoneMarketplaceImage],
-      isFavorite: false
+      isFavorite: false,
+      sellerType: 'resident'
     },
     {
       id: '2',
@@ -119,7 +121,8 @@ export default function MarketplaceItemDetail() {
       location: 'Block B, Unit 8-1',
       postedDate: '2024-01-12',
       images: [diningTableMarketplaceImage],
-      isFavorite: true
+      isFavorite: true,
+      sellerType: 'resident'
     },
     {
       id: '3',
@@ -133,7 +136,8 @@ export default function MarketplaceItemDetail() {
       location: 'Block C, Unit 12-5',
       postedDate: '2024-01-10',
       images: [programmingBooksMarketplaceImage],
-      isFavorite: false
+      isFavorite: false,
+      sellerType: 'service_provider'
     }
   ];
 
@@ -180,7 +184,8 @@ export default function MarketplaceItemDetail() {
               data.image === 'programming-books-marketplace.jpg' ? programmingBooksMarketplaceImage :
               getFallbackImage(data.title, data.category)
             ] : [getFallbackImage(data.title, data.category)],
-            isFavorite: false
+            isFavorite: false,
+            sellerType: data.seller_type as 'resident' | 'service_provider'
           };
 
           setItem(transformedItem);
@@ -419,19 +424,21 @@ export default function MarketplaceItemDetail() {
 
           {/* Action Buttons */}
           <div className="flex gap-3">
-            <Button
-              size="lg"
-              onClick={handleAddToCart}
-              className="flex-1"
-            >
-              <ShoppingCart className="h-5 w-5 mr-2" />
-              {t.addToCart}
-            </Button>
+            {item.sellerType === 'service_provider' && (
+              <Button
+                size="lg"
+                onClick={handleAddToCart}
+                className="flex-1"
+              >
+                <ShoppingCart className="h-5 w-5 mr-2" />
+                {t.addToCart}
+              </Button>
+            )}
             <Button
               variant="outline"
               size="lg"
               onClick={handleContactSeller}
-              className="flex-1"
+              className={item.sellerType === 'resident' ? 'w-full' : 'flex-1'}
             >
               <MessageCircle className="h-5 w-5 mr-2" />
               {t.contactSeller}
