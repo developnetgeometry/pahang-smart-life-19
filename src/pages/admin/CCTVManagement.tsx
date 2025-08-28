@@ -1206,23 +1206,6 @@ export default function CCTVManagement() {
                       <Settings className="h-4 w-4 mr-1" />
                       {t.settings}
                     </Button>
-                    <Button
-                      size="sm"
-                      variant={camera.recording ? "destructive" : "default"}
-                      onClick={() => handleToggleRecording(camera)}
-                    >
-                      {camera.recording ? (
-                        <>
-                          <Pause className="h-4 w-4 mr-1" />
-                          {t.stopRecording}
-                        </>
-                      ) : (
-                        <>
-                          <Play className="h-4 w-4 mr-1" />
-                          {t.startRecording}
-                        </>
-                      )}
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
