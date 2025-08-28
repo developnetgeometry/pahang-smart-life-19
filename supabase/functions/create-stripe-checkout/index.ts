@@ -98,11 +98,19 @@ serve(async (req) => {
 
     // Update click count for the advertisement
     if (advertisementId) {
-      await supabaseService
+      const { data: currentAd } = await supabaseService
         .from("advertisements")
-        .update({ click_count: supabaseService.raw('click_count + 1') })
-        .eq('id', advertisementId);
-      logStep("Updated advertisement click count", { advertisementId });
+        .select('click_count')
+        .eq('id', advertisementId)
+        .single();
+      
+      if (currentAd) {
+        await supabaseService
+          .from("advertisements")
+          .update({ click_count: (currentAd.click_count || 0) + 1 })
+          .eq('id', advertisementId);
+        logStep("Updated advertisement click count", { advertisementId, newCount: (currentAd.click_count || 0) + 1 });
+      }
     }
 
     return new Response(JSON.stringify({ url: session.url, sessionId: session.id }), {
