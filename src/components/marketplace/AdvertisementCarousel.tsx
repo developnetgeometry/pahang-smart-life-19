@@ -100,10 +100,15 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
 
   const handleBuyNow = async (ad: Advertisement) => {
     try {
+      if (!user) {
+        // Redirect to login if user is not authenticated
+        window.location.href = '/login';
+        return;
+      }
+
       handleAdClick(ad.id);
-      // TODO: Implement payment gateway integration
-      console.log('Buy Now clicked for:', ad.title);
-      // This will be implemented once payment requirements are confirmed
+      // Redirect to Stripe payment link
+      window.location.href = 'https://buy.stripe.com/test_00waEYf3peCi9ZBcId18c00';
     } catch (error) {
       console.error('Error initiating purchase:', error);
     }
