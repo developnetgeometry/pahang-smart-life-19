@@ -5620,6 +5620,8 @@ export type Database = {
         | "community_leader"
         | "state_service_manager"
         | "resident"
+        | "spouse"
+        | "tenant"
       marketplace_condition: "new" | "excellent" | "good" | "fair" | "poor"
       permission_level: "full_access" | "standard_access" | "limited_access"
       role_request_status:
@@ -5817,6 +5819,8 @@ export const Constants = {
         "community_leader",
         "state_service_manager",
         "resident",
+        "spouse",
+        "tenant",
       ],
       marketplace_condition: ["new", "excellent", "good", "fair", "poor"],
       permission_level: ["full_access", "standard_access", "limited_access"],
