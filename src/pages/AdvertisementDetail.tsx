@@ -25,6 +25,18 @@ interface Advertisement {
   start_date: string;
   end_date: string;
   created_at: string;
+  price: number;
+  currency: string;
+  stock_quantity: number;
+  is_in_stock: boolean;
+  shipping_required: boolean;
+  shipping_cost: number;
+  product_weight: number;
+  product_dimensions: string;
+  product_type: 'service' | 'product' | 'both';
+  condition_status: string;
+  warranty_period: string;
+  return_policy: string;
 }
 
 export default function AdvertisementDetail() {
@@ -60,7 +72,7 @@ export default function AdvertisementDetail() {
           return;
         }
 
-        setAdvertisement(data);
+        setAdvertisement(data as Advertisement);
       } catch (error) {
         console.error('Error:', error);
         toast({
@@ -138,7 +150,7 @@ export default function AdvertisementDetail() {
           advertisementId: advertisement.id,
           businessName: advertisement.business_name,
           title: advertisement.title,
-          price: 2999 // Default price 29.99 RM in cents
+          price: advertisement.price ? Math.round(advertisement.price * 100) : 2999 // Use actual price or default
         }
       });
 
@@ -219,7 +231,7 @@ export default function AdvertisementDetail() {
         {advertisement.is_featured && (
           <div className="flex items-center gap-1 text-yellow-600">
             <Star className="h-4 w-4 fill-current" />
-            <span className="text-sm font-medium">Featured Service</span>
+            <span className="text-sm font-medium">Featured {advertisement.product_type === 'service' ? 'Service' : advertisement.product_type === 'product' ? 'Product' : 'Listing'}</span>
           </div>
         )}
       </div>
@@ -255,18 +267,114 @@ export default function AdvertisementDetail() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Pricing */}
+              {advertisement.price && (
+                <div className="bg-primary/5 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-2xl font-bold text-primary">
+                        {advertisement.currency} {advertisement.price.toFixed(2)}
+                      </p>
+                      {advertisement.product_type === 'product' && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge 
+                            variant={advertisement.is_in_stock ? "default" : "destructive"}
+                            className="text-xs"
+                          >
+                            {advertisement.is_in_stock ? 'In Stock' : 'Out of Stock'}
+                          </Badge>
+                          {advertisement.stock_quantity && advertisement.is_in_stock && (
+                            <span className="text-sm text-muted-foreground">
+                              {advertisement.stock_quantity} available
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {advertisement.condition_status && advertisement.product_type === 'product' && (
+                      <Badge variant="outline" className="capitalize">
+                        {advertisement.condition_status}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Description */}
               <div>
-                <h3 className="font-semibold mb-2">Service Description</h3>
+                <h3 className="font-semibold mb-2">
+                  {advertisement.product_type === 'service' ? 'Service' : 
+                   advertisement.product_type === 'product' ? 'Product' : 'Item'} Description
+                </h3>
                 <p className="text-muted-foreground leading-relaxed">
                   {advertisement.description}
                 </p>
               </div>
 
+              {/* Product Specifications */}
+              {advertisement.product_type === 'product' && (advertisement.product_weight || advertisement.product_dimensions) && (
+                <div>
+                  <h3 className="font-semibold mb-2">Specifications</h3>
+                  <div className="space-y-2 text-sm">
+                    {advertisement.product_dimensions && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Dimensions:</span>
+                        <span>{advertisement.product_dimensions}</span>
+                      </div>
+                    )}
+                    {advertisement.product_weight && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Weight:</span>
+                        <span>{advertisement.product_weight} kg</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Shipping Information */}
+              {advertisement.shipping_required && (
+                <div>
+                  <h3 className="font-semibold mb-2">Shipping Information</h3>
+                  <div className="bg-muted/50 p-3 rounded-lg">
+                    <p className="text-sm">
+                      {advertisement.shipping_cost > 0 
+                        ? `Shipping cost: ${advertisement.currency} ${advertisement.shipping_cost.toFixed(2)}`
+                        : 'Free shipping available'
+                      }
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Warranty & Return Policy */}
+              {(advertisement.warranty_period || advertisement.return_policy) && (
+                <div>
+                  <h3 className="font-semibold mb-2">Warranty & Returns</h3>
+                  <div className="space-y-2 text-sm">
+                    {advertisement.warranty_period && (
+                      <div>
+                        <span className="font-medium">Warranty:</span>
+                        <p className="text-muted-foreground mt-1">{advertisement.warranty_period}</p>
+                      </div>
+                    )}
+                    {advertisement.return_policy && (
+                      <div>
+                        <span className="font-medium">Return Policy:</span>
+                        <p className="text-muted-foreground mt-1">{advertisement.return_policy}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Tags */}
               {advertisement.tags && advertisement.tags.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-2">Services Offered</h3>
+                   <h3 className="font-semibold mb-2">
+                     {advertisement.product_type === 'service' ? 'Services Offered' : 
+                      advertisement.product_type === 'product' ? 'Features' : 'Tags'}
+                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {advertisement.tags.map((tag, index) => (
                       <Badge key={index} variant="secondary">
@@ -348,9 +456,11 @@ export default function AdvertisementDetail() {
               <Button
                 className="w-full"
                 onClick={handleBookService}
+                disabled={advertisement.product_type === 'product' && !advertisement.is_in_stock}
               >
                 <ShoppingCart className="h-4 w-4 mr-2" />
-                Book This Service
+                {advertisement.product_type === 'service' ? 'Book This Service' : 
+                 advertisement.product_type === 'product' ? 'Buy Now' : 'Purchase'}
               </Button>
             </CardContent>
           </Card>
@@ -358,7 +468,10 @@ export default function AdvertisementDetail() {
           {/* Service Info */}
           <Card>
             <CardHeader>
-              <CardTitle>Service Information</CardTitle>
+              <CardTitle>
+                {advertisement.product_type === 'service' ? 'Service' : 
+                 advertisement.product_type === 'product' ? 'Product' : 'Item'} Information
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between text-sm">

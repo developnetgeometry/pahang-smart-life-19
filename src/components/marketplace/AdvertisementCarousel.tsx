@@ -20,6 +20,14 @@ interface Advertisement {
   tags: string[];
   is_featured: boolean;
   click_count: number;
+  price: number;
+  currency: string;
+  stock_quantity: number;
+  is_in_stock: boolean;
+  shipping_required: boolean;
+  shipping_cost: number;
+  product_type: 'service' | 'product' | 'both';
+  condition_status: string;
 }
 
 interface AdvertisementCarouselProps {
@@ -36,22 +44,30 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
 
   const text = {
     en: {
-      title: 'Service Provider Advertisements',
-      subtitle: 'Discover local services in your community',
+      title: 'Services & Products',
+      subtitle: 'Discover local services and products in your community',
       featured: 'Featured',
       contact: 'Contact',
       website: 'Website',
-      viewMore: 'View More',
-      noAds: 'No advertisements available'
+      viewMore: 'View Details',
+      noAds: 'No advertisements available',
+      outOfStock: 'Out of Stock',
+      inStock: 'In Stock',
+      freeShipping: 'Free Shipping',
+      shippingCost: 'Shipping'
     },
     ms: {
-      title: 'Iklan Penyedia Perkhidmatan',
-      subtitle: 'Temui perkhidmatan tempatan dalam komuniti anda',
+      title: 'Perkhidmatan & Produk',
+      subtitle: 'Temui perkhidmatan dan produk tempatan dalam komuniti anda',
       featured: 'Pilihan',
       contact: 'Hubungi',
       website: 'Laman Web',
-      viewMore: 'Lihat Lebih',
-      noAds: 'Tiada iklan tersedia'
+      viewMore: 'Lihat Butiran',
+      noAds: 'Tiada iklan tersedia',
+      outOfStock: 'Kehabisan Stok',
+      inStock: 'Ada Stok',
+      freeShipping: 'Penghantaran Percuma',
+      shippingCost: 'Penghantaran'
     }
   };
 
@@ -283,19 +299,49 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
                       </div>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground mb-2">{currentAd.business_name}</p>
-                  {currentAd.description && (
-                    <p className="text-sm mb-4">{currentAd.description}</p>
-                  )}
-                  {currentAd.tags && currentAd.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-4">
-                      {currentAd.tags.map((tag, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
+                   <p className="text-sm text-muted-foreground mb-2">{currentAd.business_name}</p>
+                   {currentAd.description && (
+                     <p className="text-sm mb-4">{currentAd.description}</p>
+                   )}
+                   
+                   {/* Price and Stock Information */}
+                   <div className="flex items-center gap-4 mb-3">
+                     {currentAd.price && (
+                       <div className="flex items-center gap-1">
+                         <span className="text-lg font-bold text-primary">
+                           {currentAd.currency} {currentAd.price.toFixed(2)}
+                         </span>
+                       </div>
+                     )}
+                     
+                     {currentAd.product_type === 'product' && (
+                       <Badge 
+                         variant={currentAd.is_in_stock ? "default" : "destructive"}
+                         className="text-xs"
+                       >
+                         {currentAd.is_in_stock ? t.inStock : t.outOfStock}
+                       </Badge>
+                     )}
+                     
+                     {currentAd.shipping_required && (
+                       <Badge variant="outline" className="text-xs">
+                         {currentAd.shipping_cost > 0 
+                           ? `${t.shippingCost}: ${currentAd.currency} ${currentAd.shipping_cost.toFixed(2)}`
+                           : t.freeShipping
+                         }
+                       </Badge>
+                     )}
+                   </div>
+                   
+                   {currentAd.tags && currentAd.tags.length > 0 && (
+                     <div className="flex flex-wrap gap-1 mb-4">
+                       {currentAd.tags.map((tag, index) => (
+                         <Badge key={index} variant="outline" className="text-xs">
+                           {tag}
+                         </Badge>
+                       ))}
+                     </div>
+                   )}
                 </div>
               </div>
 

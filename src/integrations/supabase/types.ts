@@ -141,9 +141,11 @@ export type Database = {
           business_name: string
           category: string
           click_count: number | null
+          condition_status: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
+          currency: string | null
           description: string | null
           district_id: string | null
           end_date: string | null
@@ -151,10 +153,21 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           is_featured: boolean
+          is_in_stock: boolean | null
+          low_stock_alert: number | null
+          price: number | null
+          product_dimensions: string | null
+          product_type: string | null
+          product_weight: number | null
+          return_policy: string | null
+          shipping_cost: number | null
+          shipping_required: boolean | null
           start_date: string | null
+          stock_quantity: number | null
           tags: string[] | null
           title: string
           updated_at: string
+          warranty_period: string | null
           website_url: string | null
         }
         Insert: {
@@ -162,9 +175,11 @@ export type Database = {
           business_name: string
           category?: string
           click_count?: number | null
+          condition_status?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
+          currency?: string | null
           description?: string | null
           district_id?: string | null
           end_date?: string | null
@@ -172,10 +187,21 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           is_featured?: boolean
+          is_in_stock?: boolean | null
+          low_stock_alert?: number | null
+          price?: number | null
+          product_dimensions?: string | null
+          product_type?: string | null
+          product_weight?: number | null
+          return_policy?: string | null
+          shipping_cost?: number | null
+          shipping_required?: boolean | null
           start_date?: string | null
+          stock_quantity?: number | null
           tags?: string[] | null
           title: string
           updated_at?: string
+          warranty_period?: string | null
           website_url?: string | null
         }
         Update: {
@@ -183,9 +209,11 @@ export type Database = {
           business_name?: string
           category?: string
           click_count?: number | null
+          condition_status?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
+          currency?: string | null
           description?: string | null
           district_id?: string | null
           end_date?: string | null
@@ -193,10 +221,21 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           is_featured?: boolean
+          is_in_stock?: boolean | null
+          low_stock_alert?: number | null
+          price?: number | null
+          product_dimensions?: string | null
+          product_type?: string | null
+          product_weight?: number | null
+          return_policy?: string | null
+          shipping_cost?: number | null
+          shipping_required?: boolean | null
           start_date?: string | null
+          stock_quantity?: number | null
           tags?: string[] | null
           title?: string
           updated_at?: string
+          warranty_period?: string | null
           website_url?: string | null
         }
         Relationships: [
