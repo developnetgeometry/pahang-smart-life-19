@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, ExternalLink, Phone, Mail, Globe, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, Phone, Mail, Globe, Star, ShoppingCart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Advertisement {
@@ -95,6 +95,17 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
       }
     } catch (error) {
       console.error('Error updating click count:', error);
+    }
+  };
+
+  const handleBuyNow = async (ad: Advertisement) => {
+    try {
+      handleAdClick(ad.id);
+      // TODO: Implement payment gateway integration
+      console.log('Buy Now clicked for:', ad.title);
+      // This will be implemented once payment requirements are confirmed
+    } catch (error) {
+      console.error('Error initiating purchase:', error);
     }
   };
 
@@ -237,19 +248,14 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
                     Email
                   </Button>
                 )}
-                {currentAd.website_url && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      handleAdClick(currentAd.id);
-                      window.open(currentAd.website_url, '_blank');
-                    }}
-                  >
-                    <Globe className="h-4 w-4 mr-2" />
-                    {t.website}
-                  </Button>
-                )}
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => handleBuyNow(currentAd)}
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  {language === 'en' ? 'Buy Now' : 'Beli Sekarang'}
+                </Button>
               </div>
             </div>
           </div>
