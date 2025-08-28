@@ -15,7 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { User, Phone, Mail, MapPin, Car, Shield, Settings, Camera, Edit, Save, Bell, Calendar, Users, FileText, CheckCircle } from 'lucide-react';
+import { User, Phone, Mail, MapPin, Car, Shield, Settings, Camera, Edit, Save, Bell, Calendar, Users, FileText, CheckCircle, Heart } from 'lucide-react';
 
 export default function MyProfile() {
   const { user, language, updateProfile } = useAuth();
@@ -38,6 +38,17 @@ export default function MyProfile() {
     ethnic_id: '',
     nationality_id: '',
     oku_status: false,
+    marital_status: '',
+    
+    // Maklumat Pasangan (jika ada)
+    spouse_full_name: '',
+    spouse_identity_no: '',
+    spouse_identity_no_type: 'ic',
+    spouse_gender: '',
+    spouse_dob: '',
+    spouse_mobile_no: '',
+    spouse_occupation: '',
+    spouse_workplace: '',
     
     // Butiran Tambahan
     occupation_id: '',
@@ -94,6 +105,15 @@ export default function MyProfile() {
           ethnic_id: profile.ethnic_id || '',
           nationality_id: profile.nationality_id || '',
           oku_status: profile.oku_status || false,
+          marital_status: profile.marital_status || '',
+          spouse_full_name: profile.spouse_full_name || '',
+          spouse_identity_no: profile.spouse_identity_no || '',
+          spouse_identity_no_type: profile.spouse_identity_no_type || 'ic',
+          spouse_gender: profile.spouse_gender || '',
+          spouse_dob: profile.spouse_dob || '',
+          spouse_mobile_no: profile.spouse_mobile_no || '',
+          spouse_occupation: profile.spouse_occupation || '',
+          spouse_workplace: profile.spouse_workplace || '',
           occupation_id: profile.occupation_id || '',
           type_sector: profile.type_sector || '',
           education_level: profile.education_level || '',
@@ -227,6 +247,15 @@ export default function MyProfile() {
         ethnic_id: formData.ethnic_id,
         nationality_id: formData.nationality_id,
         oku_status: formData.oku_status,
+        marital_status: formData.marital_status,
+        spouse_full_name: formData.spouse_full_name || null,
+        spouse_identity_no: formData.spouse_identity_no || null,
+        spouse_identity_no_type: formData.spouse_identity_no_type,
+        spouse_gender: formData.spouse_gender || null,
+        spouse_dob: formData.spouse_dob || null,
+        spouse_mobile_no: formData.spouse_mobile_no || null,
+        spouse_occupation: formData.spouse_occupation || null,
+        spouse_workplace: formData.spouse_workplace || null,
         occupation_id: formData.occupation_id,
         type_sector: formData.type_sector,
         education_level: formData.education_level,
@@ -498,6 +527,24 @@ export default function MyProfile() {
                   <Label htmlFor="nationality_id">Warganegara * (Tidak boleh diubah)</Label>
                   <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.nationality_id || 'Belum diisi'}</p>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="marital_status">Status Perkahwinan</Label>
+                  {isEditing ? (
+                    <Select value={formData.marital_status} onValueChange={(value) => setFormData({...formData, marital_status: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih status perkahwinan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="bujang">Bujang</SelectItem>
+                        <SelectItem value="berkahwin">Berkahwin</SelectItem>
+                        <SelectItem value="bercerai">Bercerai</SelectItem>
+                        <SelectItem value="balu">Balu</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-sm p-2 bg-muted rounded">{formData.marital_status || 'Belum diisi'}</p>
+                  )}
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 <Switch
@@ -510,6 +557,135 @@ export default function MyProfile() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Maklumat Pasangan */}
+          {formData.marital_status === 'berkahwin' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Heart className="w-5 h-5" />
+                  <span>Maklumat Pasangan</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="spouse_full_name">Nama Penuh Pasangan</Label>
+                    {isEditing ? (
+                      <Input
+                        id="spouse_full_name"
+                        value={formData.spouse_full_name}
+                        onChange={(e) => setFormData({...formData, spouse_full_name: e.target.value})}
+                      />
+                    ) : (
+                      <p className="text-sm p-2 bg-muted rounded">{formData.spouse_full_name || 'Belum diisi'}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="spouse_identity_no">No. Kad Pengenalan Pasangan</Label>
+                    {isEditing ? (
+                      <Input
+                        id="spouse_identity_no"
+                        value={formData.spouse_identity_no}
+                        onChange={(e) => setFormData({...formData, spouse_identity_no: e.target.value})}
+                      />
+                    ) : (
+                      <p className="text-sm p-2 bg-muted rounded">{formData.spouse_identity_no || 'Belum diisi'}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="spouse_identity_no_type">Jenis Kad Pengenalan Pasangan</Label>
+                    {isEditing ? (
+                      <Select value={formData.spouse_identity_no_type} onValueChange={(value) => setFormData({...formData, spouse_identity_no_type: value})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ic">MyKad</SelectItem>
+                          <SelectItem value="passport">Pasport</SelectItem>
+                          <SelectItem value="other">Lain-lain</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <p className="text-sm p-2 bg-muted rounded">{formData.spouse_identity_no_type === 'ic' ? 'MyKad' : formData.spouse_identity_no_type === 'passport' ? 'Pasport' : 'Lain-lain'}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="spouse_gender">Jantina Pasangan</Label>
+                    {isEditing ? (
+                      <Select value={formData.spouse_gender} onValueChange={(value) => setFormData({...formData, spouse_gender: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih jantina" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="lelaki">Lelaki</SelectItem>
+                          <SelectItem value="perempuan">Perempuan</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <p className="text-sm p-2 bg-muted rounded">{formData.spouse_gender || 'Belum diisi'}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="spouse_dob">Tarikh Lahir Pasangan</Label>
+                    {isEditing ? (
+                      <Input
+                        id="spouse_dob"
+                        type="date"
+                        value={formData.spouse_dob}
+                        onChange={(e) => setFormData({...formData, spouse_dob: e.target.value})}
+                      />
+                    ) : (
+                      <p className="text-sm p-2 bg-muted rounded flex items-center">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        {formData.spouse_dob || 'Belum diisi'}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="spouse_mobile_no">Nombor Telefon Pasangan</Label>
+                    {isEditing ? (
+                      <Input
+                        id="spouse_mobile_no"
+                        type="tel"
+                        value={formData.spouse_mobile_no}
+                        onChange={(e) => setFormData({...formData, spouse_mobile_no: e.target.value})}
+                      />
+                    ) : (
+                      <p className="text-sm p-2 bg-muted rounded flex items-center">
+                        <Phone className="w-4 h-4 mr-2" />
+                        {formData.spouse_mobile_no || 'Belum diisi'}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="spouse_occupation">Pekerjaan Pasangan</Label>
+                    {isEditing ? (
+                      <Input
+                        id="spouse_occupation"
+                        value={formData.spouse_occupation}
+                        onChange={(e) => setFormData({...formData, spouse_occupation: e.target.value})}
+                      />
+                    ) : (
+                      <p className="text-sm p-2 bg-muted rounded">{formData.spouse_occupation || 'Belum diisi'}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="spouse_workplace">Tempat Kerja Pasangan</Label>
+                    {isEditing ? (
+                      <Input
+                        id="spouse_workplace"
+                        value={formData.spouse_workplace}
+                        onChange={(e) => setFormData({...formData, spouse_workplace: e.target.value})}
+                      />
+                    ) : (
+                      <p className="text-sm p-2 bg-muted rounded">{formData.spouse_workplace || 'Belum diisi'}</p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Butiran Tambahan */}
           <Card>

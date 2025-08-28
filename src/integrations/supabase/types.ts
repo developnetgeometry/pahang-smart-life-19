@@ -3484,6 +3484,7 @@ export type Database = {
           join_date: string | null
           language: string | null
           language_preference: string | null
+          marital_status: string | null
           membership_id: string | null
           mobile_no: string | null
           nationality_id: string | null
@@ -3496,6 +3497,14 @@ export type Database = {
           register_method: string | null
           registration_status: boolean | null
           socio_id: string | null
+          spouse_dob: string | null
+          spouse_full_name: string | null
+          spouse_gender: string | null
+          spouse_identity_no: string | null
+          spouse_identity_no_type: string | null
+          spouse_mobile_no: string | null
+          spouse_occupation: string | null
+          spouse_workplace: string | null
           status_entrepreneur: boolean | null
           status_membership: string | null
           supervision: string | null
@@ -3533,6 +3542,7 @@ export type Database = {
           join_date?: string | null
           language?: string | null
           language_preference?: string | null
+          marital_status?: string | null
           membership_id?: string | null
           mobile_no?: string | null
           nationality_id?: string | null
@@ -3545,6 +3555,14 @@ export type Database = {
           register_method?: string | null
           registration_status?: boolean | null
           socio_id?: string | null
+          spouse_dob?: string | null
+          spouse_full_name?: string | null
+          spouse_gender?: string | null
+          spouse_identity_no?: string | null
+          spouse_identity_no_type?: string | null
+          spouse_mobile_no?: string | null
+          spouse_occupation?: string | null
+          spouse_workplace?: string | null
           status_entrepreneur?: boolean | null
           status_membership?: string | null
           supervision?: string | null
@@ -3582,6 +3600,7 @@ export type Database = {
           join_date?: string | null
           language?: string | null
           language_preference?: string | null
+          marital_status?: string | null
           membership_id?: string | null
           mobile_no?: string | null
           nationality_id?: string | null
@@ -3594,6 +3613,14 @@ export type Database = {
           register_method?: string | null
           registration_status?: boolean | null
           socio_id?: string | null
+          spouse_dob?: string | null
+          spouse_full_name?: string | null
+          spouse_gender?: string | null
+          spouse_identity_no?: string | null
+          spouse_identity_no_type?: string | null
+          spouse_mobile_no?: string | null
+          spouse_occupation?: string | null
+          spouse_workplace?: string | null
           status_entrepreneur?: boolean | null
           status_membership?: string | null
           supervision?: string | null
