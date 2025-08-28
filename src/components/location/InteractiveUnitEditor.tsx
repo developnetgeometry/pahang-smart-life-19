@@ -97,7 +97,7 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
   };
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (!imageRef.current || !canvasRef.current) return;
+    if (!imageRef.current) return;
     
     const rect = imageRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -117,15 +117,11 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
       e.stopPropagation();
     } else if (!isDrawingMode) {
       // Start panning
-      e.preventDefault();
-      e.stopPropagation();
-      if (e.target === imageRef.current || e.target === canvasRef.current) {
-        setIsDragging(true);
-        setDragStart({
-          x: e.clientX - position.x,
-          y: e.clientY - position.y
-        });
-      }
+      setIsDragging(true);
+      setDragStart({
+        x: e.clientX - position.x,
+        y: e.clientY - position.y
+      });
     }
   }, [position, isDrawingMode, isAdminMode]);
 
@@ -333,12 +329,8 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
         <div 
           ref={containerRef}
           className={`relative w-full h-full overflow-hidden select-none ${
-            isDrawingMode ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'
+            isDrawingMode ? 'cursor-crosshair' : isDragging ? 'cursor-grabbing' : 'cursor-grab'
           }`}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
           onWheel={handleWheel}
           style={{ touchAction: 'none' }}
         >
@@ -361,6 +353,10 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                 console.error('Failed to load image:', imageUrl);
                 setImageLoaded(false);
               }}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
             />
             
             {/* Drawing overlay for current box being drawn */}
