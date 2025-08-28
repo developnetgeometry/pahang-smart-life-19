@@ -2228,6 +2228,64 @@ export type Database = {
           },
         ]
       }
+      household_accounts: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          linked_account_id: string
+          permissions: Json | null
+          primary_account_id: string
+          relationship_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          linked_account_id: string
+          permissions?: Json | null
+          primary_account_id: string
+          relationship_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          linked_account_id?: string
+          permissions?: Json | null
+          primary_account_id?: string
+          relationship_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_accounts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "household_accounts_linked_account_id_fkey"
+            columns: ["linked_account_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "household_accounts_primary_account_id_fkey"
+            columns: ["primary_account_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incident_reports: {
         Row: {
           assigned_to: string | null
@@ -5492,6 +5550,10 @@ export type Database = {
           user_requested_role: Database["public"]["Enums"]["user_role"]
         }[]
       }
+      get_primary_account_id: {
+        Args: { check_user_id?: string }
+        Returns: string
+      }
       get_required_approver_role: {
         Args: {
           current_user_role: Database["public"]["Enums"]["user_role"]
@@ -5535,6 +5597,10 @@ export type Database = {
           check_role: Database["public"]["Enums"]["enhanced_user_role"]
           check_user_id?: string
         }
+        Returns: boolean
+      }
+      has_household_permission: {
+        Args: { check_user_id?: string; permission_name: string }
         Returns: boolean
       }
       has_module_permission: {
