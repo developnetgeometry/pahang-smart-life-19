@@ -272,39 +272,13 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {currentAd.contact_phone && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      handleAdClick(currentAd.id);
-                      window.location.href = `tel:${currentAd.contact_phone}`;
-                    }}
-                  >
-                    <Phone className="h-4 w-4 mr-2" />
-                    {t.contact}
-                  </Button>
-                )}
-                {currentAd.contact_email && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      handleAdClick(currentAd.id);
-                      window.location.href = `mailto:${currentAd.contact_email}`;
-                    }}
-                  >
-                    <Mail className="h-4 w-4 mr-2" />
-                    Email
-                  </Button>
-                )}
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={() => handleBuyNow(currentAd)}
+                  onClick={() => handleAdClick(currentAd.id)}
                 >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  {language === 'en' ? 'Buy Now' : 'Beli Sekarang'}
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  {language === 'en' ? 'View Details' : 'Lihat Butiran'}
                 </Button>
               </div>
             </div>
