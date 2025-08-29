@@ -157,7 +157,7 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
       const width = Math.abs(drawingBox.endX - drawingBox.startX);
       const height = Math.abs(drawingBox.endY - drawingBox.startY);
       
-      if (width > 1 && height > 1) { // Only create if box is meaningful size
+      if (width > 0.5 && height > 0.5) { // Only create if box is meaningful size (0.5% minimum)
         const x = Math.min(drawingBox.startX, drawingBox.endX) + width / 2;
         const y = Math.min(drawingBox.startY, drawingBox.endY) + height / 2;
         
