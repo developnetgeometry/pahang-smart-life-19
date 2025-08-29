@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { MessageSquare, Plus, Search, Users, Clock, Pin, ArrowLeft, Reply, ThumbsUp } from 'lucide-react';
+import { MessageSquare, Plus, Search, Users, Clock, Pin, ArrowLeft, Reply, ThumbsUp, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Discussion {
@@ -19,19 +20,25 @@ interface Discussion {
   title: string;
   content: string;
   author: string;
+  author_id: string;
   category: string;
   replies: number;
   lastActivity: string;
   isPinned: boolean;
   tags: string[];
+  views_count: number;
+  replies_count: number;
+  created_at: string;
 }
 
 interface Comment {
   id: string;
   author: string;
+  author_id: string;
   content: string;
   timestamp: string;
   likes: number;
+  created_at: string;
   replies?: Comment[];
 }
 
@@ -44,6 +51,15 @@ export default function Discussions() {
   const [selectedDiscussion, setSelectedDiscussion] = useState<Discussion | null>(null);
   const [newComment, setNewComment] = useState('');
   const [comments, setComments] = useState<Record<string, Comment[]>>({});
+  const [discussions, setDiscussions] = useState<Discussion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [newDiscussion, setNewDiscussion] = useState({
+    title: '',
+    content: '',
+    category: '',
+    tags: ''
+  });
 
   const text = {
     en: {
@@ -114,78 +130,129 @@ export default function Discussions() {
 
   const t = text[language];
 
-  const mockComments: Record<string, Comment[]> = {
-    '1': [
-      {
-        id: '1',
-        author: 'Alex Thompson',
-        content: language === 'en' ? 'Great idea! I can help with the grilling setup.' : 'Idea yang bagus! Saya boleh bantu dengan persediaan pemanggang.',
-        timestamp: '1 hour ago',
-        likes: 5
-      },
-      {
-        id: '2',
-        author: 'Maria Garcia',
-        content: language === 'en' ? 'Count me in! Should we create a sign-up sheet?' : 'Saya sertai! Haruskah kita buat senarai pendaftaran?',
-        timestamp: '30 minutes ago',
-        likes: 3
+  // Fetch discussions from database
+  useEffect(() => {
+    const fetchDiscussions = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('discussions')
+          .select(`
+            *,
+            profiles:author_id (
+              full_name,
+              email
+            )
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const transformedDiscussions: Discussion[] = (data || []).map(discussion => ({
+          id: discussion.id,
+          title: discussion.title,
+          content: discussion.content,
+          author: discussion.profiles?.full_name || discussion.profiles?.email || 'Anonymous',
+          author_id: discussion.author_id,
+          category: discussion.category,
+          replies: discussion.replies_count || 0,
+          lastActivity: discussion.last_reply_at 
+            ? new Date(discussion.last_reply_at).toLocaleDateString()
+            : new Date(discussion.created_at).toLocaleDateString(),
+          isPinned: discussion.is_pinned,
+          tags: [], // Could be enhanced
+          views_count: discussion.views_count || 0,
+          replies_count: discussion.replies_count || 0,
+          created_at: discussion.created_at
+        }));
+
+        setDiscussions(transformedDiscussions);
+      } catch (error) {
+        console.error('Error fetching discussions:', error);
+        toast({
+          title: language === 'en' ? 'Error loading discussions' : 'Ralat memuatkan perbincangan',
+          description: language === 'en' ? 'Please try again later' : 'Sila cuba lagi kemudian',
+          variant: 'destructive'
+        });
+      } finally {
+        setLoading(false);
       }
-    ],
-    '2': [
-      {
-        id: '3',
-        author: 'John Smith',
-        content: language === 'en' ? 'Thanks for the update. What time will this happen?' : 'Terima kasih atas kemas kini. Pukul berapa ini akan berlaku?',
-        timestamp: '2 hours ago',
-        likes: 1
-      }
-    ],
-    '3': [
-      {
-        id: '4',
-        author: 'Lisa Brown',
-        content: language === 'en' ? 'These measures are much needed. Good work!' : 'Langkah-langkah ini sangat diperlukan. Kerja yang bagus!',
-        timestamp: '8 hours ago',
-        likes: 7
-      }
-    ]
+    };
+
+    fetchDiscussions();
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('discussions-changes')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'discussions'
+      }, (payload) => {
+        console.log('New discussion:', payload);
+        // Add new discussion to the list
+        if (payload.new) {
+          const newDiscussion: Discussion = {
+            id: payload.new.id,
+            title: payload.new.title,
+            content: payload.new.content,
+            author: 'Loading...',
+            author_id: payload.new.author_id,
+            category: payload.new.category,
+            replies: 0,
+            lastActivity: new Date(payload.new.created_at).toLocaleDateString(),
+            isPinned: payload.new.is_pinned,
+            tags: [],
+            views_count: 0,
+            replies_count: 0,
+            created_at: payload.new.created_at
+          };
+          setDiscussions(prev => [newDiscussion, ...prev]);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [language, toast]);
+
+  // Fetch comments for a discussion
+  const fetchComments = async (discussionId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('discussion_replies')
+        .select(`
+          *,
+          profiles:author_id (
+            full_name,
+            email
+          )
+        `)
+        .eq('discussion_id', discussionId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      const transformedComments: Comment[] = (data || []).map(reply => ({
+        id: reply.id,
+        author: reply.profiles?.full_name || reply.profiles?.email || 'Anonymous',
+        author_id: reply.author_id,
+        content: reply.content,
+        timestamp: new Date(reply.created_at).toLocaleDateString(),
+        likes: 0, // Could be enhanced with likes tracking
+        created_at: reply.created_at
+      }));
+
+      setComments(prev => ({
+        ...prev,
+        [discussionId]: transformedComments
+      }));
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    }
   };
 
-  const mockDiscussions: Discussion[] = [
-    {
-      id: '1',
-      title: language === 'en' ? 'Community BBQ Event Planning' : 'Perancangan Acara BBQ Komuniti',
-      content: language === 'en' ? 'Let\'s plan our annual community BBQ event...' : 'Mari kita rancang acara BBQ tahunan komuniti kita...',
-      author: 'Sarah Johnson',
-      category: 'events',
-      replies: 12,
-      lastActivity: '2 hours ago',
-      isPinned: true,
-      tags: ['event', 'planning', 'community']
-    },
-    {
-      id: '2',
-      title: language === 'en' ? 'Elevator Maintenance Schedule' : 'Jadual Penyelenggaraan Lif',
-      content: language === 'en' ? 'The elevator maintenance will be conducted...' : 'Penyelenggaraan lif akan dijalankan...',
-      author: 'Mike Chen',
-      category: 'maintenance',
-      replies: 5,
-      lastActivity: '4 hours ago',
-      isPinned: false,
-      tags: ['maintenance', 'elevator']
-    },
-    {
-      id: '3',
-      title: language === 'en' ? 'New Security Measures' : 'Langkah Keselamatan Baru',
-      content: language === 'en' ? 'Discussion about implementing new security protocols...' : 'Perbincangan tentang pelaksanaan protokol keselamatan baru...',
-      author: 'David Wong',
-      category: 'safety',
-      replies: 8,
-      lastActivity: '1 day ago',
-      isPinned: false,
-      tags: ['security', 'safety']
-    }
-  ];
+
 
   const categories = [
     { value: 'all', label: t.allCategories },
@@ -196,39 +263,94 @@ export default function Discussions() {
     { value: 'suggestions', label: t.suggestions }
   ];
 
-  const filteredDiscussions = mockDiscussions.filter(discussion => {
+  const filteredDiscussions = discussions.filter(discussion => {
     const matchesSearch = discussion.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          discussion.content.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || discussion.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const handleCreateDiscussion = () => {
-    toast({
-      title: t.createSuccess,
-    });
-    setIsCreateOpen(false);
+  const handleCreateDiscussion = async () => {
+    if (!user || !newDiscussion.title.trim() || !newDiscussion.content.trim() || !newDiscussion.category) {
+      toast({
+        title: language === 'en' ? 'Please fill in all required fields' : 'Sila isi semua medan yang diperlukan',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { data, error } = await supabase
+        .from('discussions')
+        .insert({
+          title: newDiscussion.title,
+          content: newDiscussion.content,
+          category: newDiscussion.category,
+          author_id: user.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: t.createSuccess,
+      });
+      
+      setIsCreateOpen(false);
+      setNewDiscussion({ title: '', content: '', category: '', tags: '' });
+    } catch (error) {
+      console.error('Error creating discussion:', error);
+      toast({
+        title: language === 'en' ? 'Error creating discussion' : 'Ralat mencipta perbincangan',
+        description: language === 'en' ? 'Please try again later' : 'Sila cuba lagi kemudian',
+        variant: 'destructive'
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleDiscussionClick = (discussion: Discussion) => {
     setSelectedDiscussion(discussion);
-    // Initialize comments for this discussion if not already loaded
+    // Load comments for this discussion if not already loaded
     if (!comments[discussion.id]) {
-      setComments(prev => ({
-        ...prev,
-        [discussion.id]: mockComments[discussion.id] || []
-      }));
+      fetchComments(discussion.id);
     }
   };
 
-  const handlePostComment = () => {
-    if (newComment.trim() && selectedDiscussion) {
+  const handlePostComment = async () => {
+    if (!newComment.trim() || !selectedDiscussion || !user) return;
+
+    setSubmitting(true);
+    try {
+      const { data, error } = await supabase
+        .from('discussion_replies')
+        .insert({
+          discussion_id: selectedDiscussion.id,
+          content: newComment,
+          author_id: user.id
+        })
+        .select(`
+          *,
+          profiles:author_id (
+            full_name,
+            email
+          )
+        `)
+        .single();
+
+      if (error) throw error;
+
       const newCommentObj: Comment = {
-        id: Date.now().toString(),
-        author: user?.display_name || user?.email || 'Anonymous User',
-        content: newComment,
+        id: data.id,
+        author: data.profiles?.full_name || data.profiles?.email || 'Anonymous User',
+        author_id: data.author_id,
+        content: data.content,
         timestamp: 'just now',
-        likes: 0
+        likes: 0,
+        created_at: data.created_at
       };
 
       setComments(prev => ({
@@ -240,6 +362,15 @@ export default function Discussions() {
         title: language === 'en' ? 'Comment posted successfully!' : 'Komen berjaya dihantar!',
       });
       setNewComment('');
+    } catch (error) {
+      console.error('Error posting comment:', error);
+      toast({
+        title: language === 'en' ? 'Error posting comment' : 'Ralat menghantar komen',
+        description: language === 'en' ? 'Please try again later' : 'Sila cuba lagi kemudian',
+        variant: 'destructive'
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -322,7 +453,8 @@ export default function Discussions() {
                   rows={3}
                 />
                 <div className="flex justify-end">
-                  <Button onClick={handlePostComment} disabled={!newComment.trim()}>
+                  <Button onClick={handlePostComment} disabled={!newComment.trim() || submitting}>
+                    {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                     {t.postComment}
                   </Button>
                 </div>
@@ -382,6 +514,36 @@ export default function Discussions() {
     );
   }
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="h-8 bg-muted animate-pulse rounded mb-2 w-64"></div>
+            <div className="h-4 bg-muted animate-pulse rounded w-96"></div>
+          </div>
+          <div className="h-10 bg-muted animate-pulse rounded w-40"></div>
+        </div>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="p-6 border rounded-lg">
+              <div className="space-y-3">
+                <div className="h-6 bg-muted animate-pulse rounded w-3/4"></div>
+                <div className="h-4 bg-muted animate-pulse rounded w-full"></div>
+                <div className="h-4 bg-muted animate-pulse rounded w-2/3"></div>
+                <div className="flex gap-4">
+                  <div className="h-3 bg-muted animate-pulse rounded w-20"></div>
+                  <div className="h-3 bg-muted animate-pulse rounded w-16"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   // Main discussions list view
   return (
     <div className="space-y-6">
@@ -405,11 +567,16 @@ export default function Discussions() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="title">{t.discussionTitle}</Label>
-                <Input id="title" placeholder={t.discussionTitle} />
+                <Input 
+                  id="title" 
+                  placeholder={t.discussionTitle}
+                  value={newDiscussion.title}
+                  onChange={(e) => setNewDiscussion(prev => ({ ...prev, title: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">{t.category}</Label>
-                <Select>
+                <Select value={newDiscussion.category} onValueChange={(value) => setNewDiscussion(prev => ({ ...prev, category: value }))}>
                   <SelectTrigger>
                     <SelectValue placeholder={t.selectCategory} />
                   </SelectTrigger>
@@ -428,17 +595,25 @@ export default function Discussions() {
                   id="content" 
                   placeholder={t.discussionContent}
                   rows={4}
+                  value={newDiscussion.content}
+                  onChange={(e) => setNewDiscussion(prev => ({ ...prev, content: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tags">{t.tags}</Label>
-                <Input id="tags" placeholder="community, event, planning" />
+                <Input 
+                  id="tags" 
+                  placeholder="community, event, planning"
+                  value={newDiscussion.tags}
+                  onChange={(e) => setNewDiscussion(prev => ({ ...prev, tags: e.target.value }))}
+                />
               </div>
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+                <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={submitting}>
                   {t.cancel}
                 </Button>
-                <Button onClick={handleCreateDiscussion}>
+                <Button onClick={handleCreateDiscussion} disabled={submitting}>
+                  {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   {t.create}
                 </Button>
               </div>
