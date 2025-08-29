@@ -377,44 +377,51 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
             )}
             
             {/* Unit markers */}
-            {imageLoaded && !loading && filteredUnits.map((unit) => (
-              <div
-                key={unit.id}
-                className={`absolute border-2 cursor-pointer transition-all duration-200 ${getUnitTypeColor(unit.unit_type)} ${
-                  isAdminMode ? 'hover:border-4' : ''
-                }`}
-                style={{
-                  left: `${unit.coordinates_x}%`,
-                  top: `${unit.coordinates_y}%`,
-                  width: `${unit.width || 6}%`,
-                  height: `${unit.height || 4}%`,
-                  transform: 'translate(-50%, -50%)'
-                }}
-                onClick={(e) => handleUnitClick(e, unit)}
-                title={`${unit.unit_number} - ${unit.owner_name}`}
-              >
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[10px] font-medium text-white bg-black/70 px-0.5 py-0 rounded-sm">
-                    {unit.unit_number}
-                  </span>
-                </div>
-                {isAdminMode && (
-                  <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-6 h-6 p-0 bg-white"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteUnit(unit);
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+            {imageLoaded && !loading && filteredUnits.map((unit) => {
+              // Ensure reasonable sizing with minimums and maximums to prevent overlaps
+              const unitWidth = Math.min(Math.max(unit.width || 3, 2), 8); // Min 2%, Max 8%
+              const unitHeight = Math.min(Math.max(unit.height || 2, 1.5), 6); // Min 1.5%, Max 6%
+              
+              return (
+                <div
+                  key={unit.id}
+                  className={`absolute border-2 cursor-pointer transition-all duration-200 ${getUnitTypeColor(unit.unit_type)} ${
+                    isAdminMode ? 'hover:border-4' : ''
+                  }`}
+                  style={{
+                    left: `${unit.coordinates_x}%`,
+                    top: `${unit.coordinates_y}%`,
+                    width: `${unitWidth}%`,
+                    height: `${unitHeight}%`,
+                    transform: 'translate(-50%, -50%)',
+                    margin: '1px' // Add small margin to prevent touching edges
+                  }}
+                  onClick={(e) => handleUnitClick(e, unit)}
+                  title={`${unit.unit_number} - ${unit.owner_name}`}
+                >
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-[10px] font-medium text-white bg-black/70 px-0.5 py-0 rounded-sm whitespace-nowrap overflow-hidden">
+                      {unit.unit_number}
+                    </span>
                   </div>
-                )}
-              </div>
-            ))}
+                  {isAdminMode && (
+                    <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-6 h-6 p-0 bg-white"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteUnit(unit);
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Loading indicator */}
