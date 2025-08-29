@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,53 +19,116 @@ interface Complaint {
   description: string;
   category: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
-  status: 'submitted' | 'in_progress' | 'resolved' | 'closed';
-  created_date: string;
+  status: 'pending' | 'investigating' | 'in_progress' | 'resolved' | 'closed';
+  created_at: string;
   assigned_to?: string;
   photos?: string[];
   location: string;
+  complainant_id: string;
 }
 
 export default function MyComplaints() {
-  const { language } = useAuth();
-  const [complaints] = useState<Complaint[]>([
-    {
-      id: '1',
-      title: language === 'en' ? 'Elevator malfunction' : 'Lif rosak',
-      description: language === 'en' ? 'The elevator in Block A is making strange noises and sometimes stops between floors.' : 'Lif di Blok A mengeluarkan bunyi pelik dan kadang-kadang berhenti di antara tingkat.',
-      category: language === 'en' ? 'Maintenance' : 'Penyelenggaraan',
-      priority: 'high',
-      status: 'in_progress',
-      created_date: '2024-01-10',
-      assigned_to: 'Maintenance Team',
-      location: 'Block A, Level 1'
-    },
-    {
-      id: '2',
-      title: language === 'en' ? 'Street light not working' : 'Lampu jalan tidak berfungsi',
-      description: language === 'en' ? 'The street light near the playground has been off for 3 days.' : 'Lampu jalan berhampiran taman permainan telah padam selama 3 hari.',
-      category: language === 'en' ? 'Infrastructure' : 'Infrastruktur',
-      priority: 'medium',
-      status: 'submitted',
-      created_date: '2024-01-12',
-      location: 'Playground Area'
-    },
-    {
-      id: '3',
-      title: language === 'en' ? 'Water pressure issue' : 'Masalah tekanan air',
-      description: language === 'en' ? 'Low water pressure in unit 12-3-A, affecting kitchen and bathroom.' : 'Tekanan air rendah di unit 12-3-A, menjejaskan dapur dan bilik mandi.',
-      category: language === 'en' ? 'Plumbing' : 'Paip',
-      priority: 'medium',
-      status: 'resolved',
-      created_date: '2024-01-05',
-      assigned_to: 'Plumbing Service',
-      location: 'Block B, Unit 12-3-A'
-    }
-  ]);
+  const { language, user } = useAuth();
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [showNewComplaintDialog, setShowNewComplaintDialog] = useState(false);
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    title: '',
+    category: '',
+    priority: 'medium' as const,
+    location: '',
+    description: ''
+  });
+
+  useEffect(() => {
+    if (user) {
+      fetchComplaints();
+    }
+  }, [user]);
+
+  const fetchComplaints = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('complaints')
+        .select('*')
+        .eq('complainant_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      const formattedComplaints = data?.map(complaint => ({
+        ...complaint,
+        created_at: new Date(complaint.created_at).toLocaleDateString()
+      })) || [];
+      
+      setComplaints(formattedComplaints);
+    } catch (error) {
+      console.error('Error fetching complaints:', error);
+      toast({
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' ? 'Failed to load complaints' : 'Gagal memuatkan aduan',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmitComplaint = async () => {
+    if (!user) return;
+
+    try {
+      setSubmitting(true);
+      
+      const { error } = await supabase
+        .from('complaints')
+        .insert({
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          priority: formData.priority,
+          location: formData.location,
+          complainant_id: user.id,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: language === 'en' ? 'Success' : 'Berjaya',
+        description: language === 'en' ? 'Complaint submitted successfully' : 'Aduan berjaya dihantar',
+      });
+
+      // Reset form and close dialog
+      setFormData({
+        title: '',
+        category: '',
+        priority: 'medium',
+        location: '',
+        description: ''
+      });
+      setShowNewComplaintDialog(false);
+      
+      // Refresh complaints list
+      fetchComplaints();
+    } catch (error) {
+      console.error('Error submitting complaint:', error);
+      toast({
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' ? 'Failed to submit complaint' : 'Gagal menghantar aduan',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -77,7 +142,8 @@ export default function MyComplaints() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'submitted': return 'bg-blue-500';
+      case 'pending': return 'bg-blue-500';
+      case 'investigating': return 'bg-purple-500';
       case 'in_progress': return 'bg-yellow-500';
       case 'resolved': return 'bg-green-500';
       case 'closed': return 'bg-gray-500';
@@ -108,7 +174,8 @@ export default function MyComplaints() {
   const getStatusText = (status: string) => {
     if (language === 'en') {
       switch (status) {
-        case 'submitted': return 'Submitted';
+        case 'pending': return 'Pending';
+        case 'investigating': return 'Investigating';
         case 'in_progress': return 'In Progress';
         case 'resolved': return 'Resolved';
         case 'closed': return 'Closed';
@@ -116,7 +183,8 @@ export default function MyComplaints() {
       }
     } else {
       switch (status) {
-        case 'submitted': return 'Dihantar';
+        case 'pending': return 'Menunggu';
+        case 'investigating': return 'Menyiasat';
         case 'in_progress': return 'Dalam Proses';
         case 'resolved': return 'Diselesaikan';
         case 'closed': return 'Ditutup';
@@ -185,13 +253,18 @@ export default function MyComplaints() {
                 <Label htmlFor="title">
                   {language === 'en' ? 'Issue Title' : 'Tajuk Masalah'}
                 </Label>
-                <Input id="title" placeholder={language === 'en' ? 'Brief description of the issue' : 'Penerangan ringkas masalah'} />
+                <Input 
+                  id="title" 
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder={language === 'en' ? 'Brief description of the issue' : 'Penerangan ringkas masalah'} 
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">
                   {language === 'en' ? 'Category' : 'Kategori'}
                 </Label>
-                <Select>
+                <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
                   <SelectTrigger>
                     <SelectValue placeholder={language === 'en' ? 'Select category' : 'Pilih kategori'} />
                   </SelectTrigger>
@@ -209,7 +282,7 @@ export default function MyComplaints() {
                 <Label htmlFor="priority">
                   {language === 'en' ? 'Priority Level' : 'Tahap Keutamaan'}
                 </Label>
-                <Select>
+                <Select value={formData.priority} onValueChange={(value: any) => setFormData(prev => ({ ...prev, priority: value }))}>
                   <SelectTrigger>
                     <SelectValue placeholder={language === 'en' ? 'Select priority' : 'Pilih keutamaan'} />
                   </SelectTrigger>
@@ -225,7 +298,12 @@ export default function MyComplaints() {
                 <Label htmlFor="location">
                   {language === 'en' ? 'Location' : 'Lokasi'}
                 </Label>
-                <Input id="location" placeholder={language === 'en' ? 'e.g., Block A, Unit 12-3, Common Area' : 'cth: Blok A, Unit 12-3, Kawasan Umum'} />
+                <Input 
+                  id="location" 
+                  value={formData.location}
+                  onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                  placeholder={language === 'en' ? 'e.g., Block A, Unit 12-3, Common Area' : 'cth: Blok A, Unit 12-3, Kawasan Umum'} 
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">
@@ -233,6 +311,8 @@ export default function MyComplaints() {
                 </Label>
                 <Textarea 
                   id="description" 
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder={language === 'en' ? 'Please provide detailed information about the issue...' : 'Sila berikan maklumat terperinci tentang masalah...'} 
                   rows={4}
                 />
@@ -248,8 +328,12 @@ export default function MyComplaints() {
                   </p>
                 </div>
               </div>
-              <Button className="w-full bg-gradient-primary">
-                {language === 'en' ? 'Submit Complaint' : 'Hantar Aduan'}
+              <Button 
+                onClick={handleSubmitComplaint}
+                disabled={submitting || !formData.title || !formData.category || !formData.location || !formData.description}
+                className="w-full bg-gradient-primary"
+              >
+                {submitting ? (language === 'en' ? 'Submitting...' : 'Menghantar...') : (language === 'en' ? 'Submit Complaint' : 'Hantar Aduan')}
               </Button>
             </div>
           </DialogContent>
@@ -340,7 +424,7 @@ export default function MyComplaints() {
                   </Label>
                   <div className="p-3 bg-muted rounded-md flex items-center space-x-2">
                     <Calendar className="w-4 h-4" />
-                    <span className="text-sm">{selectedComplaint.created_date}</span>
+                    <span className="text-sm">{selectedComplaint.created_at}</span>
                   </div>
                 </div>
               </div>
@@ -394,7 +478,7 @@ export default function MyComplaints() {
                 <p className="text-sm text-muted-foreground">
                   {language === 'en' ? 'Total' : 'Jumlah'}
                 </p>
-                <p className="text-2xl font-bold">3</p>
+                <p className="text-2xl font-bold">{complaints.length}</p>
               </div>
             </div>
           </CardContent>
@@ -409,7 +493,7 @@ export default function MyComplaints() {
                 <p className="text-sm text-muted-foreground">
                   {language === 'en' ? 'In Progress' : 'Dalam Proses'}
                 </p>
-                <p className="text-2xl font-bold">1</p>
+                <p className="text-2xl font-bold">{complaints.filter(c => c.status === 'in_progress' || c.status === 'investigating').length}</p>
               </div>
             </div>
           </CardContent>
@@ -424,7 +508,7 @@ export default function MyComplaints() {
                 <p className="text-sm text-muted-foreground">
                   {language === 'en' ? 'Resolved' : 'Diselesaikan'}
                 </p>
-                <p className="text-2xl font-bold">1</p>
+                <p className="text-2xl font-bold">{complaints.filter(c => c.status === 'resolved').length}</p>
               </div>
             </div>
           </CardContent>
@@ -439,7 +523,7 @@ export default function MyComplaints() {
                 <p className="text-sm text-muted-foreground">
                   {language === 'en' ? 'High Priority' : 'Keutamaan Tinggi'}
                 </p>
-                <p className="text-2xl font-bold">1</p>
+                <p className="text-2xl font-bold">{complaints.filter(c => c.priority === 'high' || c.priority === 'urgent').length}</p>
               </div>
             </div>
           </CardContent>
@@ -448,7 +532,33 @@ export default function MyComplaints() {
 
       {/* Complaints List */}
       <div className="space-y-4">
-        {complaints.map((complaint) => (
+        {loading ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">
+              {language === 'en' ? 'Loading complaints...' : 'Memuatkan aduan...'}
+            </p>
+          </div>
+        ) : complaints.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <AlertTriangle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">
+                {language === 'en' ? 'No Complaints Found' : 'Tiada Aduan Dijumpai'}
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                {language === 'en' ? 'You haven\'t submitted any complaints yet.' : 'Anda belum menghantar sebarang aduan lagi.'}
+              </p>
+              <Button 
+                onClick={() => setShowNewComplaintDialog(true)}
+                className="bg-gradient-primary"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                {language === 'en' ? 'Submit First Complaint' : 'Hantar Aduan Pertama'}
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          complaints.map((complaint) => (
           <Card key={complaint.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex justify-between items-start">
@@ -460,7 +570,7 @@ export default function MyComplaints() {
                   <CardDescription className="flex items-center space-x-4 mt-2">
                     <span className="flex items-center">
                       <Calendar className="w-4 h-4 mr-1" />
-                      {complaint.created_date}
+                      {complaint.created_at}
                     </span>
                     <span>{complaint.location}</span>
                     {complaint.assigned_to && (
@@ -498,7 +608,7 @@ export default function MyComplaints() {
                   >
                     {language === 'en' ? 'View Details' : 'Lihat Butiran'}
                   </Button>
-                  {complaint.status === 'submitted' && (
+                  {complaint.status === 'pending' && (
                     <Button variant="outline" size="sm">
                       {language === 'en' ? 'Edit' : 'Edit'}
                     </Button>
@@ -506,8 +616,9 @@ export default function MyComplaints() {
                 </div>
               </div>
             </CardContent>
-          </Card>
-        ))}
+            </Card>
+          ))
+        )}
       </div>
 
       {complaints.length === 0 && (
