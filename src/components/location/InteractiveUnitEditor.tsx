@@ -394,7 +394,7 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                 title={`${unit.unit_number} - ${unit.owner_name}`}
               >
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-semibold text-white bg-black/70 px-1 py-0.5 rounded">
+                  <span className="text-[10px] font-medium text-white bg-black/70 px-0.5 py-0 rounded-sm">
                     {unit.unit_number}
                   </span>
                 </div>
