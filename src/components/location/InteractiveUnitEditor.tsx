@@ -431,14 +431,14 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
 
           {/* Legend */}
           <div 
-            className={`absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg cursor-pointer transition-all duration-300 ${
+            className={`absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-200 cursor-pointer transition-all duration-300 hover:shadow-2xl ${
               isLegendExpanded ? 'p-3' : 'p-2'
             }`}
             onClick={() => setIsLegendExpanded(!isLegendExpanded)}
           >
             <div className="flex items-center gap-2">
-              <h4 className="font-semibold text-sm">Legend</h4>
-              <div className={`transition-transform duration-300 ${isLegendExpanded ? 'rotate-180' : ''}`}>
+              <h4 className="font-semibold text-sm text-gray-800">Legend</h4>
+              <div className={`transition-transform duration-300 text-gray-600 ${isLegendExpanded ? 'rotate-180' : ''}`}>
                 ↑
               </div>
             </div>
@@ -446,18 +446,18 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
             <div className={`transition-all duration-300 overflow-hidden ${
               isLegendExpanded ? 'max-h-32 opacity-100 mt-2' : 'max-h-0 opacity-0'
             }`}>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded ${getUnitTypeBadge('residential')}`}></div>
-                  <span className="text-xs">Residential</span>
+                  <div className={`w-4 h-4 rounded ${getUnitTypeBadge('residential')}`}></div>
+                  <span className="text-sm text-gray-700">Residential</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded ${getUnitTypeBadge('commercial')}`}></div>
-                  <span className="text-xs">Commercial</span>
+                  <div className={`w-4 h-4 rounded ${getUnitTypeBadge('commercial')}`}></div>
+                  <span className="text-sm text-gray-700">Commercial</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded ${getUnitTypeBadge('facility')}`}></div>
-                  <span className="text-xs">Facility</span>
+                  <div className={`w-4 h-4 rounded ${getUnitTypeBadge('facility')}`}></div>
+                  <span className="text-sm text-gray-700">Facility</span>
                 </div>
               </div>
             </div>
