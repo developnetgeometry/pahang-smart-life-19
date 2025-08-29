@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ZoomIn, ZoomOut, RotateCcw, Search, Square, Edit, Trash2, Save } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Search, Square, Edit, Trash2, Save, Eye } from 'lucide-react';
 import { useUnits, Unit } from '@/hooks/use-units';
 import { toast } from 'sonner';
 
@@ -415,10 +415,11 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                           className="w-6 h-6 p-0 bg-white"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeleteUnit(unit);
+                            // Show unit information instead of deleting
+                            setSelectedUnit(unit);
                           }}
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Eye className="h-3 w-3" />
                         </Button>
                       </div>
                     </>
@@ -677,6 +678,110 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                 <p className="text-sm">{selectedUnit.notes}</p>
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Admin Unit Information Dialog with Delete Option */}
+      <Dialog open={!!selectedUnit && isAdminMode} onOpenChange={() => setSelectedUnit(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {selectedUnit?.unit_number}
+                <Badge className={getUnitTypeBadge(selectedUnit?.unit_type || 'residential')}>
+                  {selectedUnit?.unit_type}
+                </Badge>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (selectedUnit) {
+                    setEditingUnit(selectedUnit);
+                    setFormData({
+                      unit_number: selectedUnit.unit_number,
+                      owner_name: selectedUnit.owner_name,
+                      unit_type: selectedUnit.unit_type,
+                      address: selectedUnit.address || '',
+                      phone_number: selectedUnit.phone_number || '',
+                      email: selectedUnit.email || '',
+                      occupancy_status: selectedUnit.occupancy_status || 'occupied',
+                      notes: selectedUnit.notes || ''
+                    });
+                    setShowUnitForm(true);
+                    setSelectedUnit(null);
+                  }
+                }}
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <h4 className="font-semibold text-sm text-gray-600 mb-1">Owner</h4>
+              <p className="text-lg">{selectedUnit?.owner_name}</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-sm text-gray-600 mb-1">Unit Number</h4>
+              <p>{selectedUnit?.unit_number}</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-sm text-gray-600 mb-1">Type</h4>
+              <p className="capitalize">{selectedUnit?.unit_type}</p>
+            </div>
+            {selectedUnit?.address && (
+              <div>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">Address</h4>
+                <p>{selectedUnit.address}</p>
+              </div>
+            )}
+            {selectedUnit?.phone_number && (
+              <div>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">Phone</h4>
+                <p>{selectedUnit.phone_number}</p>
+              </div>
+            )}
+            {selectedUnit?.email && (
+              <div>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">Email</h4>
+                <p>{selectedUnit.email}</p>
+              </div>
+            )}
+            {selectedUnit?.occupancy_status && (
+              <div>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">Status</h4>
+                <Badge variant={selectedUnit.occupancy_status === 'occupied' ? 'default' : 'secondary'}>
+                  {selectedUnit.occupancy_status}
+                </Badge>
+              </div>
+            )}
+            {selectedUnit?.notes && (
+              <div>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">Notes</h4>
+                <p className="text-sm">{selectedUnit.notes}</p>
+              </div>
+            )}
+            
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button variant="outline" onClick={() => setSelectedUnit(null)}>
+                Close
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={() => {
+                  if (selectedUnit) {
+                    handleDeleteUnit(selectedUnit);
+                    setSelectedUnit(null);
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Unit
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
