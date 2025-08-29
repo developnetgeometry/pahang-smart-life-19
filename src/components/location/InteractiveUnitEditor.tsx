@@ -335,7 +335,9 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
             isDrawingMode ? 'cursor-crosshair' : isDragging ? 'cursor-grabbing' : 'cursor-grab'
           }`}
           onWheel={handleWheel}
-          style={{ touchAction: 'none' }}
+          onScroll={(e) => e.preventDefault()}
+          onTouchMove={(e) => e.preventDefault()}
+          style={{ touchAction: 'none', overscrollBehavior: 'contain' }}
         >
           <div 
             className="relative"
