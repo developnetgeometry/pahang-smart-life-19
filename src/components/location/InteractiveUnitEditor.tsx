@@ -75,6 +75,9 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
     notes: ''
   });
 
+  // Legend state
+  const [isLegendExpanded, setIsLegendExpanded] = useState(false);
+
   // Filter units based on search term
   const filteredUnits = units.filter(unit =>
     unit.unit_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -427,20 +430,35 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
           )}
 
           {/* Legend */}
-          <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg">
-            <h4 className="font-semibold text-sm mb-2">Legend</h4>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded ${getUnitTypeBadge('residential')}`}></div>
-                <span className="text-xs">Residential</span>
+          <div 
+            className={`absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg cursor-pointer transition-all duration-300 ${
+              isLegendExpanded ? 'p-3' : 'p-2'
+            }`}
+            onClick={() => setIsLegendExpanded(!isLegendExpanded)}
+          >
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold text-sm">Legend</h4>
+              <div className={`transition-transform duration-300 ${isLegendExpanded ? 'rotate-180' : ''}`}>
+                ↑
               </div>
-              <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded ${getUnitTypeBadge('commercial')}`}></div>
-                <span className="text-xs">Commercial</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded ${getUnitTypeBadge('facility')}`}></div>
-                <span className="text-xs">Facility</span>
+            </div>
+            
+            <div className={`transition-all duration-300 overflow-hidden ${
+              isLegendExpanded ? 'max-h-32 opacity-100 mt-2' : 'max-h-0 opacity-0'
+            }`}>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded ${getUnitTypeBadge('residential')}`}></div>
+                  <span className="text-xs">Residential</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded ${getUnitTypeBadge('commercial')}`}></div>
+                  <span className="text-xs">Commercial</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded ${getUnitTypeBadge('facility')}`}></div>
+                  <span className="text-xs">Facility</span>
+                </div>
               </div>
             </div>
           </div>
