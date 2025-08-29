@@ -281,13 +281,21 @@ export default function Discussions() {
 
     setSubmitting(true);
     try {
+      // Get user's district_id from their profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('district_id')
+        .eq('id', user.id)
+        .single();
+
       const { data, error } = await supabase
         .from('discussions')
         .insert({
           title: newDiscussion.title,
           content: newDiscussion.content,
           category: newDiscussion.category,
-          author_id: user.id
+          author_id: user.id,
+          district_id: profile?.district_id
         })
         .select()
         .single();
