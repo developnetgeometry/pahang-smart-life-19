@@ -302,6 +302,26 @@ export default function Discussions() {
 
       if (error) throw error;
 
+      // Add the new discussion to the local state immediately
+      const newDiscussionWithProfile: Discussion = {
+        id: data.id,
+        title: data.title,
+        content: data.content,
+        author: user.display_name || user.email || 'Anonymous',
+        author_id: data.author_id,
+        category: data.category,
+        replies: 0,
+        lastActivity: new Date(data.created_at).toLocaleDateString(),
+        isPinned: data.is_pinned,
+        tags: [],
+        views_count: 0,
+        replies_count: 0,
+        created_at: data.created_at
+      };
+
+      // Add to the beginning of the discussions list
+      setDiscussions(prev => [newDiscussionWithProfile, ...prev]);
+
       toast({
         title: t.createSuccess,
       });
