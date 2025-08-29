@@ -385,39 +385,46 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
               return (
                 <div
                   key={unit.id}
-                  className={`absolute border-2 cursor-pointer transition-all duration-200 ${getUnitTypeColor(unit.unit_type)} ${
-                    isAdminMode ? 'hover:border-4' : ''
+                  className={`absolute cursor-pointer transition-all duration-200 ${
+                    isAdminMode 
+                      ? `border-2 ${getUnitTypeColor(unit.unit_type)} hover:border-4`
+                      : 'hover:bg-blue-500/20 rounded-full' // For residents: invisible clickable area with hover effect
                   }`}
                   style={{
                     left: `${unit.coordinates_x}%`,
                     top: `${unit.coordinates_y}%`,
-                    width: `${unitWidth}%`,
-                    height: `${unitHeight}%`,
+                    width: isAdminMode ? `${unitWidth}%` : '20px', // Small clickable area for residents
+                    height: isAdminMode ? `${unitHeight}%` : '20px', // Small clickable area for residents
                     transform: 'translate(-50%, -50%)',
-                    margin: '1px' // Add small margin to prevent touching edges
+                    margin: isAdminMode ? '1px' : '0'
                   }}
                   onClick={(e) => handleUnitClick(e, unit)}
                   title={`${unit.unit_number} - ${unit.owner_name}`}
                 >
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[10px] font-medium text-white bg-black/70 px-0.5 py-0 rounded-sm whitespace-nowrap overflow-hidden">
-                      {unit.unit_number}
-                    </span>
-                  </div>
                   {isAdminMode && (
-                    <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-6 h-6 p-0 bg-white"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteUnit(unit);
-                        }}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
+                    <>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-[10px] font-medium text-white bg-black/70 px-0.5 py-0 rounded-sm whitespace-nowrap overflow-hidden">
+                          {unit.unit_number}
+                        </span>
+                      </div>
+                      <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-6 h-6 p-0 bg-white"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteUnit(unit);
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                  {!isAdminMode && (
+                    <div className="w-2 h-2 bg-blue-500 rounded-full opacity-60 hover:opacity-100 transition-opacity" />
                   )}
                 </div>
               );
