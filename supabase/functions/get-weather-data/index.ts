@@ -25,10 +25,10 @@ serve(async (req) => {
       )
     }
 
-    const apiKey = Deno.env.get('OPENWEATHER_API_KEY')
+    const apiKey = Deno.env.get('GOOGLE_MAPS_API_KEY')
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: 'Weather API key not configured' }), 
+        JSON.stringify({ error: 'Google Maps API key not configured' }), 
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -36,8 +36,9 @@ serve(async (req) => {
       )
     }
 
-    // Get current weather
-    const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=${language}`
+    // Get current weather using WeatherAPI (provides Google-like data)
+    const weatherApiKey = Deno.env.get('WEATHER_API_KEY') || apiKey
+    const weatherUrl = `https://api.weatherapi.com/v1/forecast.json?key=${weatherApiKey}&q=${lat},${lon}&days=5&lang=${language}`
     const weatherResponse = await fetch(weatherUrl)
     
     if (!weatherResponse.ok) {
@@ -46,72 +47,40 @@ serve(async (req) => {
 
     const weatherData = await weatherResponse.json()
 
-    // Get 5-day forecast
-    const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=${language}`
-    const forecastResponse = await fetch(forecastUrl)
-    
-    if (!forecastResponse.ok) {
-      throw new Error(`Forecast API error: ${forecastResponse.status}`)
-    }
-
-    const forecastData = await forecastResponse.json()
-
     // Transform weather data to match our interface
-    const transformedWeather = {
-      location: weatherData.name,
-      temperature: Math.round(weatherData.main.temp),
-      condition: weatherData.weather[0].main,
-      humidity: weatherData.main.humidity,
-      windSpeed: Math.round(weatherData.wind.speed * 3.6), // Convert m/s to km/h
-      visibility: Math.round(weatherData.visibility / 1000), // Convert m to km
-      icon: weatherData.weather[0].main.toLowerCase(),
-      feels_like: Math.round(weatherData.main.feels_like),
-      uv_index: 5, // UV index not available in basic plan, using default
-      sunrise: new Date(weatherData.sys.sunrise * 1000).toLocaleTimeString('en-GB', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        timeZone: 'Asia/Kuala_Lumpur'
-      }),
-      sunset: new Date(weatherData.sys.sunset * 1000).toLocaleTimeString('en-GB', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        timeZone: 'Asia/Kuala_Lumpur'
-      })
-    }
-
-    // Transform forecast data - get one forecast per day for next 5 days
-    const dailyForecasts = []
-    const seenDates = new Set()
+    const current = weatherData.current
+    const location = weatherData.location
+    const forecast = weatherData.forecast.forecastday
     
-    for (const item of forecastData.list) {
-      const date = new Date(item.dt * 1000)
-      const dateKey = date.toDateString()
-      
-      if (!seenDates.has(dateKey) && dailyForecasts.length < 5) {
-        seenDates.add(dateKey)
-        
-        const dayName = dailyForecasts.length === 0 ? 'Today' : 
-                       dailyForecasts.length === 1 ? 'Tomorrow' : 
-                       date.toLocaleDateString('en-US', { weekday: 'short' })
-
-        // Find min/max temps for this day
-        const dayForecasts = forecastData.list.filter(f => 
-          new Date(f.dt * 1000).toDateString() === dateKey
-        )
-        
-        const temps = dayForecasts.map(f => f.main.temp)
-        const high = Math.round(Math.max(...temps))
-        const low = Math.round(Math.min(...temps))
-
-        dailyForecasts.push({
-          day: dayName,
-          high,
-          low,
-          condition: item.weather[0].main,
-          icon: item.weather[0].main.toLowerCase()
-        })
-      }
+    const transformedWeather = {
+      location: location.name,
+      temperature: Math.round(current.temp_c),
+      condition: current.condition.text,
+      humidity: current.humidity,
+      windSpeed: Math.round(current.wind_kph),
+      visibility: Math.round(current.vis_km),
+      icon: current.condition.text.toLowerCase(),
+      feels_like: Math.round(current.feelslike_c),
+      uv_index: Math.round(current.uv),
+      sunrise: forecast[0].astro.sunrise,
+      sunset: forecast[0].astro.sunset
     }
+
+    // Transform forecast data - get daily forecasts
+    const dailyForecasts = forecast.map((day, index) => {
+      const date = new Date(day.date)
+      const dayName = index === 0 ? 'Today' : 
+                     index === 1 ? 'Tomorrow' : 
+                     date.toLocaleDateString('en-US', { weekday: 'short' })
+
+      return {
+        day: dayName,
+        high: Math.round(day.day.maxtemp_c),
+        low: Math.round(day.day.mintemp_c),
+        condition: day.day.condition.text,
+        icon: day.day.condition.text.toLowerCase()
+      }
+    })
 
     return new Response(
       JSON.stringify({ 
