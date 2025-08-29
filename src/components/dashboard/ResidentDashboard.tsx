@@ -17,6 +17,7 @@ import { MaintenanceTrackerWidget } from './MaintenanceTrackerWidget';
 import { PrayerTimesWidget } from './PrayerTimesWidget';
 import InteractiveUnitEditor from '@/components/location/InteractiveUnitEditor';
 import { CombinedSlideshow } from './CombinedSlideshow';
+import PanicButton from '@/components/emergency/PanicButton';
 import { MapPin } from 'lucide-react';
 import { 
   Calendar, 
@@ -725,6 +726,9 @@ export function ResidentDashboard() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Floating Round Panic Button */}
+      <PanicButton />
     </div>
   );
 }
