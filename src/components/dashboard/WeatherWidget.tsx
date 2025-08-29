@@ -3,7 +3,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Cloud, Sun, CloudRain, CloudSnow, Wind, Droplets, Thermometer, Eye, Sunset, Sunrise, CloudDrizzle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 
 interface WeatherData {
   location: string;
@@ -26,6 +25,8 @@ interface ForecastData {
   condition: string;
   icon: string;
 }
+
+const WEATHER_API_KEY = ''; // You'll need to add your OpenWeatherMap API key
 
 export function WeatherWidget() {
   const { language } = useAuth();
@@ -74,8 +75,6 @@ export function WeatherWidget() {
 
   const fetchWeatherData = async () => {
     try {
-      setLoading(true);
-      
       // Get user's current location
       const currentLocation = await getCurrentLocation();
       setLocation(currentLocation);
@@ -84,58 +83,34 @@ export function WeatherWidget() {
       const name = await getLocationName(currentLocation.lat, currentLocation.lon);
       setLocationName(name);
       
-      // Call our weather API edge function
-      const { data, error } = await supabase.functions.invoke('get-weather-data', {
-        body: { 
-          lat: currentLocation.lat, 
-          lon: currentLocation.lon,
-          language: language === 'en' ? 'en' : 'ms'
-        }
-      });
+      // For demo purposes, using mock data but now with real location
+      const mockWeatherData: WeatherData = {
+        location: name,
+        temperature: Math.round(26 + Math.random() * 8), // 26-34°C range
+        condition: ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Rain'][Math.floor(Math.random() * 4)],
+        humidity: Math.round(65 + Math.random() * 25), // 65-90%
+        windSpeed: Math.round(5 + Math.random() * 15), // 5-20 km/h
+        visibility: Math.round(8 + Math.random() * 7), // 8-15 km
+        icon: 'sunny',
+        feels_like: Math.round(28 + Math.random() * 10),
+        uv_index: Math.round(3 + Math.random() * 8),
+        sunrise: '07:02',
+        sunset: '19:16'
+      };
 
-      if (error) {
-        throw new Error(`Weather API error: ${error.message}`);
-      }
+      const mockForecast: ForecastData[] = [
+        { day: 'Today', high: 32, low: 24, condition: 'Sunny', icon: 'sunny' },
+        { day: 'Tomorrow', high: 31, low: 23, condition: 'Partly Cloudy', icon: 'partly-cloudy' },
+        { day: 'Sun', high: 29, low: 22, condition: 'Rainy', icon: 'rainy' },
+        { day: 'Mon', high: 30, low: 23, condition: 'Cloudy', icon: 'cloudy' },
+        { day: 'Tue', high: 33, low: 25, condition: 'Sunny', icon: 'sunny' }
+      ];
 
-      if (data && data.weather && data.forecast) {
-        setWeather(data.weather);
-        setForecast(data.forecast);
-      } else {
-        throw new Error('Invalid weather data received');
-      }
-      
+      setWeather(mockWeatherData);
+      setForecast(mockForecast);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching weather:', error);
-      
-      // Fallback to basic location data with error message
-      if (location && locationName) {
-        const fallbackWeather: WeatherData = {
-          location: locationName,
-          temperature: 28,
-          condition: 'Clear',
-          humidity: 75,
-          windSpeed: 10,
-          visibility: 10,
-          icon: 'clear',
-          feels_like: 30,
-          uv_index: 5,
-          sunrise: '07:00',
-          sunset: '19:30'
-        };
-        
-        const fallbackForecast: ForecastData[] = [
-          { day: 'Today', high: 30, low: 25, condition: 'Clear', icon: 'clear' },
-          { day: 'Tomorrow', high: 29, low: 24, condition: 'Partly Cloudy', icon: 'partly-cloudy' },
-          { day: 'Thu', high: 28, low: 23, condition: 'Cloudy', icon: 'cloudy' },
-          { day: 'Fri', high: 31, low: 26, condition: 'Clear', icon: 'clear' },
-          { day: 'Sat', high: 32, low: 27, condition: 'Partly Cloudy', icon: 'partly-cloudy' }
-        ];
-        
-        setWeather(fallbackWeather);
-        setForecast(fallbackForecast);
-      }
-      
       setLoading(false);
     }
   };
