@@ -1201,14 +1201,62 @@ export type Database = {
           },
         ]
       }
+      complaint_notifications: {
+        Row: {
+          complaint_id: string | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          notification_type: string
+          read_at: string | null
+          recipient_id: string
+          sent_at: string | null
+          sent_via: string[] | null
+        }
+        Insert: {
+          complaint_id?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          notification_type: string
+          read_at?: string | null
+          recipient_id: string
+          sent_at?: string | null
+          sent_via?: string[] | null
+        }
+        Update: {
+          complaint_id?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          notification_type?: string
+          read_at?: string | null
+          recipient_id?: string
+          sent_at?: string | null
+          sent_via?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "complaint_notifications_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       complaints: {
         Row: {
           assigned_to: string | null
+          auto_escalated: boolean | null
           category: string
           complainant_id: string | null
           created_at: string | null
           description: string
           district_id: string | null
+          escalated_at: string | null
+          escalated_by: string | null
+          escalation_level: number | null
           id: string
           location: string | null
           photos: string[] | null
@@ -1221,11 +1269,15 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          auto_escalated?: boolean | null
           category: string
           complainant_id?: string | null
           created_at?: string | null
           description: string
           district_id?: string | null
+          escalated_at?: string | null
+          escalated_by?: string | null
+          escalation_level?: number | null
           id?: string
           location?: string | null
           photos?: string[] | null
@@ -1238,11 +1290,15 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          auto_escalated?: boolean | null
           category?: string
           complainant_id?: string | null
           created_at?: string | null
           description?: string
           district_id?: string | null
+          escalated_at?: string | null
+          escalated_by?: string | null
+          escalation_level?: number | null
           id?: string
           location?: string | null
           photos?: string[] | null
@@ -5865,6 +5921,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_escalate_complaints: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_old_typing_indicators: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -5897,6 +5957,18 @@ export type Database = {
           requested_user_role: Database["public"]["Enums"]["user_role"]
         }
         Returns: Database["public"]["Enums"]["approval_requirement"][]
+      }
+      get_complaint_recipients: {
+        Args: {
+          p_category: string
+          p_district_id: string
+          p_escalation_level?: number
+        }
+        Returns: {
+          priority_order: number
+          role: Database["public"]["Enums"]["enhanced_user_role"]
+          user_id: string
+        }[]
       }
       get_current_user_role_safe: {
         Args: Record<PropertyKey, never>
@@ -6011,6 +6083,10 @@ export type Database = {
       }
       is_module_enabled_for_district: {
         Args: { district_id?: string; module_name: string }
+        Returns: boolean
+      }
+      mark_complaint_notification_read: {
+        Args: { notification_id: string }
         Returns: boolean
       }
       update_user_presence: {
