@@ -2306,6 +2306,50 @@ export type Database = {
           },
         ]
       }
+      floor_plans: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          district_id: string | null
+          id: string
+          image_url: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          district_id?: string | null
+          id?: string
+          image_url: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          district_id?: string | null
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floor_plans_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_memberships: {
         Row: {
           group_id: string | null
@@ -5263,6 +5307,7 @@ export type Database = {
           created_by: string | null
           district_id: string | null
           email: string | null
+          floor_plan_id: string | null
           height: number | null
           id: string
           notes: string | null
@@ -5283,6 +5328,7 @@ export type Database = {
           created_by?: string | null
           district_id?: string | null
           email?: string | null
+          floor_plan_id?: string | null
           height?: number | null
           id?: string
           notes?: string | null
@@ -5303,6 +5349,7 @@ export type Database = {
           created_by?: string | null
           district_id?: string | null
           email?: string | null
+          floor_plan_id?: string | null
           height?: number | null
           id?: string
           notes?: string | null
@@ -5327,6 +5374,13 @@ export type Database = {
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "units_floor_plan_id_fkey"
+            columns: ["floor_plan_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plans"
             referencedColumns: ["id"]
           },
         ]

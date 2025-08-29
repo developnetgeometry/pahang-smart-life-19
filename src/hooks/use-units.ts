@@ -11,6 +11,7 @@ export interface Unit {
   address?: string;
   community_id?: string;
   district_id?: string;
+  floor_plan_id?: string;
   coordinates_x: number;
   coordinates_y: number;
   width?: number;
@@ -29,13 +30,20 @@ export const useUnits = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  const fetchUnits = async () => {
+  const fetchUnits = async (floorPlanId?: string) => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('units')
         .select('*')
         .order('unit_number');
+
+      // Filter by floor plan if specified
+      if (floorPlanId) {
+        query = query.eq('floor_plan_id', floorPlanId);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching units:', error);
@@ -170,12 +178,15 @@ export const useUnits = () => {
     }
   }, [user]);
 
+  const fetchUnitsByFloorPlan = (floorPlanId: string) => fetchUnits(floorPlanId);
+
   return {
     units,
     loading,
     createUnit,
     updateUnit,
     deleteUnit,
-    refetchUnits: fetchUnits
+    refetchUnits: fetchUnits,
+    fetchUnitsByFloorPlan
   };
 };

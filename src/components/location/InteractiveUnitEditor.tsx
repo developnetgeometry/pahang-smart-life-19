@@ -9,13 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { ZoomIn, ZoomOut, RotateCcw, Search, Square, Edit, Trash2, Save, Eye } from 'lucide-react';
 import { useUnits, Unit } from '@/hooks/use-units';
+import { useFloorPlans } from '@/hooks/use-floor-plans';
 import { toast } from 'sonner';
 
 interface InteractiveUnitEditorProps {
-  imageUrl: string;
+  imageUrl?: string;
+  floorPlanId?: string;
   title?: string;
   showSearch?: boolean;
   isAdminMode?: boolean;
+  onFloorPlanChange?: (floorPlanId: string) => void;
 }
 
 interface DrawingBox {
@@ -35,15 +38,19 @@ interface UnitFormData {
   email: string;
   occupancy_status: string;
   notes: string;
+  floor_plan_id?: string;
 }
 
 const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
   imageUrl,
+  floorPlanId,
   title = "Community Map",
   showSearch = true,
-  isAdminMode = false
+  isAdminMode = false,
+  onFloorPlanChange
 }) => {
-  const { units, loading, createUnit, updateUnit, deleteUnit } = useUnits();
+  const { units, loading, createUnit, updateUnit, deleteUnit, fetchUnitsByFloorPlan } = useUnits();
+  const { floorPlans, loading: floorPlansLoading } = useFloorPlans();
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -53,6 +60,8 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
+  const [selectedFloorPlan, setSelectedFloorPlan] = useState<string>(floorPlanId || '');
+  const [currentImageUrl, setCurrentImageUrl] = useState<string>(imageUrl || '');
   const [searchTerm, setSearchTerm] = useState('');
   const [imageLoaded, setImageLoaded] = useState(false);
   
@@ -78,7 +87,29 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
   // Legend state
   const [isLegendExpanded, setIsLegendExpanded] = useState(false);
 
-  // Filter units based on search term
+  // Load units when floor plan changes
+  useEffect(() => {
+    if (selectedFloorPlan) {
+      fetchUnitsByFloorPlan(selectedFloorPlan);
+    }
+  }, [selectedFloorPlan, fetchUnitsByFloorPlan]);
+
+  // Update current image URL when floor plan changes
+  useEffect(() => {
+    if (selectedFloorPlan && floorPlans.length > 0) {
+      const floorPlan = floorPlans.find(fp => fp.id === selectedFloorPlan);
+      if (floorPlan) {
+        setCurrentImageUrl(floorPlan.image_url);
+      }
+    }
+  }, [selectedFloorPlan, floorPlans]);
+
+  const handleFloorPlanChange = (floorPlanId: string) => {
+    setSelectedFloorPlan(floorPlanId);
+    onFloorPlanChange?.(floorPlanId);
+  };
+
+  // Auto-fit image when it loads
   const filteredUnits = units.filter(unit =>
     unit.unit_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
     unit.owner_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -230,7 +261,12 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
         coordinates_x: newBoxCoordinates.x,
         coordinates_y: newBoxCoordinates.y,
         width: newBoxCoordinates.width,
-        height: newBoxCoordinates.height
+        height: newBoxCoordinates.height,
+        phone_number: formData.phone_number || '',
+        email: formData.email || '',
+        occupancy_status: formData.occupancy_status || 'occupied',
+        notes: formData.notes || '',
+        floor_plan_id: selectedFloorPlan || undefined
       });
     }
 
@@ -273,11 +309,27 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
     <Card className="w-full h-[600px] overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-lg font-semibold">{title}</CardTitle>
-            <Badge variant="secondary" className="mt-1">
-              {loading ? 'Loading...' : `${filteredUnits.length} Units`}
-            </Badge>
+          <div className="flex items-center gap-4">
+            <div>
+              <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+              <Badge variant="secondary" className="mt-1">
+                {loading ? 'Loading...' : `${filteredUnits.length} Units`}
+              </Badge>
+            </div>
+            {floorPlans.length > 0 && (
+              <Select value={selectedFloorPlan} onValueChange={handleFloorPlanChange}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Select floor plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {floorPlans.map((plan) => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      {plan.name} (v{plan.version})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {isAdminMode && (
@@ -349,8 +401,8 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
           >
             <img
               ref={imageRef}
-              src={imageUrl}
-              alt="Community Map"
+            src={currentImageUrl}
+            alt="Interactive floor plan"
               className="w-full h-auto select-none"
               draggable={false}
               onLoad={() => setImageLoaded(true)}
