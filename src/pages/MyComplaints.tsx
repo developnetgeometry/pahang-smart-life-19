@@ -45,6 +45,8 @@ export default function MyComplaints() {
     location: '',
     description: ''
   });
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -96,7 +98,8 @@ export default function MyComplaints() {
           priority: formData.priority,
           location: formData.location,
           complainant_id: user.id,
-          status: 'pending'
+          status: 'pending',
+          photos: uploadedPhotos.length > 0 ? uploadedPhotos : null
         });
 
       if (error) throw error;
@@ -114,6 +117,7 @@ export default function MyComplaints() {
         location: '',
         description: ''
       });
+      setUploadedPhotos([]);
       setShowNewComplaintDialog(false);
       
       // Refresh complaints list
@@ -128,6 +132,52 @@ export default function MyComplaints() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || !user) return;
+
+    setUploading(true);
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        
+        const { data, error } = await supabase.storage
+          .from('complaint-photos')
+          .upload(fileName, file);
+
+        if (error) throw error;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('complaint-photos')
+          .getPublicUrl(fileName);
+
+        return publicUrl;
+      });
+
+      const photoUrls = await Promise.all(uploadPromises);
+      setUploadedPhotos(prev => [...prev, ...photoUrls]);
+      
+      toast({
+        title: language === 'en' ? 'Success' : 'Berjaya',
+        description: language === 'en' ? `${photoUrls.length} photo(s) uploaded` : `${photoUrls.length} foto telah dimuat naik`,
+      });
+    } catch (error) {
+      console.error('Error uploading photos:', error);
+      toast({
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' ? 'Failed to upload photos' : 'Gagal memuat naik foto',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removePhoto = (photoUrl: string) => {
+    setUploadedPhotos(prev => prev.filter(url => url !== photoUrl));
   };
 
   const getPriorityColor = (priority: string) => {
@@ -321,11 +371,51 @@ export default function MyComplaints() {
                 <Label>
                   {language === 'en' ? 'Photos (Optional)' : 'Foto (Pilihan)'}
                 </Label>
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
-                  <Camera className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    {language === 'en' ? 'Click to upload photos' : 'Klik untuk muat naik foto'}
-                  </p>
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      disabled={uploading}
+                      className="hidden"
+                      id="photo-upload"
+                    />
+                    <label htmlFor="photo-upload" className="cursor-pointer">
+                      <Camera className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        {uploading 
+                          ? (language === 'en' ? 'Uploading...' : 'Memuat naik...')
+                          : (language === 'en' ? 'Click to upload photos' : 'Klik untuk muat naik foto')
+                        }
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {language === 'en' ? 'Max 50MB per file' : 'Maksimum 50MB setiap fail'}
+                      </p>
+                    </label>
+                  </div>
+                  
+                  {uploadedPhotos.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2">
+                      {uploadedPhotos.map((photoUrl, index) => (
+                        <div key={index} className="relative group">
+                          <img 
+                            src={photoUrl} 
+                            alt={`Complaint photo ${index + 1}`}
+                            className="w-full h-20 object-cover rounded-md"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removePhoto(photoUrl)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               <Button 
@@ -448,9 +538,13 @@ export default function MyComplaints() {
                   {selectedComplaint.photos && selectedComplaint.photos.length > 0 ? (
                     <div className="grid grid-cols-3 gap-2">
                       {selectedComplaint.photos.map((photo, index) => (
-                        <div key={index} className="aspect-square bg-gray-200 rounded-md flex items-center justify-center">
-                          <Camera className="w-6 h-6 text-gray-400" />
-                        </div>
+                        <img 
+                          key={index}
+                          src={photo} 
+                          alt={`Complaint photo ${index + 1}`}
+                          className="w-full h-20 object-cover rounded-md cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => window.open(photo, '_blank')}
+                        />
                       ))}
                     </div>
                   ) : (
