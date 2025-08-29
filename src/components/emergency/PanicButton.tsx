@@ -194,26 +194,26 @@ export default function PanicButton() {
         <div className="relative">
           {/* Progress Circle */}
           {isPressed && (
-            <div className="absolute inset-0 -m-2">
-              <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 80 80">
+            <div className="absolute inset-0 -m-3">
+              <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 96 96">
                 <circle
-                  cx="40"
-                  cy="40"
-                  r="36"
+                  cx="48"
+                  cy="48"
+                  r="44"
                   stroke="currentColor"
                   strokeWidth="8"
                   fill="none"
                   className="text-red-200"
                 />
                 <circle
-                  cx="40"
-                  cy="40"
-                  r="36"
+                  cx="48"
+                  cy="48"
+                  r="44"
                   stroke="currentColor"
                   strokeWidth="8"
                   fill="none"
-                  strokeDasharray={`${2 * Math.PI * 36}`}
-                  strokeDashoffset={`${2 * Math.PI * 36 * (1 - progress / 100)}`}
+                  strokeDasharray={`${2 * Math.PI * 44}`}
+                  strokeDashoffset={`${2 * Math.PI * 44 * (1 - progress / 100)}`}
                   className="text-red-500 transition-all duration-100 ease-linear"
                 />
               </svg>
@@ -224,7 +224,7 @@ export default function PanicButton() {
           <Button
             size="lg"
             className={`
-              w-16 h-16 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg
+              w-20 h-20 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg
               ${isPressed ? 'scale-95 bg-red-700' : ''}
               ${isTriggering ? 'animate-pulse' : ''}
               transition-all duration-150
@@ -236,7 +236,7 @@ export default function PanicButton() {
             onTouchEnd={endHold}
             disabled={isTriggering}
           >
-            <Shield className="w-6 h-6" />
+            <Shield className="w-7 h-7" />
           </Button>
 
           {/* Instructions */}
