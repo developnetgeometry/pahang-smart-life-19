@@ -76,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Load profile + roles for a given user id
   const loadProfileAndRoles = async (userId: string) => {
+    console.log('🔍 Loading profile and roles for user:', userId);
     try {
       const [{ data: profile }, { data: roleRows }] = await Promise.all([
         supabase
@@ -90,6 +91,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .eq('is_active', true),
       ]);
 
+      console.log('📋 Profile data:', profile);
+      console.log('👤 Role rows:', roleRows);
+
       let districtName = '';
       if (profile?.district_id) {
         const { data: district } = await supabase
@@ -98,10 +102,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .eq('id', profile.district_id)
           .single();
         districtName = district?.name || '';
+        console.log('🏘️ District name:', districtName);
       }
 
       const roleList: UserRole[] = (roleRows || []).map(r => r.role as UserRole);
       const primaryRole: UserRole = roleList[0] || 'resident';
+      console.log('🎭 Role list:', roleList, 'Primary role:', primaryRole);
       
       // Update language from profile if available
       const profileLanguage = profile?.language_preference as Language;
@@ -130,10 +136,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         emergency_contact_phone: undefined,
       };
 
+      console.log('✅ Setting user object:', userObj);
       setUser(userObj);
       setRoles(userObj.available_roles);
+      console.log('🔄 Auth state updated - isAuthenticated:', !!userObj);
     } catch (e) {
-      console.error('Failed to load profile/roles', e);
+      console.error('💥 Failed to load profile/roles', e);
       setUser(null);
       setRoles([]);
     }
@@ -141,12 +149,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Auth state listener + initial session
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔐 Auth state changed:', event, 'User ID:', session?.user?.id);
       const uid = session?.user?.id;
       if (uid) {
+        console.log('👤 User logged in, loading profile...');
         // Defer Supabase calls to avoid deadlocks
         setTimeout(() => loadProfileAndRoles(uid), 0);
       } else {
+        console.log('👋 User logged out, clearing state');
         setUser(null);
         setRoles([]);
       }
