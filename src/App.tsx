@@ -58,6 +58,7 @@ import InventoryManagement from "./pages/InventoryManagement";
 import ModuleManagement from "./pages/admin/ModuleManagement";
 import Facilities from "./pages/Facilities";
 import MyBookings from "./pages/MyBookings";
+import MyVisitors from "./pages/MyVisitors";
 import ResidentDirectory from './pages/ResidentDirectory';
 import EnhancedEvents from './pages/EnhancedEvents';
 import ModerationPanel from './components/discussions/ModerationPanel';
@@ -117,6 +118,16 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <MyComplaints />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-visitors"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <MyVisitors />
                   </Layout>
                 </ProtectedRoute>
               }
