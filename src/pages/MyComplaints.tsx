@@ -46,7 +46,7 @@ export default function MyComplaints() {
   const [formData, setFormData] = useState({
     title: '',
     category: '',
-    priority: 'medium' as const,
+    priority: 'medium' as 'low' | 'medium' | 'high',
     location: '',
     description: ''
   });
@@ -328,7 +328,7 @@ export default function MyComplaints() {
                   <Label>
                     {language === 'en' ? 'Priority Level' : 'Tahap Keutamaan'}
                   </Label>
-                  <Select value={formData.priority} onValueChange={(value: any) => setFormData(prev => ({ ...prev, priority: value }))}>
+                  <Select value={formData.priority} onValueChange={(value: 'low' | 'medium' | 'high') => setFormData(prev => ({ ...prev, priority: value }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
