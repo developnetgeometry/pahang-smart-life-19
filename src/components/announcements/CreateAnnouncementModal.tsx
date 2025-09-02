@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Trash2, Calendar, Users, BarChart3, PlusCircle, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Calendar, Users, BarChart3, PlusCircle, Loader2, ImagePlus, Paperclip, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface PollOption {
@@ -50,6 +50,10 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
     publish_at: new Date().toISOString().slice(0, 16),
     expire_at: ''
   });
+  
+  const [images, setImages] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<{name: string, url: string, size: number}[]>([]);
+  const [uploading, setUploading] = useState(false);
   
   const [includePoll, setIncludePoll] = useState(false);
   const [poll, setPoll] = useState<Poll>({
@@ -99,7 +103,16 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
       success: 'Announcement created successfully!',
       pushNotification: 'Push notification sent to recipients',
       minOptions: 'Poll must have at least 2 options',
-      fillRequired: 'Please fill in all required fields'
+      fillRequired: 'Please fill in all required fields',
+      images: 'Images',
+      attachments: 'Attachments',
+      addImage: 'Add Image',
+      addAttachment: 'Add Attachment',
+      removeImage: 'Remove Image',
+      removeAttachment: 'Remove Attachment',
+      uploading: 'Uploading...',
+      readingTime: 'Reading Time',
+      minutes: 'minutes'
     },
     ms: {
       createAnnouncement: 'Cipta Pengumuman',
@@ -133,11 +146,96 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
       success: 'Pengumuman berjaya dicipta!',
       pushNotification: 'Notifikasi tolak dihantar kepada penerima',
       minOptions: 'Undian mesti mempunyai sekurang-kurangnya 2 pilihan',
-      fillRequired: 'Sila isi semua medan yang diperlukan'
+      fillRequired: 'Sila isi semua medan yang diperlukan',
+      images: 'Gambar',
+      attachments: 'Lampiran',
+      addImage: 'Tambah Gambar',
+      addAttachment: 'Tambah Lampiran',
+      removeImage: 'Buang Gambar',
+      removeAttachment: 'Buang Lampiran',
+      uploading: 'Memuat naik...',
+      readingTime: 'Masa Membaca',
+      minutes: 'minit'
     }
   };
 
   const t = text[language];
+
+  // Calculate reading time (average 200 words per minute)
+  const calculateReadingTime = (content: string): number => {
+    const words = content.trim().split(/\s+/).length;
+    return Math.max(1, Math.ceil(words / 200));
+  };
+
+  const handleImageUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `announcements/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('public')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('public')
+        .getPublicUrl(filePath);
+
+      setImages(prev => [...prev, publicUrl]);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: language === 'en' ? 'Upload failed' : 'Muat naik gagal',
+        variant: 'destructive'
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleAttachmentUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${file.name}`;
+      const filePath = `announcements/attachments/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('public')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('public')
+        .getPublicUrl(filePath);
+
+      setAttachments(prev => [...prev, {
+        name: file.name,
+        url: publicUrl,
+        size: file.size
+      }]);
+    } catch (error) {
+      console.error('Error uploading attachment:', error);
+      toast({
+        title: language === 'en' ? 'Upload failed' : 'Muat naik gagal',
+        variant: 'destructive'
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async () => {
     if (!formData.title.trim() || !formData.content.trim()) {
@@ -181,7 +279,10 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
         community_id: formData.scope === 'community' ? profile?.community_id : null,
         publish_at: formData.publish_at || new Date().toISOString(),
         expire_at: formData.expire_at || null,
-        scope: formData.scope
+        scope: formData.scope,
+        images: images.length > 0 ? images : null,
+        attachments: attachments.length > 0 ? attachments : null,
+        reading_time_minutes: calculateReadingTime(formData.content)
       };
 
       const { data: announcement, error: announcementError } = await supabase
@@ -238,6 +339,8 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
         publish_at: new Date().toISOString().slice(0, 16),
         expire_at: ''
       });
+      setImages([]);
+      setAttachments([]);
       setIncludePoll(false);
       setPoll({
         title: '',
@@ -329,6 +432,101 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                 placeholder={t.content}
                 rows={4}
               />
+              {formData.content.trim() && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t.readingTime}: {calculateReadingTime(formData.content)} {t.minutes}
+                </p>
+              )}
+            </div>
+
+            {/* Rich Content Section */}
+            <div className="space-y-4">
+              <div>
+                <Label>{t.images}</Label>
+                <div className="grid grid-cols-3 gap-4 mt-2">
+                  {images.map((image, index) => (
+                    <div key={index} className="relative">
+                      <img 
+                        src={image} 
+                        alt={`Upload ${index + 1}`}
+                        className="w-full h-24 object-cover rounded-md border"
+                      />
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                        onClick={() => removeImage(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-md h-24 flex items-center justify-center">
+                    <input
+                      type="file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file && file.type.startsWith('image/')) handleImageUpload(file);
+                      }}
+                      className="hidden"
+                      id="image-upload"
+                      disabled={uploading}
+                      accept="image/*"
+                    />
+                    <label 
+                      htmlFor="image-upload" 
+                      className="flex flex-col items-center gap-2 text-muted-foreground cursor-pointer hover:text-foreground"
+                    >
+                      <ImagePlus className="h-6 w-6" />
+                      <span className="text-xs">{uploading ? t.uploading : t.addImage}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label>{t.attachments}</Label>
+                <div className="space-y-2 mt-2">
+                  {attachments.map((attachment, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 border rounded-md">
+                      <div className="flex items-center gap-2">
+                        <Paperclip className="h-4 w-4" />
+                        <span className="text-sm">{attachment.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          ({(attachment.size / 1024).toFixed(1)} KB)
+                        </span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeAttachment(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-md p-4">
+                    <input
+                      type="file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleAttachmentUpload(file);
+                      }}
+                      className="hidden"
+                      id="attachment-upload"
+                      disabled={uploading}
+                      accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx"
+                    />
+                    <label 
+                      htmlFor="attachment-upload" 
+                      className="flex items-center justify-center gap-2 text-muted-foreground cursor-pointer hover:text-foreground"
+                    >
+                      <Paperclip className="h-4 w-4" />
+                      <span className="text-sm">{uploading ? t.uploading : t.addAttachment}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
@@ -513,12 +711,12 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button onClick={() => onOpenChange(false)} variant="outline">
               {t.cancel}
             </Button>
-            <Button onClick={handleSubmit} disabled={submitting}>
-              {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {t.create}
+            <Button onClick={handleSubmit} disabled={submitting || uploading}>
+              {(submitting || uploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {uploading ? t.uploading : t.create}
             </Button>
           </div>
         </div>
