@@ -156,6 +156,7 @@ export default function PermissionsManagement() {
 
   useEffect(() => {
     if (userId) {
+      console.log('Loading permissions page for user:', userId);
       fetchUserData();
       fetchSystemModules();
       fetchRoleHierarchy();
@@ -170,6 +171,8 @@ export default function PermissionsManagement() {
 
   const fetchUserData = async () => {
     try {
+      console.log('Fetching user data for:', userId);
+      
       // Fetch user profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -177,7 +180,12 @@ export default function PermissionsManagement() {
         .eq('id', userId)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+        throw profileError;
+      }
+      
+      console.log('Profile loaded:', profile);
       setUserProfile(profile);
 
       // Fetch user roles
@@ -186,7 +194,12 @@ export default function PermissionsManagement() {
         .select('*')
         .eq('user_id', userId);
 
-      if (rolesError) throw rolesError;
+      if (rolesError) {
+        console.error('Roles fetch error:', rolesError);
+        throw rolesError;
+      }
+      
+      console.log('Roles loaded:', roles);
       
       // Filter and type-cast roles to ensure they're valid EnhancedUserRole types
       const validRoles = roles?.filter(role => 
@@ -202,7 +215,7 @@ export default function PermissionsManagement() {
       console.error('Error fetching user data:', error);
       toast({
         title: t.error,
-        description: 'Failed to fetch user data',
+        description: `Failed to fetch user data: ${error.message}`,
         variant: 'destructive'
       });
     }
@@ -439,7 +452,24 @@ export default function PermissionsManagement() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading permissions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userProfile) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <p className="text-muted-foreground">User not found or access denied</p>
+          <Button onClick={() => navigate('/admin/users')} className="mt-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Users
+          </Button>
+        </div>
       </div>
     );
   }

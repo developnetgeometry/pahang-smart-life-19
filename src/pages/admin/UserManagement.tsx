@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Users, UserPlus, Search, Filter, MoreVertical, Edit, Trash2, Shield, ShieldCheck, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface User {
   id: string;
@@ -27,6 +28,7 @@ interface User {
 export default function UserManagement() {
   const { language } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -193,7 +195,6 @@ export default function UserManagement() {
     { value: 'district_coordinator', label: 'District Coordinator' },
     { value: 'security_officer', label: t.security },
     { value: 'maintenance_staff', label: t.maintenance },
-    { value: 'security_officer', label: 'Security Officer' },
     { value: 'service_provider', label: 'Service Provider' },
     { value: 'community_leader', label: 'Community Leader' }
   ];
@@ -520,7 +521,7 @@ export default function UserManagement() {
                     <Button variant="outline" size="sm" onClick={() => handleEdit(user)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => window.location.href = `/admin/permissions/${user.id}`}>
+                    <Button variant="outline" size="sm" onClick={() => navigate(`/admin/permissions/${user.id}`)}>
                       <Shield className="h-4 w-4" />
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => handleDelete(user.id)}>
