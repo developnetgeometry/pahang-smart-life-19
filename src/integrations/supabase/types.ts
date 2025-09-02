@@ -5034,6 +5034,7 @@ export type Database = {
           unit_number: string | null
           updated_at: string | null
           updated_by: string | null
+          user_id: string
           vehicle_plate_number: string | null
         }
         Insert: {
@@ -5096,6 +5097,7 @@ export type Database = {
           unit_number?: string | null
           updated_at?: string | null
           updated_by?: string | null
+          user_id: string
           vehicle_plate_number?: string | null
         }
         Update: {
@@ -5158,6 +5160,7 @@ export type Database = {
           unit_number?: string | null
           updated_at?: string | null
           updated_by?: string | null
+          user_id?: string
           vehicle_plate_number?: string | null
         }
         Relationships: [

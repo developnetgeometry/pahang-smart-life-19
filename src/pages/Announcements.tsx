@@ -393,13 +393,17 @@ export default function Announcements() {
           created_at,
           is_edited,
           parent_comment_id,
-          profiles!inner(full_name, avatar_url)
+          profiles!announcement_comments_user_id_fkey(full_name, avatar_url)
         `)
         .eq('announcement_id', announcementId)
         .is('parent_comment_id', null)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching comments:', error);
+        setComments([]);
+        return;
+      }
 
       const transformedComments: Comment[] = data?.map(comment => ({
         id: comment.id,
@@ -416,6 +420,7 @@ export default function Announcements() {
       setComments(transformedComments);
     } catch (error) {
       console.error('Error fetching comments:', error);
+      setComments([]);
     } finally {
       setCommentsLoading(false);
     }
@@ -456,12 +461,29 @@ export default function Announcements() {
     setShareModalOpen(true);
   };
 
-  // Load announcement details when modal opens
+  // Load announcement details when modal opens - with proper error handling
   useEffect(() => {
     if (selectedAnnouncement && detailsModalOpen) {
-      fetchAnnouncementDetails(selectedAnnouncement.id);
+      let mounted = true;
+      
+      const loadDetails = async () => {
+        try {
+          await fetchAnnouncementDetails(selectedAnnouncement.id);
+        } catch (error) {
+          if (mounted) {
+            console.error('Failed to load announcement details:', error);
+            // Don't retry on error to prevent flickering
+          }
+        }
+      };
+      
+      loadDetails();
+      
+      return () => {
+        mounted = false;
+      };
     }
-  }, [selectedAnnouncement, detailsModalOpen, user]);
+  }, [selectedAnnouncement?.id, detailsModalOpen, user?.id]);
 
   const handleTogglePin = async (announcementId: string, currentPinStatus: boolean) => {
     if (!canCreateAnnouncements) {

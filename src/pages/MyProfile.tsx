@@ -234,6 +234,7 @@ export default function MyProfile() {
       // Prepare data for database
       const profileData = {
         id: user.id, // Required for upsert
+        user_id: user.id, // Required user_id field for foreign key
         full_name: formData.fullname,
         email: formData.email,
         identity_no: formData.identity_no,
