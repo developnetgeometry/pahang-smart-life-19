@@ -18,8 +18,7 @@ import {
   Reply,
   Heart,
   ThumbsUp,
-  Laugh,
-  Video
+  Laugh
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Separator } from '@/components/ui/separator';
@@ -32,7 +31,7 @@ import TypingIndicator from './TypingIndicator';
 import { UserSelectionModal } from './UserSelectionModal';
 import { GroupCreationModal } from './GroupCreationModal';
 import { ChatListItem } from './ChatListItem';
-import VideoCallRoom from './VideoCallRoom';
+
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -94,7 +93,6 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [replyToMessageId, setReplyToMessageId] = useState<string | null>(null);
   const [showFileUpload, setShowFileUpload] = useState(false);
-  const [showVideoCall, setShowVideoCall] = useState(false);
 
   // Custom hooks
   const { 
@@ -338,25 +336,6 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
     }
   };
 
-  const handleStartVideoCall = () => {
-    if (!selectedRoom) {
-      toast({
-        title: 'Error',
-        description: 'Please select a chat first',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    setShowVideoCall(true);
-    
-    // Notify other participants about the video call
-    const callType = selectedRoom.room_type === 'direct' ? 'individual' : 'group';
-    toast({
-      title: 'Video Call Started',
-      description: `Starting ${callType} video call with ${selectedRoom.name}`,
-    });
-  };
 
   // Filter rooms based on search
   const filteredRooms = rooms.filter(room =>
@@ -434,14 +413,7 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
 
       {/* Chat Area */}
       <div className="flex-1 flex flex-col">
-        {showVideoCall && selectedRoom ? (
-          <VideoCallRoom 
-            roomId={selectedRoomId}
-            isHost={true}
-            onLeave={() => setShowVideoCall(false)}
-            onToggleChat={() => setShowVideoCall(false)}
-          />
-        ) : selectedRoom ? (
+        {selectedRoom ? (
           <>
             {/* Chat Header */}
             <div className="p-4 border-b bg-muted/50">
@@ -462,14 +434,6 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
                     </p>
                   </div>
                 </div>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  onClick={handleStartVideoCall}
-                  title={language === 'en' ? 'Start video call' : 'Mula panggilan video'}
-                >
-                  <Video className="h-4 w-4" />
-                </Button>
               </div>
             </div>
 

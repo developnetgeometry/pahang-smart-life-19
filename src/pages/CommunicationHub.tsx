@@ -5,27 +5,23 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   MessageSquare, 
   Bell, 
-  Users, 
-  Phone, 
-  Video,
+  Users,
   Activity,
   Settings
 } from 'lucide-react';
 import CommunityChat from '@/components/communication/CommunityChat';
 import { useCommunicationStats } from '@/hooks/use-communication-stats';
 import { useUserPresence } from '@/hooks/use-user-presence';
-import VideoCallRoom from '@/components/communication/VideoCallRoom';
+
 import SmartNotifications from '@/components/communication/SmartNotifications';
 import NotificationCenter from '@/components/communication/NotificationCenter';
 
 export default function CommunicationHub() {
   const { language } = useAuth();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState('chat');
   const [showNotifications, setShowNotifications] = useState(false);
 
   // Real-time hooks
@@ -247,31 +243,7 @@ export default function CommunicationHub() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="chat" className="flex items-center space-x-2">
-                  <MessageSquare className="w-4 h-4" />
-                  <span>{language === 'en' ? 'Chat' : 'Chat'}</span>
-                </TabsTrigger>
-                <TabsTrigger value="video" className="flex items-center space-x-2">
-                  <Video className="w-4 h-4" />
-                  <span>{language === 'en' ? 'Video' : 'Video'}</span>
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="chat" className="mt-6">
-                <CommunityChat marketplaceChat={marketplaceChat} directoryChat={directoryChat} />
-              </TabsContent>
-
-              <TabsContent value="video" className="mt-6">
-                <VideoCallRoom 
-                  roomId="community-video-call"
-                  isHost={true}
-                  onLeave={() => setActiveTab('chat')}
-                  onToggleChat={() => setActiveTab('chat')}
-                />
-              </TabsContent>
-            </Tabs>
+            <CommunityChat marketplaceChat={marketplaceChat} directoryChat={directoryChat} />
           </CardContent>
         </Card>
 
