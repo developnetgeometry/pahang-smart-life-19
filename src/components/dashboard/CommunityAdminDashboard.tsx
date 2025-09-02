@@ -509,7 +509,7 @@ export function CommunityAdminDashboard() {
             <Button 
               className="flex items-center gap-2 h-12" 
               variant="outline"
-              onClick={() => navigate('/admin/user-management')}
+              onClick={() => navigate('/admin/complaints-analytics')}
             >
               <MessageSquare className="h-4 w-4" />
               {language === 'en' ? 'View Reports' : 'Lihat Laporan'}
