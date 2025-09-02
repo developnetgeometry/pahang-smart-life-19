@@ -60,7 +60,6 @@ import Facilities from "./pages/Facilities";
 import MyBookings from "./pages/MyBookings";
 import MyVisitors from "./pages/MyVisitors";
 import VisitorApprovals from "./pages/VisitorApprovals";
-import QRScanner from "./pages/QRScanner";
 import VisitorDashboard from "./pages/VisitorDashboard";
 import ResidentDirectory from './pages/ResidentDirectory';
 import EnhancedEvents from './pages/EnhancedEvents';
@@ -344,36 +343,24 @@ const App = () => (
               }
             />
             <Route
+              path="/visitor-management"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["security_officer", "community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <VisitorApprovals />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/visitor-dashboard"
               element={
                 <ProtectedRoute>
                   <RequireRoles roles={["security_officer", "community_admin", "district_coordinator", "state_admin"]}>
                     <Layout>
                       <VisitorDashboard />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/qr-scanner"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["security_officer", "community_admin", "district_coordinator", "state_admin"]}>
-                    <Layout>
-                      <QRScanner />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/visitor-approvals"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["security_officer", "community_admin", "district_coordinator", "state_admin"]}>
-                    <Layout>
-                      <VisitorApprovals />
                     </Layout>
                   </RequireRoles>
                 </ProtectedRoute>

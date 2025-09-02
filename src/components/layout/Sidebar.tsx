@@ -310,15 +310,9 @@ export function AppSidebar() {
             requiredRoles: ["security_officer", "state_admin", "community_admin"],
           },
           {
-            title: "Visitor Approvals",
-            url: "/visitor-approvals",
+            title: "Visitor Management",
+            url: "/visitor-management",
             icon: UserCheck,
-            requiredRoles: ["security_officer", "state_admin", "community_admin"],
-          },
-          {
-            title: "QR Scanner",
-            url: "/qr-scanner",
-            icon: QrCode,
             requiredRoles: ["security_officer", "state_admin", "community_admin"],
           },
           {
