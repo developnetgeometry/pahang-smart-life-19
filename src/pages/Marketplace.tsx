@@ -524,130 +524,140 @@ export default function Marketplace() {
         <div className="flex items-center gap-4">
           <CartIcon onClick={() => setShowCart(!showCart)} />
           {user && (
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t.newListing}
-                </Button>
-              </DialogTrigger>
-            <DialogContent className="sm:max-w-[525px]">
-              <DialogHeader>
-                <DialogTitle>{t.createTitle}</DialogTitle>
-                <DialogDescription>{t.createSubtitle}</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">{t.itemTitle}*</Label>
-                  <Input 
-                    id="title" 
-                    placeholder={t.itemTitle}
-                    value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="category">{t.category}*</Label>
-                    <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t.selectCategory} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.slice(1).map((category) => (
-                          <SelectItem key={category.value} value={category.value}>
-                            {category.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="condition">{t.condition}*</Label>
-                    <Select value={formData.condition} onValueChange={(value) => setFormData(prev => ({ ...prev, condition: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t.selectCondition} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {conditions.slice(1).map((condition) => (
-                          <SelectItem key={condition.value} value={condition.value}>
-                            {condition.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="price">{t.itemPrice}*</Label>
-                  <Input 
-                    id="price" 
-                    type="number" 
-                    placeholder="0"
-                    value={formData.price}
-                    onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="image">{t.itemImage}</Label>
-                  <Input 
-                    id="image" 
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] || null;
-                      setFormData(prev => ({ ...prev, image: file }));
-                    }}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">{t.itemDescription}</Label>
-                  <Textarea 
-                    id="description" 
-                    placeholder={t.itemDescription}
-                    rows={3}
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input 
-                    id="location" 
-                    placeholder="e.g., Block A, Unit 10-2"
-                    value={formData.location}
-                    onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="contact">{t.contactInfo}</Label>
-                  <Input 
-                    id="contact" 
-                    placeholder="Phone number or email"
-                    value={formData.contact}
-                    onChange={(e) => setFormData(prev => ({ ...prev, contact: e.target.value }))}
-                  />
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>
-                    {t.cancel}
+            <>
+              {/* Analytics Dashboard Button */}
+              <Button 
+                variant="outline" 
+                onClick={() => navigate(isServiceProvider ? '/seller-dashboard' : '/marketplace-analytics')}
+              >
+                {language === 'en' ? 'My Analytics' : 'Analitik Saya'}
+              </Button>
+              
+              <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t.newListing}
                   </Button>
-                  <Button onClick={handleCreateListing} disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        {language === 'en' ? 'Creating...' : 'Mencipta...'}
-                      </>
-                    ) : (
-                      t.create
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-        </div>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[525px]">
+                  <DialogHeader>
+                    <DialogTitle>{t.createTitle}</DialogTitle>
+                    <DialogDescription>{t.createSubtitle}</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">{t.itemTitle}*</Label>
+                      <Input 
+                        id="title" 
+                        placeholder={t.itemTitle}
+                        value={formData.title}
+                        onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="category">{t.category}*</Label>
+                        <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t.selectCategory} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.slice(1).map((category) => (
+                              <SelectItem key={category.value} value={category.value}>
+                                {category.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="condition">{t.condition}*</Label>
+                        <Select value={formData.condition} onValueChange={(value) => setFormData(prev => ({ ...prev, condition: value }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t.selectCondition} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {conditions.slice(1).map((condition) => (
+                              <SelectItem key={condition.value} value={condition.value}>
+                                {condition.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="price">{t.itemPrice}*</Label>
+                      <Input 
+                        id="price" 
+                        type="number" 
+                        placeholder="0"
+                        value={formData.price}
+                        onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="image">{t.itemImage}</Label>
+                      <Input 
+                        id="image" 
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          setFormData(prev => ({ ...prev, image: file }));
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="description">{t.itemDescription}</Label>
+                      <Textarea 
+                        id="description" 
+                        placeholder={t.itemDescription}
+                        rows={3}
+                        value={formData.description}
+                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="location">Location</Label>
+                      <Input 
+                        id="location" 
+                        placeholder="e.g., Block A, Unit 10-2"
+                        value={formData.location}
+                        onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="contact">{t.contactInfo}</Label>
+                      <Input 
+                        id="contact" 
+                        placeholder="Phone number or email"
+                        value={formData.contact}
+                        onChange={(e) => setFormData(prev => ({ ...prev, contact: e.target.value }))}
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>
+                        {t.cancel}
+                      </Button>
+                      <Button onClick={handleCreateListing} disabled={isSubmitting}>
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            {language === 'en' ? 'Creating...' : 'Mencipta...'}
+                          </>
+                        ) : (
+                          t.create
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
+         </div>
       </div>
 
       {/* Cart Sidebar */}
