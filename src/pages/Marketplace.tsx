@@ -24,10 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useChatRooms } from '@/hooks/use-chat-rooms';
 import { supabase } from '@/integrations/supabase/client';
 
-// Import marketplace product images
-import iphoneMarketplaceImage from '@/assets/iphone-marketplace.jpg';
-import diningTableMarketplaceImage from '@/assets/dining-table-marketplace.jpg';
-import programmingBooksMarketplaceImage from '@/assets/programming-books-marketplace.jpg';
+import { SmartImage } from '@/components/ui/dynamic-image';
 
 interface MarketplaceItem {
   id: string;
@@ -56,54 +53,8 @@ export default function Marketplace() {
   
   const [showCart, setShowCart] = useState(false);
   
-  // Mock items defined first for immediate use
-  const mockItems: MarketplaceItem[] = [
-    {
-      id: '1',
-      title: language === 'en' ? 'iPhone 13 Pro Max' : 'iPhone 13 Pro Max',
-      description: language === 'en' ? 'Excellent condition, comes with original box and charger' : 'Keadaan sangat baik, disertakan dengan kotak asal dan pengecas',
-      price: 3500,
-      category: 'electronics',
-      condition: 'like-new',
-      seller: 'John Doe',
-      sellerRating: 4.8,
-      location: 'Block A, Unit 15-2',
-      postedDate: '2024-01-15',
-      images: [iphoneMarketplaceImage],
-      isFavorite: false,
-      sellerType: 'resident'
-    },
-    {
-      id: '2',
-      title: language === 'en' ? 'IKEA Dining Table Set' : 'Set Meja Makan IKEA',
-      description: language === 'en' ? '6-seater dining table with chairs, good condition' : 'Meja makan 6 tempat duduk dengan kerusi, keadaan baik',
-      price: 800,
-      category: 'furniture',
-      condition: 'good',
-      seller: 'Sarah Chen',
-      sellerRating: 4.5,
-      location: 'Block B, Unit 8-1',
-      postedDate: '2024-01-12',
-      images: [diningTableMarketplaceImage],
-      isFavorite: true,
-      sellerType: 'resident'
-    },
-    {
-      id: '3',
-      title: language === 'en' ? 'Programming Books Collection' : 'Koleksi Buku Pengaturcaraan',
-      description: language === 'en' ? 'Various programming books, perfect for students' : 'Pelbagai buku pengaturcaraan, sesuai untuk pelajar',
-      price: 150,
-      category: 'books',
-      condition: 'good',
-      seller: 'Mike Wong',
-      sellerRating: 4.9,
-      location: 'Block C, Unit 12-5',
-      postedDate: '2024-01-10',
-      images: [programmingBooksMarketplaceImage],
-      isFavorite: false,
-      sellerType: 'service_provider'
-    }
-  ];
+  // Remove mock items since we're now using database data
+  const mockItems: MarketplaceItem[] = [];
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -246,9 +197,9 @@ export default function Marketplace() {
         // Helper function to get fallback image based on category/title
         const getFallbackImage = (title: string, category: string) => {
           const titleLower = title.toLowerCase();
-          if (titleLower.includes('iphone') || category === 'electronics') return iphoneMarketplaceImage;
-          if (titleLower.includes('table') || titleLower.includes('dining') || category === 'furniture') return diningTableMarketplaceImage;
-          if (titleLower.includes('book') || category === 'books') return programmingBooksMarketplaceImage;
+          if (titleLower.includes('iphone') || category === 'electronics') return '/src/assets/iphone-marketplace.jpg';
+          if (titleLower.includes('table') || titleLower.includes('dining') || category === 'furniture') return '/src/assets/dining-table-marketplace.jpg';
+          if (titleLower.includes('book') || category === 'books') return '/src/assets/programming-books-marketplace.jpg';
           return '/placeholder.svg';
         };
 
@@ -264,13 +215,13 @@ export default function Marketplace() {
           sellerRating: 4.5,
           location: item.location || '',
           postedDate: new Date(item.created_at).toISOString().split('T')[0],
-          images: item.image ? [
-            item.image.startsWith('http') ? item.image : 
-            item.image === 'iphone-marketplace.jpg' ? iphoneMarketplaceImage :
-            item.image === 'dining-table-marketplace.jpg' ? diningTableMarketplaceImage :
-            item.image === 'programming-books-marketplace.jpg' ? programmingBooksMarketplaceImage :
-            getFallbackImage(item.title, item.category)
-          ] : [getFallbackImage(item.title, item.category)],
+            images: item.image ? [
+              item.image.startsWith('http') ? item.image : 
+              item.image === 'iphone-marketplace.jpg' ? '/src/assets/iphone-marketplace.jpg' :
+              item.image === 'dining-table-marketplace.jpg' ? '/src/assets/dining-table-marketplace.jpg' :
+              item.image === 'programming-books-marketplace.jpg' ? '/src/assets/programming-books-marketplace.jpg' :
+              getFallbackImage(item.title, item.category)
+            ] : [getFallbackImage(item.title, item.category)],
           isFavorite: false,
           sellerType: item.seller_type as 'resident' | 'service_provider'
         }));
@@ -439,9 +390,9 @@ export default function Marketplace() {
           // Transform data to match our interface (reusing existing logic)
           const getFallbackImage = (title: string, category: string) => {
             const titleLower = title.toLowerCase();
-            if (titleLower.includes('iphone') || category === 'electronics') return iphoneMarketplaceImage;
-            if (titleLower.includes('table') || titleLower.includes('dining') || category === 'furniture') return diningTableMarketplaceImage;
-            if (titleLower.includes('book') || category === 'books') return programmingBooksMarketplaceImage;
+            if (titleLower.includes('iphone') || category === 'electronics') return '/src/assets/iphone-marketplace.jpg';
+            if (titleLower.includes('table') || titleLower.includes('dining') || category === 'furniture') return '/src/assets/dining-table-marketplace.jpg';
+            if (titleLower.includes('book') || category === 'books') return '/src/assets/programming-books-marketplace.jpg';
             return '/placeholder.svg';
           };
 
@@ -458,9 +409,9 @@ export default function Marketplace() {
             postedDate: new Date(item.created_at).toISOString().split('T')[0],
             images: item.image ? [
               item.image.startsWith('http') ? item.image : 
-              item.image === 'iphone-marketplace.jpg' ? iphoneMarketplaceImage :
-              item.image === 'dining-table-marketplace.jpg' ? diningTableMarketplaceImage :
-              item.image === 'programming-books-marketplace.jpg' ? programmingBooksMarketplaceImage :
+              item.image === 'iphone-marketplace.jpg' ? '/src/assets/iphone-marketplace.jpg' :
+              item.image === 'dining-table-marketplace.jpg' ? '/src/assets/dining-table-marketplace.jpg' :
+              item.image === 'programming-books-marketplace.jpg' ? '/src/assets/programming-books-marketplace.jpg' :
               getFallbackImage(item.title, item.category)
             ] : [getFallbackImage(item.title, item.category)],
             isFavorite: false,
@@ -755,11 +706,11 @@ export default function Marketplace() {
             <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
               <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden">
                 {item.images[0] && item.images[0] !== '/placeholder.svg' ? (
-                  <img 
-                    src={item.images[0]} 
-                    alt={item.title}
-                    className="w-full h-full object-cover"
-                  />
+                <SmartImage
+                  src={item.images[0]}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                />
                 ) : (
                   <ShoppingBag className="h-12 w-12 text-muted-foreground" />
                 )}

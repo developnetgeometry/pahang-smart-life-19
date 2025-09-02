@@ -2787,6 +2787,62 @@ export type Database = {
           },
         ]
       }
+      image_assets: {
+        Row: {
+          asset_type: string
+          bucket_id: string
+          created_at: string | null
+          description: string | null
+          file_path: string
+          file_size: number | null
+          id: string
+          is_active: boolean | null
+          mime_type: string | null
+          name: string
+          reference_id: string | null
+          updated_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          asset_type: string
+          bucket_id: string
+          created_at?: string | null
+          description?: string | null
+          file_path: string
+          file_size?: number | null
+          id?: string
+          is_active?: boolean | null
+          mime_type?: string | null
+          name: string
+          reference_id?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          asset_type?: string
+          bucket_id?: string
+          created_at?: string | null
+          description?: string | null
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          is_active?: boolean | null
+          mime_type?: string | null
+          name?: string
+          reference_id?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_assets_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incident_reports: {
         Row: {
           assigned_to: string | null
@@ -7567,6 +7623,10 @@ export type Database = {
           display_name: string
           module_name: string
         }[]
+      }
+      get_image_url: {
+        Args: { bucket_name: string; file_path: string }
+        Returns: string
       }
       get_module_id: {
         Args: { module_name: string }
