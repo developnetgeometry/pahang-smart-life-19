@@ -61,6 +61,7 @@ import MyBookings from "./pages/MyBookings";
 import MyVisitors from "./pages/MyVisitors";
 import VisitorApprovals from "./pages/VisitorApprovals";
 import QRScanner from "./pages/QRScanner";
+import VisitorDashboard from "./pages/VisitorDashboard";
 import ResidentDirectory from './pages/ResidentDirectory';
 import EnhancedEvents from './pages/EnhancedEvents';
 import ModerationPanel from './components/discussions/ModerationPanel';
@@ -339,6 +340,18 @@ const App = () => (
                   <Layout>
                     <VisitorSecurity />
                   </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/visitor-dashboard"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["security_officer", "community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <VisitorDashboard />
+                    </Layout>
+                  </RequireRoles>
                 </ProtectedRoute>
               }
             />
