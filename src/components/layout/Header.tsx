@@ -37,6 +37,7 @@ export function Header() {
       'district_coordinator', 
       'community_admin',
       'state_service_manager',
+      'facility_manager', // Added facility_manager to hierarchy
       'security_officer',
       'maintenance_staff',
       'service_provider',
