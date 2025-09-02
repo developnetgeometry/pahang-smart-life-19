@@ -314,12 +314,6 @@ export function AppSidebar() {
             url: "/visitor-management",
             icon: UserCheck,
             requiredRoles: ["security_officer", "state_admin", "community_admin"],
-          },
-          {
-            title: "Visitor Dashboard",
-            url: "/visitor-dashboard",
-            icon: Activity,
-            requiredRoles: ["security_officer", "state_admin", "community_admin"],
           }
         );
       }
