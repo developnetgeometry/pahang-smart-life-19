@@ -214,24 +214,7 @@ export default function Marketplace() {
 
   const t = text[language];
 
-  // Check if marketplace module is enabled
-  if (!isModuleEnabled('marketplace')) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
-            <p className="text-sm text-muted-foreground">
-              The Marketplace module is not enabled for this community.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Fetch categories from database
+  // Fetch categories from database - MOVED BEFORE CONDITIONAL RETURN
   useEffect(() => {
     const fetchCategories = async () => {
       const { data } = await supabase.from('product_categories').select('name');
@@ -240,7 +223,7 @@ export default function Marketplace() {
     fetchCategories();
   }, []);
 
-  // Fetch marketplace items from Supabase with timeout
+  // Fetch marketplace items from Supabase with timeout - MOVED BEFORE CONDITIONAL RETURN
   useEffect(() => {
     const fetchMarketplaceItems = async () => {
       try {
@@ -306,6 +289,23 @@ export default function Marketplace() {
     const timer = setTimeout(fetchMarketplaceItems, 100);
     return () => clearTimeout(timer);
   }, [language]);
+
+  // Check if marketplace module is enabled - MOVED AFTER ALL HOOKS
+  if (!isModuleEnabled('marketplace')) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
+            <p className="text-sm text-muted-foreground">
+              The Marketplace module is not enabled for this community.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const categories = useMemo(() => [
     { value: 'all', label: t.allCategories },
