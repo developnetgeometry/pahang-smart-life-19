@@ -18,16 +18,18 @@ interface Visitor {
   visitor_name: string;
   visitor_phone: string;
   visitor_ic?: string;
-  vehicle_number?: string;
+  vehicle_plate?: string;
   visit_date: string;
   visit_time: string;
   purpose: string;
   status: "pending" | "approved" | "denied" | "checked_in" | "checked_out";
   host_id: string;
   approved_by?: string;
-  qr_code?: string;
+  qr_code_data?: any;
   created_at: string;
   updated_at: string;
+  check_in_time?: string;
+  check_out_time?: string;
   notes?: string;
   profiles?: {
     full_name: string;
@@ -132,7 +134,7 @@ export default function VisitorApprovals() {
             email
           )
         `)
-        .or(`qr_code.eq.${code},id.eq.${code}`)
+        .or(`qr_code_data->>'qr_code'.eq.${code},id.eq.${code}`)
         .single();
 
       if (error) {
@@ -304,6 +306,7 @@ export default function VisitorApprovals() {
     visitor.visitor_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     visitor.visitor_phone.includes(searchTerm) ||
     (visitor.visitor_ic && visitor.visitor_ic.includes(searchTerm)) ||
+    (visitor.vehicle_plate && visitor.vehicle_plate.includes(searchTerm)) ||
     (visitor.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -458,10 +461,10 @@ export default function VisitorApprovals() {
                         {visitor.visitor_ic && (
                           <span>IC: {visitor.visitor_ic}</span>
                         )}
-                        {visitor.vehicle_number && (
+                        {visitor.vehicle_plate && (
                           <span className="flex items-center">
                             <Car className="w-4 h-4 mr-1" />
-                            {visitor.vehicle_number}
+                            {visitor.vehicle_plate}
                           </span>
                         )}
                       </CardDescription>
@@ -577,10 +580,10 @@ export default function VisitorApprovals() {
                         {visitor.visitor_ic && (
                           <span>IC: {visitor.visitor_ic}</span>
                         )}
-                        {visitor.vehicle_number && (
+                        {visitor.vehicle_plate && (
                           <span className="flex items-center">
                             <Car className="w-4 h-4 mr-1" />
-                            {visitor.vehicle_number}
+                            {visitor.vehicle_plate}
                           </span>
                         )}
                       </CardDescription>
@@ -775,10 +778,10 @@ export default function VisitorApprovals() {
                     <p className="text-sm font-medium">{selectedVisitor.visitor_ic}</p>
                   </div>
                 )}
-                {selectedVisitor.vehicle_number && (
+                {selectedVisitor.vehicle_plate && (
                   <div>
                     <Label>{language === 'en' ? 'Vehicle' : 'Kenderaan'}</Label>
-                    <p className="text-sm font-medium">{selectedVisitor.vehicle_number}</p>
+                    <p className="text-sm font-medium">{selectedVisitor.vehicle_plate}</p>
                   </div>
                 )}
                 <div>
