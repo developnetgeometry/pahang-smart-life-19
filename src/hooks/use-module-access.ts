@@ -16,10 +16,13 @@ export function useModuleAccess() {
   useEffect(() => {
     const fetchEnabledModules = async () => {
       if (!user) {
+        console.log('No user logged in - setting empty modules');
         setEnabledModules([]);
         setLoading(false);
         return;
       }
+
+      console.log('Fetching modules for user:', user.id, 'with roles:', hasRole);
 
       try {
         // Get user's community first
