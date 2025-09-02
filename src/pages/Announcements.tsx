@@ -4,9 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Megaphone, Calendar, Clock, Search, Pin, Bell, Loader2, Plus, BarChart3, Users, X, PinOff } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Megaphone, Calendar, Clock, Search, Pin, Bell, Loader2, Plus, BarChart3, Users, X, PinOff, 
+         Heart, ThumbsUp, Star, Bookmark, BookmarkCheck, MessageSquare, Share2, Eye, 
+         FileText, Download, Send, Reply, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import CreateAnnouncementModal from '@/components/announcements/CreateAnnouncementModal';
@@ -31,6 +37,29 @@ interface Announcement {
   expire_at?: string;
   has_poll?: boolean;
   poll_id?: string;
+  images?: string[];
+  attachments?: Array<{name: string; url: string; size?: number}>;
+  reading_time_minutes?: number;
+  view_count?: number;
+  reactions?: {
+    like: number;
+    helpful: number;
+    important: number;
+  };
+  user_reactions?: string[];
+  is_bookmarked?: boolean;
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  user_id: string;
+  user_name: string;
+  user_avatar?: string;
+  created_at: string;
+  is_edited: boolean;
+  parent_comment_id?: string;
+  replies?: Comment[];
 }
 
 export default function Announcements() {
@@ -46,6 +75,11 @@ export default function Announcements() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [replyToComment, setReplyToComment] = useState<string | null>(null);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   const canCreateAnnouncements = hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin');
 
@@ -83,6 +117,22 @@ export default function Announcements() {
       author: 'Author',
       pinAnnouncement: 'Pin Announcement',
       unpinAnnouncement: 'Unpin Announcement',
+      bookmark: 'Bookmark',
+      bookmarked: 'Bookmarked',
+      share: 'Share via Communication Hub',
+      comments: 'Comments',
+      addComment: 'Add a comment...',
+      postComment: 'Post Comment',
+      reply: 'Reply',
+      viewCount: 'views',
+      readingTime: 'min read',
+      reactions: 'Reactions',
+      like: 'Like',
+      helpful: 'Helpful', 
+      important: 'Important',
+      images: 'Images',
+      attachments: 'Attachments',
+      download: 'Download',
       pinnedSuccess: 'Pinned successfully',
       unpinnedSuccess: 'Unpinned successfully',
       noAnnouncements: 'No announcements found',
@@ -123,6 +173,22 @@ export default function Announcements() {
       author: 'Penulis',
       pinAnnouncement: 'Sematkan Pengumuman',
       unpinAnnouncement: 'Nyahsematkan Pengumuman',
+      bookmark: 'Tandabuku',
+      bookmarked: 'Ditandabuku',
+      share: 'Kongsi melalui Hub Komunikasi',
+      comments: 'Komen',
+      addComment: 'Tambah komen...',
+      postComment: 'Pos Komen',
+      reply: 'Balas',
+      viewCount: 'tontonan',
+      readingTime: 'min bacaan',
+      reactions: 'Reaksi',
+      like: 'Suka',
+      helpful: 'Membantu',
+      important: 'Penting', 
+      images: 'Gambar',
+      attachments: 'Lampiran',
+      download: 'Muat Turun',
       pinnedSuccess: 'Berjaya disematkan',
       unpinnedSuccess: 'Berjaya dinyahsematkan',
       noAnnouncements: 'Tiada pengumuman dijumpai',
@@ -158,7 +224,244 @@ export default function Announcements() {
   const handleAnnouncementClick = (announcement: Announcement) => {
     setSelectedAnnouncement(announcement);
     setDetailsModalOpen(true);
+    trackAnnouncementView(announcement.id);
   };
+
+  const trackAnnouncementView = async (announcementId: string) => {
+    if (!user) return;
+    
+    try {
+      await supabase
+        .from('announcement_views')
+        .upsert({
+          announcement_id: announcementId,
+          user_id: user.id,
+          viewed_at: new Date().toISOString()
+        });
+    } catch (error) {
+      console.error('Error tracking view:', error);
+    }
+  };
+
+  const handleReaction = async (announcementId: string, reactionType: 'like' | 'helpful' | 'important') => {
+    if (!user) return;
+
+    try {
+      const { data: existing } = await supabase
+        .from('announcement_reactions')
+        .select('id')
+        .eq('announcement_id', announcementId)
+        .eq('user_id', user.id)
+        .eq('reaction_type', reactionType)
+        .single();
+
+      if (existing) {
+        // Remove reaction
+        await supabase
+          .from('announcement_reactions')
+          .delete()
+          .eq('id', existing.id);
+      } else {
+        // Add reaction
+        await supabase
+          .from('announcement_reactions')
+          .insert({
+            announcement_id: announcementId,
+            user_id: user.id,
+            reaction_type: reactionType
+          });
+      }
+
+      // Refresh announcement data
+      fetchAnnouncementDetails(announcementId);
+    } catch (error) {
+      console.error('Error handling reaction:', error);
+      toast({
+        title: language === 'en' ? 'Error updating reaction' : 'Ralat mengemas kini reaksi',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleBookmark = async (announcementId: string) => {
+    if (!user) return;
+
+    try {
+      const { data: existing } = await supabase
+        .from('announcement_bookmarks')
+        .select('id')
+        .eq('announcement_id', announcementId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (existing) {
+        // Remove bookmark
+        await supabase
+          .from('announcement_bookmarks')
+          .delete()
+          .eq('id', existing.id);
+      } else {
+        // Add bookmark
+        await supabase
+          .from('announcement_bookmarks')
+          .insert({
+            announcement_id: announcementId,
+            user_id: user.id
+          });
+      }
+
+      // Update local state
+      setSelectedAnnouncement(prev => 
+        prev ? { ...prev, is_bookmarked: !prev.is_bookmarked } : null
+      );
+
+      toast({
+        title: existing 
+          ? (language === 'en' ? 'Bookmark removed' : 'Tandabuku dibuang')
+          : (language === 'en' ? 'Bookmarked successfully' : 'Berjaya ditandabuku')
+      });
+    } catch (error) {
+      console.error('Error handling bookmark:', error);
+      toast({
+        title: language === 'en' ? 'Error updating bookmark' : 'Ralat mengemas kini tandabuku',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const fetchAnnouncementDetails = async (announcementId: string) => {
+    if (!user) return;
+
+    try {
+      // Fetch reactions
+      const { data: reactions } = await supabase
+        .from('announcement_reactions')
+        .select('reaction_type, user_id')
+        .eq('announcement_id', announcementId);
+
+      // Fetch user's bookmark status
+      const { data: bookmark } = await supabase
+        .from('announcement_bookmarks')
+        .select('id')
+        .eq('announcement_id', announcementId)
+        .eq('user_id', user.id)
+        .single();
+
+      // Fetch view count
+      const { count: viewCount } = await supabase
+        .from('announcement_views')
+        .select('*', { count: 'exact' })
+        .eq('announcement_id', announcementId);
+
+      // Process reactions
+      const reactionCounts = {
+        like: reactions?.filter(r => r.reaction_type === 'like').length || 0,
+        helpful: reactions?.filter(r => r.reaction_type === 'helpful').length || 0,
+        important: reactions?.filter(r => r.reaction_type === 'important').length || 0
+      };
+
+      const userReactions = reactions
+        ?.filter(r => r.user_id === user.id)
+        .map(r => r.reaction_type) || [];
+
+      // Update selected announcement
+      setSelectedAnnouncement(prev => prev ? {
+        ...prev,
+        reactions: reactionCounts,
+        user_reactions: userReactions,
+        is_bookmarked: !!bookmark,
+        view_count: viewCount || 0,
+        reading_time_minutes: Math.max(1, Math.ceil(prev.content.length / 200))
+      } : null);
+
+      // Fetch comments
+      fetchComments(announcementId);
+    } catch (error) {
+      console.error('Error fetching announcement details:', error);
+    }
+  };
+
+  const fetchComments = async (announcementId: string) => {
+    try {
+      setCommentsLoading(true);
+      const { data, error } = await supabase
+        .from('announcement_comments')
+        .select(`
+          id,
+          content,
+          user_id,
+          created_at,
+          is_edited,
+          parent_comment_id,
+          profiles!inner(full_name, avatar_url)
+        `)
+        .eq('announcement_id', announcementId)
+        .is('parent_comment_id', null)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const transformedComments: Comment[] = data?.map(comment => ({
+        id: comment.id,
+        content: comment.content,
+        user_id: comment.user_id,
+        user_name: (comment.profiles as any)?.full_name || 'Anonymous',
+        user_avatar: (comment.profiles as any)?.avatar_url,
+        created_at: comment.created_at,
+        is_edited: comment.is_edited,
+        parent_comment_id: comment.parent_comment_id,
+        replies: []
+      })) || [];
+
+      setComments(transformedComments);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!user || !newComment.trim() || !selectedAnnouncement) return;
+
+    try {
+      const { error } = await supabase
+        .from('announcement_comments')
+        .insert({
+          announcement_id: selectedAnnouncement.id,
+          user_id: user.id,
+          content: newComment.trim(),
+          parent_comment_id: replyToComment
+        });
+
+      if (error) throw error;
+
+      setNewComment('');
+      setReplyToComment(null);
+      fetchComments(selectedAnnouncement.id);
+
+      toast({
+        title: language === 'en' ? 'Comment posted' : 'Komen telah dipos'
+      });
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast({
+        title: language === 'en' ? 'Error posting comment' : 'Ralat mempos komen',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleShare = () => {
+    setShareModalOpen(true);
+  };
+
+  // Load announcement details when modal opens
+  useEffect(() => {
+    if (selectedAnnouncement && detailsModalOpen) {
+      fetchAnnouncementDetails(selectedAnnouncement.id);
+    }
+  }, [selectedAnnouncement, detailsModalOpen, user]);
 
   const handleTogglePin = async (announcementId: string, currentPinStatus: boolean) => {
     if (!canCreateAnnouncements) {
@@ -630,7 +933,7 @@ export default function Announcements() {
 
       {/* Announcement Details Modal */}
       <Dialog open={detailsModalOpen} onOpenChange={setDetailsModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center gap-2">
@@ -662,14 +965,66 @@ export default function Announcements() {
           
           {selectedAnnouncement && (
             <div className="space-y-6">
-              {/* Title and Badges */}
-              <div className="space-y-3">
+              {/* Title and Actions Bar */}
+              <div className="space-y-4">
                 <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
                   {selectedAnnouncement.is_urgent && <span className="text-red-500">🔴</span>}
                   {selectedAnnouncement.title}
                   {selectedAnnouncement.is_pinned && <Pin className="w-5 h-5 text-yellow-500" />}
                 </h2>
+
+                {/* Engagement Stats */}
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  {selectedAnnouncement.view_count !== undefined && (
+                    <div className="flex items-center gap-1">
+                      <Eye className="w-4 h-4" />
+                      <span>{selectedAnnouncement.view_count} {t.viewCount}</span>
+                    </div>
+                  )}
+                  {selectedAnnouncement.reading_time_minutes && (
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      <span>{selectedAnnouncement.reading_time_minutes} {t.readingTime}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    <span>{t.publishedOn} {selectedAnnouncement.created_date}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Users className="w-4 h-4" />
+                    <span>{t.author}: {selectedAnnouncement.author}</span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleBookmark(selectedAnnouncement.id)}
+                    className="flex items-center gap-2"
+                  >
+                    {selectedAnnouncement.is_bookmarked ? (
+                      <BookmarkCheck className="w-4 h-4" />
+                    ) : (
+                      <Bookmark className="w-4 h-4" />
+                    )}
+                    {selectedAnnouncement.is_bookmarked ? t.bookmarked : t.bookmark}
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleShare}
+                    className="flex items-center gap-2"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    {t.share}
+                  </Button>
+                </div>
                 
+                {/* Badges */}
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant={getPriorityColor(selectedAnnouncement.priority)}>
                     {getPriorityText(selectedAnnouncement.priority)}
@@ -687,28 +1042,111 @@ export default function Announcements() {
                 </div>
               </div>
 
-              {/* Metadata */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>
-                    {t.publishedOn} {selectedAnnouncement.created_date}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  <span>
-                    {t.author}: {selectedAnnouncement.author}
-                  </span>
-                </div>
-              </div>
-
               {/* Content */}
               <div className="border-t pt-4">
                 <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                  <p className="text-foreground leading-relaxed whitespace-pre-wrap mb-4">
                     {selectedAnnouncement.content}
                   </p>
+                </div>
+
+                {/* Rich Content: Images */}
+                {selectedAnnouncement.images && selectedAnnouncement.images.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4" />
+                      {t.images}
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {selectedAnnouncement.images.map((image, index) => (
+                        <img
+                          key={index}
+                          src={image}
+                          alt={`Announcement image ${index + 1}`}
+                          className="rounded-lg border object-cover aspect-square cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => window.open(image, '_blank')}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Rich Content: Attachments */}
+                {selectedAnnouncement.attachments && selectedAnnouncement.attachments.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      {t.attachments}
+                    </h4>
+                    <div className="space-y-2">
+                      {selectedAnnouncement.attachments.map((attachment, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4" />
+                            <span className="font-medium">{attachment.name}</span>
+                            {attachment.size && (
+                              <span className="text-sm text-muted-foreground">
+                                ({(attachment.size / 1024 / 1024).toFixed(1)} MB)
+                              </span>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(attachment.url, '_blank')}
+                          >
+                            <Download className="w-4 h-4" />
+                            {t.download}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Reactions */}
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3">{t.reactions}</h4>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant={selectedAnnouncement.user_reactions?.includes('like') ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleReaction(selectedAnnouncement.id, 'like')}
+                    className="flex items-center gap-2"
+                  >
+                    <ThumbsUp className="w-4 h-4" />
+                    {t.like}
+                    {selectedAnnouncement.reactions?.like ? (
+                      <span className="ml-1 text-xs">({selectedAnnouncement.reactions.like})</span>
+                    ) : null}
+                  </Button>
+                  
+                  <Button
+                    variant={selectedAnnouncement.user_reactions?.includes('helpful') ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleReaction(selectedAnnouncement.id, 'helpful')}
+                    className="flex items-center gap-2"
+                  >
+                    <Heart className="w-4 h-4" />
+                    {t.helpful}
+                    {selectedAnnouncement.reactions?.helpful ? (
+                      <span className="ml-1 text-xs">({selectedAnnouncement.reactions.helpful})</span>
+                    ) : null}
+                  </Button>
+                  
+                  <Button
+                    variant={selectedAnnouncement.user_reactions?.includes('important') ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleReaction(selectedAnnouncement.id, 'important')}
+                    className="flex items-center gap-2"
+                  >
+                    <Star className="w-4 h-4" />
+                    {t.important}
+                    {selectedAnnouncement.reactions?.important ? (
+                      <span className="ml-1 text-xs">({selectedAnnouncement.reactions.important})</span>
+                    ) : null}
+                  </Button>
                 </div>
               </div>
 
@@ -722,8 +1160,109 @@ export default function Announcements() {
                   <PollComponent pollId={selectedAnnouncement.poll_id || "temp-id"} />
                 </div>
               )}
+
+              {/* Comments Section */}
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  {t.comments} ({comments.length})
+                </h4>
+                
+                {/* Add Comment */}
+                <div className="space-y-3 mb-4">
+                  <div className="flex gap-3">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback>{user?.email?.[0]?.toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 space-y-2">
+                      <Textarea
+                        placeholder={t.addComment}
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        className="min-h-[60px] resize-none"
+                      />
+                      <div className="flex justify-end">
+                        <Button
+                          size="sm"
+                          onClick={handleAddComment}
+                          disabled={!newComment.trim()}
+                          className="flex items-center gap-2"
+                        >
+                          <Send className="w-4 h-4" />
+                          {t.postComment}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Comments List */}
+                <ScrollArea className="max-h-[400px]">
+                  <div className="space-y-4">
+                    {commentsLoading ? (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                      </div>
+                    ) : comments.length > 0 ? (
+                      comments.map((comment) => (
+                        <div key={comment.id} className="flex gap-3 p-3 rounded-lg bg-muted/30">
+                          <Avatar className="w-8 h-8">
+                            <AvatarImage src={comment.user_avatar} />
+                            <AvatarFallback>{comment.user_name[0]?.toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-sm">{comment.user_name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(comment.created_at).toLocaleDateString()}
+                              </span>
+                              {comment.is_edited && (
+                                <span className="text-xs text-muted-foreground">(edited)</span>
+                              )}
+                            </div>
+                            <p className="text-sm text-foreground">{comment.content}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-center text-muted-foreground py-8">
+                        No comments yet. Be the first to comment!
+                      </p>
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Modal */}
+      <Dialog open={shareModalOpen} onOpenChange={setShareModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share Announcement</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-muted-foreground">
+              Share this announcement via the Communication Hub by creating a new chat or sending it to existing contacts.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShareModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => {
+                // Navigate to communication hub with the announcement
+                setShareModalOpen(false);
+                toast({
+                  title: language === 'en' ? 'Redirecting to Communication Hub' : 'Mengalih ke Hub Komunikasi',
+                  description: language === 'en' ? 'Opening Communication Hub to share announcement' : 'Membuka Hub Komunikasi untuk berkongsi pengumuman'
+                });
+              }}>
+                Open Communication Hub
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
