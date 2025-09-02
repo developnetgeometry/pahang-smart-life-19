@@ -129,6 +129,11 @@ export function AppSidebar() {
       servicesItems.push({ title: "Facilities", url: "/facilities", icon: Building });
     }
     
+    // Add bookings if module is enabled
+    if (isModuleEnabled('bookings')) {
+      servicesItems.push({ title: "My Bookings", url: "/my-bookings", icon: Calendar });
+    }
+    
     // Add service requests if module is enabled
     if (isModuleEnabled('service_requests')) {
       servicesItems.push({ title: "Service Requests", url: "/service-requests", icon: Clipboard });
@@ -220,22 +225,30 @@ export function AppSidebar() {
       });
     }
 
-    // Operations Management - for state_admin and community_admin roles
+    // Operations Management - for facility managers and above
     const operationsItems = [];
-    if (hasRole("state_admin") || hasRole("community_admin")) {
+    
+    // Facility Manager specific items
+    if (hasRole("facility_manager") || hasRole("state_admin") || hasRole("community_admin")) {
       operationsItems.push(
         {
           title: t("facilitiesManagement"),
           url: "/admin/facilities",
           icon: Building,
-          requiredRoles: ["state_admin", "community_admin"],
+          requiredRoles: ["facility_manager", "state_admin", "community_admin"],
         },
         {
           title: t("maintenanceManagement"),
           url: "/admin/maintenance",
           icon: Wrench,
-          requiredRoles: ["state_admin", "community_admin"],
-        },
+          requiredRoles: ["facility_manager", "state_admin", "community_admin"],
+        }
+      );
+    }
+    
+    // Admin only items
+    if (hasRole("state_admin") || hasRole("community_admin")) {
+      operationsItems.push(
         {
           title: t("complaintsManagement"),
           url: "/admin/complaints",
@@ -252,12 +265,12 @@ export function AppSidebar() {
     }
 
     // Asset Management - for facility managers and above
-    if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+    if (hasRole("facility_manager") || hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
       operationsItems.push({
         title: "Asset Management",
         url: "/asset-management",
         icon: Package,
-        requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
+        requiredRoles: ["facility_manager", "community_admin", "district_coordinator", "state_admin"],
       });
     }
 
