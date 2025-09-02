@@ -55,6 +55,8 @@ export default function MaintenanceManagement() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequest | null>(null);
+  const [dayDetailOpen, setDayDetailOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const text = {
     en: {
       title: 'Maintenance Management',
@@ -244,6 +246,89 @@ export default function MaintenanceManagement() {
     }
   ];
 
+  // Mock daily maintenance data
+  const dailyMaintenanceData: Record<number, Array<{
+    id: string;
+    title: string;
+    time: string;
+    technician: string;
+    status: 'scheduled' | 'in-progress' | 'completed';
+    category: string;
+    location: string;
+  }>> = {
+    5: [
+      {
+        id: '1',
+        title: 'Elevator inspection - Block A',
+        time: '09:00 - 11:00',
+        technician: 'Mike Wilson',
+        status: 'completed',
+        category: 'Elevator',
+        location: 'Block A'
+      },
+      {
+        id: '2',
+        title: 'Fire safety system check',
+        time: '14:00 - 15:00',
+        technician: 'Ahmad Hassan',
+        status: 'completed',
+        category: 'Safety',
+        location: 'Ground Floor'
+      }
+    ],
+    12: [
+      {
+        id: '3',
+        title: 'HVAC filter replacement',
+        time: '10:00 - 12:00',
+        technician: 'Lisa Rodriguez',
+        status: 'in-progress',
+        category: 'HVAC',
+        location: 'All Floors'
+      },
+      {
+        id: '4',
+        title: 'Water pump maintenance',
+        time: '14:00 - 16:00',
+        technician: 'Ahmad Hassan',
+        status: 'scheduled',
+        category: 'Plumbing',
+        location: 'Basement'
+      }
+    ],
+    19: [
+      {
+        id: '5',
+        title: 'Generator testing',
+        time: '09:00 - 10:00',
+        technician: 'Mike Wilson',
+        status: 'scheduled',
+        category: 'Electrical',
+        location: 'Basement'
+      },
+      {
+        id: '6',
+        title: 'Lighting system check',
+        time: '16:00 - 17:00',
+        technician: 'Lisa Rodriguez',
+        status: 'scheduled',
+        category: 'Electrical',
+        location: 'Common Areas'
+      }
+    ],
+    26: [
+      {
+        id: '7',
+        title: 'Security system maintenance',
+        time: '20:00 - 22:00',
+        technician: 'Mike Wilson',
+        status: 'scheduled',
+        category: 'Security',
+        location: 'All Areas'
+      }
+    ]
+  };
+
   const categories = [
     { value: 'plumbing', label: t.plumbing },
     { value: 'electrical', label: t.electrical },
@@ -358,6 +443,22 @@ export default function MaintenanceManagement() {
   const handleView = (req: MaintenanceRequest) => {
     setSelectedRequest(req);
     setViewOpen(true);
+  };
+
+  const handleCalendarDayClick = (day: number) => {
+    if (day > 0 && day <= 31) {
+      setSelectedDate(day);
+      setDayDetailOpen(true);
+    }
+  };
+
+  const getDayStatusColor = (status: 'scheduled' | 'in-progress' | 'completed') => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'in-progress': return 'bg-blue-100 text-blue-800';  
+      case 'scheduled': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
   return (
@@ -749,10 +850,12 @@ export default function MaintenanceManagement() {
                   return (
                     <div
                       key={i}
+                      onClick={() => handleCalendarDayClick(day)}
                       className={`
                         aspect-square flex items-center justify-center text-sm border rounded-lg cursor-pointer
-                        ${isCurrentMonth ? 'hover:bg-muted' : 'text-muted-foreground bg-muted/50'}
+                        ${isCurrentMonth ? 'hover:bg-muted hover:border-primary' : 'text-muted-foreground bg-muted/50'}
                         ${hasSchedule && isCurrentMonth ? 'bg-blue-50 border-blue-200' : ''}
+                        ${isCurrentMonth ? 'transition-colors' : ''}
                       `}
                     >
                       {day > 0 && day <= 31 ? day : ''}
@@ -890,6 +993,79 @@ export default function MaintenanceManagement() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Day Details Dialog */}
+      <Dialog open={dayDetailOpen} onOpenChange={setDayDetailOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>January {selectedDate}, 2025 - Maintenance Details</DialogTitle>
+            <DialogDescription>
+              {dailyMaintenanceData[selectedDate || 0] ? 
+                `${dailyMaintenanceData[selectedDate || 0].length} scheduled activities` : 
+                'No maintenance activities scheduled for this day'
+              }
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedDate && dailyMaintenanceData[selectedDate] ? (
+            <div className="space-y-4">
+              {dailyMaintenanceData[selectedDate].map((activity) => (
+                <div key={activity.id} className="p-4 border rounded-lg space-y-2">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{activity.title}</h4>
+                      <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {activity.time}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          {activity.technician}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {activity.location}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        {activity.category}
+                      </Badge>
+                      <Badge className={getDayStatusColor(activity.status)}>
+                        {activity.status.charAt(0).toUpperCase() + activity.status.slice(1)}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  {activity.status === 'scheduled' && (
+                    <div className="flex gap-2 pt-2">
+                      <Button variant="outline" size="sm">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        Reschedule
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <Settings className="h-3 w-3 mr-1" />
+                        Configure
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No maintenance activities scheduled for this day.</p>
+              <Button variant="outline" className="mt-4">
+                <Plus className="h-4 w-4 mr-2" />
+                Schedule Maintenance
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
