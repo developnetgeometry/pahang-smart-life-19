@@ -121,7 +121,8 @@ export default function Marketplace() {
     condition: '',
     price: '',
     location: '',
-    contact: ''
+    contact: '',
+    image: null as File | null
   });
 
   const text = {
@@ -156,6 +157,7 @@ export default function Marketplace() {
       itemTitle: 'Item Title',
       itemDescription: 'Description',
       itemPrice: 'Price (RM)',
+      itemImage: 'Product Image',
       selectCategory: 'Select Category',
       selectCondition: 'Select Condition',
       contactInfo: 'Contact Information',
@@ -195,6 +197,7 @@ export default function Marketplace() {
       itemTitle: 'Tajuk Barang',
       itemDescription: 'Penerangan',
       itemPrice: 'Harga (RM)',
+      itemImage: 'Gambar Produk',
       selectCategory: 'Pilih Kategori',
       selectCondition: 'Pilih Keadaan',
       contactInfo: 'Maklumat Hubungan',
@@ -391,7 +394,8 @@ export default function Marketplace() {
         condition: '',
         price: '',
         location: '',
-        contact: ''
+        contact: '',
+        image: null
       });
       setIsCreateOpen(false);
 
@@ -581,6 +585,18 @@ export default function Marketplace() {
                     placeholder="0"
                     value={formData.price}
                     onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="image">{t.itemImage}</Label>
+                  <Input 
+                    id="image" 
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setFormData(prev => ({ ...prev, image: file }));
+                    }}
                   />
                 </div>
                 <div className="space-y-2">
