@@ -188,14 +188,33 @@ export default function EnhancedEvents() {
 
       if (error) throw error;
 
-      // For now, just return events without registration info
-      const processedEvents = (data || []).map(event => ({
-        ...event,
-        user_registered: false,
-        registration_status: undefined
-      }));
+      // Fetch user registration status for each event
+      const eventsWithRegistration = await Promise.all(
+        (data || []).map(async (event) => {
+          if (!user) {
+            return {
+              ...event,
+              user_registered: false,
+              registration_status: undefined
+            };
+          }
 
-      setEvents(processedEvents);
+          const { data: registrationData } = await supabase
+            .from('event_registrations')
+            .select('id')
+            .eq('event_id', event.id)
+            .eq('user_id', user.id)
+            .single();
+
+          return {
+            ...event,
+            user_registered: !!registrationData,
+            registration_status: 'registered'
+          };
+        })
+      );
+
+      setEvents(eventsWithRegistration);
     } catch (error) {
       console.error('Error fetching events:', error);
       toast({
@@ -212,7 +231,13 @@ export default function EnhancedEvents() {
     try {
       const { data, error } = await supabase
         .from('event_registrations')
-        .select('*')
+        .select(`
+          *,
+          profiles!event_registrations_user_id_fkey (
+            full_name,
+            email
+          )
+        `)
         .eq('event_id', eventId)
         .order('registration_date', { ascending: true });
 
@@ -220,8 +245,8 @@ export default function EnhancedEvents() {
 
       const processedRegistrations = (data || []).map((reg: any) => ({
         ...reg,
-        user_name: 'User', // Placeholder for now
-        user_email: 'user@example.com' // Placeholder for now
+        user_name: reg.profiles?.full_name || 'User',
+        user_email: reg.profiles?.email || 'user@example.com'
       }));
 
       setRegistrations(processedRegistrations);

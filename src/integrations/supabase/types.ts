@@ -1513,6 +1513,47 @@ export type Database = {
           },
         ]
       }
+      community_group_memberships: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string
+          left_at: string | null
+          notes: string | null
+          role: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string
+          left_at?: string | null
+          notes?: string | null
+          role?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string
+          left_at?: string | null
+          notes?: string | null
+          role?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_group_memberships_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_groups: {
         Row: {
           category: string | null
@@ -5998,6 +6039,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      security_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          description: string | null
+          district_id: string | null
+          id: string
+          location_description: string | null
+          location_latitude: number | null
+          location_longitude: number | null
+          reporter_id: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          alert_type?: string
+          created_at?: string
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          location_description?: string | null
+          location_latitude?: number | null
+          location_longitude?: number | null
+          reporter_id: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          location_description?: string | null
+          location_latitude?: number | null
+          location_longitude?: number | null
+          reporter_id?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       security_patrols: {
         Row: {
