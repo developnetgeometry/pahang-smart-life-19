@@ -9,7 +9,7 @@ export interface EnabledModule {
 }
 
 export function useModuleAccess() {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const [enabledModules, setEnabledModules] = useState<EnabledModule[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,31 +36,56 @@ export function useModuleAccess() {
           return;
         }
 
-        // Get enabled modules for the user's community
-        const { data, error } = await supabase
+        // Get community-controlled modules
+        const { data: communityModules, error } = await supabase
           .from('community_features')
           .select('module_name')
           .eq('community_id', profile.community_id)
           .eq('is_enabled', true);
         
         if (error) {
-          console.error('Error fetching enabled modules:', error);
-          setEnabledModules([]);
-        } else {
-          // Transform to match the expected interface
-          const modules: EnabledModule[] = (data || []).map(item => {
-            // Map module names to display names and categories
-            const moduleInfo = getModuleInfo(item.module_name);
-            return {
-              module_name: item.module_name,
-              display_name: moduleInfo.display_name,
-              category: moduleInfo.category
-            };
-          });
-          
-          console.log('Enabled modules for user:', modules);
-          setEnabledModules(modules);
+          console.error('Error fetching community modules:', error);
         }
+
+        // Define role-based modules that are NOT controlled by community admin
+        const roleBasedModules: string[] = [];
+        
+        // Facility manager gets these modules regardless of community settings
+        if (hasRole('facility_manager')) {
+          roleBasedModules.push('facilities', 'bookings', 'maintenance', 'assets');
+        }
+        
+        // Security officer gets these modules regardless of community settings
+        if (hasRole('security_officer')) {
+          roleBasedModules.push('cctv', 'visitor_management', 'security');
+        }
+        
+        // Maintenance staff gets these modules regardless of community settings
+        if (hasRole('maintenance_staff')) {
+          roleBasedModules.push('maintenance', 'assets');
+        }
+
+        // Combine community-controlled and role-based modules
+        const allModuleNames = [
+          ...(communityModules?.map(m => m.module_name) || []),
+          ...roleBasedModules
+        ];
+
+        // Remove duplicates
+        const uniqueModuleNames = [...new Set(allModuleNames)];
+
+        // Transform to match the expected interface
+        const modules: EnabledModule[] = uniqueModuleNames.map(moduleName => {
+          const moduleInfo = getModuleInfo(moduleName);
+          return {
+            module_name: moduleName,
+            display_name: moduleInfo.display_name,
+            category: moduleInfo.category
+          };
+        });
+        
+        console.log('Enabled modules for user:', modules);
+        setEnabledModules(modules);
       } catch (error) {
         console.error('Error fetching enabled modules:', error);
         setEnabledModules([]);
@@ -95,7 +120,7 @@ export function useModuleAccess() {
         supabase.removeChannel(channel);
       }
     };
-  }, [user]);
+  }, [user, hasRole]);
 
   const isModuleEnabled = (moduleName: string): boolean => {
     return enabledModules.some(module => module.module_name === moduleName);
@@ -116,17 +141,23 @@ export function useModuleAccess() {
 // Helper function to get module information
 function getModuleInfo(moduleName: string) {
   const moduleMap: Record<string, { display_name: string; category: string }> = {
+    // Community-controlled modules (managed by community admin)
     'announcements': { display_name: 'Announcements', category: 'communication' },
     'directory': { display_name: 'Community Directory', category: 'information' },
     'complaints': { display_name: 'Complaints Management', category: 'services' },
     'discussions': { display_name: 'Community Discussions', category: 'communication' },
     'events': { display_name: 'Events & Activities', category: 'community' },
-    'bookings': { display_name: 'Facility Bookings', category: 'community' },
     'marketplace': { display_name: 'Marketplace', category: 'community' },
-    'facilities': { display_name: 'Facilities Management', category: 'community' },
     'service_requests': { display_name: 'Service Requests', category: 'services' },
+    
+    // Role-based modules (NOT controlled by community admin)
+    'facilities': { display_name: 'Facilities Management', category: 'facilities' },
+    'bookings': { display_name: 'Facility Bookings', category: 'facilities' },
+    'maintenance': { display_name: 'Maintenance Management', category: 'facilities' },
+    'assets': { display_name: 'Asset Management', category: 'facilities' },
+    'cctv': { display_name: 'CCTV Monitoring', category: 'security' },
     'visitor_management': { display_name: 'Visitor Management', category: 'security' },
-    'cctv': { display_name: 'CCTV Monitoring', category: 'security' }
+    'security': { display_name: 'Security Management', category: 'security' }
   };
 
   return moduleMap[moduleName] || { 
