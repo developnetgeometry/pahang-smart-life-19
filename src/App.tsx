@@ -24,6 +24,7 @@ import AdvertisementDetail from "./pages/AdvertisementDetail";
 import AdvertisementManagement from "./pages/AdvertisementManagement";
 import CCTVLiveFeed from "./pages/CCTVLiveFeed";
 import UserManagement from "./pages/admin/UserManagement";
+import PermissionsManagement from "./pages/admin/PermissionsManagement";
 import SecurityDashboard from "./pages/admin/SecurityDashboard";
 import CommunityManagement from "./pages/admin/CommunityManagement";
 import DistrictManagement from "./pages/admin/DistrictManagement";
@@ -393,6 +394,18 @@ const App = () => (
                   <Layout>
                     <UserManagement />
                   </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/permissions/:userId"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <PermissionsManagement />
+                    </Layout>
+                  </RequireRoles>
                 </ProtectedRoute>
               }
             />

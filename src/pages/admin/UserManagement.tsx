@@ -520,7 +520,7 @@ export default function UserManagement() {
                     <Button variant="outline" size="sm" onClick={() => handleEdit(user)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => toast({ title: 'Permissions', description: 'User permissions management coming soon!' })}>
+                    <Button variant="outline" size="sm" onClick={() => window.location.href = `/admin/permissions/${user.id}`}>
                       <Shield className="h-4 w-4" />
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => handleDelete(user.id)}>
