@@ -869,7 +869,7 @@ export default function Announcements() {
                 
                 {/* Render poll if exists - temporarily disabled */}
                 {announcement.has_poll && (
-                  <PollComponent pollId="temp-id" />
+                  <PollComponent announcementId={announcement.id} />
                 )}
               </div>
             ))}
@@ -927,7 +927,7 @@ export default function Announcements() {
                 
                 {/* Render poll if exists - temporarily disabled */}
                 {announcement.has_poll && (
-                  <PollComponent pollId="temp-id" />
+                  <PollComponent announcementId={announcement.id} />
                 )}
               </div>
             ))}
@@ -1179,7 +1179,7 @@ export default function Announcements() {
                     <BarChart3 className="w-5 h-5" />
                     {t.poll}
                   </h3>
-                  <PollComponent pollId={selectedAnnouncement.poll_id || "temp-id"} />
+                  <PollComponent announcementId={selectedAnnouncement.id} />
                 </div>
               )}
 

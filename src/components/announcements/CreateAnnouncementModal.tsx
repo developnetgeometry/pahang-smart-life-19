@@ -25,7 +25,7 @@ interface Poll {
   title: string;
   description: string;
   expires_at?: string;
-  allow_multiple_choices: boolean;
+  allow_multiple_votes: boolean;
   is_anonymous: boolean;
   options: PollOption[];
 }
@@ -60,7 +60,7 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
     title: '',
     description: '',
     expires_at: '',
-    allow_multiple_choices: false,
+    allow_multiple_votes: false,
     is_anonymous: false,
     options: [
       { option_text: '', option_order: 0 },
@@ -378,7 +378,7 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
         title: '',
         description: '',
         expires_at: '',
-        allow_multiple_choices: false,
+        allow_multiple_votes: false,
         is_anonymous: false,
         options: [
           { option_text: '', option_order: 0 },
@@ -687,8 +687,8 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                     <div className="flex items-center space-x-2">
                       <Switch
                         id="multipleChoices"
-                        checked={poll.allow_multiple_choices}
-                        onCheckedChange={(checked) => setPoll(prev => ({ ...prev, allow_multiple_choices: checked }))}
+                        checked={poll.allow_multiple_votes}
+                        onCheckedChange={(checked) => setPoll(prev => ({ ...prev, allow_multiple_votes: checked }))}
                       />
                       <Label htmlFor="multipleChoices">{t.multipleChoices}</Label>
                     </div>

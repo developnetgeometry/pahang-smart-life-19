@@ -28,9 +28,10 @@ interface PollOption {
 interface PollVote {
   id: string;
   poll_id: string;
-  option_id: string;
+  rating?: number;
+  selected_options?: number[];
   user_id: string;
-  created_at?: string;
+  voted_at?: string;
 }
 
 interface PollComponentProps {
@@ -105,7 +106,16 @@ export default function PollComponent({ announcementId }: PollComponentProps) {
           .eq('user_id', user.id);
 
         if (votesError) throw votesError;
-        setUserVotes(votesData || []);
+        // Transform the data to match our interface
+        const transformedVotes = votesData?.map(vote => ({
+          id: vote.id,
+          poll_id: vote.poll_id || '',
+          rating: vote.rating,
+          selected_options: vote.selected_options,
+          user_id: vote.user_id,
+          voted_at: vote.voted_at
+        })) || [];
+        setUserVotes(transformedVotes as PollVote[]);
       }
     } catch (error) {
       console.error('Error fetching poll:', error);
@@ -124,49 +134,89 @@ export default function PollComponent({ announcementId }: PollComponentProps) {
     try {
       setVoting(true);
 
-      const existingVote = userVotes.find(vote => vote.option_id === optionId);
+      const optionIndex = parseInt(optionId);
+      const existingVote = userVotes.find(vote => 
+        vote.selected_options?.includes(optionIndex)
+      );
       
       if (existingVote) {
-        // Remove vote
-        const { error } = await supabase
-          .from('poll_votes')
-          .delete()
-          .eq('id', existingVote.id);
-
-        if (error) throw error;
-
-        setUserVotes(prev => prev.filter(vote => vote.id !== existingVote.id));
-      } else {
-        // Add vote (check if multiple votes allowed)
-        if (!poll.allow_multiple_votes && userVotes.length > 0) {
-          // Remove existing vote first
-          const { error: deleteError } = await supabase
+        // Remove this option from selected_options
+        const updatedOptions = existingVote.selected_options?.filter(opt => opt !== optionIndex) || [];
+        
+        if (updatedOptions.length === 0) {
+          // Delete the vote entirely if no options left
+          const { error } = await supabase
             .from('poll_votes')
             .delete()
-            .eq('poll_id', poll.id)
-            .eq('user_id', user.id);
+            .eq('id', existingVote.id);
 
-          if (deleteError) throw deleteError;
-          setUserVotes([]);
-        }
-
-        // Add new vote
-        const { data, error } = await supabase
-          .from('poll_votes')
-          .insert({
-            poll_id: poll.id,
-            option_id: optionId,
-            user_id: user.id
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-        
-        if (!poll.allow_multiple_votes) {
-          setUserVotes([data]);
+          if (error) throw error;
+          setUserVotes(prev => prev.filter(vote => vote.id !== existingVote.id));
         } else {
-          setUserVotes(prev => [...prev, data]);
+          // Update the vote with remaining options
+          const { data, error } = await supabase
+            .from('poll_votes')
+            .update({ selected_options: updatedOptions })
+            .eq('id', existingVote.id)
+            .select()
+            .single();
+
+          if (error) throw error;
+          setUserVotes(prev => prev.map(vote => 
+            vote.id === existingVote.id ? { ...vote, selected_options: updatedOptions } : vote
+          ));
+        }
+      } else {
+        // Add vote or update existing vote
+        const currentVote = userVotes[0]; // Get existing vote if any
+        
+        if (currentVote && poll.allow_multiple_votes) {
+          // Add to existing vote's selected_options
+          const updatedOptions = [...(currentVote.selected_options || []), optionIndex];
+          const { data, error } = await supabase
+            .from('poll_votes')
+            .update({ selected_options: updatedOptions })
+            .eq('id', currentVote.id)
+            .select()
+            .single();
+
+          if (error) throw error;
+          setUserVotes([{ ...currentVote, selected_options: updatedOptions }]);
+        } else {
+          // Create new vote or replace existing single vote
+          if (!poll.allow_multiple_votes && userVotes.length > 0) {
+            // Remove existing vote first
+            const { error: deleteError } = await supabase
+              .from('poll_votes')
+              .delete()
+              .eq('poll_id', poll.id)
+              .eq('user_id', user.id);
+
+            if (deleteError) throw deleteError;
+          }
+
+          // Create new vote
+          const { data, error } = await supabase
+            .from('poll_votes')
+            .insert({
+              poll_id: poll.id,
+              selected_options: [optionIndex],
+              user_id: user.id
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+          
+          const newVote: PollVote = {
+            id: data.id,
+            poll_id: data.poll_id || '',
+            selected_options: data.selected_options,
+            user_id: data.user_id,
+            voted_at: data.voted_at
+          };
+          
+          setUserVotes([newVote]);
         }
       }
 
@@ -257,8 +307,10 @@ export default function PollComponent({ announcementId }: PollComponentProps) {
 
       <CardContent>
         <div className="space-y-3">
-          {options.map((option) => {
-            const hasVoted = userVotes.some(vote => vote.option_id === option.id);
+          {options.map((option, index) => {
+            const hasVoted = userVotes.some(vote => 
+              vote.selected_options?.includes(index)
+            );
             const percentage = totalVotes > 0 ? (option.vote_count / totalVotes) * 100 : 0;
 
             return (
@@ -273,7 +325,7 @@ export default function PollComponent({ announcementId }: PollComponentProps) {
                       <Button
                         variant={hasVoted ? "default" : "outline"}
                         size="sm"
-                        onClick={() => handleVote(option.id)}
+                        onClick={() => handleVote(index.toString())}
                         disabled={voting}
                         className="min-w-[60px]"
                       >
