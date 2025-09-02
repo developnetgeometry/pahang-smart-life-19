@@ -116,10 +116,10 @@ export default function AnalyticsDashboard() {
 
     // Calculate average rating
     const ratings = productData
-      .filter(item => item.average_rating)
-      .map(item => item.average_rating);
+      .filter(item => item.average_rating && typeof item.average_rating === 'number')
+      .map(item => Number(item.average_rating));
     const averageRating = ratings.length > 0 
-      ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length 
+      ? ratings.reduce((sum: number, rating: number) => sum + rating, 0) / ratings.length 
       : 0;
 
     // Calculate conversion rate
@@ -200,14 +200,14 @@ export default function AnalyticsDashboard() {
     ];
 
     // Process user analytics
-    const userTypes = userAnalyticsData.reduce((acc, item) => {
+    const userTypes: Record<string, number> = userAnalyticsData.reduce((acc, item) => {
       const type = item.user_type || 'visitor';
       acc[type] = (acc[type] || 0) + 1;
       return acc;
-    }, {});
+    }, {} as Record<string, number>);
 
-    const totalUsers = Object.values(userTypes).reduce((sum: number, count: any) => sum + count, 0);
-    const userAnalytics = Object.entries(userTypes).map(([type, count]: [string, any]) => ({
+    const totalUsers = Object.values(userTypes).reduce((sum: number, count: number) => sum + count, 0);
+    const userAnalytics = Object.entries(userTypes).map(([type, count]) => ({
       type,
       count,
       percentage: totalUsers > 0 ? Math.round((count / totalUsers) * 100) : 0

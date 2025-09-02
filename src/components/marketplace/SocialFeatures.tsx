@@ -1,51 +1,60 @@
-import { useState, useEffect } from 'react';
-import { Share2, Users, Heart, MessageCircle, Copy, Link, Star } from 'lucide-react';
+import { useState } from 'react';
+import { Share2, Users, Heart, Star, Copy, Link } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 
-interface ProductShare {
-  id: string;
-  product_id: string;
-  shared_by: string;
-  shared_with: string[];
-  message?: string;
-  created_at: string;
-  shared_by_name?: string;
-  shared_by_avatar?: string;
-}
+// Mock data until database migration is executed
+const mockShares = [
+  {
+    id: '1',
+    shared_by_name: 'Ahmad Rahman', 
+    shared_by_avatar: null,
+    shared_with: ['user1', 'user2'],
+    message: 'Check out this amazing product!',
+    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: '2', 
+    shared_by_name: 'Siti Nurhaliza',
+    shared_by_avatar: null,
+    shared_with: ['user3'],
+    message: 'Perfect for your home office!',
+    created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString()
+  }
+];
 
-interface SharedWishlist {
-  id: string;
-  name: string;
-  description?: string;
-  is_public: boolean;
-  created_by: string;
-  created_at: string;
-  item_count?: number;
-  created_by_name?: string;
-}
+const mockWishlists = [
+  {
+    id: '1',
+    name: 'Home Essentials',
+    description: 'Items for new apartment setup',
+    item_count: 12,
+    created_by_name: 'Hassan Ali',
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: '2',
+    name: 'Tech Gadgets 2024',
+    description: 'Latest technology items I want to buy',
+    item_count: 8,
+    created_by_name: 'Mei Lin',
+    created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
+  }
+];
 
-interface ProductRecommendation {
-  id: string;
-  recommended_product_id: string;
-  recommended_to: string;
-  recommended_by: string;
-  reason?: string;
-  created_at: string;
-  product_title?: string;
-  product_price?: number;
-  product_image?: string;
-  recommended_by_name?: string;
-}
+const mockRecommendations = [
+  {
+    id: '1',
+    product_title: 'Wireless Bluetooth Speaker',
+    product_price: 129.99,
+    product_image: null,
+    recommended_by_name: 'David Tan',
+    reason: 'Great sound quality for the price!',
+    created_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
+  }
+];
 
 interface SocialFeaturesProps {
   productId?: string;
@@ -53,204 +62,8 @@ interface SocialFeaturesProps {
 }
 
 export default function SocialFeatures({ productId, productTitle }: SocialFeaturesProps) {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const [shares, setShares] = useState<ProductShare[]>([]);
-  const [wishlists, setWishlists] = useState<SharedWishlist[]>([]);
-  const [recommendations, setRecommendations] = useState<ProductRecommendation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-  const [isWishlistDialogOpen, setIsWishlistDialogOpen] = useState(false);
-  const [isRecommendDialogOpen, setIsRecommendDialogOpen] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      fetchSocialData();
-    }
-  }, [user, productId]);
-
-  const fetchSocialData = async () => {
-    try {
-      const [sharesRes, wishlistsRes, recommendationsRes] = await Promise.all([
-        supabase
-          .from('product_shares')
-          .select(`
-            *,
-            profiles!inner(display_name, avatar_url)
-          `)
-          .order('created_at', { ascending: false })
-          .limit(10),
-        
-        supabase
-          .from('shared_wishlists')
-          .select(`
-            *,
-            profiles!inner(display_name)
-          `)
-          .eq('is_public', true)
-          .order('created_at', { ascending: false })
-          .limit(10),
-        
-        supabase
-          .from('product_recommendations')
-          .select(`
-            *,
-            marketplace_items!inner(title, price, image_url),
-            profiles!inner(display_name)
-          `)
-          .eq('recommended_to', user?.id)
-          .order('created_at', { ascending: false })
-          .limit(10)
-      ]);
-
-      if (sharesRes.data) {
-        const processedShares = sharesRes.data.map(share => ({
-          ...share,
-          shared_by_name: share.profiles?.display_name || 'Anonymous',
-          shared_by_avatar: share.profiles?.avatar_url
-        }));
-        setShares(processedShares);
-      }
-
-      if (wishlistsRes.data) {
-        const processedWishlists = wishlistsRes.data.map(wishlist => ({
-          ...wishlist,
-          created_by_name: wishlist.profiles?.display_name || 'Anonymous'
-        }));
-        setWishlists(processedWishlists);
-      }
-
-      if (recommendationsRes.data) {
-        const processedRecommendations = recommendationsRes.data.map(rec => ({
-          ...rec,
-          product_title: rec.marketplace_items?.title,
-          product_price: rec.marketplace_items?.price,
-          product_image: rec.marketplace_items?.image_url,
-          recommended_by_name: rec.profiles?.display_name || 'Anonymous'
-        }));
-        setRecommendations(processedRecommendations);
-      }
-
-    } catch (error) {
-      console.error('Error fetching social data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleShareProduct = async (message: string, shareWithEmails: string[]) => {
-    if (!user || !productId) return;
-
-    try {
-      // Get user IDs from emails
-      const { data: users, error: usersError } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .in('email', shareWithEmails);
-
-      if (usersError) throw usersError;
-
-      const userIds = users?.map(u => u.user_id) || [];
-
-      const { error } = await supabase
-        .from('product_shares')
-        .insert({
-          product_id: productId,
-          shared_by: user.id,
-          shared_with: userIds,
-          message: message
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Product shared successfully!",
-      });
-
-      setIsShareDialogOpen(false);
-      fetchSocialData();
-    } catch (error) {
-      console.error('Error sharing product:', error);
-      toast({
-        title: "Error",
-        description: "Failed to share product",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCreateSharedWishlist = async (name: string, description: string, isPublic: boolean) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('shared_wishlists')
-        .insert({
-          name,
-          description,
-          is_public: isPublic,
-          created_by: user.id
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Wishlist created successfully!",
-      });
-
-      setIsWishlistDialogOpen(false);
-      fetchSocialData();
-    } catch (error) {
-      console.error('Error creating wishlist:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create wishlist",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleRecommendProduct = async (recommendToEmail: string, reason: string) => {
-    if (!user || !productId) return;
-
-    try {
-      // Get user ID from email
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .eq('email', recommendToEmail)
-        .single();
-
-      if (userError) throw userError;
-
-      const { error } = await supabase
-        .from('product_recommendations')
-        .insert({
-          recommended_product_id: productId,
-          recommended_to: userData.user_id,
-          recommended_by: user.id,
-          reason
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Product recommended successfully!",
-      });
-
-      setIsRecommendDialogOpen(false);
-    } catch (error) {
-      console.error('Error recommending product:', error);
-      toast({
-        title: "Error",
-        description: "Failed to recommend product",
-        variant: "destructive",
-      });
-    }
-  };
+  const [loading] = useState(false);
 
   const copyProductLink = () => {
     if (productId) {
@@ -263,12 +76,40 @@ export default function SocialFeatures({ productId, productTitle }: SocialFeatur
     }
   };
 
+  const handleShare = () => {
+    toast({
+      title: "Feature Coming Soon",
+      description: "Product sharing will be available after database migration",
+    });
+  };
+
+  const handleRecommend = () => {
+    toast({
+      title: "Feature Coming Soon", 
+      description: "Product recommendations will be available after database migration",
+    });
+  };
+
+  const handleCreateWishlist = () => {
+    toast({
+      title: "Feature Coming Soon",
+      description: "Wishlist creation will be available after database migration",
+    });
+  };
+
   if (loading) {
     return <div>Loading social features...</div>;
   }
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">Social Features</h2>
+        <Badge variant="outline" className="text-yellow-600">
+          Mock Data - Migration Pending
+        </Badge>
+      </div>
+
       {/* Action Buttons */}
       {productId && (
         <Card>
@@ -280,42 +121,15 @@ export default function SocialFeatures({ productId, productTitle }: SocialFeatur
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Share2 className="h-4 w-4 mr-2" />
-                    Share Product
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Share Product</DialogTitle>
-                  </DialogHeader>
-                  <ShareProductForm
-                    productTitle={productTitle || ''}
-                    onShare={handleShareProduct}
-                    onCancel={() => setIsShareDialogOpen(false)}
-                  />
-                </DialogContent>
-              </Dialog>
+              <Button variant="outline" size="sm" onClick={handleShare}>
+                <Share2 className="h-4 w-4 mr-2" />
+                Share Product
+              </Button>
 
-              <Dialog open={isRecommendDialogOpen} onOpenChange={setIsRecommendDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Star className="h-4 w-4 mr-2" />
-                    Recommend
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Recommend Product</DialogTitle>
-                  </DialogHeader>
-                  <RecommendProductForm
-                    onRecommend={handleRecommendProduct}
-                    onCancel={() => setIsRecommendDialogOpen(false)}
-                  />
-                </DialogContent>
-              </Dialog>
+              <Button variant="outline" size="sm" onClick={handleRecommend}>
+                <Star className="h-4 w-4 mr-2" />
+                Recommend
+              </Button>
 
               <Button variant="outline" size="sm" onClick={copyProductLink}>
                 <Link className="h-4 w-4 mr-2" />
@@ -336,13 +150,14 @@ export default function SocialFeatures({ productId, productTitle }: SocialFeatur
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {shares.length > 0 ? (
-              shares.map((share) => (
+            {mockShares.length > 0 ? (
+              mockShares.map((share) => (
                 <div key={share.id} className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={share.shared_by_avatar} />
-                    <AvatarFallback>{share.shared_by_name?.[0]}</AvatarFallback>
-                  </Avatar>
+                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-medium">
+                      {share.shared_by_name?.[0]}
+                    </span>
+                  </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">{share.shared_by_name}</p>
                     <p className="text-xs text-muted-foreground">
@@ -371,28 +186,15 @@ export default function SocialFeatures({ productId, productTitle }: SocialFeatur
             <Heart className="h-5 w-5" />
             Public Wishlists
           </CardTitle>
-          <Dialog open={isWishlistDialogOpen} onOpenChange={setIsWishlistDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Users className="h-4 w-4 mr-2" />
-                Create Wishlist
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Create Shared Wishlist</DialogTitle>
-              </DialogHeader>
-              <CreateWishlistForm
-                onCreate={handleCreateSharedWishlist}
-                onCancel={() => setIsWishlistDialogOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
+          <Button size="sm" onClick={handleCreateWishlist}>
+            <Users className="h-4 w-4 mr-2" />
+            Create Wishlist
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {wishlists.length > 0 ? (
-              wishlists.map((wishlist) => (
+            {mockWishlists.length > 0 ? (
+              mockWishlists.map((wishlist) => (
                 <div key={wishlist.id} className="p-3 bg-muted rounded-lg">
                   <div className="flex justify-between items-start mb-2">
                     <h4 className="font-medium">{wishlist.name}</h4>
@@ -423,15 +225,11 @@ export default function SocialFeatures({ productId, productTitle }: SocialFeatur
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {recommendations.length > 0 ? (
-              recommendations.map((rec) => (
+            {mockRecommendations.length > 0 ? (
+              mockRecommendations.map((rec) => (
                 <div key={rec.id} className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                  <div className="w-12 h-12 bg-muted-foreground/20 rounded flex-shrink-0">
-                    {rec.product_image ? (
-                      <img src={rec.product_image} alt="" className="w-full h-full object-cover rounded" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xs">IMG</div>
-                    )}
+                  <div className="w-12 h-12 bg-muted-foreground/20 rounded flex-shrink-0 flex items-center justify-center">
+                    <span className="text-xs">IMG</span>
                   </div>
                   <div className="flex-1">
                     <h4 className="font-medium text-sm">{rec.product_title}</h4>
@@ -453,155 +251,9 @@ export default function SocialFeatures({ productId, productTitle }: SocialFeatur
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
-}
 
-// Share Product Form
-function ShareProductForm({ 
-  productTitle, 
-  onShare, 
-  onCancel 
-}: { 
-  productTitle: string; 
-  onShare: (message: string, emails: string[]) => void; 
-  onCancel: () => void; 
-}) {
-  const [message, setMessage] = useState('');
-  const [emails, setEmails] = useState('');
-
-  const handleSubmit = () => {
-    const emailList = emails.split(',').map(e => e.trim()).filter(e => e);
-    onShare(message, emailList);
-  };
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <Label>Product: {productTitle}</Label>
-      </div>
-      
-      <div>
-        <Label htmlFor="emails">Share with (email addresses, comma-separated)</Label>
-        <Input
-          id="emails"
-          placeholder="friend@example.com, another@example.com"
-          value={emails}
-          onChange={(e) => setEmails(e.target.value)}
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="message">Message (optional)</Label>
-        <Textarea
-          id="message"
-          placeholder="Check out this product!"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-        />
-      </div>
-
-      <div className="flex gap-2">
-        <Button onClick={handleSubmit} disabled={!emails.trim()}>Share</Button>
-        <Button variant="outline" onClick={onCancel}>Cancel</Button>
-      </div>
-    </div>
-  );
-}
-
-// Create Wishlist Form
-function CreateWishlistForm({ 
-  onCreate, 
-  onCancel 
-}: { 
-  onCreate: (name: string, description: string, isPublic: boolean) => void; 
-  onCancel: () => void; 
-}) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [isPublic, setIsPublic] = useState(true);
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <Label htmlFor="name">Wishlist Name</Label>
-        <Input
-          id="name"
-          placeholder="My Wishlist"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="description">Description (optional)</Label>
-        <Textarea
-          id="description"
-          placeholder="A collection of items I want..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-      </div>
-
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="isPublic"
-          checked={isPublic}
-          onChange={(e) => setIsPublic(e.target.checked)}
-        />
-        <Label htmlFor="isPublic">Make this wishlist public</Label>
-      </div>
-
-      <div className="flex gap-2">
-        <Button onClick={() => onCreate(name, description, isPublic)} disabled={!name.trim()}>
-          Create
-        </Button>
-        <Button variant="outline" onClick={onCancel}>Cancel</Button>
-      </div>
-    </div>
-  );
-}
-
-// Recommend Product Form
-function RecommendProductForm({ 
-  onRecommend, 
-  onCancel 
-}: { 
-  onRecommend: (email: string, reason: string) => void; 
-  onCancel: () => void; 
-}) {
-  const [email, setEmail] = useState('');
-  const [reason, setReason] = useState('');
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <Label htmlFor="email">Recommend to (email address)</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="friend@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="reason">Reason (optional)</Label>
-        <Textarea
-          id="reason"
-          placeholder="I think you'd like this because..."
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-        />
-      </div>
-
-      <div className="flex gap-2">
-        <Button onClick={() => onRecommend(email, reason)} disabled={!email.trim()}>
-          Recommend
-        </Button>
-        <Button variant="outline" onClick={onCancel}>Cancel</Button>
+      <div className="text-center text-sm text-muted-foreground mt-6 p-4 bg-muted rounded-lg">
+        ⚠️ This is displaying mock data. Full social features will be available after the database migration is executed.
       </div>
     </div>
   );
