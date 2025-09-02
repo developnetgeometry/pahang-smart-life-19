@@ -293,8 +293,40 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
 
       if (announcementError) throw announcementError;
 
-      // Create poll if included - temporarily commented out due to database integration
-      if (includePoll && poll.title.trim()) {
+      // Create poll if included
+      if (includePoll && poll.title.trim() && announcement.id) {
+        const { data: pollData, error: pollError } = await supabase
+          .from('announcement_polls')
+          .insert({
+            announcement_id: announcement.id,
+            title: poll.title,
+            description: poll.description || null,
+            expires_at: poll.expires_at || null,
+            is_anonymous: poll.is_anonymous,
+            allow_multiple_votes: poll.allow_multiple_votes,
+            created_by: user.id
+          })
+          .select()
+          .single();
+
+        if (pollError) throw pollError;
+
+        // Insert poll options
+        if (pollData) {
+          const validOptions = poll.options.filter(opt => opt.option_text.trim());
+          const optionsData = validOptions.map((option, index) => ({
+            poll_id: pollData.id,
+            option_text: option.option_text,
+            option_order: index
+          }));
+
+          const { error: optionsError } = await supabase
+            .from('poll_options')
+            .insert(optionsData);
+
+          if (optionsError) throw optionsError;
+        }
+      } else if (includePoll && poll.title.trim()) {
         toast({
           title: language === 'en' ? 'Poll feature coming soon' : 'Ciri undian akan datang',
           description: language === 'en' ? 'Announcement created without poll' : 'Pengumuman dicipta tanpa undian',
