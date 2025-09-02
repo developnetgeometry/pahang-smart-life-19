@@ -138,7 +138,7 @@ export default function Discussions() {
           .from('discussions')
           .select(`
             *,
-            profiles:author_id (
+            author_profile:profiles!discussions_author_id_fkey (
               full_name,
               email
             )
@@ -151,7 +151,7 @@ export default function Discussions() {
           id: discussion.id,
           title: discussion.title,
           content: discussion.content,
-          author: discussion.profiles?.full_name || discussion.profiles?.email || 'Anonymous',
+          author: discussion.author_profile?.full_name || discussion.author_profile?.email || 'Anonymous',
           author_id: discussion.author_id,
           category: discussion.category,
           replies: discussion.replies_count || 0,
