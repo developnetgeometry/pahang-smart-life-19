@@ -6,10 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Calendar, Clock, Search, Shield, Users, Car, CheckCircle, XCircle, AlertTriangle, Eye, Ban } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Calendar, Clock, Search, Shield, Users, Car, CheckCircle, XCircle, AlertTriangle, Eye, UserCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 interface Visitor {
   id: string;
@@ -26,13 +27,14 @@ interface Visitor {
   qr_code?: string;
   created_at: string;
   updated_at: string;
-  check_in_time?: string;
-  check_out_time?: string;
   notes?: string;
-  profiles?: any;
+  profiles?: {
+    full_name: string;
+    email: string;
+  } | null;
 }
 
-export default function VisitorSecurity() {
+export default function VisitorApprovals() {
   const { language, user } = useAuth();
   const { isModuleEnabled } = useModuleAccess();
   const { toast } = useToast();
@@ -40,7 +42,9 @@ export default function VisitorSecurity() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVisitor, setSelectedVisitor] = useState<Visitor | null>(null);
-  const [showCheckInDialog, setShowCheckInDialog] = useState(false);
+  const [showApprovalDialog, setShowApprovalDialog] = useState(false);
+  const [approvalNotes, setApprovalNotes] = useState('');
+  const [approvalAction, setApprovalAction] = useState<'approved' | 'denied'>('approved');
 
   useEffect(() => {
     fetchVisitors();
@@ -60,12 +64,12 @@ export default function VisitorSecurity() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setVisitors(data as any || []);
+      setVisitors((data as any) || []);
     } catch (error) {
       console.error('Error fetching visitors:', error);
       toast({
         title: 'Error',
-        description: 'Failed to fetch visitors',
+        description: 'Failed to fetch visitor requests',
         variant: 'destructive',
       });
     } finally {
@@ -73,61 +77,38 @@ export default function VisitorSecurity() {
     }
   };
 
-  const handleCheckIn = async (visitorId: string) => {
+  const handleApproval = async () => {
+    if (!selectedVisitor) return;
+
     try {
-      // Update visitor status
-      const { error: updateError } = await supabase
+      const { error } = await supabase
         .from('visitors')
         .update({ 
-          status: 'checked_in',
+          status: approvalAction,
           approved_by: user?.id,
-          check_in_time: new Date().toISOString()
+          notes: approvalNotes || null,
+          updated_at: new Date().toISOString()
         })
-        .eq('id', visitorId);
+        .eq('id', selectedVisitor.id);
 
-      if (updateError) throw updateError;
+      if (error) throw error;
 
       toast({
         title: 'Success',
-        description: language === 'en' ? 'Visitor checked in successfully' : 'Pelawat berjaya daftar masuk',
+        description: language === 'en' 
+          ? `Visitor request ${approvalAction === 'approved' ? 'approved' : 'denied'} successfully` 
+          : `Permintaan pelawat berjaya ${approvalAction === 'approved' ? 'diluluskan' : 'ditolak'}`,
       });
 
       fetchVisitors();
-      setShowCheckInDialog(false);
+      setShowApprovalDialog(false);
+      setApprovalNotes('');
+      setSelectedVisitor(null);
     } catch (error) {
-      console.error('Error checking in visitor:', error);
+      console.error('Error updating visitor status:', error);
       toast({
         title: 'Error',
-        description: 'Failed to check in visitor',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleCheckOut = async (visitorId: string) => {
-    try {
-      // Update visitor status
-      const { error: updateError } = await supabase
-        .from('visitors')
-        .update({ 
-          status: 'checked_out',
-          check_out_time: new Date().toISOString()
-        })
-        .eq('id', visitorId);
-
-      if (updateError) throw updateError;
-
-      toast({
-        title: 'Success',
-        description: language === 'en' ? 'Visitor checked out successfully' : 'Pelawat berjaya daftar keluar',
-      });
-
-      fetchVisitors();
-    } catch (error) {
-      console.error('Error checking out visitor:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to check out visitor',
+        description: 'Failed to update visitor status',
         variant: 'destructive',
       });
     }
@@ -135,7 +116,7 @@ export default function VisitorSecurity() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-blue-500';
+      case 'pending': return 'bg-orange-500';
       case 'approved': return 'bg-green-500';
       case 'checked_in': return 'bg-emerald-500';
       case 'checked_out': return 'bg-gray-500';
@@ -172,7 +153,7 @@ export default function VisitorSecurity() {
       case 'approved': return <CheckCircle className="w-4 h-4" />;
       case 'checked_in': return <Shield className="w-4 h-4" />;
       case 'checked_out': return <XCircle className="w-4 h-4" />;
-      case 'denied': return <Ban className="w-4 h-4" />;
+      case 'denied': return <XCircle className="w-4 h-4" />;
       default: return <Clock className="w-4 h-4" />;
     }
   };
@@ -180,16 +161,14 @@ export default function VisitorSecurity() {
   const filteredVisitors = visitors.filter(visitor =>
     visitor.visitor_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     visitor.visitor_phone.includes(searchTerm) ||
-    (visitor.visitor_ic && visitor.visitor_ic.includes(searchTerm))
+    (visitor.visitor_ic && visitor.visitor_ic.includes(searchTerm)) ||
+    (visitor.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const todayVisitors = filteredVisitors.filter(v => {
-    const today = new Date().toISOString().split('T')[0];
-    return v.visit_date === today;
-  });
-
-  const checkedInCount = todayVisitors.filter(v => v.status === 'checked_in').length;
-  const approvedCount = todayVisitors.filter(v => v.status === 'approved').length;
+  const pendingCount = filteredVisitors.filter(v => v.status === 'pending').length;
+  const approvedCount = filteredVisitors.filter(v => v.status === 'approved').length;
+  const deniedCount = filteredVisitors.filter(v => v.status === 'denied').length;
+  const totalCount = filteredVisitors.length;
 
   // Check if visitor management module is enabled
   if (!isModuleEnabled('visitor_management')) {
@@ -218,12 +197,12 @@ export default function VisitorSecurity() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
-            {language === 'en' ? 'Visitor Security' : 'Keselamatan Pelawat'}
+            {language === 'en' ? 'Visitor Approvals' : 'Kelulusan Pelawat'}
           </h1>
           <p className="text-muted-foreground">
             {language === 'en' 
-              ? 'Manage visitor check-ins and security screening'
-              : 'Urus daftar masuk dan saringan keselamatan pelawat'
+              ? 'Review and approve visitor registration requests'
+              : 'Semak dan luluskan permintaan pendaftaran pelawat'
             }
           </p>
         </div>
@@ -233,7 +212,7 @@ export default function VisitorSecurity() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
         <Input
-          placeholder={language === 'en' ? 'Search by name, phone, or IC...' : 'Cari mengikut nama, telefon, atau IC...'}
+          placeholder={language === 'en' ? 'Search by visitor or host name...' : 'Cari mengikut nama pelawat atau tuan rumah...'}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10"
@@ -250,9 +229,24 @@ export default function VisitorSecurity() {
               </div>
               <div className="ml-4">
                 <p className="text-sm text-muted-foreground">
-                  {language === 'en' ? "Today's Visitors" : 'Pelawat Hari Ini'}
+                  {language === 'en' ? 'Total Requests' : 'Jumlah Permintaan'}
                 </p>
-                <p className="text-2xl font-bold">{todayVisitors.length}</p>
+                <p className="text-2xl font-bold">{totalCount}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-orange-500/10 rounded-lg">
+                <AlertTriangle className="w-6 h-6 text-orange-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm text-muted-foreground">
+                  {language === 'en' ? 'Pending' : 'Menunggu'}
+                </p>
+                <p className="text-2xl font-bold">{pendingCount}</p>
               </div>
             </div>
           </CardContent>
@@ -275,31 +269,14 @@ export default function VisitorSecurity() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-emerald-500/10 rounded-lg">
-                <Shield className="w-6 h-6 text-emerald-600" />
+              <div className="p-2 bg-red-500/10 rounded-lg">
+                <XCircle className="w-6 h-6 text-red-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm text-muted-foreground">
-                  {language === 'en' ? 'Checked In' : 'Daftar Masuk'}
+                  {language === 'en' ? 'Denied' : 'Ditolak'}
                 </p>
-                <p className="text-2xl font-bold">{checkedInCount}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-orange-500/10 rounded-lg">
-                <AlertTriangle className="w-6 h-6 text-orange-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-muted-foreground">
-                  {language === 'en' ? 'Pending' : 'Menunggu'}
-                </p>
-                <p className="text-2xl font-bold">
-                  {filteredVisitors.filter(v => v.status === 'pending').length}
-                </p>
+                <p className="text-2xl font-bold">{deniedCount}</p>
               </div>
             </div>
           </CardContent>
@@ -355,6 +332,13 @@ export default function VisitorSecurity() {
                       {language === 'en' ? 'Host:' : 'Tuan Rumah:'}
                     </span> {visitor.profiles?.full_name || 'N/A'}
                   </p>
+                  {visitor.notes && (
+                    <p className="text-sm">
+                      <span className="font-medium">
+                        {language === 'en' ? 'Notes:' : 'Catatan:'}
+                      </span> {visitor.notes}
+                    </p>
+                  )}
                 </div>
                 <div className="space-x-2">
                   <Button 
@@ -362,29 +346,39 @@ export default function VisitorSecurity() {
                     size="sm"
                     onClick={() => {
                       setSelectedVisitor(visitor);
-                      setShowCheckInDialog(true);
+                      setShowApprovalDialog(true);
                     }}
                   >
                     <Eye className="w-4 h-4 mr-2" />
-                    {language === 'en' ? 'Details' : 'Butiran'}
+                    {language === 'en' ? 'Review' : 'Semak'}
                   </Button>
-                  {visitor.status === 'approved' && (
-                    <Button 
-                      size="sm"
-                      onClick={() => handleCheckIn(visitor.id)}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      {language === 'en' ? 'Check In' : 'Daftar Masuk'}
-                    </Button>
-                  )}
-                  {visitor.status === 'checked_in' && (
-                    <Button 
-                      size="sm"
-                      onClick={() => handleCheckOut(visitor.id)}
-                      className="bg-gray-600 hover:bg-gray-700"
-                    >
-                      {language === 'en' ? 'Check Out' : 'Daftar Keluar'}
-                    </Button>
+                  {visitor.status === 'pending' && (
+                    <>
+                      <Button 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedVisitor(visitor);
+                          setApprovalAction('approved');
+                          setShowApprovalDialog(true);
+                        }}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        {language === 'en' ? 'Approve' : 'Luluskan'}
+                      </Button>
+                      <Button 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedVisitor(visitor);
+                          setApprovalAction('denied');
+                          setShowApprovalDialog(true);
+                        }}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        <XCircle className="w-4 h-4 mr-2" />
+                        {language === 'en' ? 'Deny' : 'Tolak'}
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>
@@ -396,9 +390,9 @@ export default function VisitorSecurity() {
       {filteredVisitors.length === 0 && (
         <Card>
           <CardContent className="p-12 text-center">
-            <Shield className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <UserCheck className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium text-foreground mb-2">
-              {language === 'en' ? 'No visitors found' : 'Tiada pelawat ditemui'}
+              {language === 'en' ? 'No visitor requests found' : 'Tiada permintaan pelawat ditemui'}
             </h3>
             <p className="text-muted-foreground">
               {language === 'en' 
@@ -410,19 +404,25 @@ export default function VisitorSecurity() {
         </Card>
       )}
 
-      {/* Visitor Details Dialog */}
-      <Dialog open={showCheckInDialog} onOpenChange={setShowCheckInDialog}>
-        <DialogContent>
+      {/* Approval Dialog */}
+      <Dialog open={showApprovalDialog} onOpenChange={setShowApprovalDialog}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {language === 'en' ? 'Visitor Details' : 'Butiran Pelawat'}
+              {language === 'en' ? 'Visitor Request Review' : 'Semakan Permintaan Pelawat'}
             </DialogTitle>
+            <DialogDescription>
+              {language === 'en' 
+                ? 'Review the visitor details and provide your decision.'
+                : 'Semak butiran pelawat dan berikan keputusan anda.'
+              }
+            </DialogDescription>
           </DialogHeader>
           {selectedVisitor && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>{language === 'en' ? 'Name' : 'Nama'}</Label>
+                  <Label>{language === 'en' ? 'Visitor Name' : 'Nama Pelawat'}</Label>
                   <p className="text-sm font-medium">{selectedVisitor.visitor_name}</p>
                 </div>
                 <div>
@@ -458,13 +458,48 @@ export default function VisitorSecurity() {
                 <Label>{language === 'en' ? 'Host' : 'Tuan Rumah'}</Label>
                 <p className="text-sm font-medium">{selectedVisitor.profiles?.full_name || 'N/A'}</p>
               </div>
-              <div>
-                <Label>{language === 'en' ? 'Status' : 'Status'}</Label>
-                <Badge className={`${getStatusColor(selectedVisitor.status)} text-white w-fit`}>
-                  {getStatusIcon(selectedVisitor.status)}
-                  <span className="ml-1">{getStatusText(selectedVisitor.status)}</span>
-                </Badge>
-              </div>
+              
+              {selectedVisitor.status === 'pending' && (
+                <>
+                  <div>
+                    <Label htmlFor="notes">
+                      {language === 'en' ? 'Notes (Optional)' : 'Catatan (Pilihan)'}
+                    </Label>
+                    <Textarea
+                      id="notes"
+                      placeholder={language === 'en' 
+                        ? 'Add any notes or reasons for your decision...'
+                        : 'Tambah sebarang catatan atau sebab untuk keputusan anda...'
+                      }
+                      value={approvalNotes}
+                      onChange={(e) => setApprovalNotes(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="flex space-x-2 pt-4">
+                    <Button 
+                      onClick={() => {
+                        setApprovalAction('approved');
+                        handleApproval();
+                      }}
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      {language === 'en' ? 'Approve' : 'Luluskan'}
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        setApprovalAction('denied');
+                        handleApproval();
+                      }}
+                      className="flex-1 bg-red-600 hover:bg-red-700"
+                    >
+                      <XCircle className="w-4 h-4 mr-2" />
+                      {language === 'en' ? 'Deny' : 'Tolak'}
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </DialogContent>

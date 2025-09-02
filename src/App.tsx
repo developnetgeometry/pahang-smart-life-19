@@ -59,6 +59,7 @@ import ModuleManagement from "./pages/admin/ModuleManagement";
 import Facilities from "./pages/Facilities";
 import MyBookings from "./pages/MyBookings";
 import MyVisitors from "./pages/MyVisitors";
+import VisitorApprovals from "./pages/VisitorApprovals";
 import ResidentDirectory from './pages/ResidentDirectory';
 import EnhancedEvents from './pages/EnhancedEvents';
 import ModerationPanel from './components/discussions/ModerationPanel';
@@ -337,6 +338,18 @@ const App = () => (
                   <Layout>
                     <VisitorSecurity />
                   </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/visitor-approvals"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["security_officer", "community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <VisitorApprovals />
+                    </Layout>
+                  </RequireRoles>
                 </ProtectedRoute>
               }
             />
