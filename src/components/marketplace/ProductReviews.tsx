@@ -101,12 +101,12 @@ export default function ProductReviews({ itemId, sellerId, language }: ProductRe
     try {
       setLoading(true);
       
-      // Fetch reviews with user helpfulness votes
+      // Fetch reviews with optional user helpfulness votes
       const { data: reviewsData, error } = await supabase
         .from('product_reviews')
         .select(`
           *,
-          review_helpfulness!inner(is_helpful)
+          review_helpfulness(is_helpful)
         `)
         .eq('item_id', itemId)
         .order('created_at', { ascending: false });
@@ -117,8 +117,8 @@ export default function ProductReviews({ itemId, sellerId, language }: ProductRe
       const reviewsWithProfiles = (reviewsData || []).map(review => ({
         ...review,
         reviewer_name: 'Anonymous User', // In real app, fetch from profiles
-        user_voted_helpful: user ? 
-          review.review_helpfulness?.find((vote: any) => vote.user_id === user.id)?.is_helpful || null 
+        user_voted_helpful: user && review.review_helpfulness ? 
+          review.review_helpfulness.find((vote: any) => vote.user_id === user.id)?.is_helpful || null 
           : null
       }));
 
