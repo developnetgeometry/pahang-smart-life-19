@@ -347,6 +347,27 @@ export default function Marketplace() {
 
       const sellerType = userRole ? 'service_provider' : 'resident';
 
+      let imageUrl = null;
+
+      // Upload image if provided
+      if (formData.image) {
+        const fileExt = formData.image.name.split('.').pop();
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('marketplace-images')
+          .upload(fileName, formData.image);
+
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError);
+        } else {
+          const { data: { publicUrl } } = supabase.storage
+            .from('marketplace-images')
+            .getPublicUrl(fileName);
+          imageUrl = publicUrl;
+        }
+      }
+
       const { error } = await supabase
         .from('marketplace_items')
         .insert({
@@ -360,7 +381,8 @@ export default function Marketplace() {
           district_id: profile?.district_id,
           seller_type: sellerType,
           is_available: true,
-          is_active: true
+          is_active: true,
+          image: imageUrl
         });
 
       if (error) throw error;
