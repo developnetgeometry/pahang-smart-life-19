@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Settings, Shield, Users, Building, MessageSquare, Calendar, ShoppingCart, Camera, UserCheck, Phone } from 'lucide-react';
+import { Settings, Shield, Users, Building, MessageSquare, Calendar, ShoppingCart, Camera, UserCheck, Phone, Megaphone, AlertTriangle } from 'lucide-react';
 
 interface Community {
   id: string;
@@ -29,6 +29,9 @@ interface ModuleFeature {
 }
 
 const AVAILABLE_MODULES = [
+  { module_name: 'announcements', display_name: 'Announcements', category: 'communication', icon: Megaphone, description: 'Community announcements and notices' },
+  { module_name: 'directory', display_name: 'Community Directory', category: 'information', icon: Users, description: 'Community member and service directory' },
+  { module_name: 'complaints', display_name: 'Complaints Management', category: 'services', icon: AlertTriangle, description: 'Submit and manage community complaints' },
   { module_name: 'facilities', display_name: 'Facilities Management', category: 'community', icon: Building, description: 'Manage community facilities and bookings' },
   { module_name: 'bookings', display_name: 'Facility Bookings', category: 'community', icon: Calendar, description: 'Book and manage facility reservations' },
   { module_name: 'marketplace', display_name: 'Marketplace', category: 'community', icon: ShoppingCart, description: 'Community marketplace for buying/selling' },
@@ -39,7 +42,7 @@ const AVAILABLE_MODULES = [
   { module_name: 'visitor_management', display_name: 'Visitor Management', category: 'security', icon: UserCheck, description: 'Manage visitor access and tracking' },
 ];
 
-const CORE_MODULES = ['announcements', 'complaints', 'directory'];
+const CORE_MODULES: string[] = []; // No core modules - Community Admin controls everything
 
 const getCategoryIcon = (category: string) => {
   switch (category) {
@@ -332,11 +335,6 @@ export default function ModuleManagement() {
                             <div>
                               <div className="flex items-center gap-2">
                                 <h4 className="font-medium">{module.display_name}</h4>
-                                {isCore && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    Core Module
-                                  </Badge>
-                                )}
                                 <Badge 
                                   variant="outline" 
                                   className={`text-xs ${getCategoryColor(module.category)}`}
@@ -348,18 +346,18 @@ export default function ModuleManagement() {
                             </div>
                           </div>
                           <Switch
-                            checked={isCore || moduleFeature?.is_enabled || false}
+                            checked={moduleFeature?.is_enabled || false}
                             onCheckedChange={(enabled) => handleToggleModule(moduleFeature || {
                               module_name: module.module_name,
                               display_name: module.display_name,
                               category: module.category,
                               is_enabled: false
                             }, enabled)}
-                            disabled={isCore || saving || loading}
+                            disabled={saving || loading}
                           />
                         </div>
                         
-                        {!isCore && moduleFeature && (
+                        {moduleFeature && (
                           <div className="pl-8">
                             <Textarea
                               placeholder="Add notes about this module configuration..."
