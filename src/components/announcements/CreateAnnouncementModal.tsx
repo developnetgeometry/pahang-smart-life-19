@@ -252,11 +252,19 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
 
       onOpenChange(false);
       onAnnouncementCreated();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating announcement:', error);
+      
+      // Check if it's a permission error
+      const isPermissionError = error?.code === '42501' || error?.message?.includes('policy') || error?.message?.includes('permission');
+      
       toast({
         title: language === 'en' ? 'Error creating announcement' : 'Ralat mencipta pengumuman',
-        description: language === 'en' ? 'Please try again later' : 'Sila cuba lagi kemudian',
+        description: isPermissionError 
+          ? (language === 'en' 
+              ? 'You do not have permission to create announcements. Only community administrators and management staff can create announcements.' 
+              : 'Anda tidak mempunyai kebenaran untuk mencipta pengumuman. Hanya pentadbir komuniti dan kakitangan pengurusan boleh mencipta pengumuman.')
+          : (language === 'en' ? 'Please try again later' : 'Sila cuba lagi kemudian'),
         variant: 'destructive'
       });
     } finally {
