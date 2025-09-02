@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRoles } from '@/hooks/use-user-roles';
@@ -110,6 +110,7 @@ export default function Marketplace() {
   const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceItem[]>(mockItems); // Initialize with mock data for immediate display
   const [loading, setLoading] = useState(false); // Changed to false for immediate UI display
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dbCategories, setDbCategories] = useState<{name: string}[]>([]);
   
   // Check if user is a service provider
   const isServiceProvider = hasRole('service_provider');
@@ -211,6 +212,15 @@ export default function Marketplace() {
 
   const t = text[language];
 
+  // Fetch categories from database
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data } = await supabase.from('product_categories').select('name');
+      setDbCategories(data || []);
+    };
+    fetchCategories();
+  }, []);
+
   // Fetch marketplace items from Supabase with timeout
   useEffect(() => {
     const fetchMarketplaceItems = async () => {
@@ -278,15 +288,10 @@ export default function Marketplace() {
     return () => clearTimeout(timer);
   }, [language]);
 
-  const categories = [
+  const categories = useMemo(() => [
     { value: 'all', label: t.allCategories },
-    { value: 'electronics', label: t.electronics },
-    { value: 'furniture', label: t.furniture },
-    { value: 'clothing', label: t.clothing },
-    { value: 'books', label: t.books },
-    { value: 'sports', label: t.sports },
-    { value: 'others', label: t.others }
-  ];
+    ...dbCategories.map(cat => ({ value: cat.name, label: cat.name }))
+  ], [dbCategories, t.allCategories]);
 
   const conditions = [
     { value: 'all', label: t.allConditions },
