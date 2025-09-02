@@ -29,7 +29,6 @@ import FileUpload from './FileUpload';
 import MessageReactions from './MessageReactions';
 import TypingIndicator from './TypingIndicator';
 import { UserSelectionModal } from './UserSelectionModal';
-import { GroupCreationModal } from './GroupCreationModal';
 import { ChatListItem } from './ChatListItem';
 
 import { 
@@ -86,10 +85,6 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserSelection, setShowUserSelection] = useState(false);
-  const [showGroupCreation, setShowGroupCreation] = useState(false);
-  const [selectionMode, setSelectionMode] = useState<'direct' | 'group'>('direct');
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [userNames, setUserNames] = useState<string[]>([]);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [replyToMessageId, setReplyToMessageId] = useState<string | null>(null);
   const [showFileUpload, setShowFileUpload] = useState(false);
@@ -98,8 +93,7 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
   const { 
     rooms, 
     loading: roomsLoading, 
-    createDirectChat, 
-    createGroupChat,
+    createDirectChat,
     getRoomMembers 
   } = useChatRooms();
 
@@ -213,68 +207,7 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
     }
   };
 
-  const handleCreateGroup = async (name: string, description: string, memberIds: string[]) => {
-    console.log('Handling group creation:', { name, description, memberIds });
-    
-    try {
-      const roomId = await createGroupChat(name, description, memberIds);
-      console.log('Group created with ID:', roomId);
-      setSelectedRoomId(roomId);
-      setShowGroupCreation(false);
-      toast({
-        title: 'Success',
-        description: 'Group created successfully!',
-      });
-    } catch (error: any) {
-      console.error('Error creating group:', error);
-      
-      let errorMessage = 'Failed to create group';
-      
-      // Provide more specific error messages
-      if (error.code === '23505') {
-        errorMessage = 'A group with this name already exists';
-      } else if (error.code === '23503') {
-        errorMessage = 'Invalid user selected for group';
-      } else if (error.message?.includes('permission')) {
-        errorMessage = 'Permission denied - unable to create group';
-      } else if (error.message?.includes('RLS')) {
-        errorMessage = 'Database security error - please try again';
-      } else if (error.message) {
-        errorMessage = `Failed to create group: ${error.message}`;
-      }
-      
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleSelectUsersForGroup = async (userIds: string[]) => {
-    setSelectedUsers(userIds);
-    
-    // Fetch user names
-    try {
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .in('id', userIds);
-      
-      const names = profiles?.map(p => p.full_name || 'Unknown User') || [];
-      setUserNames(names);
-      setShowUserSelection(false);
-      setShowGroupCreation(true);
-    } catch (error) {
-      console.error('Error fetching user names:', error);
-      setUserNames(userIds.map(() => 'Unknown User'));
-      setShowUserSelection(false);
-      setShowGroupCreation(true);
-    }
-  };
-
-  const handleNewChatClick = (mode: 'direct' | 'group') => {
-    setSelectionMode(mode);
+  const handleNewChatClick = () => {
     setShowUserSelection(true);
   };
 
@@ -362,13 +295,9 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => handleNewChatClick('direct')}>
+                <DropdownMenuItem onClick={handleNewChatClick}>
                   <MessageCircle className="h-4 w-4 mr-2" />
                   {language === 'en' ? 'New Chat' : 'Sembang Baru'}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNewChatClick('group')}>
-                  <Users className="h-4 w-4 mr-2" />
-                  {language === 'en' ? 'New Group' : 'Kumpulan Baru'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -628,16 +557,6 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
         open={showUserSelection}
         onClose={() => setShowUserSelection(false)}
         onSelectUser={handleStartDirectChat}
-        onCreateGroup={handleSelectUsersForGroup}
-        mode={selectionMode}
-      />
-
-      <GroupCreationModal
-        open={showGroupCreation}
-        onClose={() => setShowGroupCreation(false)}
-        onCreateGroup={handleCreateGroup}
-        selectedMembers={selectedUsers}
-        memberNames={userNames}
       />
 
       <Dialog open={showFileUpload} onOpenChange={setShowFileUpload}>

@@ -253,12 +253,12 @@ export default function CommunicationHub() {
             <CardContent className="p-6 text-center">
               <MessageSquare className="w-12 h-12 mx-auto text-primary mb-4" />
               <h3 className="font-semibold mb-2">
-                {language === 'en' ? 'Start Group Chat' : 'Mulakan Chat Kumpulan'}
+                {language === 'en' ? 'Start New Chat' : 'Mulakan Chat Baru'}
               </h3>
               <p className="text-sm text-muted-foreground">
                 {language === 'en' 
-                  ? 'Create a new chat room for specific topics'
-                  : 'Cipta bilik chat baru untuk topik tertentu'
+                  ? 'Connect with community members directly'
+                  : 'Berhubung dengan ahli komuniti secara langsung'
                 }
               </p>
             </CardContent>

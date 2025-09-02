@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, MessageCircle, Users } from 'lucide-react';
+import { Search, MessageCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -18,22 +18,17 @@ interface UserSelectionModalProps {
   open: boolean;
   onClose: () => void;
   onSelectUser: (userId: string) => void;
-  onCreateGroup: (userIds: string[]) => void;
-  mode: 'direct' | 'group';
 }
 
 export const UserSelectionModal: React.FC<UserSelectionModalProps> = ({
   open,
   onClose,
   onSelectUser,
-  onCreateGroup,
-  mode
 }) => {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchUsers = async () => {
@@ -62,7 +57,6 @@ export const UserSelectionModal: React.FC<UserSelectionModalProps> = ({
     if (open) {
       fetchUsers();
       setSearchQuery('');
-      setSelectedUsers([]);
     }
   }, [open]);
 
@@ -75,23 +69,8 @@ export const UserSelectionModal: React.FC<UserSelectionModalProps> = ({
   }, [searchQuery, users]);
 
   const handleUserSelect = (userId: string) => {
-    if (mode === 'direct') {
-      onSelectUser(userId);
-      onClose();
-    } else {
-      setSelectedUsers(prev => 
-        prev.includes(userId) 
-          ? prev.filter(id => id !== userId)
-          : [...prev, userId]
-      );
-    }
-  };
-
-  const handleCreateGroup = () => {
-    if (selectedUsers.length > 0) {
-      onCreateGroup(selectedUsers);
-      onClose();
-    }
+    onSelectUser(userId);
+    onClose();
   };
 
   const getUserInitials = (name: string) => {
@@ -103,17 +82,8 @@ export const UserSelectionModal: React.FC<UserSelectionModalProps> = ({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {mode === 'direct' ? (
-              <>
-                <MessageCircle className="h-5 w-5" />
-                New Chat
-              </>
-            ) : (
-              <>
-                <Users className="h-5 w-5" />
-                New Group
-              </>
-            )}
+            <MessageCircle className="h-5 w-5" />
+            New Chat
           </DialogTitle>
         </DialogHeader>
 
@@ -127,19 +97,6 @@ export const UserSelectionModal: React.FC<UserSelectionModalProps> = ({
               className="pl-10"
             />
           </div>
-
-          {mode === 'group' && selectedUsers.length > 0 && (
-            <div className="flex flex-wrap gap-2 p-2 bg-muted/50 rounded-lg">
-              {selectedUsers.map(userId => {
-                const user = users.find(u => u.id === userId);
-                return user ? (
-                  <div key={userId} className="flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded-full text-sm">
-                    {user.full_name}
-                  </div>
-                ) : null;
-              })}
-            </div>
-          )}
 
           <div className="max-h-80 overflow-y-auto space-y-2">
             {loading ? (
@@ -155,11 +112,7 @@ export const UserSelectionModal: React.FC<UserSelectionModalProps> = ({
                 <div
                   key={user.id}
                   onClick={() => handleUserSelect(user.id)}
-                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                    selectedUsers.includes(user.id)
-                      ? 'bg-primary/10 border-primary border'
-                      : 'hover:bg-muted/50'
-                  }`}
+                  className="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50"
                 >
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={user.avatar_url} />
@@ -175,30 +128,10 @@ export const UserSelectionModal: React.FC<UserSelectionModalProps> = ({
                       {user.email}
                     </p>
                   </div>
-                  {mode === 'group' && selectedUsers.includes(user.id) && (
-                    <div className="h-5 w-5 bg-primary rounded-full flex items-center justify-center">
-                      <div className="h-2 w-2 bg-white rounded-full" />
-                    </div>
-                  )}
                 </div>
               ))
             )}
           </div>
-
-          {mode === 'group' && (
-            <div className="flex gap-2 pt-4 border-t">
-              <Button variant="outline" onClick={onClose} className="flex-1">
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleCreateGroup} 
-                disabled={selectedUsers.length === 0}
-                className="flex-1"
-              >
-                Create Group ({selectedUsers.length})
-              </Button>
-            </div>
-          )}
         </div>
       </DialogContent>
     </Dialog>
