@@ -62,7 +62,7 @@ type Account = {
 } & any;
 
 export default function FinancialManagement() {
-  const { hasRole, language } = useAuth();
+  const { hasRole, language, user } = useAuth();
   const { toast } = useToast();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -123,162 +123,40 @@ export default function FinancialManagement() {
 
   const fetchAccounts = async () => {
     try {
-      // Create sample accounts based on typical community financial structure
-      const sampleAccounts = [
-        {
-          id: '1',
-          account_code: 'INC-001',
-          account_name: 'Maintenance Fund',
-          account_type: 'income' as const,
-          description: 'Monthly maintenance fee collections',
-          balance: 45000.00,
-          is_active: true
-        },
-        {
-          id: '2',
-          account_code: 'INC-002',
-          account_name: 'Facility Rental Income',
-          account_type: 'income' as const,
-          description: 'Income from community hall and facility rentals',
-          balance: 12000.00,
-          is_active: true
-        },
-        {
-          id: '3',
-          account_code: 'EXP-001',
-          account_name: 'Equipment Expenses',
-          account_type: 'expense' as const,
-          description: 'Purchases of equipment and tools',
-          balance: 8500.00,
-          is_active: true
-        },
-        {
-          id: '4',
-          account_code: 'EXP-002',
-          account_name: 'Utility Expenses',
-          account_type: 'expense' as const,
-          description: 'Electricity, water, and other utility bills',
-          balance: 6400.00,
-          is_active: true
-        },
-        {
-          id: '5',
-          account_code: 'EXP-003',
-          account_name: 'Security Expenses',
-          account_type: 'expense' as const,
-          description: 'Security services and equipment',
-          balance: 3000.00,
-          is_active: true
-        }
-      ];
+      const { data, error } = await supabase
+        .from('financial_accounts')
+        .select('*')
+        .eq('is_active', true)
+        .order('account_code');
 
-      setAccounts(sampleAccounts);
+      if (error) throw error;
+      setAccounts(data || []);
     } catch (error) {
       console.error('Error fetching accounts:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load financial accounts',
+        variant: 'destructive',
+      });
     }
   };
 
   const fetchTransactions = async () => {
     try {
-      // Use announcements as sample financial data since they represent community activities with potential costs
-      const { data: announcements, error: announcementsError } = await supabase
-        .from('announcements')
-        .select('*')
+      const { data, error } = await supabase
+        .from('financial_transactions')
+        .select(`
+          *,
+          financial_accounts (
+            account_name,
+            account_type
+          )
+        `)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(50);
 
-      if (announcementsError) throw announcementsError;
-
-      // Generate sample financial transactions based on real community data
-      const sampleTransactions = [
-        {
-          id: '1',
-          transaction_code: 'TXN-202501-001',
-          description: 'Monthly Maintenance Fees Collection',
-          amount: 25000.00,
-          transaction_type: 'credit',
-          transaction_date: '2025-01-31',
-          reference_type: 'Maintenance Fee',
-          receipt_number: 'RCP-001',
-          payment_method: 'bank_transfer',
-          status: 'completed',
-          created_at: '2025-01-31',
-          financial_accounts: {
-            account_name: 'Maintenance Fund',
-            account_type: 'income'
-          }
-        },
-        {
-          id: '2',
-          transaction_code: 'TXN-202502-002', 
-          description: 'Swimming Pool Equipment Purchase',
-          amount: 8500.00,
-          transaction_type: 'debit',
-          transaction_date: '2025-02-10',
-          reference_type: 'Equipment Purchase',
-          receipt_number: 'RCP-002',
-          payment_method: 'bank_transfer',
-          status: 'completed',
-          created_at: '2025-02-10',
-          financial_accounts: {
-            account_name: 'Equipment Expenses',
-            account_type: 'expense'
-          }
-        },
-        {
-          id: '3',
-          transaction_code: 'TXN-202502-003',
-          description: 'Electricity Bill - Common Areas',
-          amount: 4200.00,
-          transaction_type: 'debit',
-          transaction_date: '2025-02-15',
-          reference_type: 'Utility Bill',
-          receipt_number: 'TNB-202502',
-          payment_method: 'online',
-          status: 'completed',
-          created_at: '2025-02-15',
-          financial_accounts: {
-            account_name: 'Utility Expenses',
-            account_type: 'expense'
-          }
-        },
-        {
-          id: '4',
-          transaction_code: 'TXN-202502-004',
-          description: 'Community Event Income',
-          amount: 1200.00,
-          transaction_type: 'credit',
-          transaction_date: '2025-02-20',
-          reference_type: 'Event Revenue',
-          receipt_number: 'EVT-001',
-          payment_method: 'cash',
-          status: 'completed',
-          created_at: '2025-02-20',
-          financial_accounts: {
-            account_name: 'Event Income',
-            account_type: 'income'
-          }
-        },
-        {
-          id: '5',
-          transaction_code: 'TXN-202502-005',
-          description: 'Security Guard Services',
-          amount: 1500.00,
-          transaction_type: 'debit',
-          transaction_date: '2025-02-21',
-          reference_type: 'Service Payment',
-          receipt_number: 'SEC-001',
-          payment_method: 'bank_transfer',
-          status: 'pending',
-          created_at: '2025-02-21',
-          financial_accounts: {
-            account_name: 'Security Expenses',
-            account_type: 'expense'
-          }
-        }
-      ];
-
-      setTransactions(sampleTransactions);
+      if (error) throw error;
+      setTransactions(data || []);
     } catch (error) {
       console.error('Error fetching transactions:', error);
       toast({
@@ -302,6 +180,13 @@ export default function FinancialManagement() {
 
   const onSubmitTransaction = async (values: z.infer<typeof transactionSchema>) => {
     try {
+      // Get user's district from profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('district_id')
+        .eq('id', user?.id)
+        .single();
+
       const transactionData = {
         account_id: values.account_id,
         description: values.description,
@@ -313,8 +198,8 @@ export default function FinancialManagement() {
         receipt_number: values.receipt_number || null,
         payment_method: values.payment_method || null,
         notes: values.notes || null,
-        processed_by: null, // Will be set based on current user
-        district_id: null, // Will be set based on user's district
+        processed_by: user?.id || '',
+        district_id: profile?.district_id || null,
       };
 
       const { error } = await supabase
@@ -343,12 +228,19 @@ export default function FinancialManagement() {
 
   const onSubmitAccount = async (values: z.infer<typeof accountSchema>) => {
     try {
+      // Get user's district from profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('district_id')
+        .eq('id', user?.id)
+        .single();
+
       const accountData = {
         account_name: values.account_name,
         account_type: values.account_type,
         account_code: values.account_code,
         description: values.description || null,
-        district_id: null, // Will be set based on user's district
+        district_id: profile?.district_id || null,
       };
 
       const { error } = await supabase
@@ -381,7 +273,7 @@ export default function FinancialManagement() {
       
       if (status === 'approved') {
         updateData.approved_at = new Date().toISOString();
-        updateData.approved_by = null; // Will be set to current user
+        updateData.approved_by = user?.id;
       }
 
       const { error } = await supabase

@@ -16,7 +16,6 @@ import { Package, Plus, Search, Edit, Eye, Calendar, DollarSign, MapPin, Setting
 import { useToast } from '@/hooks/use-toast';
 
 const assetSchema = z.object({
-  asset_code: z.string().min(1, 'Asset code is required'),
   name: z.string().min(1, 'Asset name is required'),
   description: z.string().optional(),
   asset_type: z.string().min(1, 'Asset type is required'),
@@ -65,7 +64,6 @@ export default function AssetManagement() {
   const form = useForm<z.infer<typeof assetSchema>>({
     resolver: zodResolver(assetSchema),
     defaultValues: {
-      asset_code: '',
       name: '',
       description: '',
       asset_type: '',
@@ -215,7 +213,7 @@ export default function AssetManagement() {
 
   const filteredAssets = assets.filter(asset => {
     const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (asset.asset_code && asset.asset_code.toLowerCase().includes(searchTerm.toLowerCase()));
+                         (asset.serial_number && asset.serial_number.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = !categoryFilter || categoryFilter === 'all' || asset.asset_type === categoryFilter;
     const matchesCondition = !conditionFilter || conditionFilter === 'all' || asset.condition_status === conditionFilter;
     
