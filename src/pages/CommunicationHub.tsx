@@ -230,20 +230,17 @@ export default function CommunicationHub() {
 
         {/* Main Communication Interface */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <MessageSquare className="w-5 h-5 mr-2" />
-              {language === 'en' ? 'Communication Tools' : 'Alat Komunikasi'}
-            </CardTitle>
-            <CardDescription>
+          <CardContent className="p-6 text-center">
+            <MessageSquare className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">
+              {language === 'en' ? 'Communication Hub' : 'Pusat Komunikasi'}
+            </h3>
+            <p className="text-muted-foreground">
               {language === 'en' 
-                ? 'Choose your communication method'
-                : 'Pilih kaedah komunikasi anda'
+                ? 'Communication features are currently disabled'
+                : 'Ciri komunikasi kini dilumpuhkan'
               }
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CommunityChat marketplaceChat={marketplaceChat} directoryChat={directoryChat} />
+            </p>
           </CardContent>
         </Card>
 
