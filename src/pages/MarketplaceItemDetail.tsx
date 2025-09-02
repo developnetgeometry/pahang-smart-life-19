@@ -156,10 +156,16 @@ export default function MarketplaceItemDetail() {
         // Try to fetch from Supabase first
         const { data, error } = await supabase
           .from('marketplace_items')
-          .select('*')
+          .select(`
+            *,
+            profiles!marketplace_items_seller_id_fkey (
+              full_name,
+              avatar_url
+            )
+          `)
           .eq('id', id)
           .eq('is_active', true)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
 
@@ -180,7 +186,7 @@ export default function MarketplaceItemDetail() {
             price: Number(data.price),
             category: data.category,
             condition: data.condition as 'new' | 'like-new' | 'good' | 'fair',
-            seller: 'Anonymous User',
+            seller: (data.profiles as any)?.full_name || 'Unknown User',
             sellerId: data.seller_id || 'unknown-seller',
             sellerRating: 4.5,
             location: data.location || '',
