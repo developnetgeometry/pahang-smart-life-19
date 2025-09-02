@@ -657,6 +657,59 @@ export type Database = {
           },
         ]
       }
+      bulk_operations: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          error_count: number | null
+          error_details: Json | null
+          filters_applied: Json | null
+          id: string
+          items_affected: number | null
+          operation_type: string
+          performed_by: string | null
+          started_at: string | null
+          status: string | null
+          success_count: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_count?: number | null
+          error_details?: Json | null
+          filters_applied?: Json | null
+          id?: string
+          items_affected?: number | null
+          operation_type: string
+          performed_by?: string | null
+          started_at?: string | null
+          status?: string | null
+          success_count?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_count?: number | null
+          error_details?: Json | null
+          filters_applied?: Json | null
+          id?: string
+          items_affected?: number | null
+          operation_type?: string
+          performed_by?: string | null
+          started_at?: string | null
+          status?: string | null
+          success_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bulk_operations_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cctv_cameras: {
         Row: {
           camera_type: string | null
@@ -2936,6 +2989,42 @@ export type Database = {
           },
         ]
       }
+      item_promotions: {
+        Row: {
+          created_at: string | null
+          id: string
+          item_id: string | null
+          promotion_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          item_id?: string | null
+          promotion_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          item_id?: string | null
+          promotion_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_promotions_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_promotions_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotional_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_requests: {
         Row: {
           actual_cost: number | null
@@ -3027,6 +3116,118 @@ export type Database = {
           },
         ]
       }
+      marketplace_analytics: {
+        Row: {
+          avg_order_value: number | null
+          created_at: string | null
+          date: string
+          district_id: string | null
+          id: string
+          top_category: string | null
+          total_items_sold: number | null
+          total_orders: number | null
+          total_revenue: number | null
+          unique_buyers: number | null
+          unique_sellers: number | null
+        }
+        Insert: {
+          avg_order_value?: number | null
+          created_at?: string | null
+          date: string
+          district_id?: string | null
+          id?: string
+          top_category?: string | null
+          total_items_sold?: number | null
+          total_orders?: number | null
+          total_revenue?: number | null
+          unique_buyers?: number | null
+          unique_sellers?: number | null
+        }
+        Update: {
+          avg_order_value?: number | null
+          created_at?: string | null
+          date?: string
+          district_id?: string | null
+          id?: string
+          top_category?: string | null
+          total_items_sold?: number | null
+          total_orders?: number | null
+          total_revenue?: number | null
+          unique_buyers?: number | null
+          unique_sellers?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_analytics_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_conversations: {
+        Row: {
+          buyer_id: string | null
+          chat_room_id: string | null
+          created_at: string | null
+          id: string
+          item_id: string | null
+          seller_id: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          buyer_id?: string | null
+          chat_room_id?: string | null
+          created_at?: string | null
+          id?: string
+          item_id?: string | null
+          seller_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          buyer_id?: string | null
+          chat_room_id?: string | null
+          created_at?: string | null
+          id?: string
+          item_id?: string | null
+          seller_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_conversations_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_conversations_chat_room_id_fkey"
+            columns: ["chat_room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_conversations_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_conversations_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_favorites: {
         Row: {
           created_at: string
@@ -3050,10 +3251,13 @@ export type Database = {
       }
       marketplace_items: {
         Row: {
+          allow_backorder: boolean | null
           category: string
+          category_id: string | null
           condition: string | null
           created_at: string | null
           description: string | null
+          dimensions: Json | null
           district_id: string | null
           id: string
           image: string | null
@@ -3066,17 +3270,24 @@ export type Database = {
           price: number
           seller_id: string | null
           seller_type: string
+          shipping_required: boolean | null
+          sku: string | null
           sold_count: number | null
           stock_quantity: number | null
           title: string
+          track_inventory: boolean | null
           updated_at: string | null
           view_count: number | null
+          weight: number | null
         }
         Insert: {
+          allow_backorder?: boolean | null
           category: string
+          category_id?: string | null
           condition?: string | null
           created_at?: string | null
           description?: string | null
+          dimensions?: Json | null
           district_id?: string | null
           id?: string
           image?: string | null
@@ -3089,17 +3300,24 @@ export type Database = {
           price: number
           seller_id?: string | null
           seller_type?: string
+          shipping_required?: boolean | null
+          sku?: string | null
           sold_count?: number | null
           stock_quantity?: number | null
           title: string
+          track_inventory?: boolean | null
           updated_at?: string | null
           view_count?: number | null
+          weight?: number | null
         }
         Update: {
+          allow_backorder?: boolean | null
           category?: string
+          category_id?: string | null
           condition?: string | null
           created_at?: string | null
           description?: string | null
+          dimensions?: Json | null
           district_id?: string | null
           id?: string
           image?: string | null
@@ -3112,13 +3330,24 @@ export type Database = {
           price?: number
           seller_id?: string | null
           seller_type?: string
+          shipping_required?: boolean | null
+          sku?: string | null
           sold_count?: number | null
           stock_quantity?: number | null
           title?: string
+          track_inventory?: boolean | null
           updated_at?: string | null
           view_count?: number | null
+          weight?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "marketplace_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "marketplace_items_district_id_fkey"
             columns: ["district_id"]
@@ -3202,55 +3431,91 @@ export type Database = {
         Row: {
           buyer_id: string
           created_at: string
+          delivered_at: string | null
           delivered_date: string | null
+          discount_amount: number | null
           id: string
           item_id: string
           notes: string | null
           order_date: string
           payment_status: string
+          promotion_code_id: string | null
           quantity: number
           seller_id: string
+          shipped_at: string | null
           shipped_date: string | null
           shipping_address: Json | null
+          shipping_cost: number | null
+          shipping_method_id: string | null
           status: string
           total_amount: number
+          tracking_number: string | null
           updated_at: string
         }
         Insert: {
           buyer_id: string
           created_at?: string
+          delivered_at?: string | null
           delivered_date?: string | null
+          discount_amount?: number | null
           id?: string
           item_id: string
           notes?: string | null
           order_date?: string
           payment_status?: string
+          promotion_code_id?: string | null
           quantity?: number
           seller_id: string
+          shipped_at?: string | null
           shipped_date?: string | null
           shipping_address?: Json | null
+          shipping_cost?: number | null
+          shipping_method_id?: string | null
           status?: string
           total_amount: number
+          tracking_number?: string | null
           updated_at?: string
         }
         Update: {
           buyer_id?: string
           created_at?: string
+          delivered_at?: string | null
           delivered_date?: string | null
+          discount_amount?: number | null
           id?: string
           item_id?: string
           notes?: string | null
           order_date?: string
           payment_status?: string
+          promotion_code_id?: string | null
           quantity?: number
           seller_id?: string
+          shipped_at?: string | null
           shipped_date?: string | null
           shipping_address?: Json | null
+          shipping_cost?: number | null
+          shipping_method_id?: string | null
           status?: string
           total_amount?: number
+          tracking_number?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_orders_promotion_code_id_fkey"
+            columns: ["promotion_code_id"]
+            isOneToOne: false
+            referencedRelation: "promotional_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_orders_shipping_method_id_fkey"
+            columns: ["shipping_method_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_methods"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       meeting_minutes: {
         Row: {
@@ -3908,6 +4173,148 @@ export type Database = {
         }
         Relationships: []
       }
+      product_analytics: {
+        Row: {
+          cart_adds: number | null
+          conversion_rate: number | null
+          created_at: string | null
+          date: string
+          favorites_count: number | null
+          id: string
+          item_id: string | null
+          purchases: number | null
+          revenue: number | null
+          views_count: number | null
+        }
+        Insert: {
+          cart_adds?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          date: string
+          favorites_count?: number | null
+          id?: string
+          item_id?: string | null
+          purchases?: number | null
+          revenue?: number | null
+          views_count?: number | null
+        }
+        Update: {
+          cart_adds?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          date?: string
+          favorites_count?: number | null
+          id?: string
+          item_id?: string | null
+          purchases?: number | null
+          revenue?: number | null
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_analytics_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          description_ms: string | null
+          icon_name: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          name_ms: string | null
+          parent_id: string | null
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          description_ms?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          name_ms?: string | null
+          parent_id?: string | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          description_ms?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          name_ms?: string | null
+          parent_id?: string | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_recommendations: {
+        Row: {
+          created_at: string | null
+          id: string
+          item_id: string | null
+          recommendation_type: string | null
+          score: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          item_id?: string | null
+          recommendation_type?: string | null
+          score?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          item_id?: string | null
+          recommendation_type?: string | null
+          score?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_recommendations_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_recommendations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_reviews: {
         Row: {
           comment: string | null
@@ -3954,6 +4361,45 @@ export type Database = {
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_shares: {
+        Row: {
+          id: string
+          item_id: string | null
+          platform: string | null
+          shared_at: string | null
+          shared_by: string | null
+        }
+        Insert: {
+          id?: string
+          item_id?: string | null
+          platform?: string | null
+          shared_at?: string | null
+          shared_by?: string | null
+        }
+        Update: {
+          id?: string
+          item_id?: string | null
+          platform?: string | null
+          shared_at?: string | null
+          shared_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_shares_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_shares_shared_by_fkey"
+            columns: ["shared_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -4139,6 +4585,123 @@ export type Database = {
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotion_usage: {
+        Row: {
+          discount_amount: number
+          id: string
+          order_id: string | null
+          promotion_id: string | null
+          used_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          discount_amount: number
+          id?: string
+          order_id?: string | null
+          promotion_id?: string | null
+          used_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          discount_amount?: number
+          id?: string
+          order_id?: string | null
+          promotion_id?: string | null
+          used_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_usage_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_usage_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotional_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotional_codes: {
+        Row: {
+          applies_to: string | null
+          code: string
+          created_at: string | null
+          created_by: string | null
+          current_uses: number | null
+          description: string | null
+          discount_type: string | null
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          minimum_order_amount: number | null
+          name: string
+          per_user_limit: number | null
+          starts_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          applies_to?: string | null
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          current_uses?: number | null
+          description?: string | null
+          discount_type?: string | null
+          discount_value: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          minimum_order_amount?: number | null
+          name: string
+          per_user_limit?: number | null
+          starts_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          applies_to?: string | null
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          current_uses?: number | null
+          description?: string | null
+          discount_type?: string | null
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          minimum_order_amount?: number | null
+          name?: string
+          per_user_limit?: number | null
+          starts_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotional_codes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -5294,6 +5857,158 @@ export type Database = {
           },
         ]
       }
+      shared_wishlists: {
+        Row: {
+          created_at: string | null
+          id: string
+          owner_id: string | null
+          permission_level: string | null
+          shared_with: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          owner_id?: string | null
+          permission_level?: string | null
+          shared_with?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          owner_id?: string | null
+          permission_level?: string | null
+          shared_with?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_wishlists_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_wishlists_shared_with_fkey"
+            columns: ["shared_with"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shipping_methods: {
+        Row: {
+          base_rate: number
+          created_at: string | null
+          description: string | null
+          district_id: string | null
+          estimated_days_max: number | null
+          estimated_days_min: number | null
+          free_shipping_threshold: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          per_kg_rate: number | null
+        }
+        Insert: {
+          base_rate: number
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          estimated_days_max?: number | null
+          estimated_days_min?: number | null
+          free_shipping_threshold?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          per_kg_rate?: number | null
+        }
+        Update: {
+          base_rate?: number
+          created_at?: string | null
+          description?: string | null
+          district_id?: string | null
+          estimated_days_max?: number | null
+          estimated_days_min?: number | null
+          free_shipping_threshold?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          per_kg_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipping_methods_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shipping_rates: {
+        Row: {
+          created_at: string | null
+          free_threshold: number | null
+          id: string
+          rate: number
+          shipping_method_id: string | null
+          shipping_zone_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          free_threshold?: number | null
+          id?: string
+          rate: number
+          shipping_method_id?: string | null
+          shipping_zone_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          free_threshold?: number | null
+          id?: string
+          rate?: number
+          shipping_method_id?: string | null
+          shipping_zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipping_rates_shipping_method_id_fkey"
+            columns: ["shipping_method_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipping_rates_shipping_zone_id_fkey"
+            columns: ["shipping_zone_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shipping_zones: {
+        Row: {
+          created_at: string | null
+          districts: Json | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          districts?: Json | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          districts?: Json | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       shopping_cart: {
         Row: {
           added_at: string
@@ -5639,6 +6354,50 @@ export type Database = {
             columns: ["floor_plan_id"]
             isOneToOne: false
             referencedRelation: "floor_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_marketplace_analytics: {
+        Row: {
+          amount_spent: number | null
+          created_at: string | null
+          date: string
+          id: string
+          items_favorited: number | null
+          items_purchased: number | null
+          items_viewed: number | null
+          session_duration: number | null
+          user_id: string | null
+        }
+        Insert: {
+          amount_spent?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          items_favorited?: number | null
+          items_purchased?: number | null
+          items_viewed?: number | null
+          session_duration?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          amount_spent?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          items_favorited?: number | null
+          items_purchased?: number | null
+          items_viewed?: number | null
+          session_duration?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_marketplace_analytics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
