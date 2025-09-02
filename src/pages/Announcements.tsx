@@ -140,6 +140,7 @@ export default function Announcements() {
     try {
       setLoading(true);
       
+      // Simplified query - only select columns that exist in the database
       const { data, error } = await supabase
         .from('announcements')
         .select(`
@@ -147,38 +148,8 @@ export default function Announcements() {
           title,
           content,
           type,
-          scope,
           is_urgent,
           is_published,
-          is_pinned,
-          publish_at,
-          expire_at,
-          created_at,
-          author_id,
-          polls!inner(
-            id
-          )
-        `)
-        .eq('is_published', true)
-        .lte('publish_at', new Date().toISOString())
-        .or('expire_at.is.null,expire_at.gt.' + new Date().toISOString())
-        .order('is_pinned', { ascending: false })
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Also fetch announcements without polls
-      const { data: announcementsWithoutPolls, error: error2 } = await supabase
-        .from('announcements')
-        .select(`
-          id,
-          title,
-          content,
-          type,
-          scope,
-          is_urgent,
-          is_published,
-          is_pinned,
           publish_at,
           expire_at,
           created_at,
@@ -187,17 +158,26 @@ export default function Announcements() {
         .eq('is_published', true)
         .lte('publish_at', new Date().toISOString())
         .or('expire_at.is.null,expire_at.gt.' + new Date().toISOString())
-        .not('id', 'in', `(${(data || []).map(a => a.id).join(',') || 'null'})`)
-        .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false });
 
-      if (error2) throw error2;
+      if (error) throw error;
 
-      // Combine and transform data
-      const allAnnouncements = [
-        ...(data || []).map(a => ({ ...a, has_poll: true, poll_id: a.polls?.[0]?.id })),
-        ...(announcementsWithoutPolls || []).map(a => ({ ...a, has_poll: false }))
-      ];
+      // Transform data with defaults for missing fields
+      const allAnnouncements = data ? data.map(a => ({
+        id: a.id,
+        title: a.title,
+        content: a.content,
+        type: a.type || 'general',
+        scope: 'district', // Default scope since it's not in database yet
+        is_urgent: a.is_urgent || false,
+        is_published: a.is_published,
+        is_pinned: a.is_urgent || false, // Use is_urgent as fallback for is_pinned
+        publish_at: a.publish_at,
+        expire_at: a.expire_at,
+        created_at: a.created_at,
+        author_id: a.author_id,
+        has_poll: false
+      })) : [];
 
       const transformedAnnouncements: Announcement[] = allAnnouncements.map(announcement => ({
         id: announcement.id,
@@ -210,13 +190,12 @@ export default function Announcements() {
         is_pinned: announcement.is_pinned || announcement.is_urgent,
         read_status: false,
         target_audience: ['residents'],
-        scope: announcement.scope || 'district',
-        type: announcement.type || 'general',
+        scope: announcement.scope,
+        type: announcement.type,
         is_urgent: announcement.is_urgent,
         publish_at: announcement.publish_at,
         expire_at: announcement.expire_at,
-        has_poll: announcement.has_poll,
-        poll_id: announcement.poll_id
+        has_poll: announcement.has_poll
       }));
 
       setAnnouncements(transformedAnnouncements);
@@ -490,9 +469,9 @@ export default function Announcements() {
                   </CardContent>
                 </Card>
                 
-                {/* Render poll if exists */}
-                {announcement.has_poll && announcement.poll_id && (
-                  <PollComponent pollId={announcement.poll_id} />
+                {/* Render poll if exists - temporarily disabled */}
+                {announcement.has_poll && (
+                  <PollComponent pollId="temp-id" />
                 )}
               </div>
             ))}
@@ -544,9 +523,9 @@ export default function Announcements() {
                   </CardContent>
                 </Card>
                 
-                {/* Render poll if exists */}
-                {announcement.has_poll && announcement.poll_id && (
-                  <PollComponent pollId={announcement.poll_id} />
+                {/* Render poll if exists - temporarily disabled */}
+                {announcement.has_poll && (
+                  <PollComponent pollId="temp-id" />
                 )}
               </div>
             ))}

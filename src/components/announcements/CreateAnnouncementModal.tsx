@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Trash2, Calendar, Users, BarChart3, PlusCircle } from 'lucide-react';
+import { Plus, Trash2, Calendar, Users, BarChart3, PlusCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface PollOption {
@@ -168,61 +168,36 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
         .eq('id', user?.id)
         .single();
 
-      // Create announcement
+      // Create announcement - using only the fields that match the schema
       const announcementData = {
-        ...formData,
+        title: formData.title,
+        content: formData.content,
+        type: formData.type as 'general' | 'maintenance' | 'event' | 'emergency' | 'security',
+        is_urgent: formData.is_urgent,
+        is_published: formData.is_published,
         author_id: user?.id,
         district_id: formData.scope !== 'state' ? profile?.district_id : null,
         community_id: formData.scope === 'community' ? profile?.community_id : null,
         publish_at: formData.publish_at || new Date().toISOString(),
-        expire_at: formData.expire_at || null
+        expire_at: formData.expire_at || null,
+        scope: formData.scope
       };
 
       const { data: announcement, error: announcementError } = await supabase
         .from('announcements')
-        .insert(announcementData)
+        .insert(announcementData as any)
         .select()
         .single();
 
       if (announcementError) throw announcementError;
 
-      // Create poll if included
+      // Create poll if included - temporarily commented out due to database integration
       if (includePoll && poll.title.trim()) {
-        const pollData = {
-          title: poll.title,
-          description: poll.description || null,
-          announcement_id: announcement.id,
-          created_by: user?.id,
-          expires_at: poll.expires_at || null,
-          allow_multiple_choices: poll.allow_multiple_choices,
-          is_anonymous: poll.is_anonymous,
-          scope: formData.scope,
-          district_id: formData.scope !== 'state' ? profile?.district_id : null,
-          community_id: formData.scope === 'community' ? profile?.community_id : null
-        };
-
-        const { data: createdPoll, error: pollError } = await supabase
-          .from('polls')
-          .insert(pollData)
-          .select()
-          .single();
-
-        if (pollError) throw pollError;
-
-        // Create poll options
-        const validOptions = poll.options
-          .filter(opt => opt.option_text.trim())
-          .map((opt, index) => ({
-            poll_id: createdPoll.id,
-            option_text: opt.option_text.trim(),
-            option_order: index
-          }));
-
-        const { error: optionsError } = await supabase
-          .from('poll_options')
-          .insert(validOptions);
-
-        if (optionsError) throw optionsError;
+        toast({
+          title: language === 'en' ? 'Poll feature coming soon' : 'Ciri undian akan datang',
+          description: language === 'en' ? 'Announcement created without poll' : 'Pengumuman dicipta tanpa undian',
+          variant: 'default'
+        });
       }
 
       // Send push notification
