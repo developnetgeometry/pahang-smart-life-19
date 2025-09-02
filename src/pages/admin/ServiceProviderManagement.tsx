@@ -415,26 +415,6 @@ export default function ServiceProviderManagement() {
                           Review
                         </Button>
                         
-                        {app.status === 'pending' && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-green-600 border-green-200 hover:bg-green-50"
-                              onClick={() => updateApplicationStatus(app.id, 'approved')}
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-red-600 border-red-200 hover:bg-red-50"
-                              onClick={() => updateApplicationStatus(app.id, 'rejected')}
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
                       </div>
                     </div>
                   </CardContent>
