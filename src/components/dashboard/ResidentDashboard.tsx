@@ -14,6 +14,7 @@ import { PrayerTimesWidget } from './PrayerTimesWidget';
 import InteractiveUnitEditor from '@/components/location/InteractiveUnitEditor';
 import { CombinedSlideshow } from './CombinedSlideshow';
 import PanicButton from '@/components/emergency/PanicButton';
+import { useModuleAccess } from '@/hooks/use-module-access';
 import { 
   Calendar, 
   Users, 
@@ -35,6 +36,7 @@ export function ResidentDashboard() {
   const { language, user } = useAuth();
   const navigate = useNavigate();
   const [selectedUpdate, setSelectedUpdate] = useState<any>(null);
+  const { isModuleEnabled } = useModuleAccess();
 
   // Handle quick action clicks
   const handleQuickAction = (action: any) => {
@@ -108,32 +110,39 @@ export function ResidentDashboard() {
     }
   ];
 
-  const quickActions = [
+  const allQuickActions = [
     {
       title: language === 'en' ? 'Submit Complaint' : 'Hantar Aduan',
       description: language === 'en' ? 'Report issues or concerns' : 'Laporkan isu atau masalah',
       icon: FileText,
-      action: '/my-complaints'
+      action: '/my-complaints',
+      module: 'complaints'
     },
     {
       title: language === 'en' ? 'Book Facilities' : 'Tempah Kemudahan',
       description: language === 'en' ? 'Reserve community facilities' : 'Tempah kemudahan komuniti',
       icon: Building,
-      action: '/my-bookings'
+      action: '/my-bookings',
+      module: 'bookings'
     },
     {
       title: language === 'en' ? 'Register Visitor' : 'Daftar Pelawat',
       description: language === 'en' ? 'Pre-register your visitors' : 'Pra-daftar pelawat anda',
       icon: UserPlus,
-      action: '/my-visitors'
+      action: '/my-visitors',
+      module: 'visitor_management'
     },
     {
       title: language === 'en' ? 'Community Chat' : 'Sembang Komuniti',
       description: language === 'en' ? 'Connect with neighbors' : 'Berhubung dengan jiran',
       icon: MessageSquare,
-      action: '/communication-hub'
+      action: '/communication-hub',
+      module: 'discussions'
     }
   ];
+
+  // Filter quick actions based on enabled modules
+  const quickActions = allQuickActions.filter(action => isModuleEnabled(action.module));
 
   const recentActivities = [
     {
