@@ -290,6 +290,12 @@ export default function Marketplace() {
     return () => clearTimeout(timer);
   }, [language]);
 
+  // Compute categories with useMemo - MOVED BEFORE CONDITIONAL RETURN
+  const categories = useMemo(() => [
+    { value: 'all', label: t.allCategories },
+    ...dbCategories.map(cat => ({ value: cat.name, label: cat.name }))
+  ], [dbCategories, t.allCategories]);
+
   // Check if marketplace module is enabled - MOVED AFTER ALL HOOKS
   if (!isModuleEnabled('marketplace')) {
     return (
@@ -306,11 +312,6 @@ export default function Marketplace() {
       </Card>
     );
   }
-
-  const categories = useMemo(() => [
-    { value: 'all', label: t.allCategories },
-    ...dbCategories.map(cat => ({ value: cat.name, label: cat.name }))
-  ], [dbCategories, t.allCategories]);
 
   const conditions = [
     { value: 'all', label: t.allConditions },
