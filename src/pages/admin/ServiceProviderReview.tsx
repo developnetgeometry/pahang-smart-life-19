@@ -223,7 +223,33 @@ export default function ServiceProviderReview() {
         await createServiceProviderProfile();
       }
 
-      toast.success(`Application ${newStatus} successfully`);
+      // Send email notification
+      try {
+        await supabase.functions.invoke('send-application-status-email', {
+          body: {
+            applicationId: application.id,
+            applicantEmail: application.applicant.email,
+            applicantName: application.applicant.full_name,
+            businessName: application.business_name,
+            status: newStatus,
+            reviewNotes: reviewNotes,
+            rejectionReason: newStatus === 'rejected' ? rejectionReason : undefined
+          }
+        });
+        console.log('Email notification sent successfully');
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+        // Don't throw error here as the main action was successful
+        toast.error('Status updated but email notification failed to send');
+      }
+
+      const statusLabels = {
+        approved: 'approved',
+        rejected: 'rejected',
+        additional_info_required: 'marked as requiring additional information'
+      };
+
+      toast.success(`Application ${statusLabels[newStatus as keyof typeof statusLabels] || newStatus} successfully. Email notification sent to applicant.`);
       fetchApplicationDetails();
     } catch (error) {
       console.error('Error updating application:', error);

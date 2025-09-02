@@ -85,6 +85,9 @@ verify_jwt = false
 [functions.send-push-notification]
 verify_jwt = true
 
+[functions.send-application-status-email]
+verify_jwt = true
+
 [edge_runtime]
 policy = "per_worker"
 inspector_port = 8083
