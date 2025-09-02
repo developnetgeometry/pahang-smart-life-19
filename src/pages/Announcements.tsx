@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Megaphone, Calendar, Clock, Search, Pin, Bell, Loader2, Plus, BarChart3, Users } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Megaphone, Calendar, Clock, Search, Pin, Bell, Loader2, Plus, BarChart3, Users, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import CreateAnnouncementModal from '@/components/announcements/CreateAnnouncementModal';
@@ -43,6 +44,8 @@ export default function Announcements() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
   const canCreateAnnouncements = hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin');
 
@@ -74,6 +77,10 @@ export default function Announcements() {
       pinnedAnnouncements: 'Pinned',
       unreadAnnouncements: 'Unread',
       thisWeek: 'This Week',
+      viewDetails: 'Click to view details',
+      announcementDetails: 'Announcement Details',
+      publishedOn: 'Published on',
+      author: 'Author',
       noAnnouncements: 'No announcements found',
       noAnnouncementsDesc: 'Try adjusting your search or filters',
       poll: 'Poll Available',
@@ -106,6 +113,10 @@ export default function Announcements() {
       pinnedAnnouncements: 'Disematkan',
       unreadAnnouncements: 'Belum Dibaca',
       thisWeek: 'Minggu Ini',
+      viewDetails: 'Klik untuk lihat butiran',
+      announcementDetails: 'Butiran Pengumuman',
+      publishedOn: 'Diterbitkan pada',
+      author: 'Penulis',
       noAnnouncements: 'Tiada pengumuman dijumpai',
       noAnnouncementsDesc: 'Cuba laraskan carian atau penapis anda',
       poll: 'Undian Tersedia',
@@ -135,6 +146,11 @@ export default function Announcements() {
       supabase.removeChannel(channel);
     };
   }, [user]);
+
+  const handleAnnouncementClick = (announcement: Announcement) => {
+    setSelectedAnnouncement(announcement);
+    setDetailsModalOpen(true);
+  };
 
   const fetchAnnouncements = async () => {
     try {
@@ -432,7 +448,11 @@ export default function Announcements() {
             </h2>
             {pinnedAnnouncements.map((announcement) => (
               <div key={announcement.id} className="space-y-4">
-                <Card className="border-l-4 border-l-yellow-400">
+                <Card 
+                  className="border-l-4 border-l-yellow-400 cursor-pointer hover:shadow-md transition-shadow" 
+                  onClick={() => handleAnnouncementClick(announcement)}
+                  title={t.viewDetails}
+                >
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -486,7 +506,11 @@ export default function Announcements() {
             )}
             {regularAnnouncements.map((announcement) => (
               <div key={announcement.id} className="space-y-4">
-                <Card className={`${!announcement.read_status ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''}`}>
+                <Card 
+                  className={`cursor-pointer hover:shadow-md transition-shadow ${!announcement.read_status ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''}`}
+                  onClick={() => handleAnnouncementClick(announcement)}
+                  title={t.viewDetails}
+                >
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -550,6 +574,92 @@ export default function Announcements() {
         onOpenChange={setCreateModalOpen}
         onAnnouncementCreated={fetchAnnouncements}
       />
+
+      {/* Announcement Details Modal */}
+      <Dialog open={detailsModalOpen} onOpenChange={setDetailsModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                <Megaphone className="w-5 h-5" />
+                {t.announcementDetails}
+              </DialogTitle>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setDetailsModalOpen(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </DialogHeader>
+          
+          {selectedAnnouncement && (
+            <div className="space-y-6">
+              {/* Title and Badges */}
+              <div className="space-y-3">
+                <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                  {selectedAnnouncement.is_urgent && <span className="text-red-500">🔴</span>}
+                  {selectedAnnouncement.title}
+                  {selectedAnnouncement.is_pinned && <Pin className="w-5 h-5 text-yellow-500" />}
+                </h2>
+                
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant={getPriorityColor(selectedAnnouncement.priority)}>
+                    {getPriorityText(selectedAnnouncement.priority)}
+                  </Badge>
+                  <Badge variant="secondary">{selectedAnnouncement.category}</Badge>
+                  <Badge className={getScopeColor(selectedAnnouncement.scope)}>
+                    {getScopeText(selectedAnnouncement.scope)}
+                  </Badge>
+                  {selectedAnnouncement.has_poll && (
+                    <Badge variant="outline">
+                      <BarChart3 className="w-3 h-3 mr-1" />
+                      {t.poll}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              {/* Metadata */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>
+                    {t.publishedOn} {selectedAnnouncement.created_date}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  <span>
+                    {t.author}: {selectedAnnouncement.author}
+                  </span>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="border-t pt-4">
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                    {selectedAnnouncement.content}
+                  </p>
+                </div>
+              </div>
+
+              {/* Poll Section */}
+              {selectedAnnouncement.has_poll && (
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5" />
+                    {t.poll}
+                  </h3>
+                  <PollComponent pollId={selectedAnnouncement.poll_id || "temp-id"} />
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
