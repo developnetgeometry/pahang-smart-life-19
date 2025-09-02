@@ -416,7 +416,7 @@ export default function ServiceProviderManagement() {
                         </Button>
                         
                         {app.status === 'pending' && (
-                          <div className="flex gap-1">
+                          <>
                             <Button
                               size="sm"
                               variant="outline"
@@ -433,7 +433,7 @@ export default function ServiceProviderManagement() {
                             >
                               <XCircle className="h-4 w-4" />
                             </Button>
-                          </div>
+                          </>
                         )}
                       </div>
                     </div>
