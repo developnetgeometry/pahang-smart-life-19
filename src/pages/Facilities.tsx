@@ -119,25 +119,13 @@ export default function Facilities() {
 
   const t = text[language];
 
-  // Check if facilities module is enabled
-  if (!isModuleEnabled('facilities')) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
-            <p className="text-sm text-muted-foreground">
-              The Facilities module is not enabled for this community.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Fetch facilities from Supabase
+  // Fetch facilities from Supabase - ALWAYS call this hook
   useEffect(() => {
+    // Only fetch if module is enabled
+    if (!isModuleEnabled('facilities')) {
+      setLoading(false);
+      return;
+    }
     const fetchFacilities = async () => {
       try {
         const { data, error } = await supabase
@@ -284,7 +272,24 @@ export default function Facilities() {
     };
 
     fetchFacilities();
-  }, [language]);
+  }, [language, isModuleEnabled]);
+
+  // Check if facilities module is enabled - do this AFTER all hooks
+  if (!isModuleEnabled('facilities')) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
+            <p className="text-sm text-muted-foreground">
+              The Facilities module is not enabled for this community.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const facilityTypes = [
     { value: 'all', label: t.allTypes },
