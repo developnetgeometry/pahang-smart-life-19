@@ -143,7 +143,8 @@ export default function Discussions() {
             author_profile:profiles!discussions_author_id_fkey (
               full_name,
               email
-            )
+            ),
+            reply_count:discussion_replies(count)
           `)
           .order('created_at', { ascending: false });
 
@@ -156,14 +157,14 @@ export default function Discussions() {
           author: discussion.author_profile?.full_name || discussion.author_profile?.email || 'Anonymous',
           author_id: discussion.author_id,
           category: discussion.category,
-          replies: discussion.replies_count || 0,
+          replies: discussion.reply_count?.[0]?.count || 0,
           lastActivity: discussion.last_reply_at 
             ? new Date(discussion.last_reply_at).toLocaleDateString()
             : new Date(discussion.created_at).toLocaleDateString(),
           isPinned: discussion.is_pinned,
           tags: [], // Could be enhanced
           views_count: discussion.views_count || 0,
-          replies_count: discussion.replies_count || 0,
+          replies_count: discussion.reply_count?.[0]?.count || 0,
           created_at: discussion.created_at
         }));
 
