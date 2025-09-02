@@ -6,6 +6,7 @@ import { useShoppingCart } from '@/hooks/use-shopping-cart';
 import AdvertisementCarousel from '@/components/marketplace/AdvertisementCarousel';
 import ShoppingCart from '@/components/marketplace/ShoppingCart';
 import CartIcon from '@/components/marketplace/CartIcon';
+import StarRating from '@/components/marketplace/StarRating';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -742,10 +743,12 @@ export default function Marketplace() {
                 </Avatar>
                 <div className="flex-1">
                   <p className="text-sm font-medium">{item.seller}</p>
-                  <div className="flex items-center gap-1">
-                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                    <span className="text-xs text-muted-foreground">{item.sellerRating}</span>
-                  </div>
+                  <StarRating
+                    rating={item.sellerRating}
+                    size="sm"
+                    showText={false}
+                    language={language}
+                  />
                 </div>
               </div>
               

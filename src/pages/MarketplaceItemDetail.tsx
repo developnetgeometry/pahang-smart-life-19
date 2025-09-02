@@ -11,6 +11,9 @@ import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, ShoppingCart, MessageCircle, Heart, Star, MapPin, Clock, User, Tag, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import ProductReviews from '@/components/marketplace/ProductReviews';
+import SellerRating from '@/components/marketplace/SellerRating';
+import StarRating from '@/components/marketplace/StarRating';
 
 // Import marketplace product images
 import iphoneMarketplaceImage from '@/assets/iphone-marketplace.jpg';
@@ -25,6 +28,7 @@ interface MarketplaceItem {
   category: string;
   condition: 'new' | 'like-new' | 'good' | 'fair';
   seller: string;
+  sellerId: string;
   sellerRating: number;
   location: string;
   postedDate: string;
@@ -102,6 +106,7 @@ export default function MarketplaceItemDetail() {
       category: 'electronics',
       condition: 'like-new',
       seller: 'John Doe',
+      sellerId: 'seller-1',
       sellerRating: 4.8,
       location: 'Block A, Unit 15-2',
       postedDate: '2024-01-15',
@@ -117,6 +122,7 @@ export default function MarketplaceItemDetail() {
       category: 'furniture',
       condition: 'good',
       seller: 'Sarah Chen',
+      sellerId: 'seller-2',
       sellerRating: 4.5,
       location: 'Block B, Unit 8-1',
       postedDate: '2024-01-12',
@@ -132,6 +138,7 @@ export default function MarketplaceItemDetail() {
       category: 'books',
       condition: 'good',
       seller: 'Mike Wong',
+      sellerId: 'seller-3',
       sellerRating: 4.9,
       location: 'Block C, Unit 12-5',
       postedDate: '2024-01-10',
@@ -174,6 +181,7 @@ export default function MarketplaceItemDetail() {
             category: data.category,
             condition: data.condition as 'new' | 'like-new' | 'good' | 'fair',
             seller: 'Anonymous User',
+            sellerId: data.seller_id || 'unknown-seller',
             sellerRating: 4.5,
             location: data.location || '',
             postedDate: new Date(data.created_at).toISOString().split('T')[0],
@@ -387,10 +395,11 @@ export default function MarketplaceItemDetail() {
             </Avatar>
             <div className="flex-1">
               <p className="font-medium">{item.seller}</p>
-              <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span className="text-sm text-muted-foreground">{item.sellerRating} rating</span>
-              </div>
+              <StarRating
+                rating={item.sellerRating}
+                size="sm"
+                language={language}
+              />
             </div>
           </div>
 
@@ -444,6 +453,23 @@ export default function MarketplaceItemDetail() {
               {t.contactSeller}
             </Button>
           </div>
+        </div>
+      </div>
+
+      {/* Reviews and Seller Rating Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <ProductReviews 
+            itemId={item.id}
+            sellerId={item.sellerId}
+            language={language}
+          />
+        </div>
+        <div>
+          <SellerRating 
+            sellerId={item.sellerId}
+            language={language}
+          />
         </div>
       </div>
     </div>
