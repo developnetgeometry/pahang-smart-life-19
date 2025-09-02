@@ -29,9 +29,9 @@ interface ModuleFeature {
 }
 
 const AVAILABLE_MODULES = [
-  { module_name: 'announcements', display_name: 'Announcements', category: 'communication', icon: Megaphone, description: 'Community announcements and notices' },
-  { module_name: 'directory', display_name: 'Community Directory', category: 'information', icon: Users, description: 'Community member and service directory' },
-  { module_name: 'complaints', display_name: 'Complaints Management', category: 'services', icon: AlertTriangle, description: 'Submit and manage community complaints' },
+  { module_name: 'announcements', display_name: 'Announcements', category: 'communication', icon: Megaphone, description: 'Community announcements and updates' },
+  { module_name: 'directory', display_name: 'Community Directory', category: 'information', icon: Users, description: 'Community contact directory' },
+  { module_name: 'complaints', display_name: 'Complaints Management', category: 'services', icon: AlertTriangle, description: 'Submit and manage complaints' },
   { module_name: 'facilities', display_name: 'Facilities Management', category: 'community', icon: Building, description: 'Manage community facilities and bookings' },
   { module_name: 'bookings', display_name: 'Facility Bookings', category: 'community', icon: Calendar, description: 'Book and manage facility reservations' },
   { module_name: 'marketplace', display_name: 'Marketplace', category: 'community', icon: ShoppingCart, description: 'Community marketplace for buying/selling' },
@@ -149,7 +149,7 @@ export default function ModuleManagement() {
             category: module.category,
             is_enabled: existingFeature?.is_enabled || false,
             notes: existingFeature?.notes || '',
-            is_core: CORE_MODULES.includes(module.module_name)
+            is_core: false // No core modules - everything is controllable
           };
         });
 
@@ -324,7 +324,6 @@ export default function ModuleManagement() {
                 <CardContent className="space-y-4">
                   {modules.map(module => {
                     const moduleFeature = moduleFeatures.find(f => f.module_name === module.module_name);
-                    const isCore = CORE_MODULES.includes(module.module_name);
                     const ModuleIcon = module.icon;
 
                     return (
