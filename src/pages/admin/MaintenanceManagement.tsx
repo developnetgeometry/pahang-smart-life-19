@@ -651,20 +651,243 @@ export default function MaintenanceManagement() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="schedule">
+        <TabsContent value="schedule" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Today's Schedule</CardTitle>
+                <CardDescription>Scheduled maintenance for today</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">Elevator inspection - Block A</p>
+                      <p className="text-sm text-muted-foreground">09:00 - 11:00</p>
+                    </div>
+                    <Badge className="bg-blue-100 text-blue-800">In Progress</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">HVAC filter replacement</p>
+                      <p className="text-sm text-muted-foreground">14:00 - 16:00</p>
+                    </div>
+                    <Badge className="bg-yellow-100 text-yellow-800">Scheduled</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">Fire safety system check</p>
+                      <p className="text-sm text-muted-foreground">16:30 - 17:30</p>
+                    </div>
+                    <Badge className="bg-yellow-100 text-yellow-800">Scheduled</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Upcoming Maintenance</CardTitle>
+                <CardDescription>Next 7 days</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">Generator testing</p>
+                      <p className="text-sm text-muted-foreground">Tomorrow - 10:00</p>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      Reschedule
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">Water pump maintenance</p>
+                      <p className="text-sm text-muted-foreground">Jan 25 - 09:00</p>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      <Settings className="h-3 w-3 mr-1" />
+                      Configure
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">Security system update</p>
+                      <p className="text-sm text-muted-foreground">Jan 27 - 20:00</p>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      <Settings className="h-3 w-3 mr-1" />
+                      Configure
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <Card>
-            <CardContent className="flex items-center justify-center py-12">
-              <p className="text-muted-foreground">Maintenance schedule coming soon...</p>
+            <CardHeader>
+              <CardTitle>Preventive Maintenance Calendar</CardTitle>
+              <CardDescription>Monthly scheduled maintenance overview</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-7 gap-2 mb-4">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                  <div key={day} className="text-center font-medium p-2 text-sm">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-2">
+                {Array.from({ length: 35 }, (_, i) => {
+                  const day = i - 2; // Start from -2 to show previous month days
+                  const isCurrentMonth = day > 0 && day <= 31;
+                  const hasSchedule = [5, 12, 19, 26].includes(day);
+                  
+                  return (
+                    <div
+                      key={i}
+                      className={`
+                        aspect-square flex items-center justify-center text-sm border rounded-lg cursor-pointer
+                        ${isCurrentMonth ? 'hover:bg-muted' : 'text-muted-foreground bg-muted/50'}
+                        ${hasSchedule && isCurrentMonth ? 'bg-blue-50 border-blue-200' : ''}
+                      `}
+                    >
+                      {day > 0 && day <= 31 ? day : ''}
+                      {hasSchedule && isCurrentMonth && (
+                        <div className="absolute w-1 h-1 bg-blue-600 rounded-full mt-4"></div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="inventory">
-          <Card>
-            <CardContent className="flex items-center justify-center py-12">
-              <p className="text-muted-foreground">Inventory management coming soon...</p>
-            </CardContent>
-          </Card>
+        <TabsContent value="inventory" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">Total Items</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">247</div>
+                <p className="text-xs text-muted-foreground">+12 from last month</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">8</div>
+                <p className="text-xs text-muted-foreground">Need restocking</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">Total Value</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">RM 45,250</div>
+                <p className="text-xs text-muted-foreground">Current inventory value</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Inventory Items</CardTitle>
+                <CardDescription>Current stock levels</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex-1">
+                      <p className="font-medium">HVAC Filters (24x24)</p>
+                      <p className="text-sm text-muted-foreground">Category: HVAC</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">25 units</p>
+                      <Badge className="bg-green-100 text-green-800">In Stock</Badge>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex-1">
+                      <p className="font-medium">Elevator Door Motor</p>
+                      <p className="text-sm text-muted-foreground">Category: Elevator</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">2 units</p>
+                      <Badge className="bg-orange-100 text-orange-800">Low Stock</Badge>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex-1">
+                      <p className="font-medium">LED Light Bulbs</p>
+                      <p className="text-sm text-muted-foreground">Category: Electrical</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">150 units</p>
+                      <Badge className="bg-green-100 text-green-800">In Stock</Badge>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex-1">
+                      <p className="font-medium">PVC Pipes (3 inch)</p>
+                      <p className="text-sm text-muted-foreground">Category: Plumbing</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">8 units</p>
+                      <Badge className="bg-orange-100 text-orange-800">Low Stock</Badge>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Transactions</CardTitle>
+                <CardDescription>Latest inventory movements</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">Used: HVAC Filter</p>
+                      <p className="text-sm text-muted-foreground">Jan 20, 2024 - Maintenance Request #1</p>
+                    </div>
+                    <Badge variant="outline" className="text-red-600">-2</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">Received: LED Bulbs</p>
+                      <p className="text-sm text-muted-foreground">Jan 19, 2024 - Purchase Order #45</p>
+                    </div>
+                    <Badge variant="outline" className="text-green-600">+50</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">Used: PVC Pipe</p>
+                      <p className="text-sm text-muted-foreground">Jan 18, 2024 - Maintenance Request #2</p>
+                    </div>
+                    <Badge variant="outline" className="text-red-600">-5</Badge>
+                  </div>
+                </div>
+                <div className="pt-4">
+                  <Button className="w-full" variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add New Item
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
