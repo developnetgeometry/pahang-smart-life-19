@@ -38,6 +38,7 @@ import {
   DollarSign,
   Clipboard,
   BarChart3,
+  QrCode,
 } from "lucide-react";
 
 interface NavigationItem {
@@ -75,9 +76,9 @@ export function AppSidebar() {
       { title: t("myComplaints"), url: "/my-complaints", icon: FileText },
     ];
     
-    // Add bookings if module is enabled
-    if (isModuleEnabled('bookings')) {
-      personalItems.push({ title: "My Bookings", url: "/my-bookings", icon: Calendar });
+    // Add visitor management if module is enabled
+    if (isModuleEnabled('visitor_management')) {
+      personalItems.push({ title: "My Visitors", url: "/my-visitors", icon: UserCheck });
     }
     
     nav.push({
@@ -296,14 +297,38 @@ export function AppSidebar() {
           url: "/panic-alerts",
           icon: AlertTriangle,
           requiredRoles: ["security_officer", "state_admin", "community_admin"],
-        },
-        {
-          title: t("visitorSecurity"),
-          url: "/visitor-security",
-          icon: Shield,
-          requiredRoles: ["security_officer", "state_admin", "community_admin"],
         }
       );
+
+      // Visitor Management modules (require visitor_management module to be enabled)
+      if (isModuleEnabled("visitor_management")) {
+        securityItems.push(
+          {
+            title: t("visitorSecurity"),
+            url: "/visitor-security", 
+            icon: Shield,
+            requiredRoles: ["security_officer", "state_admin", "community_admin"],
+          },
+          {
+            title: "Visitor Approvals",
+            url: "/visitor-approvals",
+            icon: UserCheck,
+            requiredRoles: ["security_officer", "state_admin", "community_admin"],
+          },
+          {
+            title: "QR Scanner",
+            url: "/qr-scanner",
+            icon: QrCode,
+            requiredRoles: ["security_officer", "state_admin", "community_admin"],
+          },
+          {
+            title: "Visitor Dashboard",
+            url: "/visitor-dashboard",
+            icon: Activity,
+            requiredRoles: ["security_officer", "state_admin", "community_admin"],
+          }
+        );
+      }
     }
 
     if (hasRole("state_admin") || hasRole("community_admin")) {

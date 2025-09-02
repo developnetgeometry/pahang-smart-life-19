@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-
+import { useModuleAccess } from '@/hooks/use-module-access';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Calendar, Clock, UserPlus, Users, Car, CheckCircle, XCircle, AlertTriangle, QrCode, Edit3, Share2 } from 'lucide-react';
+import { Calendar, Clock, UserPlus, Users, Car, CheckCircle, XCircle, AlertTriangle, QrCode, Edit3, Share2, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Visitor {
@@ -27,6 +27,7 @@ interface Visitor {
 
 export default function MyVisitors() {
   const { language, user } = useAuth();
+  const { isModuleEnabled } = useModuleAccess();
   const { toast } = useToast();
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -341,6 +342,23 @@ export default function MyVisitors() {
     checkedIn: visitors.filter(v => v.status === 'checked_in').length,
     completed: visitors.filter(v => v.status === 'checked_out').length,
   };
+
+  // Check if visitor management module is enabled
+  if (!isModuleEnabled('visitor_management')) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
+            <p className="text-sm text-muted-foreground">
+              The Visitor Management module is not enabled for this community.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (loading) {
     return <div className="flex justify-center items-center h-64">Loading...</div>;

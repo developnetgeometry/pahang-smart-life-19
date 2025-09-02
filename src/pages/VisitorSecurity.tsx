@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useModuleAccess } from '@/hooks/use-module-access';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,7 @@ interface Visitor {
 
 export default function VisitorSecurity() {
   const { language, user } = useAuth();
+  const { isModuleEnabled } = useModuleAccess();
   const { toast } = useToast();
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -183,6 +185,23 @@ export default function VisitorSecurity() {
 
   const checkedInCount = todayVisitors.filter(v => v.status === 'checked_in').length;
   const approvedCount = todayVisitors.filter(v => v.status === 'approved').length;
+
+  // Check if visitor management module is enabled
+  if (!isModuleEnabled('visitor_management')) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
+            <p className="text-sm text-muted-foreground">
+              The Visitor Management module is not enabled for this community.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (loading) {
     return <div className="flex justify-center items-center h-64">Loading...</div>;
