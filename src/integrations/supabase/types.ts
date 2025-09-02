@@ -260,6 +260,7 @@ export type Database = {
           expire_at: string | null
           id: string
           image_url: string | null
+          is_pinned: boolean | null
           is_published: boolean | null
           is_urgent: boolean | null
           publish_at: string | null
@@ -281,6 +282,7 @@ export type Database = {
           expire_at?: string | null
           id?: string
           image_url?: string | null
+          is_pinned?: boolean | null
           is_published?: boolean | null
           is_urgent?: boolean | null
           publish_at?: string | null
@@ -302,6 +304,7 @@ export type Database = {
           expire_at?: string | null
           id?: string
           image_url?: string | null
+          is_pinned?: boolean | null
           is_published?: boolean | null
           is_urgent?: boolean | null
           publish_at?: string | null
