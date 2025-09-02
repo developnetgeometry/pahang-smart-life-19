@@ -51,7 +51,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 
 interface MarketplaceChatInfo {
@@ -94,7 +94,8 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
     rooms, 
     loading: roomsLoading, 
     createDirectChat,
-    getRoomMembers 
+    getRoomMembers,
+    deleteChatRoom 
   } = useChatRooms();
 
   const {
@@ -248,6 +249,26 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
     }
   };
 
+  const handleDeleteChat = async () => {
+    if (!selectedRoomId) return;
+    
+    try {
+      await deleteChatRoom(selectedRoomId);
+      setSelectedRoomId(''); // Clear selection after deletion
+      toast({
+        title: 'Success',
+        description: 'Chat deleted successfully',
+      });
+    } catch (error: any) {
+      console.error('Error deleting chat:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete chat',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleFileUpload = async (uploadedFile: any) => {
     try {
       // Handle file upload logic here - send as message
@@ -363,6 +384,47 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
                     </p>
                   </div>
                 </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="ghost">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          {language === 'en' ? 'Delete Chat' : 'Padam Chat'}
+                        </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            {language === 'en' ? 'Delete Chat' : 'Padam Chat'}
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {language === 'en' 
+                              ? 'Are you sure you want to delete this chat? This action cannot be undone and all messages will be permanently deleted.'
+                              : 'Adakah anda pasti untuk memadam chat ini? Tindakan ini tidak dapat dibuat asal dan semua mesej akan dipadam secara kekal.'
+                            }
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>
+                            {language === 'en' ? 'Cancel' : 'Batal'}
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleDeleteChat}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {language === 'en' ? 'Delete' : 'Padam'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
@@ -431,38 +493,36 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
                               </span>
 
                               {isOwn && (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
-                                    >
-                                      <MoreHorizontal className="h-3 w-3" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent>
-                                    <DropdownMenuItem
-                                      onClick={() => handleEditMessage(message.id, message.message_text)}
-                                    >
-                                      <Edit3 className="h-4 w-4 mr-2" />
-                                      Edit
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => handleReplyToMessage(message.id)}
-                                    >
-                                      <Reply className="h-4 w-4 mr-2" />
-                                      Reply
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => handleDeleteMessage(message.id)}
-                                      className="text-destructive"
-                                    >
-                                      <Trash2 className="h-4 w-4 mr-2" />
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                                        <MoreHorizontal className="h-3 w-3" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem
+                                        onClick={() => handleEditMessage(message.id, message.message_text)}
+                                      >
+                                        <Edit3 className="h-4 w-4 mr-2" />
+                                        Edit
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => handleReplyToMessage(message.id)}
+                                      >
+                                        <Reply className="h-4 w-4 mr-2" />
+                                        Reply
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => handleDeleteMessage(message.id)}
+                                        className="text-destructive"
+                                      >
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Delete
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
                               )}
                             </div>
 

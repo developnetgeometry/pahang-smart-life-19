@@ -166,6 +166,61 @@ export const useChatRooms = () => {
     }
   };
 
+  const deleteChatRoom = async (roomId: string): Promise<void> => {
+    if (!user?.id) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      // First check if user has permission to delete this room
+      const { data: room, error: roomError } = await supabase
+        .from('chat_rooms')
+        .select('*, chat_room_members!inner(user_id, is_admin)')
+        .eq('id', roomId)
+        .single();
+
+      if (roomError) throw roomError;
+
+      // Check if user is room admin or it's a direct chat with the user
+      const userMembership = room.chat_room_members.find(member => member.user_id === user.id);
+      const canDelete = userMembership?.is_admin || room.room_type === 'direct';
+
+      if (!canDelete) {
+        throw new Error('You do not have permission to delete this chat');
+      }
+
+      // Delete chat messages first
+      const { error: messagesError } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('room_id', roomId);
+
+      if (messagesError) throw messagesError;
+
+      // Delete room members
+      const { error: membersError } = await supabase
+        .from('chat_room_members')
+        .delete()
+        .eq('room_id', roomId);
+
+      if (membersError) throw membersError;
+
+      // Finally delete the room
+      const { error: roomDeleteError } = await supabase
+        .from('chat_rooms')
+        .delete()
+        .eq('id', roomId);
+
+      if (roomDeleteError) throw roomDeleteError;
+
+      // Refresh rooms after deletion
+      await fetchRooms();
+    } catch (error) {
+      console.error('Error deleting chat room:', error);
+      throw error;
+    }
+  };
+
   const createGroupChat = async (name: string, description: string, memberIds: string[]) => {
     console.log('Creating group chat:', { name, description, memberIds, userId: user?.id });
     
@@ -277,6 +332,7 @@ export const useChatRooms = () => {
     fetchRooms,
     createDirectChat,
     createGroupChat,
-    getRoomMembers
+    getRoomMembers,
+    deleteChatRoom
   };
 };
