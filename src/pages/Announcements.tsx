@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Megaphone, Calendar, Clock, Search, Pin, Bell, Loader2, Plus, BarChart3, Users, X } from 'lucide-react';
+import { Megaphone, Calendar, Clock, Search, Pin, Bell, Loader2, Plus, BarChart3, Users, X, PinOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import CreateAnnouncementModal from '@/components/announcements/CreateAnnouncementModal';
@@ -81,6 +81,10 @@ export default function Announcements() {
       announcementDetails: 'Announcement Details',
       publishedOn: 'Published on',
       author: 'Author',
+      pinAnnouncement: 'Pin Announcement',
+      unpinAnnouncement: 'Unpin Announcement',
+      pinnedSuccess: 'Pinned successfully',
+      unpinnedSuccess: 'Unpinned successfully',
       noAnnouncements: 'No announcements found',
       noAnnouncementsDesc: 'Try adjusting your search or filters',
       poll: 'Poll Available',
@@ -117,6 +121,10 @@ export default function Announcements() {
       announcementDetails: 'Butiran Pengumuman',
       publishedOn: 'Diterbitkan pada',
       author: 'Penulis',
+      pinAnnouncement: 'Sematkan Pengumuman',
+      unpinAnnouncement: 'Nyahsematkan Pengumuman',
+      pinnedSuccess: 'Berjaya disematkan',
+      unpinnedSuccess: 'Berjaya dinyahsematkan',
       noAnnouncements: 'Tiada pengumuman dijumpai',
       noAnnouncementsDesc: 'Cuba laraskan carian atau penapis anda',
       poll: 'Undian Tersedia',
@@ -152,6 +160,49 @@ export default function Announcements() {
     setDetailsModalOpen(true);
   };
 
+  const handleTogglePin = async (announcementId: string, currentPinStatus: boolean) => {
+    if (!canCreateAnnouncements) {
+      toast({
+        title: language === 'en' ? 'Permission denied' : 'Kebenaran ditolak',
+        description: language === 'en' ? 'Only community administrators can pin announcements' : 'Hanya pentadbir komuniti boleh menyematkan pengumuman',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('announcements')
+        .update({ is_pinned: !currentPinStatus })
+        .eq('id', announcementId);
+
+      if (error) throw error;
+
+      // Update local state
+      setAnnouncements(prev => prev.map(ann => 
+        ann.id === announcementId 
+          ? { ...ann, is_pinned: !currentPinStatus }
+          : ann
+      ));
+
+      // Update selected announcement if it's the same one
+      if (selectedAnnouncement?.id === announcementId) {
+        setSelectedAnnouncement(prev => prev ? { ...prev, is_pinned: !currentPinStatus } : null);
+      }
+
+      toast({
+        title: !currentPinStatus ? t.pinnedSuccess : t.unpinnedSuccess,
+      });
+
+    } catch (error) {
+      console.error('Error toggling pin status:', error);
+      toast({
+        title: language === 'en' ? 'Error updating pin status' : 'Ralat mengemas kini status pin',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const fetchAnnouncements = async () => {
     try {
       setLoading(true);
@@ -166,10 +217,12 @@ export default function Announcements() {
           type,
           is_urgent,
           is_published,
+          is_pinned,
           publish_at,
           expire_at,
           created_at,
-          author_id
+          author_id,
+          scope
         `)
         .eq('is_published', true)
         .lte('publish_at', new Date().toISOString())
@@ -184,10 +237,10 @@ export default function Announcements() {
         title: a.title,
         content: a.content,
         type: a.type || 'general',
-        scope: 'district', // Default scope since it's not in database yet
+        scope: a.scope || 'district', // Use database scope or default
         is_urgent: a.is_urgent || false,
         is_published: a.is_published,
-        is_pinned: a.is_urgent || false, // Use is_urgent as fallback for is_pinned
+        is_pinned: a.is_pinned || false, // Use database is_pinned field
         publish_at: a.publish_at,
         expire_at: a.expire_at,
         created_at: a.created_at,
@@ -203,7 +256,7 @@ export default function Announcements() {
         category: announcement.type || 'general',
         created_date: new Date(announcement.created_at).toLocaleDateString(),
         author: 'Management Office',
-        is_pinned: announcement.is_pinned || announcement.is_urgent,
+        is_pinned: announcement.is_pinned,
         read_status: false,
         target_audience: ['residents'],
         scope: announcement.scope,
@@ -584,13 +637,35 @@ export default function Announcements() {
                 <Megaphone className="w-5 h-5" />
                 {t.announcementDetails}
               </DialogTitle>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setDetailsModalOpen(false)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                {canCreateAnnouncements && selectedAnnouncement && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleTogglePin(selectedAnnouncement.id, selectedAnnouncement.is_pinned)}
+                    className="flex items-center gap-2"
+                  >
+                    {selectedAnnouncement.is_pinned ? (
+                      <>
+                        <PinOff className="w-4 h-4" />
+                        {t.unpinAnnouncement}
+                      </>
+                    ) : (
+                      <>
+                        <Pin className="w-4 h-4" />
+                        {t.pinAnnouncement}
+                      </>
+                    )}
+                  </Button>
+                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setDetailsModalOpen(false)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </DialogHeader>
           

@@ -47,7 +47,6 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
     type: 'general',
     is_urgent: false,
     is_published: true,
-    is_pinned: false,
     publish_at: new Date().toISOString().slice(0, 16),
     expire_at: ''
   });
@@ -176,7 +175,7 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
         type: formData.type as 'general' | 'maintenance' | 'event' | 'emergency' | 'security',
         is_urgent: formData.is_urgent,
         is_published: formData.is_published,
-        is_pinned: formData.is_pinned,
+        is_pinned: false, // Pin feature moved to details page
         author_id: user?.id,
         district_id: formData.scope !== 'state' ? profile?.district_id : null,
         community_id: formData.scope === 'community' ? profile?.community_id : null,
@@ -236,7 +235,6 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
         type: 'general',
         is_urgent: false,
         is_published: true,
-        is_pinned: false,
         publish_at: new Date().toISOString().slice(0, 16),
         expire_at: ''
       });
@@ -369,23 +367,13 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                 </Select>
               </div>
 
-              <div className="flex flex-col space-y-3 pt-6">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="urgent"
-                    checked={formData.is_urgent}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_urgent: checked }))}
-                  />
-                  <Label htmlFor="urgent">{t.urgent}</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="pinned"
-                    checked={formData.is_pinned}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_pinned: checked }))}
-                  />
-                  <Label htmlFor="pinned">Pin Announcement</Label>
-                </div>
+              <div className="flex items-center space-x-2 pt-6">
+                <Switch
+                  id="urgent"
+                  checked={formData.is_urgent}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_urgent: checked }))}
+                />
+                <Label htmlFor="urgent">{t.urgent}</Label>
               </div>
             </div>
 
