@@ -3673,6 +3673,13 @@ export type Database = {
             referencedRelation: "districts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "marketplace_items_seller_id_profiles_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       marketplace_listings: {

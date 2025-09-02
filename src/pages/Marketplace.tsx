@@ -187,7 +187,7 @@ export default function Marketplace() {
           .from('marketplace_items')
           .select(`
             *,
-            profiles!seller_id (
+            profiles!marketplace_items_seller_id_profiles_fkey (
               full_name,
               avatar_url
             )
@@ -389,7 +389,7 @@ export default function Marketplace() {
             .from('marketplace_items')
             .select(`
               *,
-              profiles!seller_id (
+              profiles!marketplace_items_seller_id_profiles_fkey (
                 full_name,
                 avatar_url
               )

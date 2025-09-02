@@ -158,7 +158,7 @@ export default function MarketplaceItemDetail() {
           .from('marketplace_items')
           .select(`
             *,
-            profiles!marketplace_items_seller_id_fkey (
+            profiles!marketplace_items_seller_id_profiles_fkey (
               full_name,
               avatar_url
             )
