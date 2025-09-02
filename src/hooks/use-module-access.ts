@@ -22,7 +22,7 @@ export function useModuleAccess() {
       }
 
       try {
-        const { data, error } = await supabase.rpc('get_enabled_modules_for_user');
+        const { data, error } = await supabase.rpc('get_enabled_modules_for_user_by_role');
         
         if (error) {
           console.error('Error fetching enabled modules:', error);

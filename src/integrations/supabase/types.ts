@@ -7422,6 +7422,14 @@ export type Database = {
           module_name: string
         }[]
       }
+      get_enabled_modules_for_user_by_role: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          category: string
+          display_name: string
+          module_name: string
+        }[]
+      }
       get_module_id: {
         Args: { module_name: string }
         Returns: string
