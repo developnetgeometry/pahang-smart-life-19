@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useModuleAccess } from '@/hooks/use-module-access';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, Clock, MapPin, User, AlertCircle, CheckCircle, Settings } from 'lucide-react';
+import { Plus, Search, Clock, MapPin, User, AlertCircle, CheckCircle, Settings, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const serviceRequestSchema = z.object({
@@ -58,6 +59,7 @@ type ServiceCategory = {
 
 export default function ServiceRequests() {
   const { user, hasRole, language } = useAuth();
+  const { isModuleEnabled } = useModuleAccess();
   const { toast } = useToast();
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
@@ -285,6 +287,23 @@ export default function ServiceRequests() {
           <p>Loading service requests...</p>
         </div>
       </div>
+    );
+  }
+
+  // Check if service_requests module is enabled
+  if (!isModuleEnabled('service_requests')) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
+            <p className="text-sm text-muted-foreground">
+              The Service Requests module is not enabled for this community.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 

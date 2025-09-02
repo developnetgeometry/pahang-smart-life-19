@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useModuleAccess } from '@/hooks/use-module-access';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar, Clock, MapPin, Users, Plus } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Plus, Shield } from 'lucide-react';
 
 interface Booking {
   id: string;
@@ -22,6 +23,7 @@ interface Booking {
 
 export default function MyBookings() {
   const { language } = useAuth();
+  const { isModuleEnabled } = useModuleAccess();
   const [bookings, setBookings] = useState<Booking[]>([
     {
       id: '1',
@@ -89,6 +91,23 @@ export default function MyBookings() {
         : booking
     ));
   };
+
+  // Check if bookings module is enabled
+  if (!isModuleEnabled('bookings')) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
+            <p className="text-sm text-muted-foreground">
+              The Bookings module is not enabled for this community.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">

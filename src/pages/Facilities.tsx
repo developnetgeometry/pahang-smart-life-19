@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useModuleAccess } from '@/hooks/use-module-access';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, MapPin, Users, Clock, Plus, Search, Car, Dumbbell, Waves, TreePine, Loader2 } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, Plus, Search, Car, Dumbbell, Waves, TreePine, Loader2, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -35,6 +36,7 @@ interface Facility {
 
 export default function Facilities() {
   const { language, user } = useAuth();
+  const { isModuleEnabled } = useModuleAccess();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
@@ -116,6 +118,23 @@ export default function Facilities() {
   };
 
   const t = text[language];
+
+  // Check if facilities module is enabled
+  if (!isModuleEnabled('facilities')) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
+            <p className="text-sm text-muted-foreground">
+              The Facilities module is not enabled for this community.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Fetch facilities from Supabase
   useEffect(() => {

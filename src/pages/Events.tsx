@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useModuleAccess } from '@/hooks/use-module-access';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Calendar, Clock, MapPin, Users, Search, Plus } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Search, Plus, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Event {
@@ -24,6 +25,7 @@ interface Event {
 
 export default function Events() {
   const { language, user } = useAuth();
+  const { isModuleEnabled } = useModuleAccess();
   const [searchTerm, setSearchTerm] = useState('');
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +56,23 @@ export default function Events() {
     event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     event.event_type.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Check if events module is enabled
+  if (!isModuleEnabled('events')) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
+            <p className="text-sm text-muted-foreground">
+              The Events module is not enabled for this community.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

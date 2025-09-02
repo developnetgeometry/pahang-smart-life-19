@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useModuleAccess } from "@/hooks/use-module-access";
 
 import {
   Card,
@@ -55,6 +56,7 @@ import {
   Clock,
   Download,
   X,
+  Shield,
 } from "lucide-react";
 import StreamPlayer from "../components/cctv/StreamPlayer";
 
@@ -91,6 +93,7 @@ interface CCTVRecording {
 
 export default function CCTVLiveFeed() {
   const { language, user, hasRole } = useAuth();
+  const { isModuleEnabled } = useModuleAccess();
   const [selectedCamera, setSelectedCamera] = useState("all");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [motionDetectionEnabled, setMotionDetectionEnabled] = useState(false);
@@ -218,6 +221,23 @@ export default function CCTVLiveFeed() {
   };
 
   const t = text[language];
+
+  // Check if CCTV module is enabled
+  if (!isModuleEnabled('cctv')) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
+            <p className="text-sm text-muted-foreground">
+              The CCTV module is not enabled for this community.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const [rtspConnected, setRtspConnected] = useState(false);
   const [ptzPosition, setPtzPosition] = useState({ pan: 0, tilt: 0, zoom: 1 });

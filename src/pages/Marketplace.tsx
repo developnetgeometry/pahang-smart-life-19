@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useModuleAccess } from '@/hooks/use-module-access';
 import { useUserRoles } from '@/hooks/use-user-roles';
 import { useShoppingCart } from '@/hooks/use-shopping-cart';
 import AdvertisementCarousel from '@/components/marketplace/AdvertisementCarousel';
@@ -18,7 +19,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ShoppingBag, Plus, Search, Heart, MessageCircle, Star, MapPin, Clock, Loader2, ShoppingCart as ShoppingCartIcon } from 'lucide-react';
+import { ShoppingBag, Plus, Search, Heart, MessageCircle, Star, MapPin, Clock, Loader2, ShoppingCart as ShoppingCartIcon, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useChatRooms } from '@/hooks/use-chat-rooms';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,6 +47,7 @@ interface MarketplaceItem {
 
 export default function Marketplace() {
   const { language, user } = useAuth();
+  const { isModuleEnabled } = useModuleAccess();
   const { hasRole } = useUserRoles();
   const { addToCart } = useShoppingCart();
   const navigate = useNavigate();
@@ -211,6 +213,23 @@ export default function Marketplace() {
   };
 
   const t = text[language];
+
+  // Check if marketplace module is enabled
+  if (!isModuleEnabled('marketplace')) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
+            <p className="text-sm text-muted-foreground">
+              The Marketplace module is not enabled for this community.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Fetch categories from database
   useEffect(() => {
