@@ -3827,6 +3827,56 @@ export type Database = {
         }
         Relationships: []
       }
+      product_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          helpful_count: number | null
+          id: string
+          is_verified_purchase: boolean | null
+          item_id: string
+          rating: number
+          reviewer_id: string
+          seller_id: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          helpful_count?: number | null
+          id?: string
+          is_verified_purchase?: boolean | null
+          item_id: string
+          rating: number
+          reviewer_id: string
+          seller_id: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          helpful_count?: number | null
+          id?: string
+          is_verified_purchase?: boolean | null
+          item_id?: string
+          rating?: number
+          reviewer_id?: string
+          seller_id?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           address: string | null
@@ -4150,6 +4200,38 @@ export type Database = {
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_helpfulness: {
+        Row: {
+          created_at: string
+          id: string
+          is_helpful: boolean
+          review_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_helpful: boolean
+          review_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_helpful?: boolean
+          review_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_helpfulness_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "product_reviews"
             referencedColumns: ["id"]
           },
         ]
@@ -4520,6 +4602,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      seller_ratings: {
+        Row: {
+          average_rating: number | null
+          five_star_count: number | null
+          four_star_count: number | null
+          id: string
+          one_star_count: number | null
+          seller_id: string
+          three_star_count: number | null
+          total_reviews: number | null
+          two_star_count: number | null
+          updated_at: string
+        }
+        Insert: {
+          average_rating?: number | null
+          five_star_count?: number | null
+          four_star_count?: number | null
+          id?: string
+          one_star_count?: number | null
+          seller_id: string
+          three_star_count?: number | null
+          total_reviews?: number | null
+          two_star_count?: number | null
+          updated_at?: string
+        }
+        Update: {
+          average_rating?: number | null
+          five_star_count?: number | null
+          four_star_count?: number | null
+          id?: string
+          one_star_count?: number | null
+          seller_id?: string
+          three_star_count?: number | null
+          total_reviews?: number | null
+          two_star_count?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       sensor_readings: {
         Row: {
