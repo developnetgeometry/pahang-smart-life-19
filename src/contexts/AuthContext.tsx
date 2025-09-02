@@ -72,7 +72,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
 
-  const hasRole = useMemo(() => (role: UserRole) => roles.includes(role), [roles]);
+  const hasRole = useMemo(() => (role: UserRole) => {
+    const hasIt = roles.includes(role);
+    console.log('hasRole check:', role, 'in roles:', roles, 'result:', hasIt);
+    return hasIt;
+  }, [roles]);
 
   // Load profile + roles for a given user id
   const loadProfileAndRoles = async (userId: string) => {
@@ -102,6 +106,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const roleList: UserRole[] = (roleRows || []).map(r => r.role as UserRole);
       const primaryRole: UserRole = roleList[0] || 'resident';
+      
+      console.log('Loaded roles for user:', userId, 'roles:', roleList);
       
       // Update language from profile if available
       const profileLanguage = profile?.language_preference as Language;

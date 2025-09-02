@@ -13,6 +13,8 @@ export function useModuleAccess() {
   const [enabledModules, setEnabledModules] = useState<EnabledModule[]>([]);
   const [loading, setLoading] = useState(true);
 
+  console.log('useModuleAccess: user:', user?.id, 'hasRole function available:', typeof hasRole);
+
   useEffect(() => {
     const fetchEnabledModules = async () => {
       if (!user) {
@@ -55,7 +57,10 @@ export function useModuleAccess() {
         
         // Facility manager gets these modules regardless of community settings
         if (hasRole('facility_manager')) {
+          console.log('User has facility_manager role, adding role-based modules');
           roleBasedModules.push('facilities', 'bookings', 'maintenance', 'assets');
+        } else {
+          console.log('User does not have facility_manager role');
         }
         
         // Security officer gets these modules regardless of community settings
