@@ -32,8 +32,6 @@ import ComplaintsManagement from "./pages/admin/ComplaintsManagement";
 import ComplaintsAnalytics from "./pages/admin/ComplaintsAnalytics";
 import CCTVManagement from "./pages/admin/CCTVManagement";
 import RequireRoles from "@/components/routing/RequireRoles";
-import SmartMonitoring from "./pages/admin/SmartMonitoring";
-import SensorManagement from "./pages/admin/SensorManagement";
 import AnnouncementManagement from "./pages/admin/AnnouncementManagement";
 import FacilitiesManagement from "./pages/admin/FacilitiesManagement";
 import DiscussionManagement from "./pages/admin/DiscussionManagement";
@@ -505,26 +503,6 @@ const App = () => (
                       <CCTVManagement />
                     </Layout>
                   </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/smart-monitoring"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <SmartMonitoring />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/sensors"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <SensorManagement />
-                  </Layout>
                 </ProtectedRoute>
               }
             />

@@ -326,18 +326,6 @@ export function AppSidebar() {
           url: "/visitor-analytics",
           icon: Activity,
           requiredRoles: ["state_admin", "community_admin"],
-        },
-        {
-          title: t("smartMonitoring"),
-          url: "/admin/smart-monitoring",
-          icon: Monitor,
-          requiredRoles: ["state_admin", "community_admin"],
-        },
-        {
-          title: t("sensorManagement"),
-          url: "/admin/sensors",
-          icon: Radio,
-          requiredRoles: ["state_admin", "community_admin"],
         }
       );
     }
