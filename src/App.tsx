@@ -16,6 +16,9 @@ import Events from "./pages/Events";
 import Discussions from "./pages/Discussions";
 import Marketplace from "./pages/Marketplace";
 import MarketplaceItemDetail from "./pages/MarketplaceItemDetail";
+import MyOrders from "./pages/MyOrders";
+import Favorites from "./pages/Favorites";
+import SellerDashboard from "./pages/SellerDashboard";
 import AdvertisementDetail from "./pages/AdvertisementDetail";
 import AdvertisementManagement from "./pages/AdvertisementManagement";
 import CCTVLiveFeed from "./pages/CCTVLiveFeed";
@@ -220,6 +223,38 @@ const App = () => (
                   <Layout>
                     <MarketplaceItemDetail />
                   </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-orders"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <MyOrders />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/favorites"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Favorites />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/seller-dashboard"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["service_provider"]}>
+                    <Layout>
+                      <SellerDashboard />
+                    </Layout>
+                  </RequireRoles>
                 </ProtectedRoute>
               }
             />

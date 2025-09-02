@@ -3027,6 +3027,27 @@ export type Database = {
           },
         ]
       }
+      marketplace_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       marketplace_items: {
         Row: {
           category: string
@@ -3045,9 +3066,11 @@ export type Database = {
           price: number
           seller_id: string | null
           seller_type: string
+          sold_count: number | null
           stock_quantity: number | null
           title: string
           updated_at: string | null
+          view_count: number | null
         }
         Insert: {
           category: string
@@ -3066,9 +3089,11 @@ export type Database = {
           price: number
           seller_id?: string | null
           seller_type?: string
+          sold_count?: number | null
           stock_quantity?: number | null
           title: string
           updated_at?: string | null
+          view_count?: number | null
         }
         Update: {
           category?: string
@@ -3087,9 +3112,11 @@ export type Database = {
           price?: number
           seller_id?: string | null
           seller_type?: string
+          sold_count?: number | null
           stock_quantity?: number | null
           title?: string
           updated_at?: string | null
+          view_count?: number | null
         }
         Relationships: [
           {
@@ -3170,6 +3197,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      marketplace_orders: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          delivered_date: string | null
+          id: string
+          item_id: string
+          notes: string | null
+          order_date: string
+          payment_status: string
+          quantity: number
+          seller_id: string
+          shipped_date: string | null
+          shipping_address: Json | null
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          delivered_date?: string | null
+          id?: string
+          item_id: string
+          notes?: string | null
+          order_date?: string
+          payment_status?: string
+          quantity?: number
+          seller_id: string
+          shipped_date?: string | null
+          shipping_address?: Json | null
+          status?: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          delivered_date?: string | null
+          id?: string
+          item_id?: string
+          notes?: string | null
+          order_date?: string
+          payment_status?: string
+          quantity?: number
+          seller_id?: string
+          shipped_date?: string | null
+          shipping_address?: Json | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       meeting_minutes: {
         Row: {

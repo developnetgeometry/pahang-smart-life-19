@@ -7,6 +7,7 @@ import AdvertisementCarousel from '@/components/marketplace/AdvertisementCarouse
 import ShoppingCart from '@/components/marketplace/ShoppingCart';
 import CartIcon from '@/components/marketplace/CartIcon';
 import StarRating from '@/components/marketplace/StarRating';
+import FavoriteButton from '@/components/marketplace/FavoriteButton';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -784,10 +785,11 @@ export default function Marketplace() {
                   variant="default"
                   size="sm"
                   onClick={() => navigate(`/marketplace/item/${item.id}`)}
-                  className="w-full"
+                  className="flex-1"
                 >
                   {language === 'en' ? 'View Details' : 'Lihat Butiran'}
                 </Button>
+                <FavoriteButton itemId={item.id} language={language} />
               </div>
             </CardContent>
             </Card>
