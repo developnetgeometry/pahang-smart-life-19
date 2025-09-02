@@ -4008,6 +4008,7 @@ export type Database = {
           id: string
           is_read: boolean | null
           message: string
+          metadata: Json | null
           notification_type: string | null
           priority: string | null
           read_at: string | null
@@ -4030,6 +4031,7 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           message: string
+          metadata?: Json | null
           notification_type?: string | null
           priority?: string | null
           read_at?: string | null
@@ -4052,6 +4054,7 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           message?: string
+          metadata?: Json | null
           notification_type?: string | null
           priority?: string | null
           read_at?: string | null
