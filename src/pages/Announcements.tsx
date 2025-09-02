@@ -637,35 +637,26 @@ export default function Announcements() {
                 <Megaphone className="w-5 h-5" />
                 {t.announcementDetails}
               </DialogTitle>
-              <div className="flex items-center gap-2">
-                {canCreateAnnouncements && selectedAnnouncement && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleTogglePin(selectedAnnouncement.id, selectedAnnouncement.is_pinned)}
-                    className="flex items-center gap-2"
-                  >
-                    {selectedAnnouncement.is_pinned ? (
-                      <>
-                        <PinOff className="w-4 h-4" />
-                        {t.unpinAnnouncement}
-                      </>
-                    ) : (
-                      <>
-                        <Pin className="w-4 h-4" />
-                        {t.pinAnnouncement}
-                      </>
-                    )}
-                  </Button>
-                )}
-                <Button 
-                  variant="ghost" 
+              {canCreateAnnouncements && selectedAnnouncement && (
+                <Button
+                  variant="outline"
                   size="sm"
-                  onClick={() => setDetailsModalOpen(false)}
+                  onClick={() => handleTogglePin(selectedAnnouncement.id, selectedAnnouncement.is_pinned)}
+                  className="flex items-center gap-2"
                 >
-                  <X className="w-4 h-4" />
+                  {selectedAnnouncement.is_pinned ? (
+                    <>
+                      <PinOff className="w-4 h-4" />
+                      {t.unpinAnnouncement}
+                    </>
+                  ) : (
+                    <>
+                      <Pin className="w-4 h-4" />
+                      {t.pinAnnouncement}
+                    </>
+                  )}
                 </Button>
-              </div>
+              )}
             </div>
           </DialogHeader>
           
