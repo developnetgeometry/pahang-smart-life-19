@@ -6844,6 +6844,94 @@ export type Database = {
           },
         ]
       }
+      visitor_access_logs: {
+        Row: {
+          access_type: string
+          created_at: string | null
+          gate_location: string | null
+          id: string
+          notes: string | null
+          photos: Json | null
+          qr_data: Json | null
+          scan_timestamp: string | null
+          scanned_by: string | null
+          visitor_id: string
+        }
+        Insert: {
+          access_type: string
+          created_at?: string | null
+          gate_location?: string | null
+          id?: string
+          notes?: string | null
+          photos?: Json | null
+          qr_data?: Json | null
+          scan_timestamp?: string | null
+          scanned_by?: string | null
+          visitor_id: string
+        }
+        Update: {
+          access_type?: string
+          created_at?: string | null
+          gate_location?: string | null
+          id?: string
+          notes?: string | null
+          photos?: Json | null
+          qr_data?: Json | null
+          scan_timestamp?: string | null
+          scanned_by?: string | null
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_access_logs_visitor_id_fkey"
+            columns: ["visitor_id"]
+            isOneToOne: false
+            referencedRelation: "visitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_approvals: {
+        Row: {
+          approval_reason: string | null
+          approval_status: string
+          approved_at: string | null
+          approver_id: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          visitor_id: string
+        }
+        Insert: {
+          approval_reason?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approver_id: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          visitor_id: string
+        }
+        Update: {
+          approval_reason?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approver_id?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_approvals_visitor_id_fkey"
+            columns: ["visitor_id"]
+            isOneToOne: false
+            referencedRelation: "visitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       visitor_blacklist: {
         Row: {
           added_by: string | null
@@ -6980,16 +7068,108 @@ export type Database = {
           },
         ]
       }
+      visitor_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          notification_type: string
+          read_at: string | null
+          recipient_id: string
+          sent_at: string | null
+          title: string
+          visitor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          notification_type: string
+          read_at?: string | null
+          recipient_id: string
+          sent_at?: string | null
+          title: string
+          visitor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          notification_type?: string
+          read_at?: string | null
+          recipient_id?: string
+          sent_at?: string | null
+          title?: string
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_notifications_visitor_id_fkey"
+            columns: ["visitor_id"]
+            isOneToOne: false
+            referencedRelation: "visitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_photos: {
+        Row: {
+          created_at: string | null
+          id: string
+          photo_type: string
+          photo_url: string
+          uploaded_at: string | null
+          uploaded_by: string
+          visitor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          photo_type?: string
+          photo_url: string
+          uploaded_at?: string | null
+          uploaded_by: string
+          visitor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          photo_type?: string
+          photo_url?: string
+          uploaded_at?: string | null
+          uploaded_by?: string
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_photos_visitor_id_fkey"
+            columns: ["visitor_id"]
+            isOneToOne: false
+            referencedRelation: "visitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       visitors: {
         Row: {
+          approval_required: boolean | null
           approved_by: string | null
+          auto_approve: boolean | null
           check_in_time: string | null
           check_out_time: string | null
+          company_name: string | null
           created_at: string | null
+          emergency_contact: string | null
+          expected_duration_hours: number | null
           host_id: string | null
           id: string
           notes: string | null
           purpose: string | null
+          qr_code_data: Json | null
+          security_clearance: string | null
           status: Database["public"]["Enums"]["visitor_status"] | null
           updated_at: string | null
           vehicle_plate: string | null
@@ -6998,16 +7178,24 @@ export type Database = {
           visitor_ic: string | null
           visitor_name: string
           visitor_phone: string | null
+          visitor_type: string | null
         }
         Insert: {
+          approval_required?: boolean | null
           approved_by?: string | null
+          auto_approve?: boolean | null
           check_in_time?: string | null
           check_out_time?: string | null
+          company_name?: string | null
           created_at?: string | null
+          emergency_contact?: string | null
+          expected_duration_hours?: number | null
           host_id?: string | null
           id?: string
           notes?: string | null
           purpose?: string | null
+          qr_code_data?: Json | null
+          security_clearance?: string | null
           status?: Database["public"]["Enums"]["visitor_status"] | null
           updated_at?: string | null
           vehicle_plate?: string | null
@@ -7016,16 +7204,24 @@ export type Database = {
           visitor_ic?: string | null
           visitor_name: string
           visitor_phone?: string | null
+          visitor_type?: string | null
         }
         Update: {
+          approval_required?: boolean | null
           approved_by?: string | null
+          auto_approve?: boolean | null
           check_in_time?: string | null
           check_out_time?: string | null
+          company_name?: string | null
           created_at?: string | null
+          emergency_contact?: string | null
+          expected_duration_hours?: number | null
           host_id?: string | null
           id?: string
           notes?: string | null
           purpose?: string | null
+          qr_code_data?: Json | null
+          security_clearance?: string | null
           status?: Database["public"]["Enums"]["visitor_status"] | null
           updated_at?: string | null
           vehicle_plate?: string | null
@@ -7034,6 +7230,7 @@ export type Database = {
           visitor_ic?: string | null
           visitor_name?: string
           visitor_phone?: string | null
+          visitor_type?: string | null
         }
         Relationships: [
           {
