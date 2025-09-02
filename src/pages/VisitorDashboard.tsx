@@ -123,47 +123,7 @@ export default function VisitorDashboard() {
     }
   };
 
-  const handleQuickAction = async (visitorId: string, action: 'approve' | 'check_in' | 'check_out') => {
-    try {
-      let updateData: any = {};
-      
-      switch (action) {
-        case 'approve':
-          updateData = { status: 'approved', approved_by: user?.id };
-          break;
-        case 'check_in':
-          updateData = { status: 'checked_in', check_in_time: new Date().toISOString() };
-          break;
-        case 'check_out':
-          updateData = { status: 'checked_out', check_out_time: new Date().toISOString() };
-          break;
-      }
-
-      const { error } = await supabase
-        .from('visitors')
-        .update({ ...updateData, updated_at: new Date().toISOString() })
-        .eq('id', visitorId);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Success',
-        description: language === 'en' 
-          ? `Visitor ${action.replace('_', ' ')}d successfully` 
-          : `Pelawat berjaya ${action === 'approve' ? 'diluluskan' : action === 'check_in' ? 'daftar masuk' : 'daftar keluar'}`,
-      });
-
-      fetchVisitors();
-      calculateStats();
-    } catch (error) {
-      console.error(`Error ${action}ing visitor:`, error);
-      toast({
-        title: 'Error',
-        description: `Failed to ${action.replace('_', ' ')} visitor`,
-        variant: 'destructive',
-      });
-    }
-  };
+  // Dashboard is read-only - redirect to management for actions
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -247,8 +207,8 @@ export default function VisitorDashboard() {
           </h1>
           <p className="text-muted-foreground">
             {language === 'en' 
-              ? 'Real-time overview of visitor activity and management'
-              : 'Gambaran keseluruhan masa nyata aktiviti dan pengurusan pelawat'
+              ? 'Real-time overview and analytics of visitor activity'
+              : 'Gambaran keseluruhan dan analitik masa nyata aktiviti pelawat'
             }
           </p>
         </div>
@@ -407,34 +367,15 @@ export default function VisitorDashboard() {
                           <Eye className="w-4 h-4 mr-1" />
                           {language === 'en' ? 'View' : 'Lihat'}
                         </Button>
-                        {visitor.status === 'pending' && (
+                        {(visitor.status === 'pending' || visitor.status === 'approved') && (
                           <Button 
+                            variant="secondary"
                             size="sm"
-                            onClick={() => handleQuickAction(visitor.id, 'approve')}
-                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => {
+                              window.location.href = '/visitor-management';
+                            }}
                           >
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            {language === 'en' ? 'Approve' : 'Luluskan'}
-                          </Button>
-                        )}
-                        {visitor.status === 'approved' && (
-                          <Button 
-                            size="sm"
-                            onClick={() => handleQuickAction(visitor.id, 'check_in')}
-                            className="bg-emerald-600 hover:bg-emerald-700"
-                          >
-                            <Shield className="w-4 h-4 mr-1" />
-                            {language === 'en' ? 'Check In' : 'Masuk'}
-                          </Button>
-                        )}
-                        {visitor.status === 'checked_in' && (
-                          <Button 
-                            size="sm"
-                            onClick={() => handleQuickAction(visitor.id, 'check_out')}
-                            className="bg-gray-600 hover:bg-gray-700"
-                          >
-                            <XCircle className="w-4 h-4 mr-1" />
-                            {language === 'en' ? 'Check Out' : 'Keluar'}
+                            {language === 'en' ? 'Manage' : 'Urus'}
                           </Button>
                         )}
                       </div>
