@@ -34,6 +34,7 @@ interface MarketplaceItem {
   view_count: number;
   is_active: boolean;
   created_at: string;
+  totalSold?: number; // Add optional totalSold property
 }
 
 interface DashboardStats {
@@ -42,6 +43,18 @@ interface DashboardStats {
   totalSales: number;
   totalRevenue: number;
   totalViews: number;
+  averageOrderValue: number;
+  conversionRate: number;
+  topSellingProducts: MarketplaceItem[];
+  recentOrders: any[];
+  monthlyRevenue: { [key: string]: number };
+  categoryPerformance: { [key: string]: { sales: number; revenue: number } };
+  customerInsights: {
+    totalCustomers: number;
+    repeatCustomers: number;
+    averageRating: number;
+    totalReviews: number;
+  };
 }
 
 export default function SellerDashboard() {
@@ -57,7 +70,19 @@ export default function SellerDashboard() {
     activeListings: 0,
     totalSales: 0,
     totalRevenue: 0,
-    totalViews: 0
+    totalViews: 0,
+    averageOrderValue: 0,
+    conversionRate: 0,
+    topSellingProducts: [],
+    recentOrders: [],
+    monthlyRevenue: {},
+    categoryPerformance: {},
+    customerInsights: {
+      totalCustomers: 0,
+      repeatCustomers: 0,
+      averageRating: 0,
+      totalReviews: 0
+    }
   });
 
   const isServiceProvider = hasRole('service_provider');
@@ -74,6 +99,18 @@ export default function SellerDashboard() {
       totalSales: 'Total Sales',
       totalRevenue: 'Total Revenue',
       totalViews: 'Total Views',
+      averageOrderValue: 'Avg Order Value',
+      conversionRate: 'Conversion Rate',
+      customerInsights: 'Customer Insights',
+      totalCustomers: 'Total Customers',
+      repeatCustomers: 'Repeat Customers',
+      averageRating: 'Avg Rating',
+      totalReviews: 'Total Reviews',
+      topProducts: 'Top Selling Products',
+      recentOrders: 'Recent Orders',
+      monthlyTrends: 'Monthly Trends',
+      categoryPerformance: 'Category Performance',
+      revenueGrowth: 'Revenue Growth',
       noListings: 'No listings yet',
       noListingsDesc: 'Create your first listing to start selling',
       status: 'Status',
@@ -108,6 +145,18 @@ export default function SellerDashboard() {
       totalSales: 'Jumlah Jualan',
       totalRevenue: 'Jumlah Pendapatan',
       totalViews: 'Jumlah Paparan',
+      averageOrderValue: 'Purata Nilai Pesanan',
+      conversionRate: 'Kadar Penukaran',
+      customerInsights: 'Pandangan Pelanggan',
+      totalCustomers: 'Jumlah Pelanggan',
+      repeatCustomers: 'Pelanggan Berulang',
+      averageRating: 'Purata Penilaian',
+      totalReviews: 'Jumlah Ulasan',
+      topProducts: 'Produk Terlaris',
+      recentOrders: 'Pesanan Terkini',
+      monthlyTrends: 'Trend Bulanan',
+      categoryPerformance: 'Prestasi Kategori',
+      revenueGrowth: 'Pertumbuhan Pendapatan',
       noListings: 'Belum ada senarai',
       noListingsDesc: 'Cipta senarai pertama anda untuk mula menjual',
       status: 'Status',
@@ -146,7 +195,7 @@ export default function SellerDashboard() {
     
     setLoading(true);
     try {
-      // Fetch seller's items
+      // Fetch seller's items with detailed analytics
       const { data: itemsData, error: itemsError } = await supabase
         .from('marketplace_items')
         .select('*')
@@ -155,20 +204,123 @@ export default function SellerDashboard() {
 
       if (itemsError) throw itemsError;
 
-      const items = itemsData || [];
-      setItems(items);
+      // Fetch orders for this seller
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('marketplace_orders')
+        .select('*')
+        .eq('seller_id', user.id)
+        .order('order_date', { ascending: false });
 
-      // Calculate stats
+      if (ordersError) throw ordersError;
+
+      // Fetch reviews for seller's products
+      const itemIds = (itemsData || []).map(item => item.id);
+      let reviewsData = [];
+      if (itemIds.length > 0) {
+        const { data: reviews, error: reviewsError } = await supabase
+          .from('product_reviews')
+          .select('*')
+          .in('item_id', itemIds);
+        
+        if (!reviewsError) reviewsData = reviews || [];
+      }
+
+      const items = itemsData || [];
+      setItems(items as MarketplaceItem[]);
+      const orders = ordersData || [];
+      const reviews = reviewsData || [];
+
+      // Calculate comprehensive analytics
       const totalViews = items.reduce((sum, item) => sum + (item.view_count || 0), 0);
-      const totalSales = items.reduce((sum, item) => sum + (item.sold_count || 0), 0);
-      const totalRevenue = items.reduce((sum, item) => sum + ((item.sold_count || 0) * item.price), 0);
+      const totalSales = orders.filter(order => order.status === 'delivered').length;
+      const totalRevenue = orders
+        .filter(order => order.status === 'delivered')
+        .reduce((sum, order) => sum + order.total_amount, 0);
+      
+      const averageOrderValue = totalSales > 0 ? totalRevenue / totalSales : 0;
+      const conversionRate = totalViews > 0 ? (totalSales / totalViews) * 100 : 0;
+
+      // Customer analytics
+      const uniqueCustomers = new Set(orders.map(order => order.buyer_id)).size;
+      const customerOrderCounts = {};
+      orders.forEach(order => {
+        customerOrderCounts[order.buyer_id] = (customerOrderCounts[order.buyer_id] || 0) + 1;
+      });
+      const repeatCustomers = Object.values(customerOrderCounts).filter((count: any) => Number(count) > 1).length;
+
+      // Review analytics
+      const averageRating = reviews.length > 0 
+        ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+        : 0;
+
+      // Top selling products
+      const itemSalesMap = {};
+      orders.filter(order => order.status === 'delivered').forEach(order => {
+        itemSalesMap[order.item_id] = (itemSalesMap[order.item_id] || 0) + order.quantity;
+      });
+      
+      const topSellingProducts = items
+        .map(item => ({
+          ...item,
+          totalSold: itemSalesMap[item.id] || 0
+        }))
+        .sort((a, b) => b.totalSold - a.totalSold)
+        .slice(0, 5);
+
+      // Monthly revenue (last 6 months)
+      const monthlyRevenue = {};
+      const categoryPerformance = {};
+      const now = new Date();
+      
+      for (let i = 0; i < 6; i++) {
+        const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthKey = month.toLocaleDateString(language === 'en' ? 'en-US' : 'ms-MY', { 
+          year: 'numeric', 
+          month: 'short' 
+        });
+        monthlyRevenue[monthKey] = 0;
+      }
+
+      orders.filter(order => order.status === 'delivered').forEach(order => {
+        const orderDate = new Date(order.order_date);
+        const monthKey = orderDate.toLocaleDateString(language === 'en' ? 'en-US' : 'ms-MY', { 
+          year: 'numeric', 
+          month: 'short' 
+        });
+        
+        if (monthlyRevenue.hasOwnProperty(monthKey)) {
+          monthlyRevenue[monthKey] += order.total_amount;
+        }
+
+        // Category performance
+        const item = items.find(item => item.id === order.item_id);
+        if (item) {
+          if (!categoryPerformance[item.category]) {
+            categoryPerformance[item.category] = { sales: 0, revenue: 0 };
+          }
+          categoryPerformance[item.category].sales += order.quantity;
+          categoryPerformance[item.category].revenue += order.total_amount;
+        }
+      });
 
       setStats({
         totalListings: items.length,
         activeListings: items.filter(item => item.is_active).length,
         totalSales,
         totalRevenue,
-        totalViews
+        totalViews,
+        averageOrderValue,
+        conversionRate,
+        topSellingProducts,
+        recentOrders: orders.slice(0, 10),
+        monthlyRevenue,
+        categoryPerformance,
+        customerInsights: {
+          totalCustomers: uniqueCustomers,
+          repeatCustomers,
+          averageRating,
+          totalReviews: reviews.length
+        }
       });
 
     } catch (error) {
@@ -296,11 +448,14 @@ export default function SellerDashboard() {
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList>
           <TabsTrigger value="overview">{t.overview}</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="listings">{t.myListings}</TabsTrigger>
+          <TabsTrigger value="orders">Orders</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {/* Key Performance Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard 
               title={t.totalListings} 
               value={stats.totalListings} 
@@ -325,13 +480,187 @@ export default function SellerDashboard() {
               icon={DollarSign}
               color="text-emerald-600"
             />
+          </div>
+
+          {/* Advanced Analytics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard 
               title={t.totalViews} 
               value={stats.totalViews} 
               icon={Eye}
               color="text-orange-600"
             />
+            <StatCard 
+              title={t.averageOrderValue} 
+              value={`RM${stats.averageOrderValue.toFixed(2)}`} 
+              icon={DollarSign}
+              color="text-indigo-600"
+            />
+            <StatCard 
+              title={t.conversionRate} 
+              value={`${stats.conversionRate.toFixed(2)}%`} 
+              icon={TrendingUp}
+              color="text-cyan-600"
+            />
+            <StatCard 
+              title={t.totalCustomers} 
+              value={stats.customerInsights.totalCustomers} 
+              icon={Users}
+              color="text-pink-600"
+            />
           </div>
+
+          {/* Customer Insights */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t.customerInsights}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-pink-600">{stats.customerInsights.totalCustomers}</p>
+                  <p className="text-sm text-muted-foreground">{t.totalCustomers}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-600">{stats.customerInsights.repeatCustomers}</p>
+                  <p className="text-sm text-muted-foreground">{t.repeatCustomers}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-yellow-600">{stats.customerInsights.averageRating.toFixed(1)} ⭐</p>
+                  <p className="text-sm text-muted-foreground">{t.averageRating}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-600">{stats.customerInsights.totalReviews}</p>
+                  <p className="text-sm text-muted-foreground">{t.totalReviews}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Top Performing Products */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t.topProducts}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {stats.topSellingProducts.length === 0 ? (
+                <p className="text-muted-foreground text-center py-4">{t.noListings}</p>
+              ) : (
+                <div className="space-y-4">
+                  {stats.topSellingProducts.map((product) => (
+                    <div key={product.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+                          {product.image ? (
+                            <img src={product.image} alt={product.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <ShoppingBag className="h-6 w-6 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium">{product.title}</p>
+                          <p className="text-sm text-muted-foreground">RM{product.price.toFixed(2)}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-green-600">{product.totalSold || 0} sold</p>
+                        <p className="text-sm text-muted-foreground">{product.view_count || 0} views</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          {/* Monthly Revenue Trend */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t.monthlyTrends}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {Object.entries(stats.monthlyRevenue).map(([month, revenue]) => (
+                  <div key={month} className="flex items-center justify-between p-2 border-b">
+                    <span className="text-sm font-medium">{month}</span>
+                    <span className="text-sm font-bold text-green-600">RM{revenue.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Category Performance */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t.categoryPerformance}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {Object.entries(stats.categoryPerformance).map(([category, performance]) => (
+                  <div key={category} className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium capitalize">{category}</h4>
+                      <Badge>{performance.sales} sales</Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <span>Revenue: RM{performance.revenue.toFixed(2)}</span>
+                      <span>Avg: RM{(performance.revenue / Math.max(performance.sales, 1)).toFixed(2)}</span>
+                    </div>
+                  </div>
+                ))}
+                {Object.keys(stats.categoryPerformance).length === 0 && (
+                  <p className="text-muted-foreground text-center py-4">No sales data available</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="orders" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t.recentOrders}</CardTitle>
+              <CardDescription>Latest orders from your customers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {stats.recentOrders.length === 0 ? (
+                <div className="text-center py-8">
+                  <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No recent orders</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {stats.recentOrders.map((order) => (
+                    <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <p className="font-medium">Order #{order.id.slice(-8)}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(order.order_date).toLocaleDateString()}
+                        </p>
+                        <Badge className="mt-1">
+                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        </Badge>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold">RM{order.total_amount.toFixed(2)}</p>
+                        <p className="text-sm text-muted-foreground">Qty: {order.quantity}</p>
+                      </div>
+                    </div>
+                  ))}
+                  <Button 
+                    variant="outline" 
+                    onClick={() => navigate('/my-orders')} 
+                    className="w-full"
+                  >
+                    View All Orders
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="listings" className="space-y-4">

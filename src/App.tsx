@@ -19,6 +19,7 @@ import MarketplaceItemDetail from "./pages/MarketplaceItemDetail";
 import MyOrders from "./pages/MyOrders";
 import Favorites from "./pages/Favorites";
 import SellerDashboard from "./pages/SellerDashboard";
+import ResidentAnalytics from "./pages/ResidentAnalytics";
 import AdvertisementDetail from "./pages/AdvertisementDetail";
 import AdvertisementManagement from "./pages/AdvertisementManagement";
 import CCTVLiveFeed from "./pages/CCTVLiveFeed";
@@ -255,6 +256,16 @@ const App = () => (
                       <SellerDashboard />
                     </Layout>
                   </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/marketplace-analytics"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ResidentAnalytics />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
