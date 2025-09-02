@@ -528,11 +528,34 @@ export default function Discussions() {
                       </div>
                       <p className="text-sm leading-relaxed mb-3">{comment.content}</p>
                       <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 px-2 text-xs"
+                          onClick={() => {
+                            // Update likes count
+                            setComments(prev => ({
+                              ...prev,
+                              [selectedDiscussion.id]: (prev[selectedDiscussion.id] || []).map(c => 
+                                c.id === comment.id 
+                                  ? { ...c, likes: c.likes + 1 }
+                                  : c
+                              )
+                            }));
+                          }}
+                        >
                           <ThumbsUp className="h-3 w-3 mr-1" />
                           {t.like} ({comment.likes})
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 px-2 text-xs"
+                          onClick={() => {
+                            setNewComment(`@${comment.author} `);
+                            document.querySelector('textarea')?.focus();
+                          }}
+                        >
                           <Reply className="h-3 w-3 mr-1" />
                           {t.reply}
                         </Button>
