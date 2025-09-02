@@ -1,54 +1,57 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Phone, MapPin, Clock, Users, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CommunityDirectoryWidgetProps {
   language: 'en' | 'ms';
 }
 
+interface DirectoryContact {
+  id: string;
+  name: string;
+  role: string;
+  phone: string;
+  email?: string;
+  hours: string;
+  location: string;
+  status: string;
+  category: string;
+  is_active: boolean;
+}
+
 export function CommunityDirectoryWidget({ language }: CommunityDirectoryWidgetProps) {
   const navigate = useNavigate();
+  const [contacts, setContacts] = useState<DirectoryContact[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const importantContacts = [
-    {
-      id: 1,
-      name: language === 'en' ? 'Management Office' : 'Pejabat Pengurusan',
-      role: language === 'en' ? 'General Inquiries' : 'Pertanyaan Umum',
-      phone: '+60 3-2345-6789',
-      hours: language === 'en' ? 'Mon-Fri 9AM-5PM' : 'Isnin-Jumaat 9AM-5PM',
-      location: language === 'en' ? 'Ground Floor, Block A' : 'Tingkat Bawah, Blok A',
-      status: 'available'
-    },
-    {
-      id: 2,
-      name: language === 'en' ? 'Security Office' : 'Pejabat Keselamatan',
-      role: language === 'en' ? '24/7 Security' : 'Keselamatan 24/7',
-      phone: '+60 3-2345-6700',
-      hours: language === 'en' ? '24 Hours' : '24 Jam',
-      location: language === 'en' ? 'Main Gate' : 'Pintu Utama',
-      status: 'available'
-    },
-    {
-      id: 3,
-      name: language === 'en' ? 'Maintenance Team' : 'Pasukan Penyelenggaraan',
-      role: language === 'en' ? 'Repairs & Maintenance' : 'Pembaikan & Penyelenggaraan',
-      phone: '+60 3-2345-6701',
-      hours: language === 'en' ? 'Mon-Sat 8AM-6PM' : 'Isnin-Sabtu 8AM-6PM',
-      location: language === 'en' ? 'Basement, Block B' : 'Ruang Bawah Tanah, Blok B',
-      status: 'busy'
-    },
-    {
-      id: 4,
-      name: language === 'en' ? 'Community Leader' : 'Ketua Komuniti',
-      role: language === 'en' ? 'Mrs. Siti Rahman' : 'Puan Siti Rahman',
-      phone: '+60 12-345-6789',
-      hours: language === 'en' ? 'By Appointment' : 'Mengikut Temujanji',
-      location: language === 'en' ? 'Unit A-12-05' : 'Unit A-12-05',
-      status: 'available'
-    }
-  ];
+  useEffect(() => {
+    const fetchContacts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('directory_contacts')
+          .select('*')
+          .eq('is_active', true)
+          .limit(4);
+
+        if (error) {
+          console.error('Error fetching directory contacts:', error);
+          return;
+        }
+
+        setContacts(data || []);
+      } catch (error) {
+        console.error('Error fetching directory contacts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContacts();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -86,7 +89,21 @@ export function CommunityDirectoryWidget({ language }: CommunityDirectoryWidgetP
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {importantContacts.map((contact) => (
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="p-3 bg-muted/30 rounded-lg animate-pulse">
+                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        ) : contacts.length === 0 ? (
+          <div className="text-center py-4 text-muted-foreground">
+            {language === 'en' ? 'No contacts available' : 'Tiada hubungan tersedia'}
+          </div>
+        ) : (
+          contacts.map((contact) => (
           <div key={contact.id} className="p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
             <div className="flex justify-between items-start mb-2">
               <div>
@@ -113,7 +130,8 @@ export function CommunityDirectoryWidget({ language }: CommunityDirectoryWidgetP
               </div>
             </div>
           </div>
-        ))}
+          ))
+        )}
         
         <Button 
           variant="outline" 

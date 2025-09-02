@@ -1,45 +1,55 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Phone, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface QuickServicesWidgetProps {
   language: 'en' | 'ms';
 }
 
+interface ServiceItem {
+  id: string;
+  title: string;
+  category: string;
+  price?: number;
+  currency?: string;
+  business_name: string;
+  is_active: boolean;
+}
+
 export function QuickServicesWidget({ language }: QuickServicesWidgetProps) {
   const navigate = useNavigate();
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const nearbyServices = [
-    {
-      id: 1,
-      name: language === 'en' ? 'Ahmad\'s Handyman' : 'Tukang Ahmad',
-      category: language === 'en' ? 'Home Repair' : 'Pembaikan Rumah',
-      rating: 4.8,
-      distance: '0.2km',
-      availability: language === 'en' ? 'Available Now' : 'Tersedia Sekarang',
-      price: 'RM50/hr'
-    },
-    {
-      id: 2,
-      name: language === 'en' ? 'Siti\'s Catering' : 'Katering Siti',
-      category: language === 'en' ? 'Food & Catering' : 'Makanan & Katering',
-      rating: 4.9,
-      distance: '0.1km',
-      availability: language === 'en' ? 'Book Ahead' : 'Perlu Tempahan',
-      price: 'RM8/pax'
-    },
-    {
-      id: 3,
-      name: language === 'en' ? 'Lee\'s Tutoring' : 'Tuisyen Lee',
-      category: language === 'en' ? 'Education' : 'Pendidikan',
-      rating: 4.7,
-      distance: '0.3km',
-      availability: language === 'en' ? 'Weekends Only' : 'Hujung Minggu Sahaja',
-      price: 'RM30/hr'
-    }
-  ];
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('advertisements')
+          .select('id, title, category, price, currency, business_name, is_active')
+          .eq('is_active', true)
+          .eq('product_type', 'service')
+          .limit(3);
+
+        if (error) {
+          console.error('Error fetching services:', error);
+          return;
+        }
+
+        setServices(data || []);
+      } catch (error) {
+        console.error('Error fetching services:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
 
   return (
     <Card>
@@ -56,39 +66,52 @@ export function QuickServicesWidget({ language }: QuickServicesWidgetProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {nearbyServices.map((service) => (
-          <div key={service.id} className="p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-            <div className="flex justify-between items-start mb-2">
-              <div>
-                <h4 className="font-medium text-sm">{service.name}</h4>
-                <p className="text-xs text-muted-foreground">{service.category}</p>
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-3 bg-muted/30 rounded-lg animate-pulse">
+                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-1/2"></div>
               </div>
-              <Badge variant="outline" className="text-xs">
-                {service.price}
-              </Badge>
-            </div>
-            
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                <span>{service.rating}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                <span>{service.distance}</span>
-              </div>
-            </div>
-            
-            <div className="mt-2">
-              <Badge 
-                variant={service.availability.includes('Available') || service.availability.includes('Tersedia') ? 'default' : 'secondary'}
-                className="text-xs"
-              >
-                {service.availability}
-              </Badge>
-            </div>
+            ))}
           </div>
-        ))}
+        ) : services.length === 0 ? (
+          <div className="text-center py-4 text-muted-foreground">
+            {language === 'en' ? 'No services available' : 'Tiada perkhidmatan tersedia'}
+          </div>
+        ) : (
+          services.map((service) => (
+            <div key={service.id} className="p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h4 className="font-medium text-sm">{service.title}</h4>
+                  <p className="text-xs text-muted-foreground">{service.business_name}</p>
+                </div>
+                {service.price && (
+                  <Badge variant="outline" className="text-xs">
+                    {service.currency || 'RM'}{service.price}
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <span className="capitalize">{service.category}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <MapPin className="w-3 h-3" />
+                  <span>{language === 'en' ? 'Nearby' : 'Berdekatan'}</span>
+                </div>
+              </div>
+              
+              <div className="mt-2">
+                <Badge variant="default" className="text-xs">
+                  {language === 'en' ? 'Available' : 'Tersedia'}
+                </Badge>
+              </div>
+            </div>
+          ))
+        )}
         
         <Button 
           variant="outline" 
