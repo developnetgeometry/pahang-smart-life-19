@@ -104,6 +104,15 @@ export default function MyComplaints() {
 
     setSubmitting(true);
     try {
+      // Get user's district_id from their profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('district_id')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
       const { error } = await supabase
         .from('complaints')
         .insert({
@@ -113,6 +122,7 @@ export default function MyComplaints() {
           priority: formData.priority,
           location: formData.location,
           complainant_id: user.id,
+          district_id: profileData.district_id,
           status: 'pending',
           photos: uploadedPhotos.length > 0 ? uploadedPhotos : null
         });
