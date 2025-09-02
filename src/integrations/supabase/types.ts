@@ -1552,6 +1552,61 @@ export type Database = {
           },
         ]
       }
+      discussion_moderation_actions: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          discussion_id: string | null
+          id: string
+          moderator_id: string
+          notes: string | null
+          reason: string | null
+          reply_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          discussion_id?: string | null
+          id?: string
+          moderator_id: string
+          notes?: string | null
+          reason?: string | null
+          reply_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          discussion_id?: string | null
+          id?: string
+          moderator_id?: string
+          notes?: string | null
+          reason?: string | null
+          reply_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discussion_moderation_actions_discussion_id_fkey"
+            columns: ["discussion_id"]
+            isOneToOne: false
+            referencedRelation: "discussions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discussion_moderation_actions_moderator_id_fkey"
+            columns: ["moderator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discussion_moderation_actions_reply_id_fkey"
+            columns: ["reply_id"]
+            isOneToOne: false
+            referencedRelation: "discussion_replies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discussion_replies: {
         Row: {
           author_id: string | null
@@ -1604,6 +1659,80 @@ export type Database = {
           },
         ]
       }
+      discussion_reports: {
+        Row: {
+          created_at: string | null
+          discussion_id: string | null
+          id: string
+          reply_id: string | null
+          report_details: string | null
+          report_reason: string
+          reported_by: string
+          resolution_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          discussion_id?: string | null
+          id?: string
+          reply_id?: string | null
+          report_details?: string | null
+          report_reason: string
+          reported_by: string
+          resolution_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          discussion_id?: string | null
+          id?: string
+          reply_id?: string | null
+          report_details?: string | null
+          report_reason?: string
+          reported_by?: string
+          resolution_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discussion_reports_discussion_id_fkey"
+            columns: ["discussion_id"]
+            isOneToOne: false
+            referencedRelation: "discussions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discussion_reports_reply_id_fkey"
+            columns: ["reply_id"]
+            isOneToOne: false
+            referencedRelation: "discussion_replies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discussion_reports_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discussion_reports_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discussions: {
         Row: {
           author_id: string | null
@@ -1614,8 +1743,14 @@ export type Database = {
           id: string
           is_locked: boolean | null
           is_pinned: boolean | null
+          is_reported: boolean | null
           last_reply_at: string | null
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_reason: string | null
+          moderation_status: string | null
           replies_count: number | null
+          report_count: number | null
           title: string
           updated_at: string | null
           views_count: number | null
@@ -1629,8 +1764,14 @@ export type Database = {
           id?: string
           is_locked?: boolean | null
           is_pinned?: boolean | null
+          is_reported?: boolean | null
           last_reply_at?: string | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
+          moderation_status?: string | null
           replies_count?: number | null
+          report_count?: number | null
           title: string
           updated_at?: string | null
           views_count?: number | null
@@ -1644,8 +1785,14 @@ export type Database = {
           id?: string
           is_locked?: boolean | null
           is_pinned?: boolean | null
+          is_reported?: boolean | null
           last_reply_at?: string | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
+          moderation_status?: string | null
           replies_count?: number | null
+          report_count?: number | null
           title?: string
           updated_at?: string | null
           views_count?: number | null
@@ -1663,6 +1810,13 @@ export type Database = {
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discussions_moderated_by_fkey"
+            columns: ["moderated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -4404,6 +4558,56 @@ export type Database = {
           },
         ]
       }
+      profile_privacy_settings: {
+        Row: {
+          allow_event_invites: boolean | null
+          allow_messages: boolean | null
+          created_at: string | null
+          id: string
+          profile_visibility: string | null
+          show_address: boolean | null
+          show_email: boolean | null
+          show_full_name: boolean | null
+          show_phone: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          allow_event_invites?: boolean | null
+          allow_messages?: boolean | null
+          created_at?: string | null
+          id?: string
+          profile_visibility?: string | null
+          show_address?: boolean | null
+          show_email?: boolean | null
+          show_full_name?: boolean | null
+          show_phone?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          allow_event_invites?: boolean | null
+          allow_messages?: boolean | null
+          created_at?: string | null
+          id?: string
+          profile_visibility?: string | null
+          show_address?: boolean | null
+          show_email?: boolean | null
+          show_full_name?: boolean | null
+          show_phone?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_privacy_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           address: string | null
@@ -4427,7 +4631,9 @@ export type Database = {
           identity_no: string | null
           identity_no_type: string | null
           income_range: string | null
+          interests: string[] | null
           is_active: boolean | null
+          is_searchable: boolean | null
           join_date: string | null
           language: string | null
           language_preference: string | null
@@ -4440,9 +4646,11 @@ export type Database = {
           pdpa_declare: boolean | null
           phone: string | null
           primary_role: Database["public"]["Enums"]["app_role"] | null
+          profile_bio: string | null
           race_id: string | null
           register_method: string | null
           registration_status: boolean | null
+          skills: string[] | null
           socio_id: string | null
           spouse_dob: string | null
           spouse_full_name: string | null
@@ -4485,7 +4693,9 @@ export type Database = {
           identity_no?: string | null
           identity_no_type?: string | null
           income_range?: string | null
+          interests?: string[] | null
           is_active?: boolean | null
+          is_searchable?: boolean | null
           join_date?: string | null
           language?: string | null
           language_preference?: string | null
@@ -4498,9 +4708,11 @@ export type Database = {
           pdpa_declare?: boolean | null
           phone?: string | null
           primary_role?: Database["public"]["Enums"]["app_role"] | null
+          profile_bio?: string | null
           race_id?: string | null
           register_method?: string | null
           registration_status?: boolean | null
+          skills?: string[] | null
           socio_id?: string | null
           spouse_dob?: string | null
           spouse_full_name?: string | null
@@ -4543,7 +4755,9 @@ export type Database = {
           identity_no?: string | null
           identity_no_type?: string | null
           income_range?: string | null
+          interests?: string[] | null
           is_active?: boolean | null
+          is_searchable?: boolean | null
           join_date?: string | null
           language?: string | null
           language_preference?: string | null
@@ -4556,9 +4770,11 @@ export type Database = {
           pdpa_declare?: boolean | null
           phone?: string | null
           primary_role?: Database["public"]["Enums"]["app_role"] | null
+          profile_bio?: string | null
           race_id?: string | null
           register_method?: string | null
           registration_status?: boolean | null
+          skills?: string[] | null
           socio_id?: string | null
           spouse_dob?: string | null
           spouse_full_name?: string | null
@@ -7050,6 +7266,21 @@ export type Database = {
       get_user_highest_role: {
         Args: { check_user_id?: string }
         Returns: Database["public"]["Enums"]["enhanced_user_role"]
+      }
+      get_user_profile_with_privacy: {
+        Args: { target_user_id: string; viewer_id?: string }
+        Returns: {
+          avatar_url: string
+          can_invite: boolean
+          can_message: boolean
+          email: string
+          full_name: string
+          id: string
+          interests: string[]
+          phone: string
+          profile_bio: string
+          skills: string[]
+        }[]
       }
       get_user_role: {
         Args: { district_id?: string; user_id: string }
