@@ -240,6 +240,12 @@ export function AppSidebar() {
           url: "/admin/complaints",
           icon: AlertTriangle,
           requiredRoles: ["state_admin", "community_admin"],
+        },
+        {
+          title: t("complaintsAnalytics"),
+          url: "/admin/complaints-analytics",
+          icon: BarChart3,
+          requiredRoles: ["state_admin", "community_admin"],
         }
       );
     }

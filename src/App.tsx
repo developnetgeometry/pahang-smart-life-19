@@ -29,6 +29,7 @@ import CommunityManagement from "./pages/admin/CommunityManagement";
 import DistrictManagement from "./pages/admin/DistrictManagement";
 import MaintenanceManagement from "./pages/admin/MaintenanceManagement";
 import ComplaintsManagement from "./pages/admin/ComplaintsManagement";
+import ComplaintsAnalytics from "./pages/admin/ComplaintsAnalytics";
 import CCTVManagement from "./pages/admin/CCTVManagement";
 import RequireRoles from "@/components/routing/RequireRoles";
 import SmartMonitoring from "./pages/admin/SmartMonitoring";
@@ -438,6 +439,18 @@ const App = () => (
                   <Layout>
                     <ComplaintsManagement />
                   </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/complaints-analytics"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={['community_admin', 'district_coordinator', 'state_admin']}>
+                    <Layout>
+                      <ComplaintsAnalytics />
+                    </Layout>
+                  </RequireRoles>
                 </ProtectedRoute>
               }
             />
