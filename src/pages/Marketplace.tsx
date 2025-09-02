@@ -217,7 +217,7 @@ export default function Marketplace() {
   // Fetch categories from database - MOVED BEFORE CONDITIONAL RETURN
   useEffect(() => {
     const fetchCategories = async () => {
-      const { data } = await supabase.from('product_categories').select('name');
+      const { data } = await supabase.from('marketplace_categories').select('name');
       setDbCategories(data || []);
     };
     fetchCategories();

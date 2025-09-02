@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,35 +13,53 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Building, CheckCircle, Upload, X } from 'lucide-react';
 
-const SERVICE_CATEGORIES = [
-  'Cleaning Services',
-  'Maintenance & Repair',
-  'Security Services',
-  'Landscaping',
-  'Food & Catering',
-  'Transportation',
-  'Healthcare Services',
-  'Education & Tutoring',
-  'IT Services',
-  'Legal Services',
-  'Financial Services',
-  'Home Services'
-];
-
-const BUSINESS_TYPES = [
-  'Sole Proprietorship',
-  'Partnership',
-  'Private Limited Company (Sdn Bhd)',
-  'Public Limited Company (Bhd)',
-  'Limited Liability Partnership (LLP)'
-];
+// Categories and business types will be fetched from database
 
 export default function ServiceProviderApplication() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [serviceCategories, setServiceCategories] = useState<string[]>([]);
+  const [businessTypes, setBusinessTypes] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchServiceCategories();
+    fetchBusinessTypes();
+  }, []);
+
+  const fetchServiceCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('service_categories')
+        .select('name')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setServiceCategories(data?.map(cat => cat.name) || []);
+    } catch (error) {
+      console.error('Error fetching service categories:', error);
+      toast.error('Failed to load service categories');
+    }
+  };
+
+  const fetchBusinessTypes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('business_types')
+        .select('name')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setBusinessTypes(data?.map(type => type.name) || []);
+    } catch (error) {
+      console.error('Error fetching business types:', error);
+      toast.error('Failed to load business types');
+    }
+  };
 
   const [formData, setFormData] = useState({
     // Business Information
@@ -191,7 +209,7 @@ export default function ServiceProviderApplication() {
                     <SelectValue placeholder="Select business type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {BUSINESS_TYPES.map(type => (
+                    {businessTypes.map(type => (
                       <SelectItem key={type} value={type}>{type}</SelectItem>
                     ))}
                   </SelectContent>
@@ -320,7 +338,7 @@ export default function ServiceProviderApplication() {
                 Select all categories that apply to your business
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {SERVICE_CATEGORIES.map(category => (
+                {serviceCategories.map(category => (
                   <div key={category} className="flex items-center space-x-2">
                     <Checkbox
                       id={category}

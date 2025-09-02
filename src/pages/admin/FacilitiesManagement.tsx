@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -110,56 +111,97 @@ export default function FacilitiesManagement() {
 
   const t = text[language];
 
-  const [facilities, setFacilities] = useState<Facility[]>([
-    {
-      id: "1",
-      name: language === "en" ? "Community Hall" : "Dewan Komuniti",
-      type: "hall",
-      location: "Block A",
-      capacity: 120,
-      status: "open",
-      available: true,
-    },
-    {
-      id: "2",
-      name: language === "en" ? "Badminton Court" : "Gelanggang Badminton",
-      type: "court",
-      location: "Sports Complex",
-      capacity: 8,
-      status: "maintenance",
-      available: false,
-    },
-    {
-      id: "3",
-      name: language === "en" ? "Meeting Room B" : "Bilik Mesyuarat B",
-      type: "room",
-      location: "Block B, Level 2",
-      capacity: 12,
-      status: "closed",
-      available: false,
-    },
-  ]);
+  const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [facilityTypes, setFacilityTypes] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [bookings] = useState<Booking[]>([
-    {
-      id: "b1",
-      facilityId: "1",
-      facilityName: language === "en" ? "Community Hall" : "Dewan Komuniti",
-      bookedBy: "John Doe",
-      date: "2024-01-22",
-      time: "14:00 - 16:00",
-      status: "confirmed",
-    },
-    {
-      id: "b2",
-      facilityId: "2",
-      facilityName: language === "en" ? "Badminton Court" : "Gelanggang Badminton",
-      bookedBy: "Sarah Lee",
-      date: "2024-01-21",
-      time: "09:00 - 10:00",
-      status: "pending",
-    },
-  ]);
+  useEffect(() => {
+    fetchFacilities();
+    fetchBookings();
+    fetchFacilityTypes();
+  }, []);
+
+  const fetchFacilities = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('facilities')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+
+      const transformedFacilities: Facility[] = (data || []).map(facility => ({
+        id: facility.id,
+        name: facility.name,
+        type: 'other' as Facility["type"], // Default to 'other' since facility_type column doesn't exist yet
+        location: facility.location || '',
+        capacity: facility.capacity || 0,
+        status: facility.is_available ? "open" : "closed",
+        available: facility.is_available
+      }));
+
+      setFacilities(transformedFacilities);
+    } catch (error) {
+      console.error('Error fetching facilities:', error);
+      toast({ title: "Error", description: "Failed to load facilities" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchBookings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          facility_id,
+          user_id,
+          booking_date,
+          start_time,
+          end_time,
+          status,
+          facilities(name),
+          profiles(full_name)
+        `)
+        .order('booking_date', { ascending: false });
+
+      if (error) throw error;
+
+      const transformedBookings: Booking[] = (data || []).map(booking => ({
+        id: booking.id,
+        facilityId: booking.facility_id,
+        facilityName: booking.facilities?.name || 'Unknown',
+        bookedBy: 'Unknown', // Will fix when profiles structure is confirmed
+        date: booking.booking_date,
+        time: `${booking.start_time} - ${booking.end_time}`,
+        status: booking.status as Booking["status"]
+      }));
+
+      setBookings(transformedBookings);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+      toast({ title: "Error", description: "Failed to load bookings" });
+    }
+  };
+
+  const fetchFacilityTypes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('facility_types')
+        .select('name')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setFacilityTypes(data?.map(type => type.name) || []);
+    } catch (error) {
+      console.error('Error fetching facility types:', error);
+    }
+  };
+
+  const [bookings, setBookings] = useState<Booking[]>([]);
 
   const getStatusBadge = (status: Facility["status"]) => {
     switch (status) {
@@ -174,45 +216,69 @@ export default function FacilitiesManagement() {
     }
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!form.name || !form.type || !form.location) {
       toast({ title: t.save, description: "Please fill all fields." });
       return;
     }
 
-    if (editingId) {
-      setFacilities((prev) =>
-        prev.map((f) =>
-          f.id === editingId
-            ? { ...f, name: form.name, type: form.type as Facility["type"], location: form.location, capacity: Number(form.capacity) }
-            : f
-        )
-      );
-    } else {
-      const newFacility: Facility = {
-        id: String(Date.now()),
-        name: form.name,
-        type: form.type as Facility["type"],
-        location: form.location,
-        capacity: Number(form.capacity),
-        status: "open",
-        available: true,
-      };
-      setFacilities((prev) => [newFacility, ...prev]);
-    }
+    setIsLoading(true);
+    try {
+      if (editingId) {
+        const { error } = await supabase
+          .from('facilities')
+          .update({
+            name: form.name,
+            location: form.location,
+            capacity: Number(form.capacity)
+          })
+          .eq('id', editingId);
 
-    setIsCreateOpen(false);
-    setEditingId(null);
-    setForm({ name: "", type: "", location: "", capacity: 0 });
-    toast({ title: t.facilityCreated });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('facilities')
+          .insert({
+            name: form.name,
+            location: form.location,
+            capacity: Number(form.capacity),
+            is_available: true,
+            hourly_rate: 0
+          });
+
+        if (error) throw error;
+      }
+
+      await fetchFacilities();
+      setIsCreateOpen(false);
+      setEditingId(null);
+      setForm({ name: "", type: "", location: "", capacity: 0 });
+      toast({ title: t.facilityCreated });
+    } catch (error) {
+      console.error('Error saving facility:', error);
+      toast({ title: "Error", description: "Failed to save facility" });
+    } finally {
+      setIsLoading(false);
+    }
   };
-  const handleToggleAvailability = (id: string) => {
-    setFacilities((prev) =>
-      prev.map((f) =>
-        f.id === id ? { ...f, available: !f.available, status: f.available ? "closed" : "open" } : f
-      )
-    );
-    toast({ title: t.toggleAvailability });
+  const handleToggleAvailability = async (id: string) => {
+    try {
+      const facility = facilities.find(f => f.id === id);
+      if (!facility) return;
+
+      const { error } = await supabase
+        .from('facilities')
+        .update({ is_available: !facility.available })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await fetchFacilities();
+      toast({ title: t.toggleAvailability });
+    } catch (error) {
+      console.error('Error toggling facility availability:', error);
+      toast({ title: "Error", description: "Failed to update facility" });
+    }
   };
 
   const handleEdit = (facility: Facility) => {
@@ -221,10 +287,22 @@ export default function FacilitiesManagement() {
     setIsCreateOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm("Delete this facility?")) {
-      setFacilities((prev) => prev.filter((f) => f.id !== id));
-      toast({ title: "Facility deleted" });
+      try {
+        const { error } = await supabase
+          .from('facilities')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+
+        await fetchFacilities();
+        toast({ title: "Facility deleted" });
+      } catch (error) {
+        console.error('Error deleting facility:', error);
+        toast({ title: "Error", description: "Failed to delete facility" });
+      }
     }
   };
 
@@ -290,12 +368,9 @@ export default function FacilitiesManagement() {
                       <SelectValue placeholder={t.selectType} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="hall">Hall</SelectItem>
-                      <SelectItem value="court">Court</SelectItem>
-                      <SelectItem value="room">Room</SelectItem>
-                      <SelectItem value="pool">Pool</SelectItem>
-                      <SelectItem value="gym">Gym</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      {facilityTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

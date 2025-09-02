@@ -83,9 +83,28 @@ export default function AssetManagement() {
     },
   });
 
-  const categories = [
-    'furniture', 'equipment', 'infrastructure', 'vehicle', 'electronics', 'appliances'
-  ];
+  const [categories, setCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('asset_categories')
+        .select('name')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) throw error;
+      setCategories(data?.map(cat => cat.name) || []);
+    } catch (error) {
+      console.error('Error fetching asset categories:', error);
+      // Use hardcoded categories as fallback
+      setCategories(['furniture', 'equipment', 'infrastructure', 'vehicle', 'electronics', 'appliances']);
+    }
+  };
 
   const conditionOptions = [
     { value: 'excellent', label: 'Excellent', color: 'bg-green-500' },

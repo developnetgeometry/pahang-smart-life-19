@@ -48,22 +48,12 @@ interface UserService {
   updated_at: string;
 }
 
-const serviceCategories = [
-  'Home Services',
-  'Beauty & Wellness',
-  'Food & Catering', 
-  'Transportation',
-  'Tutoring & Education',
-  'Health & Medical',
-  'Technology Support',
-  'Business Services',
-  'Pet Services',
-  'Other'
-];
+// Service categories will be fetched from database
 
 export const ServiceManagement: React.FC = () => {
   const { user } = useAuth();
   const [services, setServices] = useState<UserService[]>([]);
+  const [serviceCategories, setServiceCategories] = useState<string[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<UserService | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -88,6 +78,7 @@ export const ServiceManagement: React.FC = () => {
     if (user) {
       fetchServices();
     }
+    fetchServiceCategories();
   }, [user]);
 
   const fetchServices = async () => {
@@ -103,6 +94,22 @@ export const ServiceManagement: React.FC = () => {
     } catch (error) {
       console.error('Error fetching services:', error);
       toast.error('Failed to load services');
+    }
+  };
+
+  const fetchServiceCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('service_categories')
+        .select('name')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setServiceCategories(data?.map(cat => cat.name) || []);
+    } catch (error) {
+      console.error('Error fetching service categories:', error);
+      toast.error('Failed to load service categories');
     }
   };
 

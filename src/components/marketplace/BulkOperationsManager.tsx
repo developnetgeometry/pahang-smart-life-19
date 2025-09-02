@@ -70,13 +70,28 @@ export default function BulkOperationsManager() {
       setOperations([]); // Empty until migration executed
       setItems(itemsRes.data || []);
       
-      // Use hardcoded categories until migration is executed
-      const defaultCategories = [
-        { id: '1', name: 'Electronics' },
-        { id: '2', name: 'Clothing' },
-        { id: '3', name: 'Home & Garden' }
-      ];
-      setCategories(defaultCategories);
+      // Fetch categories from database
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('marketplace_categories')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (categoriesError) {
+        console.error('Error fetching categories:', categoriesError);
+        // Use hardcoded categories as fallback
+        const defaultCategories = [
+          { id: '1', name: 'Electronics' },
+          { id: '2', name: 'Clothing' },
+          { id: '3', name: 'Books' },
+          { id: '4', name: 'Home & Garden' },
+          { id: '5', name: 'Sports' },
+          { id: '6', name: 'Vehicles' }
+        ];
+        setCategories(defaultCategories);
+      } else {
+        setCategories(categoriesData || []);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({

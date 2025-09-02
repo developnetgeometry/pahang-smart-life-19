@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, X, ChevronDown } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -7,7 +7,7 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { supabase } from '@/integrations/supabase/client';
+import { Search, Filter, X, ChevronDown } from 'lucide-react';
 
 interface ProductCategory {
   id: string;
@@ -63,15 +63,28 @@ export default function AdvancedSearch({ onFiltersChange, onSearch }: AdvancedSe
   }, [priceRange]);
 
   const fetchCategories = async () => {
-    // Use hardcoded categories until migration is executed
-    const defaultCategories = [
-      { id: '1', name: 'Electronics', description: 'Electronic devices and gadgets' },
-      { id: '2', name: 'Clothing', description: 'Apparel and accessories' },
-      { id: '3', name: 'Home & Garden', description: 'Home improvement and garden supplies' },
-      { id: '4', name: 'Books', description: 'Books and educational materials' },
-      { id: '5', name: 'Sports', description: 'Sports and fitness equipment' }
-    ];
-    setCategories(defaultCategories);
+    try {
+      const { data, error } = await supabase
+        .from('marketplace_categories')
+        .select('id, name, description')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      // Use hardcoded categories as fallback
+      const defaultCategories = [
+        { id: '1', name: 'Electronics', description: 'Electronic devices and gadgets' },
+        { id: '2', name: 'Clothing', description: 'Apparel and accessories' },
+        { id: '3', name: 'Books', description: 'Books and educational materials' },
+        { id: '4', name: 'Home & Garden', description: 'Home improvement and garden items' },
+        { id: '5', name: 'Sports', description: 'Sports and recreation equipment' },
+        { id: '6', name: 'Vehicles', description: 'Cars, motorcycles and automotive' }
+      ];
+      setCategories(defaultCategories);
+    }
   };
 
   const updateFilter = (key: keyof SearchFilters, value: any) => {
