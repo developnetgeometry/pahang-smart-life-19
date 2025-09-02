@@ -679,7 +679,7 @@ export default function ServiceProviderReview() {
 
                 {application.status !== 'rejected' && (
                   <Button
-                    className="w-full"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
                     onClick={() => updateApplicationStatus('approved')}
                     disabled={actionLoading}
                   >
