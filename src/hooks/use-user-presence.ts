@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface OnlineUser {
   id: string;
@@ -8,46 +10,118 @@ interface OnlineUser {
 }
 
 export const useUserPresence = () => {
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([
-    {
-      id: '1',
-      display_name: 'John Doe',
-      status: 'online',
-      last_seen: new Date().toISOString()
-    },
-    {
-      id: '2', 
-      display_name: 'Jane Smith',
-      status: 'away',
-      last_seen: new Date().toISOString()
-    },
-    {
-      id: '3', 
-      display_name: 'Mike Johnson',
-      status: 'online',
-      last_seen: new Date().toISOString()
+  const { user } = useAuth();
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchOnlineUsers = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Get users who were active in the last 5 minutes
+      const { data: presenceData, error: presenceError } = await supabase
+        .from('user_presence')
+        .select('user_id, status, last_seen, updated_at')
+        .in('status', ['online', 'away', 'busy'])
+        .gte('updated_at', new Date(Date.now() - 5 * 60 * 1000).toISOString());
+
+      if (presenceError) throw presenceError;
+
+      if (!presenceData || presenceData.length === 0) {
+        setOnlineUsers([]);
+        return;
+      }
+
+      // Get profile information for these users
+      const userIds = presenceData.map(p => p.user_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combine presence and profile data
+      const transformedUsers: OnlineUser[] = presenceData.map(presence => {
+        const profile = profilesData?.find(p => p.id === presence.user_id);
+        return {
+          id: presence.user_id,
+          display_name: profile?.full_name || profile?.email || 'Anonymous User',
+          status: presence.status as 'online' | 'away' | 'busy',
+          last_seen: presence.last_seen || presence.updated_at || new Date().toISOString()
+        };
+      });
+
+      setOnlineUsers(transformedUsers);
+    } catch (error) {
+      console.error('Error fetching online users:', error);
+      // Keep empty array on error
+      setOnlineUsers([]);
+    } finally {
+      setIsLoading(false);
     }
-  ]);
-  const [isLoading, setIsLoading] = useState(false);
+  };
 
   const updatePresence = async (status: 'online' | 'away' | 'busy' | 'offline') => {
-    console.log('Updating presence to:', status);
-    // Mock implementation for now
+    if (!user) return;
+
+    try {
+      const { error } = await supabase.rpc('update_user_presence', {
+        p_user_id: user.id,
+        p_status: status
+      });
+
+      if (error) {
+        console.error('Error updating presence:', error);
+        return;
+      }
+
+      // Refresh the online users list
+      if (status !== 'offline') {
+        await fetchOnlineUsers();
+      }
+    } catch (error) {
+      console.error('Error updating presence:', error);
+    }
   };
 
   useEffect(() => {
-    // Simulate presence updates
-    const interval = setInterval(() => {
-      setOnlineUsers(prev => 
-        prev.map(user => ({
-          ...user,
-          last_seen: new Date().toISOString()
-        }))
-      );
-    }, 30000);
+    if (!user) return;
 
-    return () => clearInterval(interval);
-  }, []);
+    // Set user as online when component mounts
+    updatePresence('online');
+
+    // Fetch initial online users
+    fetchOnlineUsers();
+
+    // Set up real-time subscription for presence changes
+    const channel = supabase
+      .channel('user-presence')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'user_presence'
+      }, () => {
+        fetchOnlineUsers();
+      })
+      .subscribe();
+
+    // Update presence every 2 minutes to keep status fresh
+    const presenceInterval = setInterval(() => {
+      updatePresence('online');
+    }, 2 * 60 * 1000);
+
+    // Refresh online users every 30 seconds
+    const refreshInterval = setInterval(fetchOnlineUsers, 30000);
+
+    // Set user as offline when component unmounts
+    return () => {
+      updatePresence('offline');
+      supabase.removeChannel(channel);
+      clearInterval(presenceInterval);
+      clearInterval(refreshInterval);
+    };
+  }, [user]);
 
   return {
     onlineUsers,
