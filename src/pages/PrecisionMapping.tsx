@@ -15,7 +15,7 @@ import {
   Crosshair
 } from 'lucide-react';
 
-const PrecisionMapping = () => {
+const PrecisionMapping: React.FC = () => {
   const { language } = useAuth();
 
   const content = {

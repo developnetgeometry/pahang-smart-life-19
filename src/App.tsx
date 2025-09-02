@@ -61,7 +61,7 @@ import MyBookings from "./pages/MyBookings";
 import ResidentDirectory from './pages/ResidentDirectory';
 import EnhancedEvents from './pages/EnhancedEvents';
 import ModerationPanel from './components/discussions/ModerationPanel';
-import PrecisionMapping from './pages/PrecisionMapping';
+import PrecisionMapping from "./pages/PrecisionMapping";
 
 const queryClient = new QueryClient({
   defaultOptions: {
