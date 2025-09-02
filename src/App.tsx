@@ -58,7 +58,9 @@ import InventoryManagement from "./pages/InventoryManagement";
 import ModuleManagement from "./pages/admin/ModuleManagement";
 import Facilities from "./pages/Facilities";
 import MyBookings from "./pages/MyBookings";
-import PrecisionMapping from "./pages/PrecisionMapping";
+import ResidentDirectory from './pages/ResidentDirectory';
+import EnhancedEvents from './pages/EnhancedEvents';
+import ModerationPanel from './components/discussions/ModerationPanel';
 
 const queryClient = new QueryClient({
   defaultOptions: {
