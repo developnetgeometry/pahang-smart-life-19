@@ -132,24 +132,7 @@ export default function Discussions() {
 
   const t = text[language];
 
-  // Check if discussions module is enabled
-  if (!isModuleEnabled('discussions')) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
-            <p className="text-sm text-muted-foreground">
-              The Discussions module is not enabled for this community.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Fetch discussions from database
+  // Fetch discussions from database - MOVED BEFORE CONDITIONAL RETURN
   useEffect(() => {
     const fetchDiscussions = async () => {
       try {
@@ -234,6 +217,23 @@ export default function Discussions() {
       supabase.removeChannel(channel);
     };
   }, [language, toast]);
+
+  // Check if discussions module is enabled - MOVED AFTER ALL HOOKS
+  if (!isModuleEnabled('discussions')) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
+            <p className="text-sm text-muted-foreground">
+              The Discussions module is not enabled for this community.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Fetch comments for a discussion
   const fetchComments = async (discussionId: string) => {
