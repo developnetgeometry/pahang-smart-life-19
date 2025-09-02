@@ -755,9 +755,6 @@ export default function Marketplace() {
                 <span className="text-2xl font-bold text-primary">
                   RM{item.price.toLocaleString()}
                 </span>
-                <Button variant="ghost" size="sm">
-                  <Heart className={`h-4 w-4 ${item.isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
-                </Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
