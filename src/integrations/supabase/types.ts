@@ -328,6 +328,53 @@ export type Database = {
           },
         ]
       }
+      announcement_polls: {
+        Row: {
+          allow_multiple_votes: boolean
+          announcement_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          is_anonymous: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          allow_multiple_votes?: boolean
+          announcement_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_anonymous?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          allow_multiple_votes?: boolean
+          announcement_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_anonymous?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_polls_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcement_reactions: {
         Row: {
           announcement_id: string
@@ -795,6 +842,104 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_conflicts: {
+        Row: {
+          booking_id_1: string
+          booking_id_2: string
+          conflict_type: string
+          detected_at: string
+          id: string
+          resolution_notes: string | null
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+        }
+        Insert: {
+          booking_id_1: string
+          booking_id_2: string
+          conflict_type?: string
+          detected_at?: string
+          id?: string
+          resolution_notes?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+        }
+        Update: {
+          booking_id_1?: string
+          booking_id_2?: string
+          conflict_type?: string
+          detected_at?: string
+          id?: string
+          resolution_notes?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_conflicts_booking_id_1_fkey"
+            columns: ["booking_id_1"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_conflicts_booking_id_2_fkey"
+            columns: ["booking_id_2"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_reminders: {
+        Row: {
+          booking_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          notification_method: string
+          reminder_type: string
+          scheduled_for: string
+          sent_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          notification_method?: string
+          reminder_type?: string
+          scheduled_for: string
+          sent_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          notification_method?: string
+          reminder_type?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_reminders_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
         ]
@@ -2510,6 +2655,47 @@ export type Database = {
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facility_buffer_times: {
+        Row: {
+          buffer_after_minutes: number
+          buffer_before_minutes: number
+          cleaning_time_minutes: number
+          created_at: string
+          facility_id: string
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          buffer_after_minutes?: number
+          buffer_before_minutes?: number
+          cleaning_time_minutes?: number
+          created_at?: string
+          facility_id: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          buffer_after_minutes?: number
+          buffer_before_minutes?: number
+          cleaning_time_minutes?: number
+          created_at?: string
+          facility_id?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_buffer_times_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: true
+            referencedRelation: "facilities"
             referencedColumns: ["id"]
           },
         ]
@@ -4602,6 +4788,41 @@ export type Database = {
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      poll_options: {
+        Row: {
+          created_at: string
+          id: string
+          option_order: number
+          option_text: string
+          poll_id: string
+          vote_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_order?: number
+          option_text: string
+          poll_id: string
+          vote_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_order?: number
+          option_text?: string
+          poll_id?: string
+          vote_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_options_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "announcement_polls"
             referencedColumns: ["id"]
           },
         ]
