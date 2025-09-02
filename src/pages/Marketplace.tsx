@@ -185,7 +185,13 @@ export default function Marketplace() {
 
         const queryPromise = supabase
           .from('marketplace_items')
-          .select('*')
+          .select(`
+            *,
+            profiles!marketplace_items_seller_id_fkey (
+              full_name,
+              avatar_url
+            )
+          `)
           .eq('is_active', true)
           .order('created_at', { ascending: false })
           .limit(20); // Limit results for better performance
@@ -211,7 +217,7 @@ export default function Marketplace() {
           price: Number(item.price),
           category: item.category,
           condition: item.condition as 'new' | 'like-new' | 'good' | 'fair',
-          seller: 'Anonymous User',
+          seller: (item.profiles as any)?.full_name || 'Unknown User',
           sellerRating: 4.5,
           location: item.location || '',
           postedDate: new Date(item.created_at).toISOString().split('T')[0],
@@ -381,7 +387,13 @@ export default function Marketplace() {
         try {
           const { data, error } = await supabase
             .from('marketplace_items')
-            .select('*')
+            .select(`
+              *,
+              profiles!marketplace_items_seller_id_fkey (
+                full_name,
+                avatar_url
+              )
+            `)
             .eq('is_active', true)
             .order('created_at', { ascending: false });
 
@@ -403,7 +415,7 @@ export default function Marketplace() {
             price: Number(item.price),
             category: item.category,
             condition: item.condition as 'new' | 'like-new' | 'good' | 'fair',
-            seller: 'Anonymous User',
+            seller: (item.profiles as any)?.full_name || 'Unknown User',
             sellerRating: 4.5,
             location: item.location || '',
             postedDate: new Date(item.created_at).toISOString().split('T')[0],
