@@ -20,7 +20,6 @@ import {
   Line
 } from 'recharts';
 import { 
-  FileText, 
   Download, 
   TrendingUp, 
   Wrench, 
@@ -54,39 +53,12 @@ interface ReportData {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
-export default function MaintenanceReports() {
+export function MaintenanceReports() {
   const { user, language } = useAuth();
   const { toast } = useToast();
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState('30');
-  const [reportType, setReportType] = useState('overview');
-  const [chartColors, setChartColors] = useState<string[]>([]);
-
-  const fetchConfigurationData = async () => {
-    try {
-      // Fetch chart colors
-      const { data: colors, error: colorsError } = await supabase
-        .from('chart_colors')
-        .select('hex_color')
-        .eq('is_active', true)
-        .eq('category', 'chart')
-        .order('sort_order');
-
-      if (colorsError) throw colorsError;
-      setChartColors(colors?.map(c => c.hex_color) || ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']);
-
-    } catch (error) {
-      console.error('Error fetching configuration data:', error);
-      // Fallback to default colors
-      setChartColors(['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']);
-    }
-  };
-
-  useEffect(() => {
-    fetchConfigurationData();
-    fetchReportData();
-  }, [user, dateRange]);
 
   useEffect(() => {
     fetchReportData();
@@ -263,12 +235,9 @@ export default function MaintenanceReports() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <FileText className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">
-            {language === 'ms' ? 'Laporan Penyelenggaraan' : 'Maintenance Reports'}
-          </h1>
-        </div>
+        <h2 className="text-2xl font-bold text-foreground">
+          {language === 'ms' ? 'Laporan Penyelenggaraan' : 'Maintenance Reports'}
+        </h2>
         <div className="flex gap-2">
           <Select value={dateRange} onValueChange={setDateRange}>
             <SelectTrigger className="w-40">

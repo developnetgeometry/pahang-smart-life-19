@@ -11,13 +11,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from '@/hooks/use-toast';
 import { 
   Package, 
-  Calendar, 
   MapPin, 
   DollarSign, 
-  Wrench, 
   AlertTriangle,
   CheckCircle,
-  Clock,
   Search,
   Edit
 } from 'lucide-react';
@@ -45,7 +42,7 @@ interface Asset {
   updated_at: string;
 }
 
-export default function MaintenanceAssets() {
+export function MaintenanceAssets() {
   const { user, language } = useAuth();
   const { toast } = useToast();
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -183,12 +180,9 @@ export default function MaintenanceAssets() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center gap-2">
-        <Package className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold text-foreground">
-          {language === 'ms' ? 'Pengurusan Aset' : 'Asset Management'}
-        </h1>
-      </div>
+      <h2 className="text-2xl font-bold text-foreground">
+        {language === 'ms' ? 'Pengurusan Aset' : 'Asset Management'}
+      </h2>
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -444,23 +438,18 @@ export default function MaintenanceAssets() {
             </Card>
           );
         })}
+        
+        {filteredAssets.length === 0 && (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                {language === 'ms' ? 'Tiada aset dijumpai' : 'No assets found'}
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
-
-      {filteredAssets.length === 0 && (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              {language === 'ms' ? 'Tiada Aset Dijumpai' : 'No Assets Found'}
-            </h3>
-            <p className="text-muted-foreground">
-              {language === 'ms' 
-                ? 'Tiada aset yang sepadan dengan kriteria carian anda.'
-                : 'No assets match your search criteria.'}
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

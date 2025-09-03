@@ -38,11 +38,9 @@ import AnnouncementManagement from "./pages/admin/AnnouncementManagement";
 import FacilitiesManagement from "./pages/admin/FacilitiesManagement";
 import DiscussionManagement from "./pages/admin/DiscussionManagement";
 import VisitorSecurity from "./pages/VisitorSecurity";
-import VisitorAnalytics from "./pages/VisitorAnalytics";
+import VisitorAnalytics from "./pages/VisitorAnalytics";  
 import WorkOrdersManagement from "./pages/WorkOrdersManagement";
-import MaintenanceAssets from "./pages/MaintenanceAssets";
-import MaintenanceScheduler from "./pages/MaintenanceScheduler";
-import MaintenanceReports from "./pages/MaintenanceReports";
+import Maintenance from "./pages/Maintenance";
 import MaintenanceEmergency from "./pages/MaintenanceEmergency";
 import CommunicationHub from "./pages/CommunicationHub";
 import RoleManagement from "./pages/RoleManagement";
@@ -716,37 +714,11 @@ const App = () => (
               }
             />
             <Route
-              path="/maintenance-assets"
+              path="/maintenance"
               element={
                 <ProtectedRoute>
                   <RequireRoles roles={["maintenance_staff"]}>
-                    <Layout>
-                      <MaintenanceAssets />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/maintenance-scheduler"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["maintenance_staff"]}>
-                    <Layout>
-                      <MaintenanceScheduler />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/maintenance-reports"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["maintenance_staff"]}>
-                    <Layout>
-                      <MaintenanceReports />
-                    </Layout>
+                    <Maintenance />
                   </RequireRoles>
                 </ProtectedRoute>
               }
