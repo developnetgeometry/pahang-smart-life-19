@@ -49,6 +49,7 @@ export default function WorkOrdersManagement() {
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
+  const [detailViewOrder, setDetailViewOrder] = useState<WorkOrder | null>(null);
   const [statusUpdate, setStatusUpdate] = useState('');
   const [progressNotes, setProgressNotes] = useState('');
   
@@ -400,7 +401,11 @@ export default function WorkOrdersManagement() {
       {/* Work Orders List */}
       <div className="grid gap-4">
         {workOrders.map((order) => (
-          <Card key={order.id} className="hover:shadow-md transition-shadow">
+          <Card 
+            key={order.id} 
+            className="hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => setDetailViewOrder(order)}
+          >
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
@@ -434,7 +439,10 @@ export default function WorkOrdersManagement() {
                   <p>Type: {order.work_order_type}</p>
                 </div>
                 <Button 
-                  onClick={() => setSelectedOrder(order)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedOrder(order);
+                  }}
                   disabled={order.status === 'completed'}
                 >
                   {language === 'ms' ? 'Kemas Kini' : 'Update Status'}
@@ -506,6 +514,138 @@ export default function WorkOrdersManagement() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Work Order Detail Modal */}
+      {detailViewOrder && (
+        <Dialog open={!!detailViewOrder} onOpenChange={() => setDetailViewOrder(null)}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Wrench className="h-5 w-5" />
+                {language === 'ms' ? 'Butiran Pesanan Kerja' : 'Work Order Details'}
+              </DialogTitle>
+              <DialogDescription>
+                {language === 'ms' ? 'Maklumat lengkap pesanan kerja' : 'Complete work order information'}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Header Info */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {language === 'ms' ? 'ID Pesanan Kerja' : 'Work Order ID'}
+                  </Label>
+                  <p className="text-sm font-medium">{detailViewOrder.id}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {language === 'ms' ? 'Status' : 'Status'}
+                  </Label>
+                  <Badge className={getStatusColor(detailViewOrder.status)}>
+                    {detailViewOrder.status.replace('_', ' ').toUpperCase()}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {language === 'ms' ? 'Keutamaan' : 'Priority'}
+                  </Label>
+                  <Badge className={getPriorityColor(detailViewOrder.priority)}>
+                    {detailViewOrder.priority.toUpperCase()}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Title and Description */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {language === 'ms' ? 'Tajuk' : 'Title'}
+                  </Label>
+                  <p className="text-lg font-semibold">{detailViewOrder.title}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {language === 'ms' ? 'Penerangan' : 'Description'}
+                  </Label>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{detailViewOrder.description}</p>
+                </div>
+              </div>
+
+              {/* Work Order Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {language === 'ms' ? 'Jenis Kerja' : 'Work Type'}
+                  </Label>
+                  <p className="text-sm capitalize">{detailViewOrder.work_order_type}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {language === 'ms' ? 'Lokasi' : 'Location'}
+                  </Label>
+                  <div className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm">{detailViewOrder.location}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dates */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {language === 'ms' ? 'Tarikh Dibuat' : 'Created Date'}
+                  </Label>
+                  <p className="text-sm">{new Date(detailViewOrder.created_at).toLocaleString()}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {language === 'ms' ? 'Tarikh Dikemas Kini' : 'Last Updated'}
+                  </Label>
+                  <p className="text-sm">{new Date(detailViewOrder.updated_at).toLocaleString()}</p>
+                </div>
+              </div>
+
+              {/* Complaint Reference */}
+              {detailViewOrder.complaints && (
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {language === 'ms' ? 'Aduan Berkaitan' : 'Related Complaint'}
+                  </Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="outline">{detailViewOrder.complaints.category}</Badge>
+                    <p className="text-sm">{detailViewOrder.complaints.title}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-4 border-t">
+                {detailViewOrder.status !== 'completed' && (
+                  <Button 
+                    onClick={() => {
+                      setDetailViewOrder(null);
+                      setSelectedOrder(detailViewOrder);
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Clock className="h-4 w-4" />
+                    {language === 'ms' ? 'Kemas Kini Status' : 'Update Status'}
+                  </Button>
+                )}
+                <Button 
+                  variant="outline" 
+                  onClick={() => setDetailViewOrder(null)}
+                  className="flex-1"
+                >
+                  {language === 'ms' ? 'Tutup' : 'Close'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {workOrders.length === 0 && (
