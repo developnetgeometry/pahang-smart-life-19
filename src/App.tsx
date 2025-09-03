@@ -505,6 +505,16 @@ const App = () => (
               }
             />
             <Route
+              path="/admin/complaints-management"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ComplaintsManagement />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/complaints-analytics"
               element={
                 <ProtectedRoute>
