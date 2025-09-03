@@ -2623,6 +2623,95 @@ export type Database = {
           },
         ]
       }
+      emergency_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          alert_type: string
+          attachments: Json | null
+          community_id: string | null
+          coordinates: unknown | null
+          created_at: string
+          description: string | null
+          district_id: string | null
+          id: string
+          location: string
+          reporter_id: string | null
+          resolved_at: string | null
+          responder_id: string | null
+          response_notes: string | null
+          severity: string
+          status: string
+          title: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          alert_type: string
+          attachments?: Json | null
+          community_id?: string | null
+          coordinates?: unknown | null
+          created_at?: string
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          location: string
+          reporter_id?: string | null
+          resolved_at?: string | null
+          responder_id?: string | null
+          response_notes?: string | null
+          severity?: string
+          status?: string
+          title: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          alert_type?: string
+          attachments?: Json | null
+          community_id?: string | null
+          coordinates?: unknown | null
+          created_at?: string
+          description?: string | null
+          district_id?: string | null
+          id?: string
+          location?: string
+          reporter_id?: string | null
+          resolved_at?: string | null
+          responder_id?: string | null
+          response_notes?: string | null
+          severity?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emergency_alerts_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_alerts_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_alerts_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_alerts_responder_id_fkey"
+            columns: ["responder_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       emergency_contacts: {
         Row: {
           address: string | null
@@ -4732,6 +4821,102 @@ export type Database = {
           {
             foreignKeyName: "marketplace_conversations_seller_id_fkey"
             columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_disputes: {
+        Row: {
+          community_id: string | null
+          complainant_id: string
+          created_at: string
+          description: string
+          dispute_type: string
+          district_id: string | null
+          evidence_urls: Json | null
+          id: string
+          item_id: string | null
+          order_id: string | null
+          resolution: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          respondent_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          community_id?: string | null
+          complainant_id: string
+          created_at?: string
+          description: string
+          dispute_type: string
+          district_id?: string | null
+          evidence_urls?: Json | null
+          id?: string
+          item_id?: string | null
+          order_id?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          respondent_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          community_id?: string | null
+          complainant_id?: string
+          created_at?: string
+          description?: string
+          dispute_type?: string
+          district_id?: string | null
+          evidence_urls?: Json | null
+          id?: string
+          item_id?: string | null
+          order_id?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          respondent_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_disputes_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_disputes_complainant_id_fkey"
+            columns: ["complainant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_disputes_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_disputes_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_disputes_respondent_id_fkey"
+            columns: ["respondent_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -9038,6 +9223,110 @@ export type Database = {
             columns: ["visitor_id"]
             isOneToOne: false
             referencedRelation: "visitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_registrations: {
+        Row: {
+          actual_checkin: string | null
+          actual_checkout: string | null
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
+          community_id: string | null
+          created_at: string
+          district_id: string | null
+          host_id: string
+          host_unit: string
+          id: string
+          rejection_reason: string | null
+          security_notes: string | null
+          updated_at: string
+          visit_date: string
+          visit_purpose: string | null
+          visit_time_from: string
+          visit_time_to: string
+          visitor_ic: string | null
+          visitor_name: string
+          visitor_phone: string | null
+          visitor_vehicle: string | null
+        }
+        Insert: {
+          actual_checkin?: string | null
+          actual_checkout?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          community_id?: string | null
+          created_at?: string
+          district_id?: string | null
+          host_id: string
+          host_unit: string
+          id?: string
+          rejection_reason?: string | null
+          security_notes?: string | null
+          updated_at?: string
+          visit_date: string
+          visit_purpose?: string | null
+          visit_time_from: string
+          visit_time_to: string
+          visitor_ic?: string | null
+          visitor_name: string
+          visitor_phone?: string | null
+          visitor_vehicle?: string | null
+        }
+        Update: {
+          actual_checkin?: string | null
+          actual_checkout?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          community_id?: string | null
+          created_at?: string
+          district_id?: string | null
+          host_id?: string
+          host_unit?: string
+          id?: string
+          rejection_reason?: string | null
+          security_notes?: string | null
+          updated_at?: string
+          visit_date?: string
+          visit_purpose?: string | null
+          visit_time_from?: string
+          visit_time_to?: string
+          visitor_ic?: string | null
+          visitor_name?: string
+          visitor_phone?: string | null
+          visitor_vehicle?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_registrations_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_registrations_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_registrations_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_registrations_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
