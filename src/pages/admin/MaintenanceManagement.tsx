@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ import {
   Settings
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MaintenanceRequest {
   id: string;
@@ -178,76 +179,88 @@ export default function MaintenanceManagement() {
 
   const t = text[language];
 
-  const [requests, setRequests] = useState<MaintenanceRequest[]>([
-    {
-      id: '1',
-      title: language === 'en' ? 'Elevator malfunction on Floor 15' : 'Lif rosak di Tingkat 15',
-      description: language === 'en' ? 'Elevator stops between floors 14-15' : 'Lif terhenti di antara tingkat 14-15',
-      category: 'elevator',
-      priority: 'urgent',
-      status: 'in-progress',
-      requestedBy: 'John Doe',
-      assignedTo: 'Mike Wilson',
-      location: 'Block A, Floor 15',
-      createdDate: '2024-01-20',
-      dueDate: '2024-01-21',
-      estimatedCost: 2500
-    },
-    {
-      id: '2',
-      title: language === 'en' ? 'Water leak in parking garage' : 'Kebocoran air di garaj parkir',
-      description: language === 'en' ? 'Water dripping from ceiling pipes' : 'Air menitik dari paip siling',
-      category: 'plumbing',
-      priority: 'high',
-      status: 'pending',
-      requestedBy: 'Sarah Chen',
-      location: 'Basement Level B1',
-      createdDate: '2024-01-19',
-      dueDate: '2024-01-22',
-      estimatedCost: 800
-    },
-    {
-      id: '3',
-      title: language === 'en' ? 'Air conditioning not working' : 'Penghawa dingin tidak berfungsi',
-      description: language === 'en' ? 'AC unit in lobby not cooling properly' : 'Unit AC di lobi tidak menyejukkan dengan baik',
-      category: 'hvac',
-      priority: 'medium',
-      status: 'completed',
-      requestedBy: 'David Wong',
-      assignedTo: 'Lisa Rodriguez',
-      location: 'Ground Floor Lobby',
-      createdDate: '2024-01-18',
-      dueDate: '2024-01-20',
-      estimatedCost: 450
-    }
-  ]);
+  const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const mockTechnicians: Technician[] = [
-    {
-      id: '1',
-      name: 'Mike Wilson',
-      specialization: ['elevator', 'electrical'],
-      status: 'busy',
-      currentTasks: 2
-    },
-    {
-      id: '2',
-      name: 'Lisa Rodriguez',
-      specialization: ['hvac', 'general'],
-      status: 'available',
-      currentTasks: 0
-    },
-    {
-      id: '3',
-      name: 'Ahmad Hassan',
-      specialization: ['plumbing', 'general'],
-      status: 'available',
-      currentTasks: 1
-    }
-  ];
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  // Mock daily maintenance data
-  const dailyMaintenanceData: Record<number, Array<{
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch maintenance requests from work_orders and maintenance_requests
+      const { data: workOrders } = await supabase
+        .from('work_orders')
+        .select(`
+          id,
+          title,
+          description,
+          work_order_type,
+          priority,
+          status,
+          location,
+          created_at,
+          scheduled_date,
+          estimated_cost,
+          created_by,
+          profiles!work_orders_created_by_fkey(full_name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (workOrders) {
+        const formattedRequests: MaintenanceRequest[] = workOrders.map(order => ({
+          id: order.id,
+          title: order.title,
+          description: order.description || '',
+          category: order.work_order_type as any,
+          priority: order.priority as any,
+          status: order.status as any,
+          requestedBy: (order as any).profiles?.full_name || 'Unknown',
+          assignedTo: 'Unknown', // Will fetch technician info separately
+          location: order.location,
+          createdDate: new Date(order.created_at).toLocaleDateString(),
+          dueDate: order.scheduled_date ? new Date(order.scheduled_date).toLocaleDateString() : '',
+          estimatedCost: order.estimated_cost
+        }));
+        setRequests(formattedRequests);
+      }
+
+      // Fetch technicians
+      const { data: techData } = await supabase
+        .from('maintenance_technicians')
+        .select('*')
+        .eq('is_active', true);
+
+      if (techData) {
+        const formattedTechnicians: Technician[] = techData.map(tech => ({
+          id: tech.id,
+          name: tech.name,
+          specialization: tech.specialization || [],
+          status: tech.status as any,
+          currentTasks: tech.current_tasks || 0
+        }));
+        setTechnicians(formattedTechnicians);
+      }
+
+      // Fetch schedule data
+      await fetchScheduleData();
+
+      
+      // Also fetch schedule data for technicians tab
+      await fetchScheduleData();
+
+    } catch (error) {
+      console.error('Error fetching maintenance data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch schedule data from database
+  const [dailyMaintenanceData, setDailyMaintenanceData] = useState<Record<number, Array<{
     id: string;
     title: string;
     time: string;
@@ -255,78 +268,37 @@ export default function MaintenanceManagement() {
     status: 'scheduled' | 'in-progress' | 'completed';
     category: string;
     location: string;
-  }>> = {
-    5: [
-      {
-        id: '1',
-        title: 'Elevator inspection - Block A',
-        time: '09:00 - 11:00',
-        technician: 'Mike Wilson',
-        status: 'completed',
-        category: 'Elevator',
-        location: 'Block A'
-      },
-      {
-        id: '2',
-        title: 'Fire safety system check',
-        time: '14:00 - 15:00',
-        technician: 'Ahmad Hassan',
-        status: 'completed',
-        category: 'Safety',
-        location: 'Ground Floor'
+  }>>>({});
+
+  const fetchScheduleData = async () => {
+    try {
+      const { data: schedules } = await supabase
+        .from('maintenance_schedules')
+        .select('*')
+        .eq('status', 'scheduled');
+
+      if (schedules) {
+        const groupedData: Record<number, any[]> = {};
+        schedules.forEach(schedule => {
+          if (schedule.scheduled_date) {
+            const day = new Date(schedule.scheduled_date).getDate();
+            if (!groupedData[day]) groupedData[day] = [];
+            groupedData[day].push({
+              id: schedule.id,
+              title: schedule.title,
+              time: '09:00 - 11:00', // Default time range
+              technician: 'Assigned',
+              status: schedule.status,
+              category: schedule.maintenance_type,
+              location: 'Various'
+            });
+          }
+        });
+        setDailyMaintenanceData(groupedData);
       }
-    ],
-    12: [
-      {
-        id: '3',
-        title: 'HVAC filter replacement',
-        time: '10:00 - 12:00',
-        technician: 'Lisa Rodriguez',
-        status: 'in-progress',
-        category: 'HVAC',
-        location: 'All Floors'
-      },
-      {
-        id: '4',
-        title: 'Water pump maintenance',
-        time: '14:00 - 16:00',
-        technician: 'Ahmad Hassan',
-        status: 'scheduled',
-        category: 'Plumbing',
-        location: 'Basement'
-      }
-    ],
-    19: [
-      {
-        id: '5',
-        title: 'Generator testing',
-        time: '09:00 - 10:00',
-        technician: 'Mike Wilson',
-        status: 'scheduled',
-        category: 'Electrical',
-        location: 'Basement'
-      },
-      {
-        id: '6',
-        title: 'Lighting system check',
-        time: '16:00 - 17:00',
-        technician: 'Lisa Rodriguez',
-        status: 'scheduled',
-        category: 'Electrical',
-        location: 'Common Areas'
-      }
-    ],
-    26: [
-      {
-        id: '7',
-        title: 'Security system maintenance',
-        time: '20:00 - 22:00',
-        technician: 'Mike Wilson',
-        status: 'scheduled',
-        category: 'Security',
-        location: 'All Areas'
-      }
-    ]
+    } catch (error) {
+      console.error('Error fetching schedule data:', error);
+    }
   };
 
   const categories = [
@@ -463,6 +435,12 @@ export default function MaintenanceManagement() {
 
   return (
     <div className="space-y-6">
+      {loading ? (
+        <div className="flex justify-center items-center min-h-96">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
@@ -717,7 +695,7 @@ export default function MaintenanceManagement() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {mockTechnicians.map((tech) => (
+                {technicians.map((tech) => (
                   <Card key={tech.id}>
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
@@ -1066,6 +1044,8 @@ export default function MaintenanceManagement() {
           )}
         </DialogContent>
       </Dialog>
+        </>
+      )}
     </div>
   );
 }

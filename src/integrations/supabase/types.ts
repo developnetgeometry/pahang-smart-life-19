@@ -4688,6 +4688,45 @@ export type Database = {
           },
         ]
       }
+      maintenance_technicians: {
+        Row: {
+          created_at: string | null
+          current_tasks: number | null
+          district_id: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          specialization: string[] | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_tasks?: number | null
+          district_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          specialization?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_tasks?: number | null
+          district_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          specialization?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       marketplace_analytics: {
         Row: {
           avg_order_value: number | null

@@ -1,52 +1,64 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Wrench, Calendar, Clock, AlertCircle, CheckCircle, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from '@/integrations/supabase/client';
 
 interface MaintenanceTrackerWidgetProps {
   language: 'en' | 'ms';
 }
 
+interface MaintenanceRequest {
+  id: string;
+  title: string;
+  category: string;
+  status: string;
+  priority: string;
+  created_at: string;
+  assigned_to?: string;
+  technician_name?: string;
+}
+
 export function MaintenanceTrackerWidget({ language }: MaintenanceTrackerWidgetProps) {
   const navigate = useNavigate();
+  const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequest[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const maintenanceRequests = [
-    {
-      id: 'MR-2024-001',
-      title: language === 'en' ? 'Kitchen sink leak repair' : 'Pembaikan kebocoran sink dapur',
-      category: language === 'en' ? 'Plumbing' : 'Paip',
-      status: 'in_progress',
-      priority: 'high',
-      submitDate: '2024-01-15',
-      estimatedCompletion: '2024-01-18',
-      progress: 60,
-      assignedTo: language === 'en' ? 'Ahmad (Plumber)' : 'Ahmad (Tukang Paip)'
-    },
-    {
-      id: 'MR-2024-002',
-      title: language === 'en' ? 'Air conditioning service' : 'Servis penghawa dingin',
-      category: language === 'en' ? 'HVAC' : 'Penghawa Dingin',
-      status: 'scheduled',
-      priority: 'medium',
-      submitDate: '2024-01-16',
-      estimatedCompletion: '2024-01-20',
-      progress: 25,
-      assignedTo: language === 'en' ? 'Lim (HVAC Technician)' : 'Lim (Jurutera HVAC)'
-    },
-    {
-      id: 'MR-2024-003',
-      title: language === 'en' ? 'Light fixture replacement' : 'Penggantian lampu',
-      category: language === 'en' ? 'Electrical' : 'Elektrik',
-      status: 'completed',
-      priority: 'low',
-      submitDate: '2024-01-10',
-      estimatedCompletion: '2024-01-14',
-      progress: 100,
-      assignedTo: language === 'en' ? 'Rahman (Electrician)' : 'Rahman (Jurutera Elektrik)'
+  useEffect(() => {
+    fetchMaintenanceRequests();
+  }, []);
+
+  const fetchMaintenanceRequests = async () => {
+    try {
+      const { data: workOrders, error } = await supabase
+        .from('work_orders')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (error) throw error;
+
+      const formattedRequests = workOrders?.map(order => ({
+        id: order.id.slice(-8),
+        title: order.title,
+        category: order.work_order_type || 'General',
+        status: order.status,
+        priority: order.priority,
+        created_at: order.created_at,
+        assigned_to: order.assigned_to,
+        technician_name: 'Loading...'
+      })) || [];
+
+      setMaintenanceRequests(formattedRequests);
+    } catch (error) {
+      console.error('Error fetching maintenance requests:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -115,50 +127,72 @@ export function MaintenanceTrackerWidget({ language }: MaintenanceTrackerWidgetP
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {maintenanceRequests.map((request) => (
-          <div key={request.id} className="p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
-            <div className="flex justify-between items-start mb-2">
-              <div>
-                <h4 className="font-medium text-sm line-clamp-1">{request.title}</h4>
-                <p className="text-xs text-muted-foreground">{request.category}</p>
-              </div>
-              <div className="flex items-center gap-1">
-                {request.status === 'completed' && <CheckCircle className="w-3 h-3 text-green-600" />}
-                {request.status === 'in_progress' && <Clock className="w-3 h-3 text-blue-600" />}
-                {request.priority === 'high' && <AlertCircle className={`w-3 h-3 ${getPriorityColor(request.priority)}`} />}
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2 mb-2">
-              <Badge className={getStatusColor(request.status)}>
-                {getStatusText(request.status)}
-              </Badge>
-              <Badge variant="outline" className={getPriorityColor(request.priority)}>
-                {getPriorityText(request.priority)}
-              </Badge>
-            </div>
-            
-            {request.status !== 'completed' && (
-              <div className="mb-2">
-                <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                  <span>{language === 'en' ? 'Progress' : 'Kemajuan'}</span>
-                  <span>{request.progress}%</span>
-                </div>
-                <Progress value={request.progress} className="h-1" />
-              </div>
-            )}
-            
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                <span>{formatDate(request.submitDate)}</span>
-              </div>
-              <span className="line-clamp-1">
-                {request.assignedTo}
-              </span>
-            </div>
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
           </div>
-        ))}
+        ) : maintenanceRequests.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Wrench className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p>{language === 'en' ? 'No maintenance requests found' : 'Tiada permintaan penyelenggaraan'}</p>
+          </div>
+        ) : (
+          maintenanceRequests.map((request) => {
+            const progress = request.status === 'completed' ? 100 : 
+                           request.status === 'in_progress' ? 60 : 
+                           request.status === 'assigned' ? 25 : 0;
+                           
+            return (
+              <div key={request.id} className="p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h4 className="font-medium text-sm line-clamp-1">{request.title}</h4>
+                    <p className="text-xs text-muted-foreground">
+                      {request.category === 'maintenance' ? (language === 'en' ? 'Maintenance' : 'Penyelenggaraan') :
+                       request.category === 'repair' ? (language === 'en' ? 'Repair' : 'Pembaikan') :
+                       request.category === 'emergency' ? (language === 'en' ? 'Emergency' : 'Kecemasan') :
+                       request.category}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {request.status === 'completed' && <CheckCircle className="w-3 h-3 text-green-600" />}
+                    {request.status === 'in_progress' && <Clock className="w-3 h-3 text-blue-600" />}
+                    {(request.priority === 'high' || request.priority === 'urgent') && <AlertCircle className={`w-3 h-3 ${getPriorityColor(request.priority)}`} />}
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge className={getStatusColor(request.status)}>
+                    {getStatusText(request.status)}
+                  </Badge>
+                  <Badge variant="outline" className={getPriorityColor(request.priority)}>
+                    {getPriorityText(request.priority)}
+                  </Badge>
+                </div>
+                
+                {request.status !== 'completed' && progress > 0 && (
+                  <div className="mb-2">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                      <span>{language === 'en' ? 'Progress' : 'Kemajuan'}</span>
+                      <span>{progress}%</span>
+                    </div>
+                    <Progress value={progress} className="h-1" />
+                  </div>
+                )}
+                
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    <span>{formatDate(request.created_at)}</span>
+                  </div>
+                  <span className="line-clamp-1">
+                    {request.technician_name || (language === 'en' ? 'Unassigned' : 'Belum ditugaskan')}
+                  </span>
+                </div>
+              </div>
+            );
+          })
+        )}
         
         <Button 
           variant="outline" 

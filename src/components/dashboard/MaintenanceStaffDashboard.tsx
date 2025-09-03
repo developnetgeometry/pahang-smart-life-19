@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -244,25 +244,26 @@ export function MaintenanceStaffDashboard() {
     navigate('/facilities-management');
   };
 
-  const workMetrics = [
+  // State for fetched data
+  const [workMetrics, setWorkMetrics] = useState([
     {
       title: language === 'en' ? 'Open Work Orders' : 'Arahan Kerja Terbuka',
-      value: '8',
+      value: '0',
       icon: Wrench,
-      trend: '3 high priority'
+      trend: '0 high priority'
     },
     {
       title: language === 'en' ? "Today's Tasks" : 'Tugas Hari Ini',
-      value: '3',
+      value: '0',
       icon: Calendar,
-      trend: '2 completed'
+      trend: '0 completed'
     },
     {
       title: language === 'en' ? 'Completion Rate' : 'Kadar Penyelesaian',
-      value: '94%',
+      value: '0%',
       icon: CheckCircle,
       trend: 'This month',
-      status: 94
+      status: 0
     },
     {
       title: language === 'en' ? 'Safety Incidents' : 'Insiden Keselamatan',
@@ -270,58 +271,114 @@ export function MaintenanceStaffDashboard() {
       icon: Shield,
       trend: 'This month ✓'
     }
-  ];
+  ]);
 
-  const inventoryAlerts = [
-    {
-      item: 'LED Bulbs',
-      status: 'low_stock',
-      quantity: 8,
-      message: language === 'en' ? 'Low stock (8 remaining)' : 'Stok rendah (8 berbaki)'
-    },
-    {
-      item: 'AC Filters',
-      status: 'reorder',
-      quantity: 2,
-      message: language === 'en' ? 'Reorder needed' : 'Perlu tempah semula'
-    },
-    {
-      item: 'Paint (White)',
-      status: 'ok',
-      quantity: 15,
-      message: language === 'en' ? 'Adequate stock' : 'Stok mencukupi'
-    }
-  ];
+  const [inventoryAlerts, setInventoryAlerts] = useState<any[]>([]);
+  const [workOrders, setWorkOrders] = useState<any[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
 
-  const workOrders = [
-    {
-      id: 'WO-2024-001',
-      title: language === 'en' ? 'Elevator maintenance' : 'Penyelenggaraan lif',
-      location: 'Building B',
-      priority: 'high',
-      status: 'in_progress',
-      assignedDate: '2024-02-15',
-      dueDate: '2024-02-16'
-    },
-    {
-      id: 'WO-2024-002',
-      title: language === 'en' ? 'Plumbing repair' : 'Pembaikan paip',
-      location: 'Unit A-12-05',
-      priority: 'medium',
-      status: 'pending',
-      assignedDate: '2024-02-14',
-      dueDate: '2024-02-17'
-    },
-    {
-      id: 'WO-2024-003',
-      title: language === 'en' ? 'Garden maintenance' : 'Penyelenggaraan taman',
-      location: 'Landscape Area',
-      priority: 'low',
-      status: 'scheduled',
-      assignedDate: '2024-02-13',
-      dueDate: '2024-02-20'
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData();
     }
-  ];
+  }, [user, language]);
+
+  const fetchDashboardData = async () => {
+    try {
+      setDataLoading(true);
+      
+      // Fetch work orders assigned to current user or in their district
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('district_id')
+        .eq('id', user?.id)
+        .single();
+
+      // Fetch work orders
+      const { data: orders } = await supabase
+        .from('work_orders')
+        .select('*')
+        .or(`assigned_to.eq.${user?.id},district_id.eq.${userProfile?.district_id}`)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (orders) {
+        const formattedOrders = orders.map(order => ({
+          id: order.id.slice(-8),
+          title: order.title,
+          location: order.location,
+          priority: order.priority,
+          status: order.status,
+          assignedDate: new Date(order.created_at).toLocaleDateString(),
+          dueDate: order.scheduled_date ? new Date(order.scheduled_date).toLocaleDateString() : 'TBD'
+        }));
+        setWorkOrders(formattedOrders);
+
+        // Update metrics
+        const openOrders = orders.filter(o => o.status !== 'completed').length;
+        const todayTasks = orders.filter(o => {
+          const today = new Date().toDateString();
+          return o.scheduled_date && new Date(o.scheduled_date).toDateString() === today;
+        }).length;
+        const completedToday = orders.filter(o => {
+          const today = new Date().toDateString();
+          return o.completed_at && new Date(o.completed_at).toDateString() === today;
+        }).length;
+        const highPriority = orders.filter(o => o.priority === 'high' || o.priority === 'urgent').length;
+        
+        setWorkMetrics([
+          {
+            title: language === 'en' ? 'Open Work Orders' : 'Arahan Kerja Terbuka',
+            value: openOrders.toString(),
+            icon: Wrench,
+            trend: `${highPriority} high priority`
+          },
+          {
+            title: language === 'en' ? "Today's Tasks" : 'Tugas Hari Ini',
+            value: todayTasks.toString(),
+            icon: Calendar,
+            trend: `${completedToday} completed`
+          },
+          {
+            title: language === 'en' ? 'Completion Rate' : 'Kadar Penyelesaian',
+            value: orders.length > 0 ? `${Math.round((orders.filter(o => o.status === 'completed').length / orders.length) * 100)}%` : '0%',
+            icon: CheckCircle,
+            trend: 'This month',
+            status: orders.length > 0 ? Math.round((orders.filter(o => o.status === 'completed').length / orders.length) * 100) : 0
+          },
+          {
+            title: language === 'en' ? 'Safety Incidents' : 'Insiden Keselamatan',
+            value: '0',
+            icon: Shield,
+            trend: 'This month ✓'
+          }
+        ]);
+      }
+
+      // Fetch inventory alerts
+      const { data: inventory } = await supabase
+        .from('inventory_items')
+        .select('*')
+        .lte('current_stock', 'minimum_stock');
+
+      if (inventory) {
+        const alerts = inventory.slice(0, 3).map(item => ({
+          item: item.name,
+          status: item.current_stock === 0 ? 'reorder' : 'low_stock',
+          quantity: item.current_stock,
+          message: item.current_stock === 0 
+            ? (language === 'en' ? 'Out of stock - reorder needed' : 'Kehabisan stok - perlu tempah semula')
+            : (language === 'en' ? `Low stock (${item.current_stock} remaining)` : `Stok rendah (${item.current_stock} berbaki)`)
+        }));
+        setInventoryAlerts(alerts);
+      }
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setDataLoading(false);
+    }
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
