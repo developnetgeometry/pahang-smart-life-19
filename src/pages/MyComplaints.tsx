@@ -315,13 +315,54 @@ export default function MyComplaints() {
                       <SelectValue placeholder={language === 'en' ? 'Select category' : 'Pilih kategori'} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="maintenance">{language === 'en' ? 'Maintenance' : 'Penyelenggaraan'}</SelectItem>
-                      <SelectItem value="security">{language === 'en' ? 'Security' : 'Keselamatan'}</SelectItem>
-                      <SelectItem value="facilities">{language === 'en' ? 'Facilities' : 'Kemudahan'}</SelectItem>
-                      <SelectItem value="noise">{language === 'en' ? 'Noise' : 'Bunyi Bising'}</SelectItem>
-                      <SelectItem value="general">{language === 'en' ? 'General' : 'Umum'}</SelectItem>
+                      <SelectItem value="maintenance">
+                        <div className="flex flex-col">
+                          <span>{language === 'en' ? 'Maintenance' : 'Penyelenggaraan'}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {language === 'en' ? 'Assigned to maintenance staff' : 'Diserahkan kepada kakitangan penyelenggaraan'}
+                          </span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="security">
+                        <div className="flex flex-col">
+                          <span>{language === 'en' ? 'Security' : 'Keselamatan'}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {language === 'en' ? 'Assigned to security officers' : 'Diserahkan kepada pegawai keselamatan'}
+                          </span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="facilities">
+                        <div className="flex flex-col">
+                          <span>{language === 'en' ? 'Facilities' : 'Kemudahan'}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {language === 'en' ? 'Assigned to facility managers' : 'Diserahkan kepada pengurus kemudahan'}
+                          </span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="noise">
+                        <div className="flex flex-col">
+                          <span>{language === 'en' ? 'Noise' : 'Bunyi Bising'}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {language === 'en' ? 'Assigned to community admin' : 'Diserahkan kepada pentadbir komuniti'}
+                          </span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="general">
+                        <div className="flex flex-col">
+                          <span>{language === 'en' ? 'General' : 'Umum'}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {language === 'en' ? 'Assigned to community admin' : 'Diserahkan kepada pentadbir komuniti'}
+                          </span>
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {language === 'en' 
+                      ? 'Your complaint will be automatically assigned to the appropriate team based on category'
+                      : 'Aduan anda akan diserahkan secara automatik kepada pasukan yang sesuai berdasarkan kategori'
+                    }
+                  </p>
                 </div>
                 
                 <div className="space-y-2">
