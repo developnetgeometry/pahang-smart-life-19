@@ -9261,6 +9261,15 @@ export type Database = {
         }
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      get_sla_timeout: {
+        Args: {
+          p_category: string
+          p_level?: number
+          p_module_name: string
+          p_priority: string
+        }
+        Returns: number
+      }
       get_user_community: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -9348,6 +9357,18 @@ export type Database = {
       is_module_enabled_for_district: {
         Args: { district_id?: string; module_name: string }
         Returns: boolean
+      }
+      manage_workflow_state: {
+        Args: {
+          p_assigned_role?: Database["public"]["Enums"]["enhanced_user_role"]
+          p_assigned_to?: string
+          p_category?: string
+          p_priority?: string
+          p_reference_id: string
+          p_reference_table: string
+          p_status: string
+        }
+        Returns: string
       }
       mark_complaint_notification_read: {
         Args: { notification_id: string }
