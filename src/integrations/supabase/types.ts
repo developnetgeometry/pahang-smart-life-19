@@ -2696,6 +2696,52 @@ export type Database = {
           },
         ]
       }
+      escalation_rules: {
+        Row: {
+          category: string | null
+          conditions: Json | null
+          created_at: string | null
+          from_level: number
+          from_roles: Database["public"]["Enums"]["enhanced_user_role"][] | null
+          id: string
+          is_active: boolean | null
+          module_name: string
+          priority: string
+          to_level: number
+          to_roles: Database["public"]["Enums"]["enhanced_user_role"][] | null
+        }
+        Insert: {
+          category?: string | null
+          conditions?: Json | null
+          created_at?: string | null
+          from_level: number
+          from_roles?:
+            | Database["public"]["Enums"]["enhanced_user_role"][]
+            | null
+          id?: string
+          is_active?: boolean | null
+          module_name: string
+          priority: string
+          to_level: number
+          to_roles?: Database["public"]["Enums"]["enhanced_user_role"][] | null
+        }
+        Update: {
+          category?: string | null
+          conditions?: Json | null
+          created_at?: string | null
+          from_level?: number
+          from_roles?:
+            | Database["public"]["Enums"]["enhanced_user_role"][]
+            | null
+          id?: string
+          is_active?: boolean | null
+          module_name?: string
+          priority?: string
+          to_level?: number
+          to_roles?: Database["public"]["Enums"]["enhanced_user_role"][] | null
+        }
+        Relationships: []
+      }
       event_registrations: {
         Row: {
           attendance_status: string | null
@@ -4948,6 +4994,57 @@ export type Database = {
           },
         ]
       }
+      module_activities: {
+        Row: {
+          activity_type: string
+          created_at: string | null
+          description: string
+          id: string
+          metadata: Json | null
+          module_name: string
+          new_state: Json | null
+          performed_by: string | null
+          performed_by_role:
+            | Database["public"]["Enums"]["enhanced_user_role"]
+            | null
+          previous_state: Json | null
+          reference_id: string
+          reference_table: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string | null
+          description: string
+          id?: string
+          metadata?: Json | null
+          module_name: string
+          new_state?: Json | null
+          performed_by?: string | null
+          performed_by_role?:
+            | Database["public"]["Enums"]["enhanced_user_role"]
+            | null
+          previous_state?: Json | null
+          reference_id: string
+          reference_table: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          metadata?: Json | null
+          module_name?: string
+          new_state?: Json | null
+          performed_by?: string | null
+          performed_by_role?:
+            | Database["public"]["Enums"]["enhanced_user_role"]
+            | null
+          previous_state?: Json | null
+          reference_id?: string
+          reference_table?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           announcements: boolean | null
@@ -4996,6 +5093,51 @@ export type Database = {
           security?: boolean | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      notification_routing: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          delay_minutes: number | null
+          event_type: string
+          id: string
+          is_active: boolean | null
+          module_name: string
+          notification_methods: string[] | null
+          priority: string | null
+          target_roles:
+            | Database["public"]["Enums"]["enhanced_user_role"][]
+            | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          delay_minutes?: number | null
+          event_type: string
+          id?: string
+          is_active?: boolean | null
+          module_name: string
+          notification_methods?: string[] | null
+          priority?: string | null
+          target_roles?:
+            | Database["public"]["Enums"]["enhanced_user_role"][]
+            | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          delay_minutes?: number | null
+          event_type?: string
+          id?: string
+          is_active?: boolean | null
+          module_name?: string
+          notification_methods?: string[] | null
+          priority?: string | null
+          target_roles?:
+            | Database["public"]["Enums"]["enhanced_user_role"][]
+            | null
         }
         Relationships: []
       }
@@ -7596,6 +7738,45 @@ export type Database = {
           },
         ]
       }
+      sla_configurations: {
+        Row: {
+          auto_escalation_enabled: boolean | null
+          category: string | null
+          created_at: string | null
+          id: string
+          level_0_timeout_hours: number | null
+          level_1_timeout_hours: number | null
+          level_2_timeout_hours: number | null
+          module_name: string
+          priority: string
+          updated_at: string | null
+        }
+        Insert: {
+          auto_escalation_enabled?: boolean | null
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          level_0_timeout_hours?: number | null
+          level_1_timeout_hours?: number | null
+          level_2_timeout_hours?: number | null
+          module_name: string
+          priority: string
+          updated_at?: string | null
+        }
+        Update: {
+          auto_escalation_enabled?: boolean | null
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          level_0_timeout_hours?: number | null
+          level_1_timeout_hours?: number | null
+          level_2_timeout_hours?: number | null
+          module_name?: string
+          priority?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       staff: {
         Row: {
           address: string | null
@@ -8905,6 +9086,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      workflow_states: {
+        Row: {
+          assigned_role:
+            | Database["public"]["Enums"]["enhanced_user_role"]
+            | null
+          assigned_to: string | null
+          created_at: string | null
+          current_level: number | null
+          escalation_count: number | null
+          id: string
+          is_overdue: boolean | null
+          last_escalated_at: string | null
+          reference_id: string
+          reference_table: string
+          sla_due_at: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_role?:
+            | Database["public"]["Enums"]["enhanced_user_role"]
+            | null
+          assigned_to?: string | null
+          created_at?: string | null
+          current_level?: number | null
+          escalation_count?: number | null
+          id?: string
+          is_overdue?: boolean | null
+          last_escalated_at?: string | null
+          reference_id: string
+          reference_table: string
+          sla_due_at?: string | null
+          status: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_role?:
+            | Database["public"]["Enums"]["enhanced_user_role"]
+            | null
+          assigned_to?: string | null
+          created_at?: string | null
+          current_level?: number | null
+          escalation_count?: number | null
+          id?: string
+          is_overdue?: boolean | null
+          last_escalated_at?: string | null
+          reference_id?: string
+          reference_table?: string
+          sla_due_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
