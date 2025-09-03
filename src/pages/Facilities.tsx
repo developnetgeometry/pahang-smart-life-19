@@ -339,13 +339,56 @@ export default function Facilities() {
   };
 
   const handleConfirmBooking = async () => {
-    if (!selectedFacility || !user) return;
+    if (!selectedFacility || !user) {
+      toast({
+        variant: 'destructive',
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' ? 'Please try again' : 'Sila cuba lagi'
+      });
+      return;
+    }
 
-    // Calculate duration
+    // Validate required fields
+    if (!bookingData.date || !bookingData.startTime || !bookingData.endTime || !bookingData.purpose) {
+      toast({
+        variant: 'destructive',
+        title: language === 'en' ? 'Missing Information' : 'Maklumat Kurang',
+        description: language === 'en' 
+          ? 'Please fill in all required fields (date, start time, end time, and purpose).'
+          : 'Sila isikan semua medan yang diperlukan (tarikh, masa mula, masa tamat, dan tujuan).'
+      });
+      return;
+    }
+
+    // Validate time range
     const startTime = new Date(`${bookingData.date}T${bookingData.startTime}`);
     const endTime = new Date(`${bookingData.date}T${bookingData.endTime}`);
-    const durationHours = Math.ceil((endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60));
     
+    if (endTime <= startTime) {
+      toast({
+        variant: 'destructive',
+        title: language === 'en' ? 'Invalid Time Range' : 'Masa Tidak Sah',
+        description: language === 'en' 
+          ? 'End time must be after start time.'
+          : 'Masa tamat mesti selepas masa mula.'
+      });
+      return;
+    }
+
+    // Validate booking is not in the past
+    const now = new Date();
+    if (startTime < now) {
+      toast({
+        variant: 'destructive',
+        title: language === 'en' ? 'Invalid Date/Time' : 'Tarikh/Masa Tidak Sah',
+        description: language === 'en' 
+          ? 'Cannot book for past dates or times.'
+          : 'Tidak boleh menempah untuk tarikh atau masa yang lalu.'
+      });
+      return;
+    }
+
+    const durationHours = Math.ceil((endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60));
     const totalAmount = selectedFacility.hourlyRate ? selectedFacility.hourlyRate * durationHours : 0;
 
     try {
@@ -364,7 +407,10 @@ export default function Facilities() {
           status: 'pending'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
       toast({
         title: t.bookingSuccess,
@@ -382,8 +428,8 @@ export default function Facilities() {
         variant: 'destructive',
         title: language === 'en' ? 'Booking Failed' : 'Tempahan Gagal',
         description: language === 'en' 
-          ? 'There was an error creating your booking. Please try again.'
-          : 'Terdapat ralat semasa mencipta tempahan anda. Sila cuba lagi.'
+          ? `Failed to create booking: ${error.message || 'Unknown error'}. Please try again.`
+          : `Gagal mencipta tempahan: ${error.message || 'Ralat tidak diketahui'}. Sila cuba lagi.`
       });
     }
   };
