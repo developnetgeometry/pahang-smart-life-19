@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ZoomIn, ZoomOut, RotateCcw, Search, Square, Edit, Trash2, Save, Eye } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ZoomIn, ZoomOut, RotateCcw, Search, Square, Edit, Trash2, Save, Eye, MapPin, Users, Phone, Mail } from 'lucide-react';
 import { useUnits, Unit } from '@/hooks/use-units';
 import { useFloorPlans } from '@/hooks/use-floor-plans';
 import { toast } from 'sonner';
@@ -380,163 +381,280 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
         )}
       </CardHeader>
       
-      <CardContent className="p-0 h-full">
-        <div 
-          ref={containerRef}
-          className={`relative w-full h-full overflow-hidden select-none ${
-            isDrawingMode ? 'cursor-crosshair' : isDragging ? 'cursor-grabbing' : 'cursor-grab'
-          }`}
-          onWheel={handleWheel}
-          onScroll={(e) => e.preventDefault()}
-          onTouchMove={(e) => e.preventDefault()}
-          style={{ touchAction: 'none', overscrollBehavior: 'contain' }}
-        >
-          <div 
-            className="relative"
-            style={{
-              transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-              transformOrigin: 'center center',
-              transition: isDragging ? 'none' : 'transform 0.1s ease-out'
-            }}
-          >
-            <img
-              ref={imageRef}
-            src={currentImageUrl}
-            alt="Interactive floor plan"
-              className="w-full h-auto select-none"
-              draggable={false}
-              onLoad={() => setImageLoaded(true)}
-              onError={() => {
-                console.error('Failed to load image:', imageUrl);
-                setImageLoaded(false);
-              }}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-            />
-            
-            {/* Drawing overlay for current box being drawn */}
-            {drawingBox && isDrawingActive && (
-              <div
-                className="absolute border-2 border-dashed border-blue-500 bg-blue-500/10"
-                style={{
-                  left: `${Math.min(drawingBox.startX, drawingBox.endX)}%`,
-                  top: `${Math.min(drawingBox.startY, drawingBox.endY)}%`,
-                  width: `${Math.abs(drawingBox.endX - drawingBox.startX)}%`,
-                  height: `${Math.abs(drawingBox.endY - drawingBox.startY)}%`,
-                  pointerEvents: 'none'
-                }}
-              />
-            )}
-            
-            {/* Unit markers */}
-            {imageLoaded && !loading && filteredUnits.map((unit) => {
-              // Ensure reasonable sizing with minimums and maximums to prevent overlaps
-              const unitWidth = Math.min(Math.max(unit.width || 3, 2), 8); // Min 2%, Max 8%
-              const unitHeight = Math.min(Math.max(unit.height || 2, 1.5), 6); // Min 1.5%, Max 6%
-              
-              return (
-                <div
-                  key={unit.id}
-                  className={`absolute cursor-pointer transition-all duration-200 ${
-                    isAdminMode 
-                      ? `border-2 ${getUnitTypeColor(unit.unit_type)} hover:border-4`
-                      : 'hover:bg-blue-500/20 rounded-full' // For residents: invisible clickable area with hover effect
-                  }`}
+      <CardContent className="p-4 h-full">
+        <Tabs defaultValue="map" className="w-full h-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="map" className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Map View
+            </TabsTrigger>
+            <TabsTrigger value="owners" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Community Owners
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="map" className="mt-4 h-full">
+            <div className="h-full">
+              <div 
+                ref={containerRef}
+                className={`relative w-full h-full overflow-hidden select-none ${
+                  isDrawingMode ? 'cursor-crosshair' : isDragging ? 'cursor-grabbing' : 'cursor-grab'
+                }`}
+                onWheel={handleWheel}
+                onScroll={(e) => e.preventDefault()}
+                onTouchMove={(e) => e.preventDefault()}
+                style={{ touchAction: 'none', overscrollBehavior: 'contain' }}
+              >
+                <div 
+                  className="relative"
                   style={{
-                    left: `${unit.coordinates_x}%`,
-                    top: `${unit.coordinates_y}%`,
-                    width: isAdminMode ? `${unitWidth}%` : '20px', // Small clickable area for residents
-                    height: isAdminMode ? `${unitHeight}%` : '20px', // Small clickable area for residents
-                    transform: 'translate(-50%, -50%)',
-                    margin: isAdminMode ? '1px' : '0'
+                    transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                    transformOrigin: 'center center',
+                    transition: isDragging ? 'none' : 'transform 0.1s ease-out'
                   }}
-                  onClick={(e) => handleUnitClick(e, unit)}
-                  title={`${unit.unit_number} - ${unit.owner_name}`}
                 >
-                  {isAdminMode && (
-                    <>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-[10px] font-medium text-white bg-black/70 px-0.5 py-0 rounded-sm whitespace-nowrap overflow-hidden">
-                          {unit.unit_number}
-                        </span>
-                      </div>
-                      <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-6 h-6 p-0 bg-white"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // Show unit information instead of deleting
-                            setSelectedUnit(unit);
-                          }}
-                        >
-                          <Eye className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </>
+                  <img
+                    ref={imageRef}
+                    src={currentImageUrl}
+                    alt="Interactive floor plan"
+                    className="w-full h-auto select-none"
+                    draggable={false}
+                    onLoad={() => setImageLoaded(true)}
+                    onError={() => {
+                      console.error('Failed to load image:', imageUrl);
+                      setImageLoaded(false);
+                    }}
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                  />
+                  
+                  {/* Drawing overlay for current box being drawn */}
+                  {drawingBox && isDrawingActive && (
+                    <div
+                      className="absolute border-2 border-dashed border-blue-500 bg-blue-500/10"
+                      style={{
+                        left: `${Math.min(drawingBox.startX, drawingBox.endX)}%`,
+                        top: `${Math.min(drawingBox.startY, drawingBox.endY)}%`,
+                        width: `${Math.abs(drawingBox.endX - drawingBox.startX)}%`,
+                        height: `${Math.abs(drawingBox.endY - drawingBox.startY)}%`,
+                        pointerEvents: 'none'
+                      }}
+                    />
                   )}
-                  {!isAdminMode && (
-                    <div className="w-2 h-2 bg-blue-500 rounded-full opacity-60 hover:opacity-100 transition-opacity" />
+                  
+                  {/* Unit markers */}
+                  {imageLoaded && !loading && filteredUnits.map((unit) => {
+                    // Ensure reasonable sizing with minimums and maximums to prevent overlaps
+                    const unitWidth = Math.min(Math.max(unit.width || 3, 2), 8); // Min 2%, Max 8%
+                    const unitHeight = Math.min(Math.max(unit.height || 2, 1.5), 6); // Min 1.5%, Max 6%
+                    
+                    return (
+                      <div
+                        key={unit.id}
+                        className={`absolute cursor-pointer transition-all duration-200 ${
+                          isAdminMode 
+                            ? `border-2 ${getUnitTypeColor(unit.unit_type)} hover:border-4`
+                            : 'hover:bg-blue-500/20 rounded-full' // For residents: invisible clickable area with hover effect
+                        }`}
+                        style={{
+                          left: `${unit.coordinates_x}%`,
+                          top: `${unit.coordinates_y}%`,
+                          width: isAdminMode ? `${unitWidth}%` : '20px', // Small clickable area for residents
+                          height: isAdminMode ? `${unitHeight}%` : '20px', // Small clickable area for residents
+                          transform: 'translate(-50%, -50%)',
+                          margin: isAdminMode ? '1px' : '0'
+                        }}
+                        onClick={(e) => handleUnitClick(e, unit)}
+                        title={`${unit.unit_number} - ${unit.owner_name}`}
+                      >
+                        {isAdminMode && (
+                          <>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-[10px] font-medium text-white bg-black/70 px-0.5 py-0 rounded-sm whitespace-nowrap overflow-hidden">
+                                {unit.unit_number}
+                              </span>
+                            </div>
+                            <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="w-6 h-6 p-0 bg-white"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Show unit information instead of deleting
+                                  setSelectedUnit(unit);
+                                }}
+                              >
+                                <Eye className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </>
+                        )}
+                        {!isAdminMode && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full opacity-60 hover:opacity-100 transition-opacity" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Loading indicator */}
+                {(!imageLoaded || loading) && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                      <p className="text-sm text-gray-500">
+                        {loading ? 'Loading units...' : 'Loading community map...'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Legend */}
+                <div 
+                  className={`absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-200 cursor-pointer transition-all duration-300 hover:shadow-2xl ${
+                    isLegendExpanded ? 'p-3' : 'p-2'
+                  }`}
+                  onClick={() => setIsLegendExpanded(!isLegendExpanded)}
+                >
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-semibold text-sm text-gray-800">Legend</h4>
+                    <div className={`transition-transform duration-300 text-gray-600 ${isLegendExpanded ? 'rotate-180' : ''}`}>
+                      ↑
+                    </div>
+                  </div>
+                  
+                  <div className={`transition-all duration-300 overflow-hidden ${
+                    isLegendExpanded ? 'max-h-32 opacity-100 mt-2' : 'max-h-0 opacity-0'
+                  }`}>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-4 h-4 rounded ${getUnitTypeBadge('residential')}`}></div>
+                        <span className="text-sm text-gray-700">Residential</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-4 h-4 rounded ${getUnitTypeBadge('commercial')}`}></div>
+                        <span className="text-sm text-gray-700">Commercial</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-4 h-4 rounded ${getUnitTypeBadge('facility')}`}></div>
+                        <span className="text-sm text-gray-700">Facility</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Zoom indicator */}
+                <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg">
+                  <span className="text-xs font-mono">{Math.round(scale * 100)}%</span>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="owners" className="mt-4 h-full">
+            <div className="h-full overflow-auto">
+              <div className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search owners..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8"
+                  />
+                </div>
+              </div>
+              
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                    <p className="text-sm text-gray-500">Loading owners...</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {filteredUnits.map((unit) => (
+                    <Card key={unit.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedUnit(unit)}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-lg">{unit.owner_name}</h3>
+                              <Badge className={getUnitTypeBadge(unit.unit_type)}>
+                                {unit.unit_type}
+                              </Badge>
+                              <Badge variant={unit.occupancy_status === 'occupied' ? 'default' : 'secondary'}>
+                                {unit.occupancy_status}
+                              </Badge>
+                            </div>
+                            
+                            <div className="space-y-1 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-2">
+                                <MapPin className="h-4 w-4" />
+                                <span>Unit {unit.unit_number}</span>
+                              </div>
+                              
+                              {unit.address && (
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-4 w-4" />
+                                  <span>{unit.address}</span>
+                                </div>
+                              )}
+                              
+                              {unit.phone_number && (
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-4 w-4" />
+                                  <span>{unit.phone_number}</span>
+                                </div>
+                              )}
+                              
+                              {unit.email && (
+                                <div className="flex items-center gap-2">
+                                  <Mail className="h-4 w-4" />
+                                  <span>{unit.email}</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {unit.notes && (
+                              <div className="mt-2 text-sm text-gray-600">
+                                <strong>Notes:</strong> {unit.notes}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="ml-4">
+                            <Button variant="outline" size="sm" onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedUnit(unit);
+                            }}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  
+                  {filteredUnits.length === 0 && !loading && (
+                    <div className="text-center py-12">
+                      <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">No Owners Found</h3>
+                      <p className="text-muted-foreground">
+                        {searchTerm ? 'No owners match your search criteria.' : 'No owners have been added to this community yet.'}
+                      </p>
+                    </div>
                   )}
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Loading indicator */}
-          {(!imageLoaded || loading) && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                <p className="text-sm text-gray-500">
-                  {loading ? 'Loading units...' : 'Loading community map...'}
-                </p>
-              </div>
+              )}
             </div>
-          )}
-
-          {/* Legend */}
-          <div 
-            className={`absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-200 cursor-pointer transition-all duration-300 hover:shadow-2xl ${
-              isLegendExpanded ? 'p-3' : 'p-2'
-            }`}
-            onClick={() => setIsLegendExpanded(!isLegendExpanded)}
-          >
-            <div className="flex items-center gap-2">
-              <h4 className="font-semibold text-sm text-gray-800">Legend</h4>
-              <div className={`transition-transform duration-300 text-gray-600 ${isLegendExpanded ? 'rotate-180' : ''}`}>
-                ↑
-              </div>
-            </div>
-            
-            <div className={`transition-all duration-300 overflow-hidden ${
-              isLegendExpanded ? 'max-h-32 opacity-100 mt-2' : 'max-h-0 opacity-0'
-            }`}>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className={`w-4 h-4 rounded ${getUnitTypeBadge('residential')}`}></div>
-                  <span className="text-sm text-gray-700">Residential</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-4 h-4 rounded ${getUnitTypeBadge('commercial')}`}></div>
-                  <span className="text-sm text-gray-700">Commercial</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-4 h-4 rounded ${getUnitTypeBadge('facility')}`}></div>
-                  <span className="text-sm text-gray-700">Facility</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Zoom indicator */}
-          <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg">
-            <span className="text-xs font-mono">{Math.round(scale * 100)}%</span>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
 
       {/* Unit Form Dialog */}
