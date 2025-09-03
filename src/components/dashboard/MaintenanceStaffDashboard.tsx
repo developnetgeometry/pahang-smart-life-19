@@ -36,6 +36,8 @@ export function MaintenanceStaffDashboard() {
   // State for modals and forms
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [partsRequestOpen, setPartsRequestOpen] = useState(false);
+  const [workOrderDetailOpen, setWorkOrderDetailOpen] = useState(false);
+  const [selectedWorkOrder, setSelectedWorkOrder] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form states
@@ -128,7 +130,8 @@ export function MaintenanceStaffDashboard() {
   };
 
   const handleViewWorkOrder = (order: any) => {
-    navigate('/work-orders-management');
+    setSelectedWorkOrder(order);
+    setWorkOrderDetailOpen(true);
   };
 
   const handleSubmitReport = async () => {
@@ -661,6 +664,124 @@ export function MaintenanceStaffDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Work Order Detail Modal */}
+      <Dialog open={workOrderDetailOpen} onOpenChange={setWorkOrderDetailOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wrench className="h-5 w-5" />
+              {language === 'en' ? 'Work Order Details' : 'Butiran Arahan Kerja'}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedWorkOrder && `${selectedWorkOrder.id} - ${selectedWorkOrder.title}`}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedWorkOrder && (
+            <div className="space-y-6">
+              {/* Header Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {language === 'en' ? 'Work Order ID' : 'ID Arahan Kerja'}
+                  </Label>
+                  <p className="text-sm">{selectedWorkOrder.id}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {language === 'en' ? 'Status' : 'Status'}
+                  </Label>
+                  <Badge className={getStatusColor(selectedWorkOrder.status)}>
+                    {selectedWorkOrder.status}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Title and Description */}
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">
+                  {language === 'en' ? 'Title' : 'Tajuk'}
+                </Label>
+                <p className="text-sm font-medium">{selectedWorkOrder.title}</p>
+              </div>
+
+              {/* Location and Priority */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {language === 'en' ? 'Location' : 'Lokasi'}
+                  </Label>
+                  <p className="text-sm">{selectedWorkOrder.location}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {language === 'en' ? 'Priority' : 'Keutamaan'}
+                  </Label>
+                  <Badge variant={getPriorityColor(selectedWorkOrder.priority) as any}>
+                    {selectedWorkOrder.priority}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Dates */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {language === 'en' ? 'Assigned Date' : 'Tarikh Diberikan'}
+                  </Label>
+                  <p className="text-sm">{selectedWorkOrder.assignedDate}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {language === 'en' ? 'Due Date' : 'Tarikh Akhir'}
+                  </Label>
+                  <p className="text-sm">{selectedWorkOrder.dueDate}</p>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">
+                  {language === 'en' ? 'Description' : 'Penerangan'}
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {language === 'en' 
+                    ? 'Detailed maintenance work as per schedule and requirements.'
+                    : 'Kerja penyelenggaraan terperinci mengikut jadual dan keperluan.'
+                  }
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-4 border-t">
+                {selectedWorkOrder.status === 'pending' && (
+                  <Button 
+                    onClick={() => {
+                      handleStartWorkOrder(selectedWorkOrder);
+                      setWorkOrderDetailOpen(false);
+                    }}
+                    disabled={isSubmitting}
+                    className="flex-1"
+                  >
+                    {isSubmitting ? (
+                      <Clock className="h-4 w-4 animate-spin mr-2" />
+                    ) : null}
+                    {language === 'en' ? 'Start Work' : 'Mula Kerja'}
+                  </Button>
+                )}
+                <Button 
+                  variant="outline" 
+                  onClick={() => setWorkOrderDetailOpen(false)}
+                  className="flex-1"
+                >
+                  {language === 'en' ? 'Close' : 'Tutup'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
