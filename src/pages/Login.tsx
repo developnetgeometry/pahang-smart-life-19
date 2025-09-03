@@ -20,6 +20,7 @@ export default function Login() {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [districtId, setDistrictId] = useState('');
+  const [communityId, setCommunityId] = useState('');
   const [location, setLocation] = useState('');
   const [selectedRole, setSelectedRole] = useState('resident');
   const [businessName, setBusinessName] = useState('');
@@ -29,6 +30,7 @@ export default function Login() {
   const [pdpaAccepted, setPdpaAccepted] = useState(false);
   const [showPdpaDialog, setShowPdpaDialog] = useState(false);
   const [districts, setDistricts] = useState<Array<{id: string, name: string}>>([]);
+  const [communities, setCommunities] = useState<Array<{id: string, name: string}>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
@@ -54,6 +56,31 @@ export default function Login() {
       loadDistricts();
     }
   }, [mode]);
+
+  // Load communities based on selected district
+  useEffect(() => {
+    const loadCommunities = async () => {
+      if (!districtId) {
+        setCommunities([]);
+        setCommunityId('');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('communities')
+        .select('id, name')
+        .eq('district_id', districtId)
+        .order('name');
+      
+      if (!error && data) {
+        setCommunities(data);
+      }
+    };
+    
+    if (mode === 'signUp' && districtId) {
+      loadCommunities();
+    }
+  }, [mode, districtId]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -69,6 +96,9 @@ export default function Login() {
         }
         if (!districtId) {
           throw new Error(language === 'en' ? 'Please select a district' : 'Sila pilih daerah');
+        }
+        if (!communityId) {
+          throw new Error(language === 'en' ? 'Please select a community' : 'Sila pilih komuniti');
         }
         if (!location.trim()) {
           throw new Error(language === 'en' ? 'Location is required' : 'Lokasi diperlukan');
@@ -114,6 +144,7 @@ export default function Login() {
             full_name: fullName.trim(),
             phone: phone.trim() || null,
             district_id: districtId,
+            community_id: communityId,
             address: location.trim(),
             language: language,
             is_active: true
@@ -165,6 +196,7 @@ export default function Login() {
           setFullName('');
           setPhone('');
           setDistrictId('');
+          setCommunityId('');
           setLocation('');
           setSelectedRole('resident');
           setBusinessName('');
@@ -394,6 +426,28 @@ export default function Login() {
                           {districts.map((district) => (
                             <SelectItem key={district.id} value={district.id}>
                               {district.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="community">
+                        {language === 'en' ? 'Select Community' : 'Pilih Komuniti'} *
+                      </Label>
+                      <Select value={communityId} onValueChange={setCommunityId} required disabled={!districtId}>
+                        <SelectTrigger className="transition-smooth">
+                          <SelectValue placeholder={
+                            !districtId 
+                              ? (language === 'en' ? 'Please select district first' : 'Sila pilih daerah dahulu')
+                              : (language === 'en' ? 'Choose your community' : 'Pilih komuniti anda')
+                          } />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {communities.map((community) => (
+                            <SelectItem key={community.id} value={community.id}>
+                              {community.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
