@@ -9275,6 +9275,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "work_order_activities_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "work_order_activities_work_order_id_fkey"
             columns: ["work_order_id"]
             isOneToOne: false
@@ -9414,10 +9421,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "work_orders_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "work_orders_complaint_id_fkey"
             columns: ["complaint_id"]
             isOneToOne: false
             referencedRelation: "complaints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
