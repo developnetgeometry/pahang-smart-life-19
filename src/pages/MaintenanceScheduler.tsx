@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { 
+  Calendar as CalendarIcon, 
   Clock, 
   AlertTriangle, 
   CheckCircle, 
@@ -28,7 +29,7 @@ interface MaintenanceTask {
   description: string;
 }
 
-export function MaintenanceScheduler() {
+export default function MaintenanceScheduler() {
   const { user, language } = useAuth();
   const { toast } = useToast();
   const [tasks, setTasks] = useState<MaintenanceTask[]>([]);
@@ -172,9 +173,12 @@ export function MaintenanceScheduler() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">
-          {language === 'ms' ? 'Jadual Penyelenggaraan' : 'Maintenance Scheduler'}
-        </h2>
+        <div className="flex items-center gap-2">
+          <CalendarIcon className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground">
+            {language === 'ms' ? 'Jadual Penyelenggaraan' : 'Maintenance Scheduler'}
+          </h1>
+        </div>
         <div className="flex gap-2">
           <Button 
             variant={view === 'list' ? 'default' : 'outline'}

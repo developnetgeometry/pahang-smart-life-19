@@ -38,9 +38,11 @@ import AnnouncementManagement from "./pages/admin/AnnouncementManagement";
 import FacilitiesManagement from "./pages/admin/FacilitiesManagement";
 import DiscussionManagement from "./pages/admin/DiscussionManagement";
 import VisitorSecurity from "./pages/VisitorSecurity";
-import VisitorAnalytics from "./pages/VisitorAnalytics";  
+import VisitorAnalytics from "./pages/VisitorAnalytics";
 import WorkOrdersManagement from "./pages/WorkOrdersManagement";
-import Maintenance from "./pages/Maintenance";
+import MaintenanceAssets from "./pages/MaintenanceAssets";
+import MaintenanceScheduler from "./pages/MaintenanceScheduler";
+import MaintenanceReports from "./pages/MaintenanceReports";
 import MaintenanceEmergency from "./pages/MaintenanceEmergency";
 import CommunicationHub from "./pages/CommunicationHub";
 import RoleManagement from "./pages/RoleManagement";
@@ -714,19 +716,41 @@ const App = () => (
               }
             />
             <Route
-              path="/maintenance"
+              path="/maintenance-assets"
               element={
                 <ProtectedRoute>
                   <RequireRoles roles={["maintenance_staff"]}>
-                    <Maintenance />
+                    <Layout>
+                      <MaintenanceAssets />
+                    </Layout>
                   </RequireRoles>
                 </ProtectedRoute>
               }
             />
-            {/* Redirect old maintenance routes to new unified route */}
-            <Route path="/maintenance-reports" element={<Navigate to="/maintenance" replace />} />
-            <Route path="/maintenance-scheduler" element={<Navigate to="/maintenance" replace />} />
-            <Route path="/maintenance-assets" element={<Navigate to="/maintenance" replace />} />
+            <Route
+              path="/maintenance-scheduler"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["maintenance_staff"]}>
+                    <Layout>
+                      <MaintenanceScheduler />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/maintenance-reports"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["maintenance_staff"]}>
+                    <Layout>
+                      <MaintenanceReports />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
