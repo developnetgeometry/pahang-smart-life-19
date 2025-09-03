@@ -164,24 +164,35 @@ export default function Login() {
 
           if (profileError) {
             console.error('Profile creation error:', profileError);
-            // Don't throw error - profile will be created by trigger if this fails
+            console.error('Profile data being inserted:', profileData);
+            console.error('Auth user data:', authData.user);
+            throw new Error(`Profile creation failed: ${profileError.message}`);
           }
 
+          console.log('Profile created successfully for user:', authData.user.id);
+
           // Assign selected role using enhanced_user_roles table
+          const roleData = {
+            user_id: authData.user.id,
+            role: selectedRole as any,
+            district_id: districtId,
+            assigned_by: authData.user.id, // Self-assigned during registration
+            is_active: true
+          };
+
+          console.log('Attempting to insert role data:', roleData);
+
           const { error: roleError } = await supabase
             .from('enhanced_user_roles')
-            .insert({
-              user_id: authData.user.id,
-              role: selectedRole as any,
-              district_id: districtId,
-              assigned_by: authData.user.id, // Self-assigned during registration
-              is_active: true
-            });
+            .insert(roleData);
 
           if (roleError) {
             console.error('Role assignment error:', roleError);
-            // Don't throw error - this is not critical for signup
+            console.error('Role data being inserted:', roleData);
+            throw new Error(`Role assignment failed: ${roleError.message}`);
           }
+
+          console.log('Role assigned successfully:', selectedRole);
 
           // Show success message
           toast({
