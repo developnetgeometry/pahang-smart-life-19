@@ -133,43 +133,23 @@ export default function ComplaintsManagement() {
 
   const fetchStats = async () => {
     try {
-      console.log('=== DEBUGGING STATS FETCH ===');
-      
       let query = supabase
         .from('complaints')
         .select('*');
 
-      // TEMPORARILY REMOVE DISTRICT FILTERING TO DEBUG
-      // const userDistrict = user?.district;
-      // if (userDistrict) {
-      //   const districtId = userDistrict.startsWith('district-') 
-      //     ? userDistrict.replace('district-', '') 
-      //     : userDistrict;
-      //   console.log('Stats filtering by district:', districtId);
-      //   query = query.eq('district_id', districtId);
-      // }
-
-      // TEMPORARILY REMOVE ROLE-BASED FILTERING TO SHOW ALL COMPLAINTS
-      // if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
-      //   console.log('Applying facility manager filter to stats');
-      //   query = query.in('category', ['facilities', 'maintenance']);
-      //   } else if (hasRole('community_admin' as any) && !hasRole('district_coordinator' as any) && !hasRole('state_admin' as any)) {
-      //     console.log('Applying community admin filter to stats');
-      //     query = query.in('category', ['noise', 'general']);
-      //   } else {
-      //     console.log('No role-based filtering applied to stats');
-      //   }
+      // Apply same role-based filtering for stats
+      if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
+        query = query.in('category', ['facilities', 'maintenance', 'infrastructure']);
+        } else if (hasRole('community_admin' as any) && !hasRole('district_coordinator' as any) && !hasRole('state_admin' as any)) {
+          query = query.in('category', ['noise', 'general']);
+        }
 
       const { data, error } = await query;
-
-      console.log('Stats query result:', { data, error });
 
       if (error) {
         console.error('Supabase error:', error);
         throw error;
       }
-
-      console.log('Fetched complaint stats from database:', data?.length);
 
       const today = new Date().toDateString();
       const resolvedToday = data?.filter(c => 
@@ -186,7 +166,6 @@ export default function ComplaintsManagement() {
         avgResolutionTime: '2.5 days'
       };
 
-      console.log('Setting stats:', statsData);
       setStats(statsData);
     } catch (error) {
       console.error('Error fetching stats:', error);
