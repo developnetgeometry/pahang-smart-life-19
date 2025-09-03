@@ -89,7 +89,11 @@ export default function ComplaintsManagement() {
       // Add district filtering to ensure we only show complaints from user's district
       const userDistrict = user?.district;
       if (userDistrict) {
-        query = query.eq('district_id', userDistrict);
+        // Handle both UUID format and "district-{uuid}" format
+        const districtId = userDistrict.startsWith('district-') 
+          ? userDistrict.replace('district-', '') 
+          : userDistrict;
+        query = query.eq('district_id', districtId);
       }
 
       // Filter complaints based on user role
@@ -131,7 +135,11 @@ export default function ComplaintsManagement() {
       // Add district filtering for stats as well
       const userDistrict = user?.district;
       if (userDistrict) {
-        query = query.eq('district_id', userDistrict);
+        // Handle both UUID format and "district-{uuid}" format
+        const districtId = userDistrict.startsWith('district-') 
+          ? userDistrict.replace('district-', '') 
+          : userDistrict;
+        query = query.eq('district_id', districtId);
       }
 
       // Apply same role-based filtering for stats
