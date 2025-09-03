@@ -109,7 +109,7 @@ export default function Login() {
         if (authData.user) {
           // Create profile record
           const profileData: any = {
-            user_id: authData.user.id,
+            id: authData.user.id,
             email: email,
             full_name: fullName.trim(),
             phone: phone.trim() || null,
