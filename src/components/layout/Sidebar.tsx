@@ -247,13 +247,13 @@ export function AppSidebar() {
     }
     
     // Admin and Facility Manager items  
-    if (hasRole("facility_manager") || hasRole("state_admin") || hasRole("community_admin")) {
+    if (hasRole("facility_manager") || hasRole("security_officer") || hasRole("state_admin") || hasRole("community_admin")) {
       operationsItems.push(
         {
           title: "Complaints Center",
           url: "/admin/complaints",
           icon: AlertTriangle,
-          requiredRoles: ["facility_manager", "state_admin", "community_admin"],
+          requiredRoles: ["facility_manager", "security_officer", "state_admin", "community_admin"],
         }
       );
     }

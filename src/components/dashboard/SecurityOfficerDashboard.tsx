@@ -35,12 +35,10 @@ export function SecurityOfficerDashboard() {
         navigate('/visitor-security');
         break;
       case 'incident':
-        toast({
-          title: language === 'en' ? 'Incident Report' : 'Laporan Insiden',
-          description: language === 'en' ? 'Opening incident reporting form...' : 'Membuka borang laporan insiden...',
-        });
-        // Navigate to a dedicated incident report page or open modal
-        navigate('/my-complaints'); // Using existing complaints page as incident reports
+        navigate('/my-complaints');
+        break;
+      case 'complaints_center':
+        navigate('/admin/complaints');
         break;
       case 'system':
         toast({
@@ -312,7 +310,7 @@ export function SecurityOfficerDashboard() {
           <CardTitle>{language === 'en' ? 'Quick Actions' : 'Tindakan Pantas'}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <Button 
               className="flex items-center gap-2 h-12" 
               onClick={() => handleQuickAction('cameras')}
@@ -327,6 +325,14 @@ export function SecurityOfficerDashboard() {
             >
               <Users className="h-4 w-4" />
               {language === 'en' ? 'Visitor Log' : 'Log Pelawat'}
+            </Button>
+            <Button 
+              className="flex items-center gap-2 h-12" 
+              variant="outline"
+              onClick={() => handleQuickAction('complaints_center')}
+            >
+              <AlertTriangle className="h-4 w-4" />
+              {language === 'en' ? 'Complaints Center' : 'Pusat Aduan'}
             </Button>
             <Button 
               className="flex items-center gap-2 h-12" 

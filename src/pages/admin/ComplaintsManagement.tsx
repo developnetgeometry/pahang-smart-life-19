@@ -70,6 +70,7 @@ export default function ComplaintsManagement() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const isFacilityManager = hasRole('facility_manager' as any);
+  const isSecurityOfficer = hasRole('security_officer' as any);
   const canManageWorkOrders = isFacilityManager || hasRole('community_admin' as any);
 
   useEffect(() => {
