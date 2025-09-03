@@ -250,15 +250,9 @@ export function AppSidebar() {
     if (hasRole("facility_manager") || hasRole("state_admin") || hasRole("community_admin")) {
       operationsItems.push(
         {
-          title: t("complaintsManagement"),
+          title: "Complaints Center",
           url: "/admin/complaints",
           icon: AlertTriangle,
-          requiredRoles: ["facility_manager", "state_admin", "community_admin"],
-        },
-        {
-          title: t("complaintsAnalytics"),
-          url: "/admin/complaints-analytics",
-          icon: BarChart3,
           requiredRoles: ["facility_manager", "state_admin", "community_admin"],
         }
       );
