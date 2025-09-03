@@ -75,10 +75,16 @@ export default function WorkOrdersManagement() {
 
   const updateWorkOrderStatus = async (orderId: string, newStatus: string) => {
     try {
+      const validStatuses: WorkOrder['status'][] = ['pending', 'in_progress', 'completed', 'cancelled', 'assigned'];
+      if (!validStatuses.includes(newStatus as WorkOrder['status'])) {
+        console.error('Invalid status:', newStatus);
+        return;
+      }
+
       const { error } = await supabase
         .from('work_orders')
         .update({ 
-          status: newStatus,
+          status: newStatus as WorkOrder['status'],
           updated_at: new Date().toISOString()
         })
         .eq('id', orderId);

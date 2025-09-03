@@ -34,7 +34,7 @@ interface EmergencyAlert {
     full_name: string;
     phone: string;
     email: string;
-  };
+  } | null;
 }
 
 interface EmergencyContact {
@@ -109,7 +109,7 @@ export default function MaintenanceEmergency() {
 
       if (error) throw error;
 
-      const formattedAlerts = emergencyComplaints?.map(complaint => ({
+      const formattedAlerts: EmergencyAlert[] = (emergencyComplaints || []).map((complaint: any) => ({
         id: complaint.id,
         type: complaint.category,
         title: complaint.title,
@@ -122,8 +122,10 @@ export default function MaintenanceEmergency() {
         created_at: complaint.created_at,
         resolved_at: complaint.resolved_at,
         metadata: { escalation_level: complaint.escalation_level },
-        profiles: complaint.profiles
-      })) || [];
+        profiles: complaint.profiles && typeof complaint.profiles === 'object' && !Array.isArray(complaint.profiles)
+          ? complaint.profiles
+          : null
+      }));
 
       setAlerts(formattedAlerts);
     } catch (error) {
