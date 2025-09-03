@@ -66,11 +66,12 @@ export function FacilityManagement() {
   const [activeTab, setActiveTab] = useState('dashboard');
 
   // Check user permissions - using correct role names
-  const isFacilityManager = hasRole('maintenance_staff'); // Closest role to facility manager
-  const canManageBookings = hasRole('maintenance_staff') || hasRole('community_admin') || 
-                           hasRole('district_coordinator') || hasRole('state_admin');
-  const canManageFacilities = hasRole('community_admin') || hasRole('district_coordinator') || 
-                             hasRole('state_admin');
+  const isFacilityManager = hasRole('facility_manager');
+  const canManageBookings = hasRole('facility_manager') || hasRole('maintenance_staff') || 
+                           hasRole('community_admin') || hasRole('district_coordinator') || 
+                           hasRole('state_admin');
+  const canManageFacilities = hasRole('facility_manager') || hasRole('community_admin') || 
+                             hasRole('district_coordinator') || hasRole('state_admin');
 
   useEffect(() => {
     fetchFacilities();

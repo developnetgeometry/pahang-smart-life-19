@@ -7,6 +7,7 @@ export type EnhancedUserRole =
   | 'community_leader' 
   | 'service_provider'
   | 'maintenance_staff'
+  | 'facility_manager'
   | 'security_officer'
   | 'community_admin'
   | 'district_coordinator'
