@@ -136,13 +136,15 @@ export default function Login() {
             // Don't throw error - profile will be created by trigger if this fails
           }
 
-          // Assign selected role
+          // Assign selected role using enhanced_user_roles table
           const { error: roleError } = await supabase
-            .from('user_roles')
+            .from('enhanced_user_roles')
             .insert({
               user_id: authData.user.id,
               role: selectedRole as any,
-              district_id: districtId
+              district_id: districtId,
+              assigned_by: authData.user.id, // Self-assigned during registration
+              is_active: true
             });
 
           if (roleError) {
