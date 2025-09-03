@@ -128,29 +128,36 @@ export default function ComplaintsManagement() {
 
   const fetchStats = async () => {
     try {
+      console.log('=== DEBUGGING STATS FETCH ===');
+      
       let query = supabase
         .from('complaints')
         .select('*');
 
-      // Add district filtering for stats as well
-      const userDistrict = user?.district;
-      if (userDistrict) {
-        // Handle both UUID format and "district-{uuid}" format
-        const districtId = userDistrict.startsWith('district-') 
-          ? userDistrict.replace('district-', '') 
-          : userDistrict;
-        query = query.eq('district_id', districtId);
-      }
+      // TEMPORARILY REMOVE DISTRICT FILTERING TO DEBUG
+      // const userDistrict = user?.district;
+      // if (userDistrict) {
+      //   const districtId = userDistrict.startsWith('district-') 
+      //     ? userDistrict.replace('district-', '') 
+      //     : userDistrict;
+      //   console.log('Stats filtering by district:', districtId);
+      //   query = query.eq('district_id', districtId);
+      // }
 
       // Apply same role-based filtering for stats
       if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
+        console.log('Applying facility manager filter to stats');
         query = query.in('category', ['facilities', 'maintenance']);
         } else if (hasRole('community_admin' as any) && !hasRole('district_coordinator' as any) && !hasRole('state_admin' as any)) {
-          // Community admins should see: noise and general complaints
+          console.log('Applying community admin filter to stats');
           query = query.in('category', ['noise', 'general']);
+        } else {
+          console.log('No role-based filtering applied to stats');
         }
 
       const { data, error } = await query;
+
+      console.log('Stats query result:', { data, error });
 
       if (error) {
         console.error('Supabase error:', error);
@@ -167,12 +174,15 @@ export default function ComplaintsManagement() {
 
       const pendingCount = data?.filter(c => c.status === 'pending').length || 0;
 
-      setStats({
+      const statsData = {
         total: data?.length || 0,
         pending: pendingCount,
         resolvedToday,
         avgResolutionTime: '2.5 days'
-      });
+      };
+
+      console.log('Setting stats:', statsData);
+      setStats(statsData);
     } catch (error) {
       console.error('Error fetching stats:', error);
       toast({
