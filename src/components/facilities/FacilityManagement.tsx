@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserRoles } from '@/hooks/use-user-roles';
+import { toast } from 'sonner';
 import { 
   Building2, 
   Settings, 
@@ -18,12 +20,23 @@ import {
   Plus,
   Edit3,
   Power,
-  Wrench
+  Wrench,
+  Package,
+  TrendingUp,
+  CheckSquare,
+  Repeat
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { FacilityConfigModal } from './FacilityConfigModal';
+
+// Import enhanced components
+import { EnhancedFacilityDashboard } from './EnhancedFacilityDashboard';
+import { BookingApprovalSystem } from './BookingApprovalSystem';
+import { WorkOrderCreator } from './WorkOrderCreator';
+import { InventoryManagement } from './InventoryManagement';
+import { FacilityAnalyticsDashboard } from './FacilityAnalyticsDashboard';
+import { RecurringBookingManager } from './RecurringBookingManager';
 import { FacilityBookingCalendar } from './FacilityBookingCalendar';
 import { FacilityUsageReports } from './FacilityUsageReports';
+import { FacilityConfigModal } from './FacilityConfigModal';
 
 interface Facility {
   id: string;
@@ -44,16 +57,20 @@ interface Facility {
 }
 
 export function FacilityManagement() {
-  const { hasRole } = useAuth();
-  const { toast } = useToast();
+  const { user } = useAuth();
+  const { hasRole } = useUserRoles();
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
   const [showConfigModal, setShowConfigModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('dashboard');
 
-  const canManage = hasRole('facility_manager') || hasRole('community_admin') || 
-                   hasRole('district_coordinator') || hasRole('state_admin');
+  // Check user permissions - using correct role names
+  const isFacilityManager = hasRole('maintenance_staff'); // Closest role to facility manager
+  const canManageBookings = hasRole('maintenance_staff') || hasRole('community_admin') || 
+                           hasRole('district_coordinator') || hasRole('state_admin');
+  const canManageFacilities = hasRole('community_admin') || hasRole('district_coordinator') || 
+                             hasRole('state_admin');
 
   useEffect(() => {
     fetchFacilities();
@@ -70,11 +87,7 @@ export function FacilityManagement() {
       setFacilities(data || []);
     } catch (error) {
       console.error('Error fetching facilities:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load facilities",
-        variant: "destructive",
-      });
+      toast.error('Failed to load facilities');
     } finally {
       setLoading(false);
     }
@@ -93,17 +106,10 @@ export function FacilityManagement() {
         prev.map(f => f.id === facilityId ? { ...f, is_available: isAvailable } : f)
       );
 
-      toast({
-        title: "Success",
-        description: `Facility ${isAvailable ? 'enabled' : 'disabled'} successfully`,
-      });
+      toast.success(`Facility ${isAvailable ? 'enabled' : 'disabled'} successfully`);
     } catch (error) {
       console.error('Error updating facility availability:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update facility availability",
-        variant: "destructive",
-      });
+      toast.error('Failed to update facility availability');
     }
   };
 
@@ -112,7 +118,7 @@ export function FacilityManagement() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-muted-foreground">Loading facilities...</p>
+          <p className="mt-2 text-muted-foreground">Loading facility management system...</p>
         </div>
       </div>
     );
@@ -122,10 +128,15 @@ export function FacilityManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Facility Management</h1>
-          <p className="text-muted-foreground">Configure and manage community facilities</p>
+          <h1 className="text-3xl font-bold text-foreground">Facility Management System</h1>
+          <p className="text-muted-foreground">
+            {isFacilityManager 
+              ? "Comprehensive facility operations and management"
+              : "Community facility overview and booking management"
+            }
+          </p>
         </div>
-        {canManage && (
+        {canManageFacilities && (
           <Button onClick={() => setShowConfigModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add Facility
@@ -134,14 +145,128 @@ export function FacilityManagement() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="bookings">Bookings</TabsTrigger>
-          <TabsTrigger value="usage">Usage Reports</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-8">
+          <TabsTrigger value="dashboard" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Dashboard
+          </TabsTrigger>
+          <TabsTrigger value="approvals" className="flex items-center gap-2">
+            <CheckSquare className="h-4 w-4" />
+            Approvals
+          </TabsTrigger>
+          <TabsTrigger value="work-orders" className="flex items-center gap-2">
+            <Wrench className="h-4 w-4" />
+            Work Orders
+          </TabsTrigger>
+          <TabsTrigger value="inventory" className="flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Inventory
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="recurring" className="flex items-center gap-2">
+            <Repeat className="h-4 w-4" />
+            Recurring
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            Calendar
+          </TabsTrigger>
+          <TabsTrigger value="facilities" className="flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            Facilities
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
+        {/* Enhanced Dashboard - Default view for facility managers */}
+        <TabsContent value="dashboard" className="space-y-6">
+          <EnhancedFacilityDashboard />
+        </TabsContent>
+
+        {/* Booking Approval System */}
+        <TabsContent value="approvals" className="space-y-6">
+          {canManageBookings ? (
+            <BookingApprovalSystem />
+          ) : (
+            <Card>
+              <CardContent className="text-center py-8">
+                <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">Access Restricted</h3>
+                <p className="text-muted-foreground">You don't have permission to manage booking approvals.</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Work Order Management */}
+        <TabsContent value="work-orders" className="space-y-6">
+          {isFacilityManager || canManageBookings ? (
+            <WorkOrderCreator />
+          ) : (
+            <Card>
+              <CardContent className="text-center py-8">
+                <Wrench className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">Access Restricted</h3>
+                <p className="text-muted-foreground">You don't have permission to manage work orders.</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Inventory Management */}
+        <TabsContent value="inventory" className="space-y-6">
+          {isFacilityManager || canManageBookings ? (
+            <InventoryManagement />
+          ) : (
+            <Card>
+              <CardContent className="text-center py-8">
+                <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">Access Restricted</h3>
+                <p className="text-muted-foreground">You don't have permission to manage inventory.</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Analytics Dashboard */}
+        <TabsContent value="analytics" className="space-y-6">
+          {isFacilityManager || canManageBookings ? (
+            <FacilityAnalyticsDashboard />
+          ) : (
+            <Card>
+              <CardContent className="text-center py-8">
+                <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">Access Restricted</h3>
+                <p className="text-muted-foreground">You don't have permission to view detailed analytics.</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Recurring Bookings */}
+        <TabsContent value="recurring" className="space-y-6">
+          {canManageBookings ? (
+            <RecurringBookingManager />
+          ) : (
+            <Card>
+              <CardContent className="text-center py-8">
+                <Repeat className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">Access Restricted</h3>
+                <p className="text-muted-foreground">You don't have permission to manage recurring bookings.</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Booking Calendar */}
+        <TabsContent value="calendar" className="space-y-6">
+          <FacilityBookingCalendar facilities={facilities} />
+        </TabsContent>
+
+        {/* Facilities Overview */}
+        <TabsContent value="facilities" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {facilities.map((facility) => (
               <Card key={facility.id} className="relative">
@@ -189,7 +314,7 @@ export function FacilityManagement() {
                     </div>
                   )}
 
-                  {canManage && (
+                  {(isFacilityManager || canManageFacilities) && (
                     <div className="flex items-center justify-between pt-4 border-t">
                       <div className="flex items-center space-x-4">
                         <div className="flex items-center space-x-2">
@@ -200,16 +325,18 @@ export function FacilityManagement() {
                           <span className="text-sm">Available</span>
                         </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedFacility(facility);
-                          setShowConfigModal(true);
-                        }}
-                      >
-                        <Edit3 className="h-4 w-4" />
-                      </Button>
+                      {canManageFacilities && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedFacility(facility);
+                            setShowConfigModal(true);
+                          }}
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   )}
                 </CardContent>
@@ -225,7 +352,7 @@ export function FacilityManagement() {
                 <p className="text-muted-foreground mb-4">
                   Start by adding facilities for your community to manage.
                 </p>
-                {canManage && (
+                {canManageFacilities && (
                   <Button onClick={() => setShowConfigModal(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add First Facility
@@ -235,29 +362,9 @@ export function FacilityManagement() {
             </Card>
           )}
         </TabsContent>
-
-        <TabsContent value="bookings">
-          <FacilityBookingCalendar facilities={facilities} />
-        </TabsContent>
-
-        <TabsContent value="usage">
-          <FacilityUsageReports facilities={facilities} />
-        </TabsContent>
-
-        <TabsContent value="settings">
-          <Card>
-            <CardHeader>
-              <CardTitle>System Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Additional facility management settings will be available here.
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
 
+      {/* Facility Configuration Modal */}
       <FacilityConfigModal
         open={showConfigModal}
         onOpenChange={setShowConfigModal}
