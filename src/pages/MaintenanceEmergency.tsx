@@ -122,8 +122,15 @@ export default function MaintenanceEmergency() {
         created_at: complaint.created_at,
         resolved_at: complaint.resolved_at,
         metadata: { escalation_level: complaint.escalation_level },
-        profiles: complaint.profiles && typeof complaint.profiles === 'object' && !Array.isArray(complaint.profiles)
-          ? complaint.profiles
+        profiles: complaint.profiles && 
+                  typeof complaint.profiles === 'object' && 
+                  !Array.isArray(complaint.profiles) &&
+                  'full_name' in complaint.profiles
+          ? {
+              full_name: complaint.profiles.full_name || 'Unknown',
+              phone: complaint.profiles.phone || '',
+              email: complaint.profiles.email || ''
+            }
           : null
       }));
 

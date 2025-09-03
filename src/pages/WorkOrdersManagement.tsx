@@ -13,7 +13,7 @@ interface WorkOrder {
   id: string;
   title: string;
   description: string;
-  status: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'assigned';
   priority: string;
   work_order_type: string;
   location: string;
@@ -25,11 +25,11 @@ interface WorkOrder {
   profiles?: {
     full_name: string;
     email: string;
-  };
+  } | null;
   complaints?: {
     title: string;
     category: string;
-  };
+  } | null;
 }
 
 export default function WorkOrdersManagement() {
@@ -60,7 +60,30 @@ export default function WorkOrdersManagement() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setWorkOrders(data || []);
+      
+      const formattedWorkOrders: WorkOrder[] = (data || []).map((order: any) => ({
+        ...order,
+        profiles: order.profiles && 
+                  typeof order.profiles === 'object' && 
+                  !Array.isArray(order.profiles) &&
+                  'full_name' in order.profiles
+          ? {
+              full_name: order.profiles.full_name || 'Unknown',
+              email: order.profiles.email || ''
+            }
+          : null,
+        complaints: order.complaints && 
+                    typeof order.complaints === 'object' && 
+                    !Array.isArray(order.complaints) &&
+                    'title' in order.complaints
+          ? {
+              title: order.complaints.title || 'Unknown',
+              category: order.complaints.category || ''
+            }
+          : null
+      }));
+      
+      setWorkOrders(formattedWorkOrders);
     } catch (error) {
       console.error('Error fetching work orders:', error);
       toast({
