@@ -416,6 +416,7 @@ export default function ComplaintsManagement() {
                   <>
                     <SelectItem value="maintenance">Maintenance</SelectItem>
                     <SelectItem value="facilities">Facilities</SelectItem>
+                    <SelectItem value="infrastructure">Infrastructure</SelectItem>
                   </>
                 ) : (hasRole('community_admin' as any) && !hasRole('district_coordinator' as any) && !hasRole('state_admin' as any)) ? (
                   // Show noise and general categories for community admins
@@ -430,6 +431,7 @@ export default function ComplaintsManagement() {
                     <SelectItem value="noise">Noise</SelectItem>
                     <SelectItem value="security">Security</SelectItem>
                     <SelectItem value="facilities">Facilities</SelectItem>
+                    <SelectItem value="infrastructure">Infrastructure</SelectItem>
                     <SelectItem value="parking">Parking</SelectItem>
                     <SelectItem value="general">General</SelectItem>
                   </>
