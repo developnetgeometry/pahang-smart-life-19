@@ -59,6 +59,7 @@ type InventoryItem = {
   maximum_stock?: number;
   reorder_level: number;
   supplier_name?: string;
+  supplier_contact?: string;
   storage_location?: string;
   inventory_categories?: {
     name: string;
@@ -101,6 +102,8 @@ export default function InventoryManagement() {
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [itemDetailDialogOpen, setItemDetailDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [activeTab, setActiveTab] = useState('items');
   const [unitOptions, setUnitOptions] = useState<string[]>([]);
   const [transactionTypes, setTransactionTypes] = useState<Array<{value: string, label: string, color: string}>>([]);
@@ -432,6 +435,72 @@ export default function InventoryManagement() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to create category',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleItemClick = (item: InventoryItem) => {
+    setSelectedItem(item);
+    // Populate form with selected item data
+    itemForm.reset({
+      item_code: item.item_code,
+      name: item.name,
+      description: item.description || '',
+      category_id: item.inventory_categories ? categories.find(c => c.name === item.inventory_categories?.name)?.id || '' : '',
+      unit_of_measure: item.unit_of_measure,
+      unit_cost: item.unit_cost?.toString() || '',
+      minimum_stock: item.minimum_stock.toString(),
+      maximum_stock: item.maximum_stock?.toString() || '',
+      reorder_level: item.reorder_level.toString(),
+      supplier_name: item.supplier_name || '',
+      supplier_contact: item.supplier_contact || '',
+      storage_location: item.storage_location || '',
+    });
+    setItemDetailDialogOpen(true);
+  };
+
+  const onUpdateItem = async (values: z.infer<typeof itemSchema>) => {
+    if (!selectedItem) return;
+
+    try {
+      const itemData = {
+        name: values.name,
+        description: values.description || null,
+        item_code: values.item_code,
+        category_id: values.category_id,
+        unit_of_measure: values.unit_of_measure,
+        unit_cost: values.unit_cost ? parseFloat(values.unit_cost) : null,
+        minimum_stock: parseInt(values.minimum_stock || '0'),
+        maximum_stock: values.maximum_stock ? parseInt(values.maximum_stock) : null,
+        reorder_level: parseInt(values.reorder_level || '0'),
+        supplier_name: values.supplier_name || null,
+        supplier_contact: values.supplier_contact || null,
+        storage_location: values.storage_location || null,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('inventory_items')
+        .update(itemData)
+        .eq('id', selectedItem.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Inventory item updated successfully',
+      });
+
+      setItemDetailDialogOpen(false);
+      setSelectedItem(null);
+      itemForm.reset();
+      fetchItems();
+    } catch (error: any) {
+      console.error('Error updating inventory item:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update inventory item',
         variant: 'destructive',
       });
     }
@@ -818,6 +887,249 @@ export default function InventoryManagement() {
                   </DialogContent>
                 </Dialog>
 
+                {/* Item Detail/Edit Dialog */}
+                <Dialog open={itemDetailDialogOpen} onOpenChange={setItemDetailDialogOpen}>
+                  <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>
+                        {selectedItem ? `Edit Item: ${selectedItem.name}` : 'Item Details'}
+                      </DialogTitle>
+                      <DialogDescription>
+                        View and modify inventory item details
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    {selectedItem && (
+                      <div className="space-y-6">
+                        {/* Item Overview */}
+                        <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+                          <div>
+                            <h3 className="font-semibold text-lg">{selectedItem.name}</h3>
+                            <p className="text-muted-foreground">{selectedItem.item_code}</p>
+                            {selectedItem.description && (
+                              <p className="text-sm text-muted-foreground mt-2">{selectedItem.description}</p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            {getStockStatus(selectedItem)}
+                            <div className="mt-2">
+                              <span className="text-2xl font-bold">{selectedItem.current_stock}</span>
+                              <span className="text-sm text-muted-foreground ml-1">{selectedItem.unit_of_measure}</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">Current Stock</p>
+                          </div>
+                        </div>
+
+                        {/* Edit Form */}
+                        <Form {...itemForm}>
+                          <form onSubmit={itemForm.handleSubmit(onUpdateItem)} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <FormField
+                                control={itemForm.control}
+                                name="item_code"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Item Code</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="ITM-001" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={itemForm.control}
+                                name="name"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Item Name</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Item name" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+
+                            <FormField
+                              control={itemForm.control}
+                              name="description"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Description</FormLabel>
+                                  <FormControl>
+                                    <Textarea placeholder="Item description..." {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <FormField
+                                control={itemForm.control}
+                                name="category_id"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Category</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select category" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {categories.map(category => (
+                                          <SelectItem key={category.id} value={category.id}>
+                                            {category.name}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={itemForm.control}
+                                name="unit_of_measure"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Unit of Measure</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select unit" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {unitOptions.map(unit => (
+                                          <SelectItem key={unit} value={unit}>
+                                            {unit.charAt(0).toUpperCase() + unit.slice(1)}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4">
+                              <FormField
+                                control={itemForm.control}
+                                name="unit_cost"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Unit Cost (RM)</FormLabel>
+                                    <FormControl>
+                                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={itemForm.control}
+                                name="minimum_stock"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Minimum Stock</FormLabel>
+                                    <FormControl>
+                                      <Input type="number" placeholder="0" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={itemForm.control}
+                                name="reorder_level"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Reorder Level</FormLabel>
+                                    <FormControl>
+                                      <Input type="number" placeholder="0" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <FormField
+                                control={itemForm.control}
+                                name="supplier_name"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Supplier Name</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Supplier name" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={itemForm.control}
+                                name="supplier_contact"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Supplier Contact</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Phone or email" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+
+                            <FormField
+                              control={itemForm.control}
+                              name="storage_location"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Storage Location</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Warehouse A, Shelf 1" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <div className="flex justify-end space-x-2">
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                onClick={() => {
+                                  setItemDetailDialogOpen(false);
+                                  setSelectedItem(null);
+                                  itemForm.reset();
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                              <Button type="submit">
+                                Update Item
+                              </Button>
+                            </div>
+                          </form>
+                        </Form>
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
+
                 <Dialog open={itemDialogOpen} onOpenChange={setItemDialogOpen}>
                   <DialogTrigger asChild>
                     <Button>
@@ -1044,7 +1356,11 @@ export default function InventoryManagement() {
           {/* Items Grid */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredItems.map((item) => (
-              <Card key={item.id} className="hover:shadow-lg transition-shadow">
+              <Card 
+                key={item.id} 
+                className="hover:shadow-lg transition-shadow cursor-pointer hover:scale-[1.02] transition-transform"
+                onClick={() => handleItemClick(item)}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div>
