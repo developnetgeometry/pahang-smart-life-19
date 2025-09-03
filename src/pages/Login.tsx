@@ -416,8 +416,11 @@ export default function Login() {
                       <Label htmlFor="district">
                         {language === 'en' ? 'Select District' : 'Pilih Daerah'} *
                       </Label>
-                      <Select value={districtId} onValueChange={setDistrictId} required>
-                        <SelectTrigger className="transition-smooth">
+                      <Select value={districtId} onValueChange={(value) => {
+                        console.log('District selected:', value);
+                        setDistrictId(value);
+                      }} required>
+                        <SelectTrigger className="transition-smooth bg-background border-2">
                           <SelectValue placeholder={
                             language === 'en' ? 'Choose your district' : 'Pilih daerah anda'
                           } />
