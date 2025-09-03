@@ -220,52 +220,52 @@ export function MaintenanceStaffDashboard() {
             ))}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Work Orders */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Wrench className="h-5 w-5" />
-            {language === 'en' ? 'My Work Orders' : 'Arahan Kerja Saya'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {workOrders.map((order, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge variant="outline">{order.id}</Badge>
-                    <Badge variant={getPriorityColor(order.priority) as any}>
-                      {order.priority}
-                    </Badge>
-                    <Badge className={getStatusColor(order.status)}>
-                      {order.status}
-                    </Badge>
+        {/* My Work Orders */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wrench className="h-5 w-5" />
+              {language === 'en' ? 'My Work Orders' : 'Arahan Kerja Saya'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {workOrders.map((order, index) => (
+                <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="outline">{order.id}</Badge>
+                      <Badge variant={getPriorityColor(order.priority) as any}>
+                        {order.priority}
+                      </Badge>
+                      <Badge className={getStatusColor(order.status)}>
+                        {order.status}
+                      </Badge>
+                    </div>
+                    <p className="text-sm font-medium">{order.title}</p>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                      <span>{order.location}</span>
+                      <span>Assigned: {order.assignedDate}</span>
+                      <span>Due: {order.dueDate}</span>
+                    </div>
                   </div>
-                  <p className="text-sm font-medium">{order.title}</p>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                    <span>{order.location}</span>
-                    <span>Assigned: {order.assignedDate}</span>
-                    <span>Due: {order.dueDate}</span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
-                    {language === 'en' ? 'View' : 'Lihat'}
-                  </Button>
-                  {order.status === 'pending' && (
-                    <Button size="sm">
-                      {language === 'en' ? 'Start' : 'Mula'}
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline">
+                      {language === 'en' ? 'View' : 'Lihat'}
                     </Button>
-                  )}
+                    {order.status === 'pending' && (
+                      <Button size="sm">
+                        {language === 'en' ? 'Start' : 'Mula'}
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Quick Actions */}
       <Card>
