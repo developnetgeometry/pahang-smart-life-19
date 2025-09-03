@@ -89,6 +89,10 @@ export default function ComplaintsManagement() {
       if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
         // Facility managers should only see facilities and maintenance related complaints
         query = query.in('category', ['facilities', 'maintenance']);
+      } else if (hasRole('community_admin' as any) && !hasRole('district_coordinator' as any) && !hasRole('state_admin' as any)) {
+        // Community admins should only see complaints assigned to community admin role
+        // This includes: general, noise (all levels), facilities/maintenance (level 1+), security (level 1+)
+        query = query.or('category.in.(general,noise),and(category.in.(facilities,maintenance,security),escalation_level.gte.1)');
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -111,13 +115,14 @@ export default function ComplaintsManagement() {
       // Apply same role-based filtering for stats
       if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
         query = query.in('category', ['facilities', 'maintenance']);
+      } else if (hasRole('community_admin' as any) && !hasRole('district_coordinator' as any) && !hasRole('state_admin' as any)) {
+        // Community admins should only see complaints assigned to community admin role
+        query = query.or('category.in.(general,noise),and(category.in.(facilities,maintenance,security),escalation_level.gte.1)');
       }
 
       const { data, error } = await query;
 
       if (error) throw error;
-
-      console.log('Stats data:', data); // Debug log
 
       const today = new Date().toDateString();
       const resolvedToday = data?.filter(c => 
@@ -126,7 +131,6 @@ export default function ComplaintsManagement() {
       ).length || 0;
 
       const pendingCount = data?.filter(c => c.status === 'pending').length || 0;
-      const inProgressCount = data?.filter(c => c.status === 'in_progress').length || 0;
 
       setStats({
         total: data?.length || 0,
@@ -134,13 +138,6 @@ export default function ComplaintsManagement() {
         resolvedToday,
         avgResolutionTime: '2.5 days'
       });
-
-      console.log('Stats calculated:', {
-        total: data?.length || 0,
-        pending: pendingCount,
-        inProgress: inProgressCount,
-        resolved: resolvedToday
-      }); // Debug log
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
