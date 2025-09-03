@@ -38,8 +38,14 @@ interface WorkOrder {
 
 export default function WorkOrdersManagement() {
   const { user, language } = useAuth();
-  const { hasRole } = useUserRoles();
+  const { hasRole, userRoles, loading: rolesLoading } = useUserRoles();
   const { toast } = useToast();
+  
+  // Debug logging
+  console.log('User roles:', userRoles);
+  console.log('Roles loading:', rolesLoading);
+  console.log('Has maintenance_staff role:', hasRole('maintenance_staff'));
+  console.log('Has facility_manager role:', hasRole('facility_manager'));
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
@@ -245,7 +251,7 @@ export default function WorkOrdersManagement() {
         </div>
         
         {/* Create Work Order Button - Show for authorized roles */}
-        {(hasRole('maintenance_staff') || hasRole('facility_manager') || hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin')) && (
+        {(!rolesLoading && (hasRole('maintenance_staff') || hasRole('facility_manager') || hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin'))) && (
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button className="flex items-center gap-2">
