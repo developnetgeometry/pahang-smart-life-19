@@ -751,6 +751,10 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/maintenance"
+              element={<Navigate to="/maintenance-reports" replace />}
+            />
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
