@@ -86,6 +86,12 @@ export default function ComplaintsManagement() {
           profiles!complainant_id (full_name)
         `);
 
+      // Add district filtering to ensure we only show complaints from user's district
+      const userDistrict = user?.district;
+      if (userDistrict) {
+        query = query.eq('district_id', userDistrict);
+      }
+
       // Filter complaints based on user role
       if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
         // Facility managers should only see facilities and maintenance related complaints
@@ -97,10 +103,20 @@ export default function ComplaintsManagement() {
 
       const { data, error } = await query.order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Fetched complaints from database:', data);
       setComplaints(data || []);
     } catch (error) {
       console.error('Error fetching complaints:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load complaints from database.',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
@@ -112,6 +128,12 @@ export default function ComplaintsManagement() {
         .from('complaints')
         .select('*');
 
+      // Add district filtering for stats as well
+      const userDistrict = user?.district;
+      if (userDistrict) {
+        query = query.eq('district_id', userDistrict);
+      }
+
       // Apply same role-based filtering for stats
       if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
         query = query.in('category', ['facilities', 'maintenance']);
@@ -122,7 +144,12 @@ export default function ComplaintsManagement() {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Fetched complaint stats from database:', data?.length);
 
       const today = new Date().toDateString();
       const resolvedToday = data?.filter(c => 
@@ -140,6 +167,11 @@ export default function ComplaintsManagement() {
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load complaint statistics.',
+        variant: 'destructive'
+      });
     }
   };
 
