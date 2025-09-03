@@ -36,6 +36,7 @@ interface PanicAlert {
   profiles?: {
     full_name: string;
     email: string;
+    phone?: string;
   };
 }
 
@@ -100,7 +101,7 @@ export default function ActivePanicAlerts() {
       const userIds = [...new Set(data?.map(alert => alert.user_id))];
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, full_name, email')
+        .select('id, full_name, email, phone')
         .in('id', userIds);
 
       // Create a map of user profiles
@@ -284,6 +285,17 @@ export default function ActivePanicAlerts() {
                             {alert.profiles?.full_name || alert.profiles?.email}
                           </span>
                         </div>
+                        
+                        {alert.profiles?.phone && (
+                          <div className="flex items-start gap-3">
+                            <div className="w-5 h-5 mt-0.5 flex-shrink-0 flex justify-center">
+                              📞
+                            </div>
+                            <span className="text-sm font-medium">
+                              {alert.profiles.phone}
+                            </span>
+                          </div>
+                        )}
                         
                         <div className="flex items-start gap-3">
                           <Clock className="w-5 h-5 mt-0.5 flex-shrink-0" />
