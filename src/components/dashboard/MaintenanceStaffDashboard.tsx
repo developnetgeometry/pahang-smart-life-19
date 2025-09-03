@@ -186,26 +186,6 @@ export function MaintenanceStaffDashboard() {
         <PrayerTimesWidget />
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                {language === 'en' ? 'Maintenance Operations Status' : 'Status Operasi Penyelenggaraan'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-muted-foreground">
-                {language === 'en' 
-                  ? '8 open work orders. 94% completion rate this month.' 
-                  : '8 arahan kerja terbuka. Kadar penyelesaian 94% bulan ini.'}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Inventory Alerts */}
         <Card>
