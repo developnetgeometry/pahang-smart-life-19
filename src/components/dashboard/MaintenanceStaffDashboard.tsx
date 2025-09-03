@@ -207,45 +207,6 @@ export function MaintenanceStaffDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Today's Schedule */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              {language === 'en' ? "Today's Schedule" : 'Jadual Hari Ini'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {todaySchedule.map((task, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge variant={getPriorityColor(task.priority) as any}>
-                      {task.priority}
-                    </Badge>
-                    <span className="text-sm font-medium">{task.time}</span>
-                  </div>
-                  <p className="text-sm font-medium">{task.task}</p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                    <span>{task.location}</span>
-                    <span>•</span>
-                    <Clock className="h-3 w-3" />
-                    <span>{task.estimatedDuration}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge className={getStatusColor(task.status)}>
-                    {task.status}
-                  </Badge>
-                  <Button size="sm" variant="outline">
-                    {language === 'en' ? 'Start' : 'Mula'}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
         {/* Inventory Alerts */}
         <Card>
           <CardHeader>
