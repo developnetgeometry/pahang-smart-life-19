@@ -31,6 +31,11 @@ const itemSchema = z.object({
   storage_location: z.string().optional(),
 });
 
+const categorySchema = z.object({
+  name: z.string().min(1, 'Category name is required'),
+  description: z.string().optional(),
+});
+
 const transactionSchema = z.object({
   item_id: z.string().min(1, 'Item is required'),
   transaction_type: z.enum(['stock_in', 'stock_out', 'adjustment', 'transfer']),
@@ -95,6 +100,7 @@ export default function InventoryManagement() {
   const [stockFilter, setStockFilter] = useState('');
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('items');
   const [unitOptions, setUnitOptions] = useState<string[]>([]);
   const [transactionTypes, setTransactionTypes] = useState<Array<{value: string, label: string, color: string}>>([]);
@@ -129,6 +135,14 @@ export default function InventoryManagement() {
       notes: '',
       expiry_date: '',
       batch_number: '',
+    },
+  });
+
+  const categoryForm = useForm<z.infer<typeof categorySchema>>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      name: '',
+      description: '',
     },
   });
 
@@ -185,8 +199,38 @@ export default function InventoryManagement() {
 
       if (error) throw error;
       setCategories(data || []);
+
+      // If no categories exist, create default ones
+      if (!data || data.length === 0) {
+        await createDefaultCategories();
+      }
     } catch (error) {
       console.error('Error fetching categories:', error);
+    }
+  };
+
+  const createDefaultCategories = async () => {
+    try {
+      const defaultCategories = [
+        { name: 'Tools & Equipment', description: 'Maintenance tools and equipment' },
+        { name: 'Cleaning Supplies', description: 'Cleaning materials and supplies' },
+        { name: 'Electrical', description: 'Electrical components and supplies' },
+        { name: 'Plumbing', description: 'Plumbing materials and fixtures' },
+        { name: 'Safety Equipment', description: 'Safety gear and equipment' },
+        { name: 'Office Supplies', description: 'Administrative and office materials' },
+        { name: 'General Materials', description: 'General purpose materials' }
+      ];
+
+      const { error } = await supabase
+        .from('inventory_categories')
+        .insert(defaultCategories);
+
+      if (error) throw error;
+
+      // Refresh categories after creating defaults
+      fetchCategories();
+    } catch (error) {
+      console.error('Error creating default categories:', error);
     }
   };
 
@@ -359,6 +403,35 @@ export default function InventoryManagement() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to record transaction',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const onSubmitCategory = async (values: z.infer<typeof categorySchema>) => {
+    try {
+      const { error } = await supabase
+        .from('inventory_categories')
+        .insert([{
+          name: values.name,
+          description: values.description || null,
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Category created successfully',
+      });
+
+      setCategoryDialogOpen(false);
+      categoryForm.reset();
+      fetchCategories();
+    } catch (error: any) {
+      console.error('Error creating category:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create category',
         variant: 'destructive',
       });
     }
@@ -687,6 +760,64 @@ export default function InventoryManagement() {
                   </DialogContent>
                 </Dialog>
 
+                <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Category
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add New Category</DialogTitle>
+                      <DialogDescription>
+                        Create a new inventory category
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <Form {...categoryForm}>
+                      <form onSubmit={categoryForm.handleSubmit(onSubmitCategory)} className="space-y-4">
+                        <FormField
+                          control={categoryForm.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Category Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="e.g., Tools & Equipment" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={categoryForm.control}
+                          name="description"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Description (Optional)</FormLabel>
+                              <FormControl>
+                                <Textarea placeholder="Category description..." {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="flex justify-end space-x-2">
+                          <Button type="button" variant="outline" onClick={() => setCategoryDialogOpen(false)}>
+                            Cancel
+                          </Button>
+                          <Button type="submit">
+                            Create Category
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+
                 <Dialog open={itemDialogOpen} onOpenChange={setItemDialogOpen}>
                   <DialogTrigger asChild>
                     <Button>
@@ -760,16 +891,36 @@ export default function InventoryManagement() {
                                     <SelectTrigger>
                                       <SelectValue placeholder="Select category" />
                                     </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {categories.map(category => (
-                                      <SelectItem key={category.id} value={category.id}>
-                                        {category.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
+                                   </FormControl>
+                                   <SelectContent>
+                                     {categories.length > 0 ? (
+                                       categories.map(category => (
+                                         <SelectItem key={category.id} value={category.id}>
+                                           {category.name}
+                                         </SelectItem>
+                                       ))
+                                     ) : (
+                                       <div className="p-2 text-sm text-muted-foreground">
+                                         No categories available
+                                       </div>
+                                     )}
+                                   </SelectContent>
+                                 </Select>
+                                 {categories.length === 0 && (
+                                   <p className="text-xs text-muted-foreground">
+                                     No categories found. 
+                                     <Button 
+                                       type="button" 
+                                       variant="link" 
+                                       size="sm" 
+                                       className="h-auto p-0 text-xs"
+                                       onClick={() => setCategoryDialogOpen(true)}
+                                     >
+                                       Create one
+                                     </Button>
+                                   </p>
+                                 )}
+                                 <FormMessage />
                               </FormItem>
                             )}
                           />
