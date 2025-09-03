@@ -87,9 +87,9 @@ export default function ComplaintsManagement() {
 
       // Filter complaints based on user role
       if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
-        // Facility managers should only see facility/maintenance related complaints
+        // Facility managers should only see facilities-related complaints
         // or complaints assigned to them specifically
-        query = query.or(`category.in.(facilities,maintenance),assigned_to.eq.${user?.id}`);
+        query = query.or(`category.eq.facilities,assigned_to.eq.${user?.id}`);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -111,7 +111,7 @@ export default function ComplaintsManagement() {
 
       // Apply same role-based filtering for stats
       if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
-        query = query.or(`category.in.(facilities,maintenance),assigned_to.eq.${user?.id}`);
+        query = query.or(`category.eq.facilities,assigned_to.eq.${user?.id}`);
       }
 
       const { data, error } = await query;
