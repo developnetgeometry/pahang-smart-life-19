@@ -8073,6 +8073,190 @@ export type Database = {
         }
         Relationships: []
       }
+      work_order_activities: {
+        Row: {
+          activity_type: string
+          created_at: string
+          description: string
+          id: string
+          metadata: Json | null
+          performed_by: string
+          work_order_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          description: string
+          id?: string
+          metadata?: Json | null
+          performed_by: string
+          work_order_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          description?: string
+          id?: string
+          metadata?: Json | null
+          performed_by?: string
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_order_activities_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_order_escalations: {
+        Row: {
+          created_at: string
+          escalated_by: string
+          escalated_to: string | null
+          escalation_reason: string
+          from_department: string
+          id: string
+          notes: string | null
+          responded_at: string | null
+          status: string | null
+          to_department: string
+          work_order_id: string
+        }
+        Insert: {
+          created_at?: string
+          escalated_by: string
+          escalated_to?: string | null
+          escalation_reason: string
+          from_department: string
+          id?: string
+          notes?: string | null
+          responded_at?: string | null
+          status?: string | null
+          to_department: string
+          work_order_id: string
+        }
+        Update: {
+          created_at?: string
+          escalated_by?: string
+          escalated_to?: string | null
+          escalation_reason?: string
+          from_department?: string
+          id?: string
+          notes?: string | null
+          responded_at?: string | null
+          status?: string | null
+          to_department?: string
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_order_escalations_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_orders: {
+        Row: {
+          actual_cost: number | null
+          actual_hours: number | null
+          assigned_to: string | null
+          complaint_id: string | null
+          completed_at: string | null
+          completion_notes: string | null
+          created_at: string
+          created_by: string
+          description: string
+          district_id: string | null
+          estimated_cost: number | null
+          estimated_hours: number | null
+          id: string
+          location: string
+          materials_needed: string[] | null
+          notes: string | null
+          photos: string[] | null
+          priority: Database["public"]["Enums"]["work_order_priority"]
+          scheduled_date: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["work_order_status"]
+          title: string
+          updated_at: string
+          work_order_type: Database["public"]["Enums"]["work_order_type"]
+        }
+        Insert: {
+          actual_cost?: number | null
+          actual_hours?: number | null
+          assigned_to?: string | null
+          complaint_id?: string | null
+          completed_at?: string | null
+          completion_notes?: string | null
+          created_at?: string
+          created_by: string
+          description: string
+          district_id?: string | null
+          estimated_cost?: number | null
+          estimated_hours?: number | null
+          id?: string
+          location: string
+          materials_needed?: string[] | null
+          notes?: string | null
+          photos?: string[] | null
+          priority?: Database["public"]["Enums"]["work_order_priority"]
+          scheduled_date?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["work_order_status"]
+          title: string
+          updated_at?: string
+          work_order_type?: Database["public"]["Enums"]["work_order_type"]
+        }
+        Update: {
+          actual_cost?: number | null
+          actual_hours?: number | null
+          assigned_to?: string | null
+          complaint_id?: string | null
+          completed_at?: string | null
+          completion_notes?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          district_id?: string | null
+          estimated_cost?: number | null
+          estimated_hours?: number | null
+          id?: string
+          location?: string
+          materials_needed?: string[] | null
+          notes?: string | null
+          photos?: string[] | null
+          priority?: Database["public"]["Enums"]["work_order_priority"]
+          scheduled_date?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["work_order_status"]
+          title?: string
+          updated_at?: string
+          work_order_type?: Database["public"]["Enums"]["work_order_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_orders_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -8088,6 +8272,18 @@ export type Database = {
       }
       create_direct_chat: {
         Args: { other_user_id: string }
+        Returns: string
+      }
+      create_work_order_from_complaint: {
+        Args: {
+          p_assigned_to?: string
+          p_complaint_id: string
+          p_description: string
+          p_location?: string
+          p_priority?: Database["public"]["Enums"]["work_order_priority"]
+          p_title: string
+          p_work_order_type?: Database["public"]["Enums"]["work_order_type"]
+        }
         Returns: string
       }
       get_announcement_content: {
@@ -8356,6 +8552,19 @@ export type Database = {
         | "denied"
         | "checked_in"
         | "checked_out"
+      work_order_priority: "low" | "medium" | "high" | "urgent"
+      work_order_status:
+        | "pending"
+        | "assigned"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+      work_order_type:
+        | "maintenance"
+        | "repair"
+        | "inspection"
+        | "emergency"
+        | "general"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -8558,6 +8767,21 @@ export const Constants = {
         "denied",
         "checked_in",
         "checked_out",
+      ],
+      work_order_priority: ["low", "medium", "high", "urgent"],
+      work_order_status: [
+        "pending",
+        "assigned",
+        "in_progress",
+        "completed",
+        "cancelled",
+      ],
+      work_order_type: [
+        "maintenance",
+        "repair",
+        "inspection",
+        "emergency",
+        "general",
       ],
     },
   },
