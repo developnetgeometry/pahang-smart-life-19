@@ -89,11 +89,10 @@ export default function ComplaintsManagement() {
       if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
         // Facility managers should only see facilities and maintenance related complaints
         query = query.in('category', ['facilities', 'maintenance']);
-      } else if (hasRole('community_admin' as any) && !hasRole('district_coordinator' as any) && !hasRole('state_admin' as any)) {
-        // Community admins should only see complaints assigned to community admin role
-        // This includes: general, noise (all levels), facilities/maintenance (level 1+), security (level 1+)
-        query = query.or('category.in.(general,noise),and(category.in.(facilities,maintenance,security),escalation_level.gte.1)');
-      }
+        } else if (hasRole('community_admin' as any) && !hasRole('district_coordinator' as any) && !hasRole('state_admin' as any)) {
+          // Community admins should see: noise complaints (all levels)
+          query = query.ilike('category', '%noise%');
+        }
 
       const { data, error } = await query.order('created_at', { ascending: false });
 
@@ -115,10 +114,10 @@ export default function ComplaintsManagement() {
       // Apply same role-based filtering for stats
       if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
         query = query.in('category', ['facilities', 'maintenance']);
-      } else if (hasRole('community_admin' as any) && !hasRole('district_coordinator' as any) && !hasRole('state_admin' as any)) {
-        // Community admins should only see complaints assigned to community admin role
-        query = query.or('category.in.(general,noise),and(category.in.(facilities,maintenance,security),escalation_level.gte.1)');
-      }
+        } else if (hasRole('community_admin' as any) && !hasRole('district_coordinator' as any) && !hasRole('state_admin' as any)) {
+          // Community admins should see: noise complaints (all levels)
+          query = query.ilike('category', '%noise%');
+        }
 
       const { data, error } = await query;
 
@@ -362,8 +361,13 @@ export default function ComplaintsManagement() {
                     <SelectItem value="maintenance">Maintenance</SelectItem>
                     <SelectItem value="facilities">Facilities</SelectItem>
                   </>
+                ) : (hasRole('community_admin' as any) && !hasRole('district_coordinator' as any) && !hasRole('state_admin' as any)) ? (
+                  // Show only noise category for community admins
+                  <>
+                    <SelectItem value="noise">Noise</SelectItem>
+                  </>
                 ) : (
-                  // Show all categories for admins
+                  // Show all categories for higher level admins
                   <>
                     <SelectItem value="maintenance">Maintenance</SelectItem>
                     <SelectItem value="noise">Noise</SelectItem>
