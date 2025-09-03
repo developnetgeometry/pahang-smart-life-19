@@ -394,10 +394,10 @@ export function AppSidebar() {
           </div>
           {!isCollapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-semibold text-foreground">
+              <span className="text-sm font-semibold text-sidebar-foreground">
                 Smart Community
               </span>
-              <span className="text-xs text-muted-foreground">Pahang</span>
+              <span className="text-xs text-sidebar-accent-foreground opacity-75">Pahang</span>
             </div>
           )}
         </div>
