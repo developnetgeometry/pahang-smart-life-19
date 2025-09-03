@@ -9,6 +9,7 @@ import { Layout } from "@/components/layout/Layout";
 import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import ComplaintDetail from "./pages/ComplaintDetail";
 import MyComplaints from "./pages/MyComplaints";
 import MyProfile from "./pages/MyProfile";
 import Announcements from "./pages/Announcements";
@@ -119,6 +120,16 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <MyComplaints />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/complaint/:id"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ComplaintDetail />
                   </Layout>
                 </ProtectedRoute>
               }

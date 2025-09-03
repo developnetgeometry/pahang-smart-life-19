@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +35,7 @@ interface Complaint {
 export default function MyComplaints() {
   const { language, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -574,7 +576,7 @@ export default function MyComplaints() {
                   className={`hover:shadow-lg transition-shadow cursor-pointer ${
                     selectedComplaint?.id === complaint.id ? 'ring-2 ring-primary' : ''
                   }`}
-                  onClick={() => setSelectedComplaint(complaint)}
+                  onClick={() => navigate(`/complaint/${complaint.id}`)}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
