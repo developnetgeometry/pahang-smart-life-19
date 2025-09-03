@@ -9374,6 +9374,10 @@ export type Database = {
         Args: { notification_id: string }
         Returns: boolean
       }
+      process_workflow_escalations: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       update_user_presence: {
         Args: { p_room_id?: string; p_status: string; p_user_id: string }
         Returns: undefined
