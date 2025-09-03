@@ -246,14 +246,14 @@ export function AppSidebar() {
       );
     }
     
-    // Admin only items
-    if (hasRole("state_admin") || hasRole("community_admin")) {
+    // Admin and Facility Manager items  
+    if (hasRole("facility_manager") || hasRole("state_admin") || hasRole("community_admin")) {
       operationsItems.push(
         {
           title: t("complaintsManagement"),
           url: "/admin/complaints",
           icon: AlertTriangle,
-          requiredRoles: ["state_admin", "community_admin"],
+          requiredRoles: ["facility_manager", "state_admin", "community_admin"],
         },
         {
           title: t("complaintsAnalytics"),
