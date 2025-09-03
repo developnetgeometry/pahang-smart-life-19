@@ -90,8 +90,8 @@ export default function ComplaintsManagement() {
         // Facility managers should only see facilities and maintenance related complaints
         query = query.in('category', ['facilities', 'maintenance']);
         } else if (hasRole('community_admin' as any) && !hasRole('district_coordinator' as any) && !hasRole('state_admin' as any)) {
-          // Community admins should see: noise complaints (all levels)
-          query = query.ilike('category', '%noise%');
+          // Community admins should see: noise and general complaints
+          query = query.in('category', ['noise', 'general']);
         }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -115,8 +115,8 @@ export default function ComplaintsManagement() {
       if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
         query = query.in('category', ['facilities', 'maintenance']);
         } else if (hasRole('community_admin' as any) && !hasRole('district_coordinator' as any) && !hasRole('state_admin' as any)) {
-          // Community admins should see: noise complaints (all levels)
-          query = query.ilike('category', '%noise%');
+          // Community admins should see: noise and general complaints
+          query = query.in('category', ['noise', 'general']);
         }
 
       const { data, error } = await query;
@@ -362,9 +362,10 @@ export default function ComplaintsManagement() {
                     <SelectItem value="facilities">Facilities</SelectItem>
                   </>
                 ) : (hasRole('community_admin' as any) && !hasRole('district_coordinator' as any) && !hasRole('state_admin' as any)) ? (
-                  // Show only noise category for community admins
+                  // Show noise and general categories for community admins
                   <>
                     <SelectItem value="noise">Noise</SelectItem>
+                    <SelectItem value="general">General</SelectItem>
                   </>
                 ) : (
                   // Show all categories for higher level admins
