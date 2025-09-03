@@ -129,8 +129,8 @@ export function AppSidebar() {
       servicesItems.push({ title: "Facilities", url: "/facilities", icon: Building });
     }
     
-    // Add bookings if module is enabled
-    if (isModuleEnabled('bookings')) {
+    // Add bookings if module is enabled (exclude facility managers - they manage facilities, don't book them)
+    if (isModuleEnabled('bookings') && !hasRole('facility_manager')) {
       servicesItems.push({ title: "My Bookings", url: "/my-bookings", icon: Calendar });
     }
     
@@ -259,7 +259,7 @@ export function AppSidebar() {
           title: t("complaintsAnalytics"),
           url: "/admin/complaints-analytics",
           icon: BarChart3,
-          requiredRoles: ["state_admin", "community_admin"],
+          requiredRoles: ["facility_manager", "state_admin", "community_admin"],
         }
       );
     }
@@ -274,13 +274,13 @@ export function AppSidebar() {
       });
     }
 
-    // Inventory Management - for maintenance staff and above
-    if (hasRole("maintenance_staff") || hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+    // Inventory Management - for facility managers and above
+    if (hasRole("facility_manager") || hasRole("maintenance_staff") || hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
       operationsItems.push({
         title: "Inventory Management",
         url: "/inventory-management",
         icon: BarChart3,
-        requiredRoles: ["maintenance_staff", "community_admin", "district_coordinator", "state_admin"],
+        requiredRoles: ["facility_manager", "maintenance_staff", "community_admin", "district_coordinator", "state_admin"],
       });
     }
 
