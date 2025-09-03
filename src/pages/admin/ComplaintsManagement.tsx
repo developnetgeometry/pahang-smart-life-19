@@ -117,6 +117,8 @@ export default function ComplaintsManagement() {
 
       if (error) throw error;
 
+      console.log('Stats data:', data); // Debug log
+
       const today = new Date().toDateString();
       const resolvedToday = data?.filter(c => 
         c.status === 'resolved' && 
@@ -124,6 +126,7 @@ export default function ComplaintsManagement() {
       ).length || 0;
 
       const pendingCount = data?.filter(c => c.status === 'pending').length || 0;
+      const inProgressCount = data?.filter(c => c.status === 'in_progress').length || 0;
 
       setStats({
         total: data?.length || 0,
@@ -131,6 +134,13 @@ export default function ComplaintsManagement() {
         resolvedToday,
         avgResolutionTime: '2.5 days'
       });
+
+      console.log('Stats calculated:', {
+        total: data?.length || 0,
+        pending: pendingCount,
+        inProgress: inProgressCount,
+        resolved: resolvedToday
+      }); // Debug log
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
