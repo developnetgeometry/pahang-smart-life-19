@@ -78,13 +78,21 @@ export default function ComplaintsManagement() {
 
   const fetchComplaints = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('complaints')
         .select(`
           *,
           profiles!complainant_id (full_name)
-        `)
-        .order('created_at', { ascending: false });
+        `);
+
+      // Filter complaints based on user role
+      if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
+        // Facility managers should only see facility/maintenance related complaints
+        // or complaints assigned to them specifically
+        query = query.or(`category.in.(facilities,maintenance),assigned_to.eq.${user?.id}`);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       setComplaints(data || []);
@@ -97,9 +105,16 @@ export default function ComplaintsManagement() {
 
   const fetchStats = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('complaints')
         .select('*');
+
+      // Apply same role-based filtering for stats
+      if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
+        query = query.or(`category.in.(facilities,maintenance),assigned_to.eq.${user?.id}`);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
