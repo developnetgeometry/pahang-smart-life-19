@@ -1685,6 +1685,56 @@ export type Database = {
           },
         ]
       }
+      complaint_escalations: {
+        Row: {
+          complaint_id: string
+          created_at: string
+          escalated_by: string
+          escalated_to: string | null
+          escalation_reason: string
+          from_department: string
+          id: string
+          notes: string | null
+          responded_at: string | null
+          status: string | null
+          to_department: string
+        }
+        Insert: {
+          complaint_id: string
+          created_at?: string
+          escalated_by: string
+          escalated_to?: string | null
+          escalation_reason: string
+          from_department: string
+          id?: string
+          notes?: string | null
+          responded_at?: string | null
+          status?: string | null
+          to_department: string
+        }
+        Update: {
+          complaint_id?: string
+          created_at?: string
+          escalated_by?: string
+          escalated_to?: string | null
+          escalation_reason?: string
+          from_department?: string
+          id?: string
+          notes?: string | null
+          responded_at?: string | null
+          status?: string | null
+          to_department?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "complaint_escalations_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       complaint_notifications: {
         Row: {
           complaint_id: string | null

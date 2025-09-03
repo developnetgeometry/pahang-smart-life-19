@@ -64,14 +64,14 @@ export default function ComplaintEscalationDialog({
         .from('enhanced_user_roles')
         .select(`
           user_id,
-          profiles!enhanced_user_roles_user_id_fkey(full_name, email)
+          profiles(full_name, email)
         `)
-        .eq('role', role)
+        .eq('role', role as any)
         .eq('is_active', true);
 
       if (error) throw error;
 
-      const staff = (data || []).map(item => ({
+      const staff = (data || []).map((item: any) => ({
         id: item.user_id,
         name: item.profiles?.full_name || item.profiles?.email || 'Unknown',
         role: role

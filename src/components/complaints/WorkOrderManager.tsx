@@ -81,13 +81,13 @@ export default function WorkOrderManager({
         .from('work_orders')
         .select(`
           *,
-          profiles!work_orders_assigned_to_fkey(full_name)
+          profiles(full_name)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const transformedWorkOrders: WorkOrder[] = (data || []).map(wo => ({
+      const transformedWorkOrders: WorkOrder[] = (data || []).map((wo: any) => ({
         id: wo.id,
         title: wo.title,
         description: wo.description,
@@ -123,14 +123,14 @@ export default function WorkOrderManager({
         .from('enhanced_user_roles')
         .select(`
           user_id,
-          profiles!enhanced_user_roles_user_id_fkey(full_name, email)
+          profiles(full_name, email)
         `)
         .eq('role', 'maintenance_staff')
         .eq('is_active', true);
 
       if (error) throw error;
 
-      const staff = (data || []).map(item => ({
+      const staff = (data || []).map((item: any) => ({
         id: item.user_id,
         name: item.profiles?.full_name || item.profiles?.email || 'Unknown'
       }));

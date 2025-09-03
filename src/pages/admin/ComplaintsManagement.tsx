@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,9 +24,16 @@ import {
   Clock,
   User,
   MapPin,
-  MessageCircle
+  MessageCircle,
+  Wrench,
+  ArrowUpRight,
+  FileText
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import WorkOrderManager from '@/components/complaints/WorkOrderManager';
+import ComplaintEscalationDialog from '@/components/complaints/ComplaintEscalationDialog';
+import FacilityManagerComplaintForm from '@/components/complaints/FacilityManagerComplaintForm';
+import { useUserRoles } from '@/hooks/use-user-roles';
 
 interface Complaint {
   id: string;
@@ -43,12 +51,18 @@ interface Complaint {
 }
 
 export default function ComplaintsManagement() {
-  const { language } = useAuth();
+  const { language, user } = useAuth();
+  const { userRoles, hasRole } = useUserRoles();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const isFacilityManager = hasRole('facility_manager' as any);
+  const isMaintenanceStaff = hasRole('maintenance_staff' as any);
+  const canManageWorkOrders = isFacilityManager || isMaintenanceStaff || hasRole('community_admin' as any);
 
   const text = {
     en: {
@@ -97,7 +111,14 @@ export default function ComplaintsManagement() {
       avgResolution: 'Avg Resolution Time',
       complaintResolved: 'Complaint resolved successfully!',
       complaintAssigned: 'Complaint assigned successfully!',
-      complaintClosed: 'Complaint closed successfully!'
+      complaintClosed: 'Complaint closed successfully!',
+      complaints: 'Complaints',
+      analytics: 'Analytics',
+      searchPlaceholder: 'Search complaints...',
+      filterByStatus: 'Filter by status',
+      filterByCategory: 'Filter by category',
+      allStatuses: 'All Statuses',
+      general: 'General'
     },
     ms: {
       title: 'Pengurusan Aduan',
@@ -145,7 +166,14 @@ export default function ComplaintsManagement() {
       avgResolution: 'Purata Masa Penyelesaian',
       complaintResolved: 'Aduan berjaya diselesaikan!',
       complaintAssigned: 'Aduan berjaya ditugaskan!',
-      complaintClosed: 'Aduan berjaya ditutup!'
+      complaintClosed: 'Aduan berjaya ditutup!',
+      complaints: 'Aduan',
+      analytics: 'Analitik',
+      searchPlaceholder: 'Cari aduan...',
+      filterByStatus: 'Tapis mengikut status',
+      filterByCategory: 'Tapis mengikut kategori',
+      allStatuses: 'Semua Status',
+      general: 'Umum'
     }
   };
 
@@ -301,6 +329,24 @@ export default function ComplaintsManagement() {
     setComplaints(prev => prev.map(c => c.id === id ? { ...c, status: 'closed', updatedDate: new Date().toISOString().slice(0,10) } : c));
     toast({ title: t.complaintClosed });
   };
+
+  const handleAction = (complaintId: string, action: string) => {
+    switch (action) {
+      case 'resolve':
+        handleResolve(complaintId);
+        break;
+      case 'assign':
+        handleAssign(complaintId);
+        break;
+      case 'close':
+        handleClose(complaintId);
+        break;
+    }
+  };
+
+  // Calculate stats
+  const pendingCount = complaints.filter(c => c.status === 'pending').length;
+  const resolvedCount = complaints.filter(c => c.status === 'resolved').length;
 
   return (
     <div className="space-y-6">
