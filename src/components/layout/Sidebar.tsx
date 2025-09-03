@@ -246,17 +246,7 @@ export function AppSidebar() {
       );
     }
     
-    // Admin and Facility Manager items  
-    if (hasRole("facility_manager") || hasRole("security_officer") || hasRole("state_admin") || hasRole("community_admin")) {
-      operationsItems.push(
-        {
-          title: "Complaints Center",
-          url: "/admin/complaints",
-          icon: AlertTriangle,
-          requiredRoles: ["facility_manager", "security_officer", "state_admin", "community_admin"],
-        }
-      );
-    }
+    // Admin and Facility Manager items - removed complaints center from here
 
     // Asset Management - for facility managers and above
     if (hasRole("facility_manager") || hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
@@ -299,6 +289,12 @@ export function AppSidebar() {
     const securityItems = [];
     if (hasRole("security_officer") || hasRole("state_admin") || hasRole("community_admin")) {
       securityItems.push(
+        {
+          title: "Complaints Center",
+          url: "/admin/complaints",
+          icon: AlertTriangle,
+          requiredRoles: ["security_officer", "facility_manager", "state_admin", "community_admin"],
+        },
         {
           title: t("panicAlerts"),
           url: "/panic-alerts",
