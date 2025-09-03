@@ -261,47 +261,6 @@ export function ResidentDashboard() {
         isAdminMode={false}
       />
 
-      {/* Community Updates */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Megaphone className="h-5 w-5" />
-            {language === 'en' ? 'Community Updates' : 'Kemaskini Komuniti'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {communityUpdates.map((update, index) => {
-            const IconComponent = getUpdateIcon(update.type);
-            return (
-              <Alert key={index} variant={update.priority === 'high' ? 'destructive' : 'default'}>
-                <IconComponent className="h-4 w-4" />
-                <AlertDescription>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{update.title}</p>
-                      <p className="text-sm mt-1">{update.message}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
-                        <Clock className="h-3 w-3" />
-                        {update.time}
-                        <Badge variant={getPriorityColor(update.priority) as any} className="text-xs">
-                          {update.priority}
-                        </Badge>
-                      </div>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => setSelectedUpdate(update)}
-                    >
-                      {language === 'en' ? 'View' : 'Lihat'}
-                    </Button>
-                  </div>
-                </AlertDescription>
-              </Alert>
-            );
-          })}
-        </CardContent>
-      </Card>
 
       {/* Additional Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
