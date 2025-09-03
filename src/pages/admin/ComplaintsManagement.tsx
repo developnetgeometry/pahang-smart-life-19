@@ -79,6 +79,10 @@ export default function ComplaintsManagement() {
 
   const fetchComplaints = async () => {
     try {
+      console.log('=== DEBUGGING COMPLAINTS FETCH ===');
+      console.log('User object:', user);
+      console.log('User district:', user?.district);
+      
       let query = supabase
         .from('complaints')
         .select(`
@@ -86,15 +90,16 @@ export default function ComplaintsManagement() {
           profiles!complainant_id (full_name)
         `);
 
-      // Add district filtering to ensure we only show complaints from user's district
-      const userDistrict = user?.district;
-      if (userDistrict) {
-        // Handle both UUID format and "district-{uuid}" format
-        const districtId = userDistrict.startsWith('district-') 
-          ? userDistrict.replace('district-', '') 
-          : userDistrict;
-        query = query.eq('district_id', districtId);
-      }
+      // TEMPORARILY REMOVE DISTRICT FILTERING TO DEBUG
+      // const userDistrict = user?.district;
+      // if (userDistrict) {
+      //   // Handle both UUID format and "district-{uuid}" format
+      //   const districtId = userDistrict.startsWith('district-') 
+      //     ? userDistrict.replace('district-', '') 
+      //     : userDistrict;
+      //   console.log('Filtering by district:', districtId);
+      //   query = query.eq('district_id', districtId);
+      // }
 
       // Filter complaints based on user role
       if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
