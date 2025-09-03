@@ -846,6 +846,56 @@ export type Database = {
           },
         ]
       }
+      booking_approvals: {
+        Row: {
+          approval_notes: string | null
+          approval_status: string
+          approved_at: string | null
+          approver_id: string
+          booking_id: string
+          created_at: string
+          escalated: boolean
+          escalated_at: string | null
+          escalated_to: string | null
+          id: string
+          rejection_reason: string | null
+        }
+        Insert: {
+          approval_notes?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approver_id: string
+          booking_id: string
+          created_at?: string
+          escalated?: boolean
+          escalated_at?: string | null
+          escalated_to?: string | null
+          id?: string
+          rejection_reason?: string | null
+        }
+        Update: {
+          approval_notes?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approver_id?: string
+          booking_id?: string
+          created_at?: string
+          escalated?: boolean
+          escalated_at?: string | null
+          escalated_to?: string | null
+          id?: string
+          rejection_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_approvals_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_conflicts: {
         Row: {
           booking_id_1: string
@@ -940,6 +990,59 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_waitlist: {
+        Row: {
+          created_at: string
+          facility_id: string
+          id: string
+          offer_expires_at: string | null
+          offered_at: string | null
+          priority: number
+          purpose: string | null
+          requested_date: string
+          requested_end_time: string
+          requested_start_time: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          facility_id: string
+          id?: string
+          offer_expires_at?: string | null
+          offered_at?: string | null
+          priority?: number
+          purpose?: string | null
+          requested_date: string
+          requested_end_time: string
+          requested_start_time: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          facility_id?: string
+          id?: string
+          offer_expires_at?: string | null
+          offered_at?: string | null
+          priority?: number
+          purpose?: string | null
+          requested_date?: string
+          requested_end_time?: string
+          requested_start_time?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_waitlist_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
             referencedColumns: ["id"]
           },
         ]
@@ -2791,6 +2894,177 @@ export type Database = {
           },
         ]
       }
+      facility_configurations: {
+        Row: {
+          booking_rules: Json
+          created_at: string
+          equipment_list: Json | null
+          facility_id: string
+          id: string
+          operating_hours: Json
+          peak_hours: Json
+          pricing_tiers: Json
+          safety_requirements: string | null
+          updated_at: string
+        }
+        Insert: {
+          booking_rules?: Json
+          created_at?: string
+          equipment_list?: Json | null
+          facility_id: string
+          id?: string
+          operating_hours?: Json
+          peak_hours?: Json
+          pricing_tiers?: Json
+          safety_requirements?: string | null
+          updated_at?: string
+        }
+        Update: {
+          booking_rules?: Json
+          created_at?: string
+          equipment_list?: Json | null
+          facility_id?: string
+          id?: string
+          operating_hours?: Json
+          peak_hours?: Json
+          pricing_tiers?: Json
+          safety_requirements?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_configurations_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facility_equipment: {
+        Row: {
+          condition_status: string
+          created_at: string
+          equipment_type: string
+          facility_id: string
+          id: string
+          is_active: boolean
+          last_maintenance_date: string | null
+          maintenance_interval_days: number | null
+          model: string | null
+          name: string
+          next_maintenance_date: string | null
+          purchase_date: string | null
+          qr_code: string | null
+          serial_number: string | null
+          updated_at: string
+          warranty_expiry: string | null
+        }
+        Insert: {
+          condition_status?: string
+          created_at?: string
+          equipment_type: string
+          facility_id: string
+          id?: string
+          is_active?: boolean
+          last_maintenance_date?: string | null
+          maintenance_interval_days?: number | null
+          model?: string | null
+          name: string
+          next_maintenance_date?: string | null
+          purchase_date?: string | null
+          qr_code?: string | null
+          serial_number?: string | null
+          updated_at?: string
+          warranty_expiry?: string | null
+        }
+        Update: {
+          condition_status?: string
+          created_at?: string
+          equipment_type?: string
+          facility_id?: string
+          id?: string
+          is_active?: boolean
+          last_maintenance_date?: string | null
+          maintenance_interval_days?: number | null
+          model?: string | null
+          name?: string
+          next_maintenance_date?: string | null
+          purchase_date?: string | null
+          qr_code?: string | null
+          serial_number?: string | null
+          updated_at?: string
+          warranty_expiry?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_equipment_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facility_supplies: {
+        Row: {
+          category: string
+          created_at: string
+          current_stock: number
+          expiry_date: string | null
+          facility_id: string
+          id: string
+          is_active: boolean
+          item_name: string
+          last_restocked_date: string | null
+          maximum_stock: number
+          minimum_stock: number
+          supplier: string | null
+          unit_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          current_stock?: number
+          expiry_date?: string | null
+          facility_id: string
+          id?: string
+          is_active?: boolean
+          item_name: string
+          last_restocked_date?: string | null
+          maximum_stock?: number
+          minimum_stock?: number
+          supplier?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          current_stock?: number
+          expiry_date?: string | null
+          facility_id?: string
+          id?: string
+          is_active?: boolean
+          item_name?: string
+          last_restocked_date?: string | null
+          maximum_stock?: number
+          minimum_stock?: number
+          supplier?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_supplies_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facility_types: {
         Row: {
           created_at: string | null
@@ -2817,6 +3091,188 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      facility_usage_analytics: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          facility_id: string
+          id: string
+          occupancy_rate: number | null
+          peak_usage_time: string | null
+          revenue_generated: number
+          usage_date: string
+          usage_hours: number
+          user_satisfaction_rating: number | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          facility_id: string
+          id?: string
+          occupancy_rate?: number | null
+          peak_usage_time?: string | null
+          revenue_generated?: number
+          usage_date: string
+          usage_hours?: number
+          user_satisfaction_rating?: number | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          facility_id?: string
+          id?: string
+          occupancy_rate?: number | null
+          peak_usage_time?: string | null
+          revenue_generated?: number
+          usage_date?: string
+          usage_hours?: number
+          user_satisfaction_rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_usage_analytics_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_usage_analytics_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facility_work_orders: {
+        Row: {
+          actual_cost: number | null
+          actual_duration_hours: number | null
+          after_photos: string[] | null
+          assigned_to: string | null
+          before_photos: string[] | null
+          complaint_id: string | null
+          completed_at: string | null
+          completion_notes: string | null
+          created_at: string
+          created_by: string
+          description: string
+          district_id: string | null
+          equipment_id: string | null
+          estimated_cost: number | null
+          estimated_duration_hours: number | null
+          facility_id: string
+          id: string
+          maintenance_schedule_id: string | null
+          parts_needed: Json | null
+          priority: string
+          required_skills: string[] | null
+          safety_requirements: string | null
+          scheduled_end: string | null
+          scheduled_start: string | null
+          started_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          vendor_info: Json | null
+          work_order_type: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          actual_duration_hours?: number | null
+          after_photos?: string[] | null
+          assigned_to?: string | null
+          before_photos?: string[] | null
+          complaint_id?: string | null
+          completed_at?: string | null
+          completion_notes?: string | null
+          created_at?: string
+          created_by: string
+          description: string
+          district_id?: string | null
+          equipment_id?: string | null
+          estimated_cost?: number | null
+          estimated_duration_hours?: number | null
+          facility_id: string
+          id?: string
+          maintenance_schedule_id?: string | null
+          parts_needed?: Json | null
+          priority?: string
+          required_skills?: string[] | null
+          safety_requirements?: string | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          started_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          vendor_info?: Json | null
+          work_order_type?: string
+        }
+        Update: {
+          actual_cost?: number | null
+          actual_duration_hours?: number | null
+          after_photos?: string[] | null
+          assigned_to?: string | null
+          before_photos?: string[] | null
+          complaint_id?: string | null
+          completed_at?: string | null
+          completion_notes?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          district_id?: string | null
+          equipment_id?: string | null
+          estimated_cost?: number | null
+          estimated_duration_hours?: number | null
+          facility_id?: string
+          id?: string
+          maintenance_schedule_id?: string | null
+          parts_needed?: Json | null
+          priority?: string
+          required_skills?: string[] | null
+          safety_requirements?: string | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          started_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          vendor_info?: Json | null
+          work_order_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_work_orders_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_work_orders_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "facility_equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_work_orders_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_work_orders_maintenance_schedule_id_fkey"
+            columns: ["maintenance_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       feedback: {
         Row: {
@@ -3871,6 +4327,84 @@ export type Database = {
             columns: ["requested_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_schedules: {
+        Row: {
+          actual_duration_hours: number | null
+          assigned_to: string | null
+          completed_at: string | null
+          completion_notes: string | null
+          cost: number | null
+          created_at: string
+          description: string | null
+          equipment_id: string | null
+          estimated_duration_hours: number | null
+          facility_id: string | null
+          id: string
+          maintenance_type: string
+          next_maintenance_date: string | null
+          priority: string
+          scheduled_date: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actual_duration_hours?: number | null
+          assigned_to?: string | null
+          completed_at?: string | null
+          completion_notes?: string | null
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          equipment_id?: string | null
+          estimated_duration_hours?: number | null
+          facility_id?: string | null
+          id?: string
+          maintenance_type: string
+          next_maintenance_date?: string | null
+          priority?: string
+          scheduled_date: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          actual_duration_hours?: number | null
+          assigned_to?: string | null
+          completed_at?: string | null
+          completion_notes?: string | null
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          equipment_id?: string | null
+          estimated_duration_hours?: number | null
+          facility_id?: string | null
+          id?: string
+          maintenance_type?: string
+          next_maintenance_date?: string | null
+          priority?: string
+          scheduled_date?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_schedules_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "facility_equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_schedules_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
             referencedColumns: ["id"]
           },
         ]
@@ -5740,6 +6274,71 @@ export type Database = {
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_bookings: {
+        Row: {
+          created_at: string
+          days_of_week: number[] | null
+          end_date: string | null
+          end_time: string
+          facility_id: string
+          id: string
+          next_booking_date: string | null
+          purpose: string | null
+          recurrence_interval: number
+          recurrence_pattern: string
+          start_date: string
+          start_time: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          days_of_week?: number[] | null
+          end_date?: string | null
+          end_time: string
+          facility_id: string
+          id?: string
+          next_booking_date?: string | null
+          purpose?: string | null
+          recurrence_interval?: number
+          recurrence_pattern: string
+          start_date: string
+          start_time: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          days_of_week?: number[] | null
+          end_date?: string | null
+          end_time?: string
+          facility_id?: string
+          id?: string
+          next_booking_date?: string | null
+          purpose?: string | null
+          recurrence_interval?: number
+          recurrence_pattern?: string
+          start_date?: string
+          start_time?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_bookings_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
             referencedColumns: ["id"]
           },
         ]
