@@ -41,6 +41,7 @@ export default function ComplaintEscalationDialog({
   const [isOpen, setIsOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [departmentOptions, setDepartmentOptions] = useState<Array<{value: string, label: string}>>([]);
 
   const [formData, setFormData] = useState({
     to_department: '',
@@ -48,6 +49,30 @@ export default function ComplaintEscalationDialog({
     escalation_reason: '',
     notes: ''
   });
+
+  const fetchConfigurationData = async () => {
+    try {
+      // Fetch department options
+      const { data: departments, error: departmentsError } = await supabase
+        .from('department_types')
+        .select('code, name_en, name_ms')
+        .eq('is_active', true)
+        .order('sort_order');
+
+      if (departmentsError) throw departmentsError;
+      setDepartmentOptions(departments?.map(d => ({
+        value: d.code,
+        label: language === 'en' ? d.name_en : d.name_ms
+      })).filter(dept => dept.value !== currentCategory) || []);
+
+    } catch (error) {
+      console.error('Error fetching configuration data:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchConfigurationData();
+  }, [language, currentCategory]);
 
   useEffect(() => {
     if (isOpen && formData.to_department) {
@@ -146,13 +171,7 @@ export default function ComplaintEscalationDialog({
     }
   };
 
-  const departmentOptions = [
-    { value: 'maintenance', label: language === 'en' ? 'Maintenance' : 'Penyelenggaraan' },
-    { value: 'security', label: language === 'en' ? 'Security' : 'Keselamatan' },
-    { value: 'facilities', label: language === 'en' ? 'Facilities' : 'Kemudahan' },
-    { value: 'general', label: language === 'en' ? 'General/Admin' : 'Umum/Pentadbir' },
-    { value: 'noise', label: language === 'en' ? 'Noise Control' : 'Kawalan Bunyi' },
-  ].filter(dept => dept.value !== currentCategory);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

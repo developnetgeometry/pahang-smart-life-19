@@ -61,6 +61,32 @@ export default function MaintenanceReports() {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState('30');
   const [reportType, setReportType] = useState('overview');
+  const [chartColors, setChartColors] = useState<string[]>([]);
+
+  const fetchConfigurationData = async () => {
+    try {
+      // Fetch chart colors
+      const { data: colors, error: colorsError } = await supabase
+        .from('chart_colors')
+        .select('hex_color')
+        .eq('is_active', true)
+        .eq('category', 'chart')
+        .order('sort_order');
+
+      if (colorsError) throw colorsError;
+      setChartColors(colors?.map(c => c.hex_color) || ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']);
+
+    } catch (error) {
+      console.error('Error fetching configuration data:', error);
+      // Fallback to default colors
+      setChartColors(['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']);
+    }
+  };
+
+  useEffect(() => {
+    fetchConfigurationData();
+    fetchReportData();
+  }, [user, dateRange]);
 
   useEffect(() => {
     fetchReportData();

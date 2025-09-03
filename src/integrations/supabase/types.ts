@@ -1259,6 +1259,39 @@ export type Database = {
           },
         ]
       }
+      chart_colors: {
+        Row: {
+          category: string | null
+          created_at: string
+          hex_color: string
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          hex_color: string
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          hex_color?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           created_at: string
@@ -2077,6 +2110,45 @@ export type Database = {
           status?: string | null
           tracking_number?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      department_types: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          icon_name: string | null
+          id: string
+          is_active: boolean
+          name_en: string
+          name_ms: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean
+          name_en: string
+          name_ms: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean
+          name_en?: string
+          name_ms?: string
+          sort_order?: number | null
+          updated_at?: string
         }
         Relationships: []
       }

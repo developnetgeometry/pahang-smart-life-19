@@ -83,7 +83,32 @@ export default function AssetManagement() {
 
   const [categories, setCategories] = useState<string[]>([]);
 
+  const [conditionOptions, setConditionOptions] = useState<Array<{value: string, label: string, color: string}>>([]);
+
+  const fetchConfigurationData = async () => {
+    try {
+      // Fetch condition options
+      const { data: conditions, error: conditionsError } = await supabase
+        .from('status_types')
+        .select('code, name, color_class')
+        .eq('is_active', true)
+        .eq('category', 'asset_condition')
+        .order('sort_order');
+
+      if (conditionsError) throw conditionsError;
+      setConditionOptions(conditions?.map(c => ({
+        value: c.code,
+        label: c.name,
+        color: c.color_class
+      })) || []);
+
+    } catch (error) {
+      console.error('Error fetching configuration data:', error);
+    }
+  };
+
   useEffect(() => {
+    fetchConfigurationData();
     fetchCategories();
   }, []);
 
@@ -103,14 +128,6 @@ export default function AssetManagement() {
       setCategories(['furniture', 'equipment', 'infrastructure', 'vehicle', 'electronics', 'appliances']);
     }
   };
-
-  const conditionOptions = [
-    { value: 'excellent', label: 'Excellent', color: 'bg-green-500' },
-    { value: 'good', label: 'Good', color: 'bg-blue-500' },
-    { value: 'fair', label: 'Fair', color: 'bg-yellow-500' },
-    { value: 'poor', label: 'Poor', color: 'bg-orange-500' },
-    { value: 'needs_replacement', label: 'Needs Replacement', color: 'bg-red-500' }
-  ];
 
   const fetchAssets = async () => {
     try {
