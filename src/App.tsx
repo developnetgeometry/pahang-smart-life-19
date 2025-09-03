@@ -690,6 +690,68 @@ const App = () => (
               }
             />
 
+            {/* Maintenance Staff Routes */}
+            <Route
+              path="/work-orders-management"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["maintenance_staff"]}>
+                    <Layout>
+                      <WorkOrdersManagement />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/maintenance-emergency"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["maintenance_staff"]}>
+                    <Layout>
+                      <MaintenanceEmergency />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/maintenance-assets"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["maintenance_staff"]}>
+                    <Layout>
+                      <MaintenanceAssets />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/maintenance-scheduler"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["maintenance_staff"]}>
+                    <Layout>
+                      <MaintenanceScheduler />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/maintenance-reports"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["maintenance_staff"]}>
+                    <Layout>
+                      <MaintenanceReports />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
