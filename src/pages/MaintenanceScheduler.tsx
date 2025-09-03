@@ -92,6 +92,7 @@ export default function MaintenanceScheduler() {
 
   const markTaskComplete = async (taskId: string) => {
     try {
+      setLoading(true);
       const today = new Date().toISOString().split('T')[0];
       const nextMonth = new Date();
       nextMonth.setMonth(nextMonth.getMonth() + 1);
@@ -108,12 +109,24 @@ export default function MaintenanceScheduler() {
 
       if (error) throw error;
 
+      // Update local state immediately for better UX
+      setTasks(prevTasks => prevTasks.map(task => 
+        task.id === taskId 
+          ? {
+              ...task,
+              last_maintenance_date: today,
+              next_maintenance_date: nextMaintenanceDate
+            }
+          : task
+      ));
+
       toast({
         title: language === 'ms' ? 'Berjaya' : 'Success',
         description: language === 'ms' ? 'Tugas penyelenggaraan ditandakan selesai' : 'Maintenance task marked as complete'
       });
 
-      fetchMaintenanceTasks();
+      // Refresh data from server to ensure consistency
+      await fetchMaintenanceTasks();
     } catch (error) {
       console.error('Error updating maintenance task:', error);
       toast({
@@ -121,6 +134,8 @@ export default function MaintenanceScheduler() {
         description: language === 'ms' ? 'Gagal mengemas kini tugas' : 'Failed to update task',
         variant: 'destructive'
       });
+    } finally {
+      setLoading(false);
     }
   };
 
