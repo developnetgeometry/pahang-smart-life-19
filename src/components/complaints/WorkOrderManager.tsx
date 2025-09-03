@@ -79,33 +79,45 @@ export default function WorkOrderManager({
       setLoading(true);
       const { data, error } = await supabase
         .from('work_orders')
-        .select(`
-          *,
-          profiles(full_name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const transformedWorkOrders: WorkOrder[] = (data || []).map((wo: any) => ({
-        id: wo.id,
-        title: wo.title,
-        description: wo.description,
-        work_order_type: wo.work_order_type,
-        priority: wo.priority,
-        status: wo.status,
-        location: wo.location,
-        estimated_hours: wo.estimated_hours,
-        estimated_cost: wo.estimated_cost,
-        scheduled_date: wo.scheduled_date,
-        complaint_id: wo.complaint_id,
-        assigned_to: wo.assigned_to,
-        assigned_name: wo.profiles?.full_name,
-        created_at: wo.created_at,
-        updated_at: wo.updated_at
-      }));
+      // Fetch assigned user names separately
+      const workOrdersWithNames = await Promise.all(
+        (data || []).map(async (wo: any) => {
+          let assigned_name = '';
+          if (wo.assigned_to) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('user_id', wo.assigned_to)
+              .single();
+            assigned_name = profileData?.full_name || '';
+          }
 
-      setWorkOrders(transformedWorkOrders);
+          return {
+            id: wo.id,
+            title: wo.title,
+            description: wo.description,
+            work_order_type: wo.work_order_type,
+            priority: wo.priority,
+            status: wo.status,
+            location: wo.location,
+            estimated_hours: wo.estimated_hours,
+            estimated_cost: wo.estimated_cost,
+            scheduled_date: wo.scheduled_date,
+            complaint_id: wo.complaint_id,
+            assigned_to: wo.assigned_to,
+            assigned_name: assigned_name,
+            created_at: wo.created_at,
+            updated_at: wo.updated_at
+          };
+        })
+      );
+
+      setWorkOrders(workOrdersWithNames);
     } catch (error) {
       console.error('Error fetching work orders:', error);
       toast({
