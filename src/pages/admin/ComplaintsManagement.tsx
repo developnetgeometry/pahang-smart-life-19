@@ -87,9 +87,8 @@ export default function ComplaintsManagement() {
 
       // Filter complaints based on user role
       if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
-        // Facility managers should only see facilities-related complaints
-        // or complaints assigned to them specifically
-        query = query.or(`category.eq.facilities,assigned_to.eq.${user?.id}`);
+        // Facility managers should only see facilities and maintenance related complaints
+        query = query.in('category', ['facilities', 'maintenance']);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -111,7 +110,7 @@ export default function ComplaintsManagement() {
 
       // Apply same role-based filtering for stats
       if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
-        query = query.or(`category.eq.facilities,assigned_to.eq.${user?.id}`);
+        query = query.in('category', ['facilities', 'maintenance']);
       }
 
       const { data, error } = await query;
@@ -350,12 +349,23 @@ export default function ComplaintsManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="maintenance">Maintenance</SelectItem>
-                <SelectItem value="noise">Noise</SelectItem>
-                <SelectItem value="security">Security</SelectItem>
-                <SelectItem value="facilities">Facilities</SelectItem>
-                <SelectItem value="parking">Parking</SelectItem>
-                <SelectItem value="general">General</SelectItem>
+                {(isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) ? (
+                  // Show only relevant categories for facility managers
+                  <>
+                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                    <SelectItem value="facilities">Facilities</SelectItem>
+                  </>
+                ) : (
+                  // Show all categories for admins
+                  <>
+                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                    <SelectItem value="noise">Noise</SelectItem>
+                    <SelectItem value="security">Security</SelectItem>
+                    <SelectItem value="facilities">Facilities</SelectItem>
+                    <SelectItem value="parking">Parking</SelectItem>
+                    <SelectItem value="general">General</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
