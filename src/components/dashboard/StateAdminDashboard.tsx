@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { WeatherWidget } from './WeatherWidget';
+import { PrayerTimesWidget } from './PrayerTimesWidget';
 import { useState } from 'react';
 import { 
   MapPin, 
@@ -139,10 +140,14 @@ export function StateAdminDashboard() {
         ))}
       </div>
 
-      {/* Weather Widget */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Weather and Prayer Times Widgets */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <WeatherWidget />
-        <div className="md:col-span-2">
+        <PrayerTimesWidget />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        <div>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

@@ -8,6 +8,8 @@ import { Calendar, Clock, Users, AlertTriangle, Building, Wrench, Eye, Shield, T
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import { WeatherWidget } from './WeatherWidget';
+import { PrayerTimesWidget } from './PrayerTimesWidget';
 
 interface DashboardStats {
   totalFacilities: number;
@@ -256,6 +258,12 @@ export const FacilityManagerDashboard = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Weather and Prayer Times Widgets */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <WeatherWidget />
+        <PrayerTimesWidget />
       </div>
 
       {/* Main Content Tabs */}
