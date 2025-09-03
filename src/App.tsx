@@ -551,6 +551,16 @@ const App = () => (
               }
             />
             <Route
+              path="/admin/announcement-management"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AnnouncementManagement />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/discussions"
               element={
                 <ProtectedRoute>
