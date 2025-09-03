@@ -228,6 +228,42 @@ export function AppSidebar() {
     // Operations Management - for facility managers and above
     const operationsItems = [];
     
+    // Maintenance Staff specific items
+    if (hasRole("maintenance_staff")) {
+      operationsItems.push(
+        {
+          title: "Work Orders",
+          url: "/work-orders-management",
+          icon: Wrench,
+          requiredRoles: ["maintenance_staff"],
+        },
+        {
+          title: "Emergency Response",
+          url: "/maintenance-emergency",
+          icon: AlertTriangle,
+          requiredRoles: ["maintenance_staff"],
+        },
+        {
+          title: "Maintenance Assets",
+          url: "/maintenance-assets",
+          icon: Package,
+          requiredRoles: ["maintenance_staff"],
+        },
+        {
+          title: "Maintenance Scheduler",
+          url: "/maintenance-scheduler",
+          icon: Calendar,
+          requiredRoles: ["maintenance_staff"],
+        },
+        {
+          title: "Maintenance Reports",
+          url: "/maintenance-reports",
+          icon: FileText,
+          requiredRoles: ["maintenance_staff"],
+        }
+      );
+    }
+    
     // Facility Manager specific items
     if (hasRole("facility_manager") || hasRole("state_admin") || hasRole("community_admin")) {
       operationsItems.push(
