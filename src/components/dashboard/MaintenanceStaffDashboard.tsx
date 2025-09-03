@@ -1,8 +1,17 @@
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import { WeatherWidget } from './WeatherWidget';
 import { PrayerTimesWidget } from './PrayerTimesWidget';
 import { 
@@ -15,11 +24,222 @@ import {
   Calendar,
   FileText,
   Shield,
-  Settings
+  Settings,
+  Send
 } from 'lucide-react';
 
 export function MaintenanceStaffDashboard() {
-  const { language } = useAuth();
+  const { language, user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // State for modals and forms
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [partsRequestOpen, setPartsRequestOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Form states
+  const [reportForm, setReportForm] = useState({
+    title: '',
+    description: '',
+    category: 'maintenance',
+    priority: 'medium',
+    location: ''
+  });
+
+  const [partsForm, setPartsForm] = useState({
+    itemName: '',
+    quantity: '',
+    urgency: 'medium',
+    justification: '',
+    estimatedCost: ''
+  });
+
+  // Handler functions
+  const handleSupplyRequest = async (item: any) => {
+    if (!user) return;
+
+    setIsSubmitting(true);
+    try {
+      // Get user's district for the request
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('district_id')
+        .eq('id', user.id)
+        .single();
+
+      // Create a work order for supply request
+      const { error } = await supabase
+        .from('work_orders')
+        .insert({
+          title: `Supply Request: ${item.item}`,
+          description: `Request for ${item.quantity} units of ${item.item}. Current stock: ${item.quantity}. ${item.message}`,
+          work_order_type: 'general',
+          priority: item.status === 'reorder' ? 'high' : 'medium',
+          location: 'Supply Room',
+          created_by: user.id,
+          district_id: userProfile?.district_id,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: language === 'en' ? 'Success' : 'Berjaya',
+        description: language === 'en' ? 'Supply request submitted successfully' : 'Permintaan bekalan berjaya dihantar'
+      });
+    } catch (error) {
+      console.error('Error submitting supply request:', error);
+      toast({
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' ? 'Failed to submit request' : 'Gagal menghantar permintaan',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleStartWorkOrder = async (order: any) => {
+    if (!user) return;
+
+    setIsSubmitting(true);
+    try {
+      // For demo purposes, just show success message since these are sample work orders
+      toast({
+        title: language === 'en' ? 'Work Order Started' : 'Arahan Kerja Dimulakan',
+        description: language === 'en' ? `Started work on: ${order.title}` : `Mula kerja: ${order.title}`
+      });
+
+      // Navigate to work orders management page
+      setTimeout(() => {
+        navigate('/work-orders-management');
+      }, 1000);
+    } catch (error) {
+      console.error('Error starting work order:', error);
+      toast({
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' ? 'Failed to start work order' : 'Gagal memulakan arahan kerja',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleViewWorkOrder = (order: any) => {
+    navigate('/work-orders-management');
+  };
+
+  const handleSubmitReport = async () => {
+    if (!user || !reportForm.title || !reportForm.description) return;
+
+    setIsSubmitting(true);
+    try {
+      // Get user's district for the request
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('district_id')
+        .eq('id', user.id)
+        .single();
+
+      // Create a work order for the report
+      const { error } = await supabase
+        .from('work_orders')
+        .insert({
+          title: reportForm.title,
+          description: reportForm.description,
+          work_order_type: 'general',
+          priority: reportForm.priority as any,
+          location: reportForm.location || 'Various',
+          created_by: user.id,
+          district_id: userProfile?.district_id,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: language === 'en' ? 'Report Submitted' : 'Laporan Dihantar',
+        description: language === 'en' ? 'Maintenance report submitted successfully' : 'Laporan penyelenggaraan berjaya dihantar'
+      });
+
+      setReportModalOpen(false);
+      setReportForm({
+        title: '',
+        description: '',
+        category: 'maintenance',
+        priority: 'medium',
+        location: ''
+      });
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      toast({
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' ? 'Failed to submit report' : 'Gagal menghantar laporan',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRequestParts = async () => {
+    if (!user || !partsForm.itemName || !partsForm.quantity) return;
+
+    setIsSubmitting(true);
+    try {
+      // Get user's district for the request
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('district_id')
+        .eq('id', user.id)
+        .single();
+
+      // Create a work order for parts request
+      const { error } = await supabase
+        .from('work_orders')
+        .insert({
+          title: `Parts Request: ${partsForm.itemName}`,
+          description: `Request for ${partsForm.quantity} units of ${partsForm.itemName}. Justification: ${partsForm.justification}`,
+          work_order_type: 'general',
+          priority: partsForm.urgency as any,
+          location: 'Parts Storage',
+          created_by: user.id,
+          district_id: userProfile?.district_id,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: language === 'en' ? 'Parts Request Submitted' : 'Permintaan Alat Ganti Dihantar',
+        description: language === 'en' ? 'Parts request submitted successfully' : 'Permintaan alat ganti berjaya dihantar'
+      });
+
+      setPartsRequestOpen(false);
+      setPartsForm({
+        itemName: '',
+        quantity: '',
+        urgency: 'medium',
+        justification: '',
+        estimatedCost: ''
+      });
+    } catch (error) {
+      console.error('Error submitting parts request:', error);
+      toast({
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' ? 'Failed to submit request' : 'Gagal menghantar permintaan',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEquipmentCheck = () => {
+    navigate('/facilities-management');
+  };
 
   const workMetrics = [
     {
@@ -46,33 +266,6 @@ export function MaintenanceStaffDashboard() {
       value: '0',
       icon: Shield,
       trend: 'This month ✓'
-    }
-  ];
-
-  const todaySchedule = [
-    {
-      time: '9:00 AM',
-      task: language === 'en' ? 'Pool pump maintenance' : 'Penyelenggaraan pam kolam',
-      location: 'Building A',
-      priority: 'high',
-      status: 'upcoming',
-      estimatedDuration: '2 hours'
-    },
-    {
-      time: '11:00 AM',
-      task: language === 'en' ? 'Light fixture replacement' : 'Penggantian lampu',
-      location: 'Level 5',
-      priority: 'medium',
-      status: 'upcoming',
-      estimatedDuration: '1 hour'
-    },
-    {
-      time: '2:00 PM',
-      task: language === 'en' ? 'AC filter change' : 'Tukar penapis AC',
-      location: 'Community Hall',
-      priority: 'low',
-      status: 'upcoming',
-      estimatedDuration: '30 minutes'
     }
   ];
 
@@ -211,7 +404,15 @@ export function MaintenanceStaffDashboard() {
                     {item.status === 'low_stock' ? 'Low' : item.status === 'reorder' ? 'Reorder' : 'OK'}
                   </Badge>
                   {item.status !== 'ok' && (
-                    <Button size="sm" variant="outline">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleSupplyRequest(item)}
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <Clock className="h-3 w-3 animate-spin mr-1" />
+                      ) : null}
                       {language === 'en' ? 'Request' : 'Minta'}
                     </Button>
                   )}
@@ -251,11 +452,22 @@ export function MaintenanceStaffDashboard() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleViewWorkOrder(order)}
+                    >
                       {language === 'en' ? 'View' : 'Lihat'}
                     </Button>
                     {order.status === 'pending' && (
-                      <Button size="sm">
+                      <Button 
+                        size="sm"
+                        onClick={() => handleStartWorkOrder(order)}
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <Clock className="h-3 w-3 animate-spin mr-1" />
+                        ) : null}
                         {language === 'en' ? 'Start' : 'Mula'}
                       </Button>
                     )}
@@ -274,15 +486,175 @@ export function MaintenanceStaffDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button className="flex items-center gap-2 h-12">
-              <FileText className="h-4 w-4" />
-              {language === 'en' ? 'Submit Report' : 'Hantar Laporan'}
-            </Button>
-            <Button className="flex items-center gap-2 h-12" variant="outline">
-              <Package className="h-4 w-4" />
-              {language === 'en' ? 'Request Parts' : 'Minta Alat Ganti'}
-            </Button>
-            <Button className="flex items-center gap-2 h-12" variant="outline">
+            {/* Submit Report */}
+            <Dialog open={reportModalOpen} onOpenChange={setReportModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2 h-12">
+                  <FileText className="h-4 w-4" />
+                  {language === 'en' ? 'Submit Report' : 'Hantar Laporan'}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>
+                    {language === 'en' ? 'Submit Maintenance Report' : 'Hantar Laporan Penyelenggaraan'}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {language === 'en' ? 'Report issues or completed maintenance tasks' : 'Laporkan isu atau tugas penyelenggaraan yang selesai'}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="title">{language === 'en' ? 'Title' : 'Tajuk'}</Label>
+                    <Input
+                      id="title"
+                      value={reportForm.title}
+                      onChange={(e) => setReportForm({...reportForm, title: e.target.value})}
+                      placeholder={language === 'en' ? 'Report title' : 'Tajuk laporan'}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="description">{language === 'en' ? 'Description' : 'Penerangan'}</Label>
+                    <Textarea
+                      id="description"
+                      value={reportForm.description}
+                      onChange={(e) => setReportForm({...reportForm, description: e.target.value})}
+                      placeholder={language === 'en' ? 'Describe the issue or work completed' : 'Terangkan isu atau kerja yang selesai'}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="priority">{language === 'en' ? 'Priority' : 'Keutamaan'}</Label>
+                      <Select value={reportForm.priority} onValueChange={(value) => setReportForm({...reportForm, priority: value})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="location">{language === 'en' ? 'Location' : 'Lokasi'}</Label>
+                      <Input
+                        id="location"
+                        value={reportForm.location}
+                        onChange={(e) => setReportForm({...reportForm, location: e.target.value})}
+                        placeholder={language === 'en' ? 'Location' : 'Lokasi'}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={handleSubmitReport}
+                      disabled={isSubmitting || !reportForm.title || !reportForm.description}
+                      className="flex-1"
+                    >
+                      {isSubmitting ? (
+                        <Clock className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Send className="h-4 w-4 mr-2" />
+                      )}
+                      {language === 'en' ? 'Submit' : 'Hantar'}
+                    </Button>
+                    <Button variant="outline" onClick={() => setReportModalOpen(false)} className="flex-1">
+                      {language === 'en' ? 'Cancel' : 'Batal'}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Request Parts */}
+            <Dialog open={partsRequestOpen} onOpenChange={setPartsRequestOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2 h-12" variant="outline">
+                  <Package className="h-4 w-4" />
+                  {language === 'en' ? 'Request Parts' : 'Minta Alat Ganti'}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>
+                    {language === 'en' ? 'Request Parts/Supplies' : 'Minta Alat Ganti/Bekalan'}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {language === 'en' ? 'Request parts or supplies for maintenance work' : 'Minta alat ganti atau bekalan untuk kerja penyelenggaraan'}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="itemName">{language === 'en' ? 'Item Name' : 'Nama Item'}</Label>
+                    <Input
+                      id="itemName"
+                      value={partsForm.itemName}
+                      onChange={(e) => setPartsForm({...partsForm, itemName: e.target.value})}
+                      placeholder={language === 'en' ? 'e.g., LED Bulbs, AC Filter' : 'cth: Mentol LED, Penapis AC'}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="quantity">{language === 'en' ? 'Quantity' : 'Kuantiti'}</Label>
+                      <Input
+                        id="quantity"
+                        type="number"
+                        value={partsForm.quantity}
+                        onChange={(e) => setPartsForm({...partsForm, quantity: e.target.value})}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="urgency">{language === 'en' ? 'Urgency' : 'Kecemasan'}</Label>
+                      <Select value={partsForm.urgency} onValueChange={(value) => setPartsForm({...partsForm, urgency: value})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="justification">{language === 'en' ? 'Justification' : 'Justifikasi'}</Label>
+                    <Textarea
+                      id="justification"
+                      value={partsForm.justification}
+                      onChange={(e) => setPartsForm({...partsForm, justification: e.target.value})}
+                      placeholder={language === 'en' ? 'Why is this item needed?' : 'Mengapa item ini diperlukan?'}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={handleRequestParts}
+                      disabled={isSubmitting || !partsForm.itemName || !partsForm.quantity}
+                      className="flex-1"
+                    >
+                      {isSubmitting ? (
+                        <Clock className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Send className="h-4 w-4 mr-2" />
+                      )}
+                      {language === 'en' ? 'Submit Request' : 'Hantar Permintaan'}
+                    </Button>
+                    <Button variant="outline" onClick={() => setPartsRequestOpen(false)} className="flex-1">
+                      {language === 'en' ? 'Cancel' : 'Batal'}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Equipment Check */}
+            <Button 
+              className="flex items-center gap-2 h-12" 
+              variant="outline"
+              onClick={handleEquipmentCheck}
+            >
               <Settings className="h-4 w-4" />
               {language === 'en' ? 'Equipment Check' : 'Semak Peralatan'}
             </Button>
