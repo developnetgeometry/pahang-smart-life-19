@@ -336,8 +336,40 @@ export default function CommunityGroupManager() {
     }
   };
 
-  const groupTypes = ['interest', 'sports', 'education', 'social', 'hobby', 'professional'];
-  const frequencies = ['weekly', 'monthly', 'biweekly', 'quarterly', 'asNeeded'];
+  const [groupTypes, setGroupTypes] = useState<string[]>([]);
+  const [frequencies, setFrequencies] = useState<string[]>([]);
+
+  const fetchConfigurationData = async () => {
+    try {
+      // Fetch group types
+      const { data: groupTypesData, error: groupTypesError } = await supabase
+        .from('group_types')
+        .select('code, name')
+        .eq('is_active', true)
+        .order('sort_order');
+
+      if (groupTypesError) throw groupTypesError;
+      setGroupTypes(groupTypesData?.map(g => g.code) || []);
+
+      // Fetch frequency types
+      const { data: frequenciesData, error: frequenciesError } = await supabase
+        .from('frequency_types')
+        .select('code, name')
+        .eq('is_active', true)
+        .order('sort_order');
+
+      if (frequenciesError) throw frequenciesError;
+      setFrequencies(frequenciesData?.map(f => f.code) || []);
+
+    } catch (error) {
+      console.error('Error fetching configuration data:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchConfigurationData();
+    fetchGroups();
+  }, []);
 
   if (loading) {
     return (

@@ -82,21 +82,45 @@ export default function ServiceRequests() {
     },
   });
 
-  const priorityOptions = [
-    { value: 'low', label: 'Low', color: 'bg-green-500' },
-    { value: 'medium', label: 'Medium', color: 'bg-yellow-500' },
-    { value: 'high', label: 'High', color: 'bg-orange-500' },
-    { value: 'urgent', label: 'Urgent', color: 'bg-red-500' }
-  ];
+  const [priorityOptions, setPriorityOptions] = useState<Array<{value: string, label: string, color: string}>>([]);
+  const [statusOptions, setStatusOptions] = useState<Array<{value: string, label: string, color: string}>>([]);
 
-  const statusOptions = [
-    { value: 'pending', label: 'Pending', color: 'bg-gray-500' },
-    { value: 'assigned', label: 'Assigned', color: 'bg-blue-500' },
-    { value: 'in_progress', label: 'In Progress', color: 'bg-orange-500' },
-    { value: 'completed', label: 'Completed', color: 'bg-green-500' },
-    { value: 'cancelled', label: 'Cancelled', color: 'bg-red-500' },
-    { value: 'on_hold', label: 'On Hold', color: 'bg-gray-400' }
-  ];
+  const fetchConfigurationData = async () => {
+    try {
+      // Fetch priority levels
+      const { data: priorities, error: prioritiesError } = await supabase
+        .from('priority_levels')
+        .select('code, name, color_class')
+        .eq('is_active', true)
+        .eq('category', 'general')
+        .order('sort_order');
+
+      if (prioritiesError) throw prioritiesError;
+      setPriorityOptions(priorities?.map(p => ({
+        value: p.code,
+        label: p.name,
+        color: p.color_class
+      })) || []);
+
+      // Fetch status types
+      const { data: statuses, error: statusesError } = await supabase
+        .from('status_types')
+        .select('code, name, color_class')
+        .eq('is_active', true)
+        .eq('category', 'service_request')
+        .order('sort_order');
+
+      if (statusesError) throw statusesError;
+      setStatusOptions(statuses?.map(s => ({
+        value: s.code,
+        label: s.name,
+        color: s.color_class
+      })) || []);
+
+    } catch (error) {
+      console.error('Error fetching configuration data:', error);
+    }
+  };
 
   const fetchCategories = async () => {
     try {

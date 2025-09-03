@@ -96,6 +96,9 @@ export default function InventoryManagement() {
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('items');
+  const [unitOptions, setUnitOptions] = useState<string[]>([]);
+  const [transactionTypes, setTransactionTypes] = useState<Array<{value: string, label: string, color: string}>>([]);
+  const [referenceTypes, setReferenceTypes] = useState<string[]>([]);
 
   const itemForm = useForm<z.infer<typeof itemSchema>>({
     resolver: zodResolver(itemSchema),
@@ -129,20 +132,48 @@ export default function InventoryManagement() {
     },
   });
 
-  const unitOptions = [
-    'piece', 'kg', 'liter', 'meter', 'box', 'roll', 'pack', 'bottle', 'set', 'pair'
-  ];
+  const fetchConfigurationData = async () => {
+    try {
+      // Fetch units of measure
+      const { data: units, error: unitsError } = await supabase
+        .from('units_of_measure')
+        .select('code, name')
+        .eq('is_active', true)
+        .order('sort_order');
 
-  const transactionTypes = [
-    { value: 'stock_in', label: 'Stock In', color: 'bg-green-500' },
-    { value: 'stock_out', label: 'Stock Out', color: 'bg-red-500' },
-    { value: 'adjustment', label: 'Adjustment', color: 'bg-blue-500' },
-    { value: 'transfer', label: 'Transfer', color: 'bg-yellow-500' }
-  ];
+      if (unitsError) throw unitsError;
+      setUnitOptions(units?.map(u => u.code) || []);
 
-  const referenceTypes = [
-    'purchase', 'usage', 'maintenance', 'waste', 'return', 'donation'
-  ];
+      // Fetch transaction types
+      const { data: transactionTypesData, error: transactionTypesError } = await supabase
+        .from('transaction_types')
+        .select('code, name, color_class')
+        .eq('is_active', true)
+        .eq('category', 'inventory')
+        .order('sort_order');
+
+      if (transactionTypesError) throw transactionTypesError;
+      setTransactionTypes(transactionTypesData?.map(t => ({
+        value: t.code,
+        label: t.name,
+        color: t.color_class
+      })) || []);
+
+      // Fetch reference types
+      const { data: referenceTypesData, error: referenceTypesError } = await supabase
+        .from('reference_types')
+        .select('code, name')
+        .eq('is_active', true)
+        .eq('category', 'inventory')
+        .order('sort_order');
+
+      if (referenceTypesError) throw referenceTypesError;
+      setReferenceTypes(referenceTypesData?.map(r => r.code) || []);
+
+    } catch (error) {
+      console.error('Error fetching configuration data:', error);
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -217,6 +248,7 @@ export default function InventoryManagement() {
   };
 
   useEffect(() => {
+    fetchConfigurationData();
     fetchCategories();
     fetchItems();
     fetchTransactions();

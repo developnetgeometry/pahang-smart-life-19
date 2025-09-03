@@ -3664,6 +3664,42 @@ export type Database = {
           },
         ]
       }
+      frequency_types: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          interval_days: number | null
+          is_active: boolean
+          name: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          interval_days?: number | null
+          is_active?: boolean
+          name: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          interval_days?: number | null
+          is_active?: boolean
+          name?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       group_memberships: {
         Row: {
           group_id: string | null
@@ -3698,6 +3734,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      group_types: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          icon_name: string | null
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       household_accounts: {
         Row: {
@@ -5680,6 +5752,48 @@ export type Database = {
         }
         Relationships: []
       }
+      priority_levels: {
+        Row: {
+          category: string | null
+          code: string
+          color_class: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          severity_level: number | null
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          code: string
+          color_class?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          severity_level?: number | null
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          code?: string
+          color_class?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          severity_level?: number | null
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_analytics: {
         Row: {
           cart_adds: number | null
@@ -6484,6 +6598,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reference_types: {
+        Row: {
+          category: string
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       review_helpfulness: {
         Row: {
@@ -7857,6 +8007,48 @@ export type Database = {
           },
         ]
       }
+      status_types: {
+        Row: {
+          category: string
+          code: string
+          color_class: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_final: boolean | null
+          name: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          code: string
+          color_class?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_final?: boolean | null
+          name: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          code?: string
+          color_class?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_final?: boolean | null
+          name?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_configurations: {
         Row: {
           config_key: string
@@ -8004,6 +8196,48 @@ export type Database = {
         }
         Relationships: []
       }
+      transaction_types: {
+        Row: {
+          category: string | null
+          code: string
+          color_class: string | null
+          created_at: string
+          description: string | null
+          icon_name: string | null
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          code: string
+          color_class?: string | null
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          code?: string
+          color_class?: string | null
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       typing_indicators: {
         Row: {
           id: string
@@ -8120,6 +8354,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      units_of_measure: {
+        Row: {
+          abbreviation: string | null
+          category: string | null
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          abbreviation?: string | null
+          category?: string | null
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          abbreviation?: string | null
+          category?: string | null
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_marketplace_analytics: {
         Row: {
