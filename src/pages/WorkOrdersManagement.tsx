@@ -6,8 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Wrench, Clock, AlertTriangle, CheckCircle, MapPin, User } from 'lucide-react';
+import { useUserRoles } from '@/hooks/use-user-roles';
+import { Wrench, Clock, AlertTriangle, CheckCircle, MapPin, User, Plus } from 'lucide-react';
 
 interface WorkOrder {
   id: string;
@@ -34,12 +38,24 @@ interface WorkOrder {
 
 export default function WorkOrdersManagement() {
   const { user, language } = useAuth();
+  const { hasRole } = useUserRoles();
   const { toast } = useToast();
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
   const [statusUpdate, setStatusUpdate] = useState('');
   const [progressNotes, setProgressNotes] = useState('');
+  
+  // Create work order states
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newWorkOrder, setNewWorkOrder] = useState({
+    title: '',
+    description: '',
+    work_order_type: 'maintenance',
+    priority: 'medium',
+    location: ''
+  });
 
   useEffect(() => {
     fetchWorkOrders();
@@ -77,6 +93,59 @@ export default function WorkOrdersManagement() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createWorkOrder = async () => {
+    if (!user) return;
+
+    setCreating(true);
+    try {
+      // Get user's district for the work order
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('district_id')
+        .eq('id', user.id)
+        .single();
+
+      const { error } = await supabase
+        .from('work_orders')
+        .insert({
+          title: newWorkOrder.title,
+          description: newWorkOrder.description,
+          work_order_type: newWorkOrder.work_order_type as any,
+          priority: newWorkOrder.priority as any,
+          location: newWorkOrder.location,
+          created_by: user.id,
+          district_id: userProfile?.district_id,
+          status: 'pending' as any
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: language === 'ms' ? 'Berjaya' : 'Success',
+        description: language === 'ms' ? 'Pesanan kerja berjaya dibuat' : 'Work order created successfully'
+      });
+
+      setCreateDialogOpen(false);
+      setNewWorkOrder({
+        title: '',
+        description: '',
+        work_order_type: 'maintenance',
+        priority: 'medium',
+        location: ''
+      });
+      fetchWorkOrders();
+    } catch (error) {
+      console.error('Error creating work order:', error);
+      toast({
+        title: language === 'ms' ? 'Ralat' : 'Error',
+        description: language === 'ms' ? 'Gagal membuat pesanan kerja' : 'Failed to create work order',
+        variant: 'destructive'
+      });
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -167,11 +236,117 @@ export default function WorkOrdersManagement() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center gap-2">
-        <Wrench className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold text-foreground">
-          {language === 'ms' ? 'Pengurusan Pesanan Kerja' : 'Work Orders Management'}
-        </h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Wrench className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground">
+            {language === 'ms' ? 'Pengurusan Pesanan Kerja' : 'Work Orders Management'}
+          </h1>
+        </div>
+        
+        {/* Create Work Order Button - Show for authorized roles */}
+        {(hasRole('maintenance_staff') || hasRole('facility_manager') || hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin')) && (
+          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                {language === 'ms' ? 'Buat Pesanan Kerja' : 'Create Work Order'}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>
+                  {language === 'ms' ? 'Buat Pesanan Kerja Baharu' : 'Create New Work Order'}
+                </DialogTitle>
+                <DialogDescription>
+                  {language === 'ms' ? 'Buat pesanan kerja untuk penyelenggaraan atau pembaikan' : 'Create a work order for maintenance or repairs'}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="title">{language === 'ms' ? 'Tajuk' : 'Title'}</Label>
+                  <Input
+                    id="title"
+                    value={newWorkOrder.title}
+                    onChange={(e) => setNewWorkOrder({...newWorkOrder, title: e.target.value})}
+                    placeholder={language === 'ms' ? 'Masukkan tajuk pesanan kerja' : 'Enter work order title'}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="description">{language === 'ms' ? 'Penerangan' : 'Description'}</Label>
+                  <Textarea
+                    id="description"
+                    value={newWorkOrder.description}
+                    onChange={(e) => setNewWorkOrder({...newWorkOrder, description: e.target.value})}
+                    placeholder={language === 'ms' ? 'Terangkan pesanan kerja secara terperinci' : 'Describe the work order in detail'}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="type">{language === 'ms' ? 'Jenis' : 'Type'}</Label>
+                    <Select value={newWorkOrder.work_order_type} onValueChange={(value) => setNewWorkOrder({...newWorkOrder, work_order_type: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="maintenance">Maintenance</SelectItem>
+                        <SelectItem value="repair">Repair</SelectItem>
+                        <SelectItem value="inspection">Inspection</SelectItem>
+                        <SelectItem value="installation">Installation</SelectItem>
+                        <SelectItem value="general">General</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="priority">{language === 'ms' ? 'Keutamaan' : 'Priority'}</Label>
+                    <Select value={newWorkOrder.priority} onValueChange={(value) => setNewWorkOrder({...newWorkOrder, priority: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="location">{language === 'ms' ? 'Lokasi' : 'Location'}</Label>
+                  <Input
+                    id="location"
+                    value={newWorkOrder.location}
+                    onChange={(e) => setNewWorkOrder({...newWorkOrder, location: e.target.value})}
+                    placeholder={language === 'ms' ? 'Masukkan lokasi kerja' : 'Enter work location'}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <Button 
+                  onClick={createWorkOrder}
+                  disabled={creating || !newWorkOrder.title || !newWorkOrder.description || !newWorkOrder.location}
+                  className="flex-1"
+                >
+                  {creating && <Clock className="w-4 h-4 mr-2 animate-spin" />}
+                  {language === 'ms' ? 'Buat Pesanan Kerja' : 'Create Work Order'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setCreateDialogOpen(false)}
+                  className="flex-1"
+                >
+                  {language === 'ms' ? 'Batal' : 'Cancel'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {/* Statistics */}
