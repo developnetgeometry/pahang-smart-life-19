@@ -433,20 +433,9 @@ export default function WorkOrdersManagement() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
-                  <p>Created: {new Date(order.created_at).toLocaleDateString()}</p>
-                  <p>Type: {order.work_order_type}</p>
-                </div>
-                <Button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedOrder(order);
-                  }}
-                  disabled={order.status === 'completed'}
-                >
-                  {language === 'ms' ? 'Kemas Kini' : 'Update Status'}
-                </Button>
+              <div className="text-sm text-muted-foreground">
+                <p>Created: {new Date(order.created_at).toLocaleDateString()}</p>
+                <p>Type: {order.work_order_type}</p>
               </div>
             </CardContent>
           </Card>
