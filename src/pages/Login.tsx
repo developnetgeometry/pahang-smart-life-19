@@ -143,8 +143,8 @@ export default function Login() {
             email: email,
             full_name: fullName.trim(),
             phone: phone.trim() || null,
-            district_id: districtId,
-            community_id: communityId,
+            district_id: districtId?.replace('district-', '') || districtId,
+            community_id: communityId?.replace('community-', '') || communityId,
             address: location.trim(),
             language: language,
             is_active: true
@@ -175,7 +175,7 @@ export default function Login() {
           const roleData = {
             user_id: authData.user.id,
             role: selectedRole as any,
-            district_id: districtId,
+            district_id: districtId?.replace('district-', '') || districtId,
             assigned_by: authData.user.id, // Self-assigned during registration
             is_active: true
           };
