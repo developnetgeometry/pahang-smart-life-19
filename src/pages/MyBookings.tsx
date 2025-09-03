@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useModuleAccess } from '@/hooks/use-module-access';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,40 +25,64 @@ interface Booking {
 }
 
 export default function MyBookings() {
-  const { language } = useAuth();
+  const { language, user } = useAuth();
   const { isModuleEnabled } = useModuleAccess();
-  const [bookings, setBookings] = useState<Booking[]>([
-    {
-      id: '1',
-      facility_name: language === 'en' ? 'Swimming Pool' : 'Kolam Renang',
-      date: '2024-01-15',
-      time: '14:00',
-      duration: 2,
-      status: 'confirmed',
-      location: language === 'en' ? 'Recreation Center' : 'Pusat Rekreasi',
-      capacity: 50
-    },
-    {
-      id: '2',
-      facility_name: language === 'en' ? 'Function Hall' : 'Dewan Serbaguna',
-      date: '2024-01-20',
-      time: '19:00',
-      duration: 4,
-      status: 'pending',
-      location: language === 'en' ? 'Community Center' : 'Pusat Komuniti',
-      capacity: 100
-    },
-    {
-      id: '3',
-      facility_name: language === 'en' ? 'Tennis Court' : 'Gelanggang Tenis',
-      date: '2024-01-10',
-      time: '08:00',
-      duration: 1,
-      status: 'cancelled',
-      location: language === 'en' ? 'Sports Complex' : 'Kompleks Sukan',
-      capacity: 4
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user || !isModuleEnabled('bookings')) {
+      setLoading(false);
+      return;
     }
-  ]);
+    
+    fetchBookings();
+  }, [user, isModuleEnabled]);
+
+  const fetchBookings = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          facilities (
+            name,
+            location,
+            capacity
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const transformedBookings: Booking[] = (data || []).map(booking => ({
+        id: booking.id,
+        facility_name: booking.facilities?.name || 'Unknown Facility',
+        date: booking.booking_date,
+        time: booking.start_time,
+        duration: booking.duration_hours,
+        status: booking.status === 'confirmed' ? 'confirmed' : booking.status === 'pending' ? 'pending' : 'cancelled',
+        location: booking.facilities?.location || '',
+        capacity: booking.facilities?.capacity || 0
+      }));
+
+      setBookings(transformedBookings);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+      toast({
+        variant: 'destructive',
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' ? 'Failed to fetch bookings' : 'Gagal mendapatkan tempahan'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -84,12 +111,38 @@ export default function MyBookings() {
     }
   };
 
-  const handleModifyBooking = (bookingId: string, updatedData: Partial<Booking>) => {
-    setBookings(prev => prev.map(booking => 
-      booking.id === bookingId 
-        ? { ...booking, ...updatedData }
-        : booking
-    ));
+  const handleCancelBooking = async (bookingId: string) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status: 'cancelled' })
+        .eq('id', bookingId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setBookings(prev => prev.map(booking => 
+        booking.id === bookingId 
+          ? { ...booking, status: 'cancelled' }
+          : booking
+      ));
+
+      toast({
+        title: language === 'en' ? 'Booking Cancelled' : 'Tempahan Dibatalkan',
+        description: language === 'en' 
+          ? 'Your booking has been cancelled successfully' 
+          : 'Tempahan anda telah berjaya dibatalkan'
+      });
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+      toast({
+        variant: 'destructive',
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' ? 'Failed to cancel booking' : 'Gagal membatalkan tempahan'
+      });
+    }
   };
 
   // Check if bookings module is enabled
@@ -124,7 +177,7 @@ export default function MyBookings() {
             }
           </p>
         </div>
-        <Button className="bg-gradient-primary">
+        <Button className="bg-gradient-primary" onClick={() => navigate('/facilities')}>
           <Plus className="w-4 h-4 mr-2" />
           {language === 'en' ? 'New Booking' : 'Tempahan Baru'}
         </Button>
@@ -142,7 +195,9 @@ export default function MyBookings() {
                 <p className="text-sm text-muted-foreground">
                   {language === 'en' ? 'Active Bookings' : 'Tempahan Aktif'}
                 </p>
-                <p className="text-2xl font-bold">2</p>
+                <p className="text-2xl font-bold">
+                  {bookings.filter(b => b.status === 'confirmed' || b.status === 'pending').length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -157,7 +212,14 @@ export default function MyBookings() {
                 <p className="text-sm text-muted-foreground">
                   {language === 'en' ? 'This Month' : 'Bulan Ini'}
                 </p>
-                <p className="text-2xl font-bold">5</p>
+                <p className="text-2xl font-bold">
+                  {bookings.filter(b => {
+                    const bookingDate = new Date(b.date);
+                    const now = new Date();
+                    return bookingDate.getMonth() === now.getMonth() && 
+                           bookingDate.getFullYear() === now.getFullYear();
+                  }).length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -172,7 +234,9 @@ export default function MyBookings() {
                 <p className="text-sm text-muted-foreground">
                   {language === 'en' ? 'Total Hours' : 'Jumlah Jam'}
                 </p>
-                <p className="text-2xl font-bold">24</p>
+                <p className="text-2xl font-bold">
+                  {bookings.reduce((total, booking) => total + booking.duration, 0)}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -180,8 +244,23 @@ export default function MyBookings() {
       </div>
 
       {/* Bookings List */}
-      <div className="space-y-4">
-        {bookings.map((booking) => (
+      {loading ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardHeader>
+                <div className="h-6 bg-muted animate-pulse rounded mb-2" />
+                <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
+              </CardHeader>
+              <CardContent>
+                <div className="h-4 bg-muted animate-pulse rounded w-1/2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {bookings.map((booking) => (
           <Card key={booking.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex justify-between items-start">
@@ -284,7 +363,11 @@ export default function MyBookings() {
                     </Dialog>
                   )}
                   {booking.status !== 'cancelled' && (
-                    <Button variant="destructive" size="sm">
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={() => handleCancelBooking(booking.id)}
+                    >
                       {language === 'en' ? 'Cancel' : 'Batal'}
                     </Button>
                   )}
@@ -292,8 +375,9 @@ export default function MyBookings() {
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {bookings.length === 0 && (
         <Card>
@@ -308,7 +392,7 @@ export default function MyBookings() {
                 : 'Mulakan dengan menempah kemudahan untuk aktiviti komuniti anda.'
               }
             </p>
-            <Button className="bg-gradient-primary">
+            <Button className="bg-gradient-primary" onClick={() => navigate('/facilities')}>
               {language === 'en' ? 'Make a booking' : 'Buat tempahan'}
             </Button>
           </CardContent>
