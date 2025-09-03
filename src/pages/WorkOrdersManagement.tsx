@@ -63,24 +63,8 @@ export default function WorkOrdersManagement() {
       
       const formattedWorkOrders: WorkOrder[] = (data || []).map((order: any) => ({
         ...order,
-        profiles: order.profiles && 
-                  typeof order.profiles === 'object' && 
-                  !Array.isArray(order.profiles) &&
-                  'full_name' in order.profiles
-          ? {
-              full_name: order.profiles.full_name || 'Unknown',
-              email: order.profiles.email || ''
-            }
-          : null,
-        complaints: order.complaints && 
-                    typeof order.complaints === 'object' && 
-                    !Array.isArray(order.complaints) &&
-                    'title' in order.complaints
-          ? {
-              title: order.complaints.title || 'Unknown',
-              category: order.complaints.category || ''
-            }
-          : null
+        profiles: null,
+        complaints: null
       }));
       
       setWorkOrders(formattedWorkOrders);
