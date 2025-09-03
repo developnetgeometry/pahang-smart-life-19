@@ -9822,6 +9822,14 @@ export type Database = {
         }
         Returns: string
       }
+      escalate_workflow: {
+        Args: {
+          p_reason?: string
+          p_reference_id: string
+          p_reference_table: string
+        }
+        Returns: boolean
+      }
       get_announcement_content: {
         Args: {
           p_content_en: string
