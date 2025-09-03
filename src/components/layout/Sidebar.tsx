@@ -244,21 +244,9 @@ export function AppSidebar() {
           requiredRoles: ["maintenance_staff"],
         },
         {
-          title: "Maintenance Assets",
-          url: "/maintenance-assets",
-          icon: Package,
-          requiredRoles: ["maintenance_staff"],
-        },
-        {
-          title: "Maintenance Scheduler",
-          url: "/maintenance-scheduler",
-          icon: Calendar,
-          requiredRoles: ["maintenance_staff"],
-        },
-        {
-          title: "Maintenance Reports",
-          url: "/maintenance-reports",
-          icon: FileText,
+          title: "Maintenance",
+          url: "/maintenance",
+          icon: Wrench,
           requiredRoles: ["maintenance_staff"],
         }
       );

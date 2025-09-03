@@ -723,6 +723,10 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            {/* Redirect old maintenance routes to new unified route */}
+            <Route path="/maintenance-reports" element={<Navigate to="/maintenance" replace />} />
+            <Route path="/maintenance-scheduler" element={<Navigate to="/maintenance" replace />} />
+            <Route path="/maintenance-assets" element={<Navigate to="/maintenance" replace />} />
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
