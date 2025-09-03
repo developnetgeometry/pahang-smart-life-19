@@ -149,16 +149,16 @@ export default function ComplaintsManagement() {
       //   query = query.eq('district_id', districtId);
       // }
 
-      // Apply same role-based filtering for stats
-      if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
-        console.log('Applying facility manager filter to stats');
-        query = query.in('category', ['facilities', 'maintenance']);
-        } else if (hasRole('community_admin' as any) && !hasRole('district_coordinator' as any) && !hasRole('state_admin' as any)) {
-          console.log('Applying community admin filter to stats');
-          query = query.in('category', ['noise', 'general']);
-        } else {
-          console.log('No role-based filtering applied to stats');
-        }
+      // TEMPORARILY REMOVE ROLE-BASED FILTERING TO SHOW ALL COMPLAINTS
+      // if (isFacilityManager && !hasRole('community_admin' as any) && !hasRole('state_admin' as any)) {
+      //   console.log('Applying facility manager filter to stats');
+      //   query = query.in('category', ['facilities', 'maintenance']);
+      //   } else if (hasRole('community_admin' as any) && !hasRole('district_coordinator' as any) && !hasRole('state_admin' as any)) {
+      //     console.log('Applying community admin filter to stats');
+      //     query = query.in('category', ['noise', 'general']);
+      //   } else {
+      //     console.log('No role-based filtering applied to stats');
+      //   }
 
       const { data, error } = await query;
 
