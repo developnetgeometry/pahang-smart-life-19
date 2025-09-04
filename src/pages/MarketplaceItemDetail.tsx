@@ -41,7 +41,7 @@ export default function MarketplaceItemDetail() {
   const { id } = useParams<{ id: string }>();
   const { language, user } = useAuth();
   const { addToCart } = useShoppingCart();
-  const { createGroupChat } = useChatRooms();
+  const { createGroupChat, createDirectChat } = useChatRooms();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -254,12 +254,8 @@ export default function MarketplaceItemDetail() {
     if (!item) return;
 
     try {
-      const chatName = `${item.seller} - ${item.title}`;
-      const chatDescription = language === 'en' 
-        ? `Marketplace chat about "${item.title}" (RM${item.price.toLocaleString()})`
-        : `Chat marketplace tentang "${item.title}" (RM${item.price.toLocaleString()})`;
-      
-      const roomId = await createGroupChat(chatName, chatDescription, []);
+      // Create direct chat with the seller instead of empty group chat
+      const roomId = await createDirectChat(item.sellerId);
       
       navigate('/communication', {
         state: {
