@@ -41,6 +41,7 @@ interface MarketplaceItem {
   sold_count: number;
   view_count: number;
   is_active: boolean;
+  is_available?: boolean;
   created_at: string;
 }
 
@@ -150,6 +151,12 @@ export default function ResidentAnalytics() {
       delete: 'Delete',
       activate: 'Activate',
       deactivate: 'Deactivate',
+      markAsSold: 'Mark as Sold',
+      markAsAvailable: 'Mark as Available',
+      soldStatus: 'Sold',
+      availableStatus: 'Available',
+      markedAsSold: 'Item marked as sold',
+      markedAsAvailable: 'Item marked as available',
       itemTitle: 'Title',
       itemDescription: 'Description',
       itemLocation: 'Location',
@@ -226,6 +233,12 @@ export default function ResidentAnalytics() {
       delete: 'Padam',
       activate: 'Aktifkan',
       deactivate: 'Nyahaktifkan',
+      markAsSold: 'Tandakan Terjual',
+      markAsAvailable: 'Tandakan Tersedia',
+      soldStatus: 'Terjual',
+      availableStatus: 'Tersedia',
+      markedAsSold: 'Item ditanda sebagai terjual',
+      markedAsAvailable: 'Item ditanda sebagai tersedia',
       itemTitle: 'Tajuk',
       itemDescription: 'Penerangan',
       itemLocation: 'Lokasi',
@@ -287,7 +300,7 @@ export default function ResidentAnalytics() {
       // Fetch user's marketplace listings
       const { data: listings, error: listingsError } = await supabase
         .from('marketplace_items')
-        .select('*')
+        .select('*, is_available')
         .eq('seller_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -392,6 +405,52 @@ export default function ResidentAnalytics() {
       fetchResidentStats(); // Refresh data
     } catch (error) {
       console.error('Error updating item status:', error);
+      toast({
+        title: t.updateError,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const markAsSold = async (itemId: string) => {
+    try {
+      const { error } = await supabase
+        .from('marketplace_items')
+        .update({ is_available: false })
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      toast({
+        title: t.markedAsSold
+      });
+
+      fetchResidentStats(); // Refresh data
+    } catch (error) {
+      console.error('Error marking item as sold:', error);
+      toast({
+        title: t.updateError,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const markAsAvailable = async (itemId: string) => {
+    try {
+      const { error } = await supabase
+        .from('marketplace_items')
+        .update({ is_available: true })
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      toast({
+        title: t.markedAsAvailable
+      });
+
+      fetchResidentStats(); // Refresh data
+    } catch (error) {
+      console.error('Error marking item as available:', error);
       toast({
         title: t.updateError,
         variant: 'destructive'
@@ -775,6 +834,13 @@ export default function ResidentAnalytics() {
                             >
                               {item.is_active ? t.active : t.inactive}
                             </Badge>
+                            {item.is_available !== undefined && (
+                              <Badge 
+                                variant={item.is_available ? "outline" : "destructive"}
+                              >
+                                {item.is_available ? t.availableStatus : t.soldStatus}
+                              </Badge>
+                            )}
                             <Badge className={getConditionColor(item.condition)}>
                               {getConditionText(item.condition)}
                             </Badge>
@@ -802,11 +868,24 @@ export default function ResidentAnalytics() {
                             variant="outline"
                             size="sm"
                             onClick={() => toggleItemStatus(item.id, item.is_active)}
+                            title={item.is_active ? t.deactivate : t.activate}
                           >
                             {item.is_active ? (
                               <ToggleRight className="h-4 w-4 text-green-600" />
                             ) : (
                               <ToggleLeft className="h-4 w-4 text-gray-400" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => item.is_available ? markAsSold(item.id) : markAsAvailable(item.id)}
+                            title={item.is_available ? t.markAsSold : t.markAsAvailable}
+                          >
+                            {item.is_available ? (
+                              <Package className="h-4 w-4 text-orange-600" />
+                            ) : (
+                              <Package className="h-4 w-4 text-red-600" />
                             )}
                           </Button>
                           <Button
