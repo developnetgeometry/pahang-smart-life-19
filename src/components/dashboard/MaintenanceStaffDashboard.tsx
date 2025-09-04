@@ -25,8 +25,10 @@ import {
   FileText,
   Shield,
   Settings,
-  Send
+  Send,
+  MessageSquare
 } from 'lucide-react';
+import MaintenanceComplaintCenter from '@/components/complaints/MaintenanceComplaintCenter';
 
 export function MaintenanceStaffDashboard() {
   const { language, user } = useAuth();
@@ -39,6 +41,7 @@ export function MaintenanceStaffDashboard() {
   const [workOrderDetailOpen, setWorkOrderDetailOpen] = useState(false);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showComplaintCenter, setShowComplaintCenter] = useState(false);
 
   // Form states
   const [reportForm, setReportForm] = useState({
@@ -403,15 +406,48 @@ export function MaintenanceStaffDashboard() {
     }
   };
 
+  if (showComplaintCenter) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              {language === 'en' ? 'Maintenance Complaint Center' : 'Pusat Aduan Penyelenggaraan'}
+            </h1>
+            <p className="text-muted-foreground">
+              {language === 'en' ? 'Monitor and manage maintenance-related complaints' : 'Pantau dan urus aduan berkaitan penyelenggaraan'}
+            </p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowComplaintCenter(false)}
+          >
+            {language === 'en' ? 'Back to Dashboard' : 'Kembali ke Papan Pemuka'}
+          </Button>
+        </div>
+        <MaintenanceComplaintCenter />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">
-          {language === 'en' ? 'Maintenance Staff Dashboard' : 'Papan Pemuka Staf Penyelenggaraan'}
-        </h1>
-        <p className="text-muted-foreground">
-          {language === 'en' ? 'Work orders and asset maintenance management' : 'Arahan kerja dan pengurusan penyelenggaraan aset'}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">
+            {language === 'en' ? 'Maintenance Staff Dashboard' : 'Papan Pemuka Staf Penyelenggaraan'}
+          </h1>
+          <p className="text-muted-foreground">
+            {language === 'en' ? 'Work orders and asset maintenance management' : 'Arahan kerja dan pengurusan penyelenggaraan aset'}
+          </p>
+        </div>
+        <Button 
+          onClick={() => setShowComplaintCenter(true)}
+          className="flex items-center gap-2"
+        >
+          <MessageSquare className="h-4 w-4" />
+          {language === 'en' ? 'Complaint Center' : 'Pusat Aduan'}
+        </Button>
       </div>
 
       {/* Work Status Overview */}
