@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 interface ImageUploadProps {
-  bucket: 'marketplace-images' | 'facility-images' | 'user-avatars' | 'community-assets';
+  bucket: 'marketplace-images' | 'facility-images' | 'user-avatars' | 'community-assets' | 'floor-plan-images';
   onUploadComplete: (url: string, path: string) => void;
   maxFiles?: number;
   accept?: string;

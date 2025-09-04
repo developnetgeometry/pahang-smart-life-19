@@ -1,3 +1,6 @@
+import React from 'react';
+import { useFloorPlans } from '@/hooks/use-floor-plans';
+import { InteractiveUnitEditor } from '@/components/location/InteractiveUnitEditor';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +32,7 @@ import InteractiveUnitEditor from '@/components/location/InteractiveUnitEditor';
 export function CommunityAdminDashboard() {
   const { language, user } = useAuth();
   const navigate = useNavigate();
+  const { floorPlans } = useFloorPlans();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState({
     totalResidents: 0,
@@ -481,10 +485,12 @@ export function CommunityAdminDashboard() {
         </CardHeader>
         <CardContent>
           <InteractiveUnitEditor 
-            imageUrl="/lovable-uploads/0709b4db-2289-4ac3-a185-7de4c3dce5b0.png"
+            imageUrl={floorPlans?.[0]?.image_url || "/lovable-uploads/0709b4db-2289-4ac3-a185-7de4c3dce5b0.png"}
+            floorPlanId={floorPlans?.[0]?.id}
             title="Interactive Unit Management"
             showSearch={true}
             isAdminMode={true}
+            onFloorPlanChange={(floorPlanId) => console.log('Floor plan changed:', floorPlanId)}
           />
         </CardContent>
       </Card>

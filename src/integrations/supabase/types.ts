@@ -3781,6 +3781,60 @@ export type Database = {
           },
         ]
       }
+      floor_plan_migrations: {
+        Row: {
+          created_at: string
+          from_floor_plan_id: string | null
+          id: string
+          migration_data: Json | null
+          migration_type: string
+          notes: string | null
+          performed_at: string
+          performed_by: string | null
+          to_floor_plan_id: string
+          units_affected: number
+        }
+        Insert: {
+          created_at?: string
+          from_floor_plan_id?: string | null
+          id?: string
+          migration_data?: Json | null
+          migration_type?: string
+          notes?: string | null
+          performed_at?: string
+          performed_by?: string | null
+          to_floor_plan_id: string
+          units_affected?: number
+        }
+        Update: {
+          created_at?: string
+          from_floor_plan_id?: string | null
+          id?: string
+          migration_data?: Json | null
+          migration_type?: string
+          notes?: string | null
+          performed_at?: string
+          performed_by?: string | null
+          to_floor_plan_id?: string
+          units_affected?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floor_plan_migrations_from_floor_plan_id_fkey"
+            columns: ["from_floor_plan_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_plan_migrations_to_floor_plan_id_fkey"
+            columns: ["to_floor_plan_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       floor_plans: {
         Row: {
           created_at: string
@@ -8562,6 +8616,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      unit_coordinate_backups: {
+        Row: {
+          backup_reason: string
+          created_at: string
+          created_by: string | null
+          floor_plan_id: string
+          id: string
+          unit_data: Json
+        }
+        Insert: {
+          backup_reason?: string
+          created_at?: string
+          created_by?: string | null
+          floor_plan_id: string
+          id?: string
+          unit_data: Json
+        }
+        Update: {
+          backup_reason?: string
+          created_at?: string
+          created_by?: string | null
+          floor_plan_id?: string
+          id?: string
+          unit_data?: Json
+        }
+        Relationships: []
       }
       units: {
         Row: {
