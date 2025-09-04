@@ -24,7 +24,8 @@ import {
   UserPlus,
   CheckCircle,
   XCircle,
-  MapPin
+  MapPin,
+  Monitor
 } from 'lucide-react';
 import InteractiveUnitEditor from '@/components/location/InteractiveUnitEditor';
 
@@ -515,6 +516,14 @@ export function CommunityAdminDashboard() {
             >
               <AlertTriangle className="h-4 w-4" />
               {language === 'en' ? 'Manage Complaints' : 'Urus Aduan'}
+            </Button>
+            <Button 
+              className="flex items-center gap-2 h-12" 
+              variant="outline"
+              onClick={() => navigate('/admin/floor-plans')}
+            >
+              <Monitor className="h-4 w-4" />
+              {language === 'en' ? 'Floor Plan Management' : 'Pengurusan Pelan Lantai'}
             </Button>
             <Button 
               className="flex items-center gap-2 h-12" 
