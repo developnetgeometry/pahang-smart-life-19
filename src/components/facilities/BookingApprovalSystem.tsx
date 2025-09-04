@@ -59,7 +59,7 @@ export function BookingApprovalSystem() {
         .from('bookings')
         .select(`
           *,
-          facilities(name, location),
+          facilities!facility_id(name, location),
           booking_approvals(id, approval_status, approval_notes, approved_at)
         `)
         .eq('status', 'pending')

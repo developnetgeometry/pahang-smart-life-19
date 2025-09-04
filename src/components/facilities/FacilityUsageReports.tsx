@@ -54,7 +54,7 @@ export function FacilityUsageReports({ facilities }: FacilityUsageReportsProps) 
         .from('bookings')
         .select(`
           *,
-          facilities (
+          facilities!facility_id (
             hourly_rate
           )
         `)

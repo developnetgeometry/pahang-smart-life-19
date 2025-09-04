@@ -118,7 +118,7 @@ export function EnhancedFacilityDashboard() {
         .from('bookings')
         .select(`
           id, purpose, created_at,
-          facilities(name)
+          facilities!facility_id(name)
         `)
         .order('created_at', { ascending: false })
         .limit(5);

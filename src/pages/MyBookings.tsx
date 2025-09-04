@@ -49,7 +49,7 @@ export default function MyBookings() {
         .from('bookings')
         .select(`
           *,
-          facilities (
+          facilities!facility_id (
             name,
             location,
             capacity
