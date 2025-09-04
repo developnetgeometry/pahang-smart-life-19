@@ -282,6 +282,39 @@ export default function ComplaintsManagement() {
     }
   };
 
+  const handleView = (complaint: Complaint) => {
+    // Navigate to complaint detail page
+    window.location.href = `/admin/complaint/${complaint.id}`;
+  };
+
+  const handleClose = async (complaintId: string) => {
+    try {
+      const { error } = await supabase
+        .from('complaints')
+        .update({ 
+          status: 'closed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', complaintId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Complaint Closed',
+        description: 'Complaint has been closed.',
+      });
+
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Error closing complaint:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to close complaint.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -474,7 +507,12 @@ export default function ComplaintsManagement() {
                             </Badge>
                             
                             <div className="flex gap-2">
-                              <Button variant="ghost" size="sm">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleView(complaint)}
+                                title="View Details"
+                              >
                                 <Eye className="h-4 w-4" />
                               </Button>
                               <Button 
@@ -494,7 +532,12 @@ export default function ComplaintsManagement() {
                                 Resolve
                               </Button>
                               {complaint.status === 'resolved' && (
-                                <Button variant="outline" size="sm">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleClose(complaint.id)}
+                                  title="Close Complaint"
+                                >
                                   Close
                                 </Button>
                               )}

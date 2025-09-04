@@ -131,20 +131,32 @@ export default function WorkOrderManager({
 
   const fetchMaintenanceStaff = async () => {
     try {
-      const { data, error } = await supabase
+      // Get maintenance staff user IDs first
+      const { data: roleData, error: roleError } = await supabase
         .from('enhanced_user_roles')
-        .select(`
-          user_id,
-          profiles(full_name, email)
-        `)
+        .select('user_id')
         .eq('role', 'maintenance_staff')
         .eq('is_active', true);
 
-      if (error) throw error;
+      if (roleError) throw roleError;
 
-      const staff = (data || []).map((item: any) => ({
-        id: item.user_id,
-        name: item.profiles?.full_name || item.profiles?.email || 'Unknown'
+      if (!roleData || roleData.length === 0) {
+        setMaintenanceStaff([]);
+        return;
+      }
+
+      // Then get profile information for these users
+      const userIds = roleData.map(item => item.user_id);
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .in('user_id', userIds);
+
+      if (profileError) throw profileError;
+
+      const staff = (profileData || []).map((profile: any) => ({
+        id: profile.user_id,
+        name: profile.full_name || profile.email || 'Unknown'
       }));
 
       setMaintenanceStaff(staff);
