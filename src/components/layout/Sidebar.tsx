@@ -238,6 +238,12 @@ export function AppSidebar() {
           requiredRoles: ["maintenance_staff"],
         },
         {
+          title: "Maintenance Complaints",
+          url: "/maintenance-complaint-center",
+          icon: MessageSquare,
+          requiredRoles: ["maintenance_staff"],
+        },
+        {
           title: "Emergency Response",
           url: "/maintenance-emergency",
           icon: AlertTriangle,

@@ -70,6 +70,7 @@ import ResidentDirectory from './pages/ResidentDirectory';
 import EnhancedEvents from './pages/EnhancedEvents';
 import ModerationPanel from './components/discussions/ModerationPanel';
 import PrecisionMapping from "./pages/PrecisionMapping";
+import MaintenanceComplaintCenterPage from "./pages/MaintenanceComplaintCenter";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -698,6 +699,18 @@ const App = () => (
                   <RequireRoles roles={["maintenance_staff"]}>
                     <Layout>
                       <WorkOrdersManagement />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/maintenance-complaint-center"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["maintenance_staff"]}>
+                    <Layout>
+                      <MaintenanceComplaintCenterPage />
                     </Layout>
                   </RequireRoles>
                 </ProtectedRoute>
