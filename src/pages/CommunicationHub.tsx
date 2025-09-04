@@ -15,6 +15,7 @@ import {
 import CommunityChat from '@/components/communication/CommunityChat';
 import { useCommunicationStats } from '@/hooks/use-communication-stats';
 import { useUserPresence } from '@/hooks/use-user-presence';
+import { NotificationTest } from '@/components/communication/NotificationTest';
 
 import SmartNotifications from '@/components/communication/SmartNotifications';
 import NotificationCenter from '@/components/communication/NotificationCenter';
@@ -143,16 +144,20 @@ export default function CommunicationHub() {
 
         {/* Notification Settings */}
         {showNotifications && (
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {language === 'en' ? 'Smart Notifications' : 'Notifikasi Pintar'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SmartNotifications />
-            </CardContent>
-          </Card>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {language === 'en' ? 'Smart Notifications' : 'Notifikasi Pintar'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SmartNotifications />
+              </CardContent>
+            </Card>
+            
+            <NotificationTest />
+          </div>
         )}
 
         {/* Stats Overview */}

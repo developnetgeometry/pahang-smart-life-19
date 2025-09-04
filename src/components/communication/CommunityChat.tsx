@@ -173,16 +173,29 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
         await editMessage(editingMessageId, newMessage.trim());
         setEditingMessageId(null);
       } else {
+        // Get room members to send notifications (the database trigger will handle notifications automatically)
+        const roomMembers = await getRoomMembers(selectedRoomId);
+        const recipientIds = roomMembers
+          .filter(member => member.user_id !== user?.id)
+          .map(member => member.user_id);
+
+        console.log('Sending message to room with members:', recipientIds);
+
+        // The database trigger will automatically create notifications for all room members
         await sendMessage(
           newMessage.trim(),
           'text',
           undefined,
-          replyToMessageId || undefined
+          replyToMessageId || undefined,
+          {
+            isMarketplaceChat: marketplaceChat !== null,
+            recipientIds // This helps with additional push notifications if needed
+          }
         );
         setReplyToMessageId(null);
       }
       setNewMessage('');
-      console.log('Message sent successfully');
+      console.log('Message sent successfully - notifications will be handled automatically by database trigger');
     } catch (error) {
       console.error('Error sending message:', error);
       toast({

@@ -212,39 +212,31 @@ export const useRealtimeMessaging = (roomId?: string) => {
       // Stop typing indicator
       stopTyping();
 
-      // Send notifications to other room members if specified
-      if (notificationOptions?.recipientIds) {
+      // Send additional push notifications if specified (in-app notifications are handled by database trigger)
+      if (notificationOptions?.recipientIds && notificationOptions.recipientIds.length > 0) {
         const senderName = data.profiles?.full_name || user.email || 'Someone';
         const messagePreview = messageText.length > 50 ? `${messageText.substring(0, 50)}...` : messageText;
         
-        // Send notification via edge function
-        await supabase.functions.invoke('send-push-notification', {
-          body: {
-            title: notificationOptions.isMarketplaceChat 
-              ? `New message about your product` 
-              : `New message from ${senderName}`,
-            body: `${senderName}: ${messagePreview}`,
-            url: `/communication-hub?room=${roomId}`,
-            userIds: notificationOptions.recipientIds,
-            notificationType: 'message'
-          }
-        });
-
-        // Store notification in database
-        const notifications = notificationOptions.recipientIds.map(recipientId => ({
-          recipient_id: recipientId,
-          title: notificationOptions.isMarketplaceChat 
-            ? `New message about your product` 
-            : `New message from ${senderName}`,
-          message: `${senderName}: ${messagePreview}`,
-          notification_type: 'message',
-          category: 'message',
-          created_by: user.id,
-          is_read: false,
-          sent_at: new Date().toISOString(),
-        }));
-
-        await supabase.from('notifications').insert(notifications);
+        console.log('Sending push notifications to:', notificationOptions.recipientIds);
+        
+        // Send push notification via edge function (for mobile/browser notifications)
+        try {
+          await supabase.functions.invoke('send-push-notification', {
+            body: {
+              title: notificationOptions.isMarketplaceChat 
+                ? `New message about your product` 
+                : `New message from ${senderName}`,
+              body: `${senderName}: ${messagePreview}`,
+              url: `/communication-hub?room=${roomId}`,
+              userIds: notificationOptions.recipientIds,
+              notificationType: 'message'
+            }
+          });
+          console.log('Push notifications sent successfully');
+        } catch (pushError) {
+          console.error('Failed to send push notifications:', pushError);
+          // Don't fail the message sending if push notifications fail
+        }
       }
 
       return data;
