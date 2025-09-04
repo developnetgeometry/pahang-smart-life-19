@@ -32,28 +32,44 @@ serve(async (req) => {
 
     console.log('Processing panic alert:', { panicAlertId, userName, location: userLocation });
 
-    // Get all security personnel and administrators
+    // Get all security personnel and administrators from both role systems
     const { data: securityUsers, error: securityError } = await supabase
-      .from('user_roles')
+      .from('enhanced_user_roles')
       .select(`
         user_id,
         role
       `)
-      .in('role', ['security_officer', 'admin', 'state_admin', 'district_coordinator', 'community_admin']);
+      .in('role', ['security_officer', 'community_admin', 'state_admin', 'district_coordinator'])
+      .eq('is_active', true);
+
+    // Fallback to user_roles table if enhanced_user_roles is empty
+    let fallbackUsers = [];
+    if (!securityUsers || securityUsers.length === 0) {
+      const { data: fallbackData } = await supabase
+        .from('user_roles')
+        .select(`
+          user_id,
+          role
+        `)
+        .in('role', ['security_officer', 'admin', 'state_admin', 'district_coordinator', 'community_admin']);
+      
+      fallbackUsers = fallbackData || [];
+    }
 
     if (securityError) {
       console.error('Error fetching security users:', securityError);
       throw securityError;
     }
 
-    console.log('Found security users:', securityUsers?.length);
+    const allSecurityUsers = [...(securityUsers || []), ...fallbackUsers];
+    console.log('Found security users:', allSecurityUsers.length);
 
     // Create location string
     const locationString = userLocation?.address || 
       (userLocation ? `${userLocation.latitude.toFixed(6)}, ${userLocation.longitude.toFixed(6)}` : 'Location unavailable');
 
     // Create notifications for all security personnel
-    const notifications = securityUsers?.map(user => ({
+    const notifications = allSecurityUsers?.map(user => ({
       recipient_id: user.user_id,
       title: '🚨 EMERGENCY PANIC ALERT',
       message: `Emergency alert triggered by ${userName}. Location: ${locationString}. Immediate response required.`,

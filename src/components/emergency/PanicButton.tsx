@@ -153,23 +153,32 @@ export default function PanicButton() {
       }
 
       // Call edge function to notify security
-      const { error: notifyError } = await supabase.functions.invoke('notify-panic-alert', {
+      const { data: notifyData, error: notifyError } = await supabase.functions.invoke('notify-panic-alert', {
         body: {
           panicAlertId: panicAlert.id,
           userLocation: currentLocation,
-          userName: user?.email // Using email as display name for now
+          userName: user?.email || 'Unknown User' // Better fallback
         }
       });
 
       if (notifyError) {
         console.error('Error notifying security:', notifyError);
+        // Don't throw error here - the alert was still created in database
+        console.warn('Alert created but notification may have failed');
       }
+
+      const successMessage = notifyError 
+        ? 'Emergency alert created! Security notification may be delayed - please also contact security directly if urgent.'
+        : 'Emergency alert sent! Security has been notified and help is on the way.';
 
       toast({
         title: language === 'en' ? 'Emergency Alert Sent!' : 'Amaran Kecemasan Dihantar!',
         description: language === 'en' 
-          ? 'Security has been notified of your emergency. Help is on the way.' 
-          : 'Keselamatan telah dimaklumkan tentang kecemasan anda. Bantuan sedang dalam perjalanan.',
+          ? successMessage
+          : (notifyError 
+              ? 'Amaran kecemasan dicipta! Pemberitahuan keselamatan mungkin tertangguh - sila hubungi keselamatan secara langsung jika mendesak.'
+              : 'Amaran kecemasan dihantar! Keselamatan telah dimaklumkan dan bantuan sedang dalam perjalanan.'
+          ),
       });
 
       setShowConfirm(true);
