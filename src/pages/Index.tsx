@@ -5,7 +5,7 @@ import { CommunityAdminDashboard } from '@/components/dashboard/CommunityAdminDa
 import { FacilityManagerDashboard } from '@/components/dashboard/FacilityManagerDashboard';
 import { SecurityOfficerDashboard } from '@/components/dashboard/SecurityOfficerDashboard';
 import { MaintenanceStaffDashboard } from '@/components/dashboard/MaintenanceStaffDashboard';
-import { ServiceProviderDashboard } from '@/components/dashboard/ServiceProviderDashboard';
+import ServiceProviderEnhancedDashboard from '@/components/dashboard/ServiceProviderEnhancedDashboard';
 import { CommunityLeaderDashboard } from '@/components/dashboard/CommunityLeaderDashboard';
 import { StateServiceManagerDashboard } from '@/components/dashboard/StateServiceManagerDashboard';
 import { ResidentDashboard } from '@/components/dashboard/ResidentDashboard';
@@ -21,7 +21,7 @@ const Index = () => {
   
   if (hasRole('security_officer')) return <SecurityOfficerDashboard />;
   if (hasRole('maintenance_staff')) return <MaintenanceStaffDashboard />;
-  if (hasRole('service_provider')) return <ServiceProviderDashboard />;
+  if (hasRole('service_provider')) return <ServiceProviderEnhancedDashboard />;
   if (hasRole('community_leader')) return <CommunityLeaderDashboard />;
   if (hasRole('state_service_manager')) return <StateServiceManagerDashboard />;
   
