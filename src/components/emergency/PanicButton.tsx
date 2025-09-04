@@ -143,7 +143,7 @@ export default function PanicButton() {
           location_longitude: currentLocation?.longitude,
           location_address: currentLocation?.address,
           alert_status: 'active',
-          district_id: '00000000-0000-0000-0000-000000000001' // Default district for now
+          district_id: null // Allow null since user might not have district assigned yet
         })
         .select()
         .single();
