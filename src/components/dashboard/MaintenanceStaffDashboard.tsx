@@ -358,14 +358,18 @@ export function MaintenanceStaffDashboard() {
         ]);
       }
 
-      // Fetch inventory alerts
+      // Fetch all inventory items and filter for low stock
       const { data: inventory } = await supabase
         .from('inventory_items')
-        .select('*')
-        .lte('current_stock', 'minimum_stock');
+        .select('*');
 
       if (inventory) {
-        const alerts = inventory.slice(0, 3).map(item => ({
+        // Filter items where current_stock <= minimum_stock
+        const lowStockItems = inventory.filter(item => 
+          item.current_stock <= item.minimum_stock
+        );
+        
+        const alerts = lowStockItems.slice(0, 3).map((item: any) => ({
           item: item.name,
           status: item.current_stock === 0 ? 'reorder' : 'low_stock',
           quantity: item.current_stock,
