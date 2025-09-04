@@ -36,6 +36,7 @@ import CCTVManagement from "./pages/admin/CCTVManagement";
 import RequireRoles from "@/components/routing/RequireRoles";
 import AnnouncementManagement from "./pages/admin/AnnouncementManagement";
 import FacilitiesManagement from "./pages/admin/FacilitiesManagement";
+import FloorPlanManagement from "./pages/admin/FloorPlanManagement";
 import DiscussionManagement from "./pages/admin/DiscussionManagement";
 import VisitorSecurity from "./pages/VisitorSecurity";
 import VisitorAnalytics from "./pages/VisitorAnalytics";
@@ -487,6 +488,18 @@ const App = () => (
                   <Layout>
                     <FacilitiesManagement />
                   </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/floor-plans"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["facility_manager", "community_admin", "state_admin"]}>
+                    <Layout>
+                      <FloorPlanManagement />
+                    </Layout>
+                  </RequireRoles>
                 </ProtectedRoute>
               }
             />

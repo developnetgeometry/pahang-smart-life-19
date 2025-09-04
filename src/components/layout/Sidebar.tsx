@@ -280,6 +280,12 @@ export function AppSidebar() {
           requiredRoles: ["facility_manager", "state_admin", "community_admin"],
         },
         {
+          title: "Floor Plan Management",
+          url: "/admin/floor-plans",
+          icon: Monitor,
+          requiredRoles: ["facility_manager", "state_admin", "community_admin"],
+        },
+        {
           title: t("maintenanceManagement"),
           url: "/admin/maintenance",
           icon: Wrench,
