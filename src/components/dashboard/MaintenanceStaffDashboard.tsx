@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { WeatherWidget } from './WeatherWidget';
 import { PrayerTimesWidget } from './PrayerTimesWidget';
+import PanicButton from '@/components/emergency/PanicButton';
 import { 
   Wrench, 
   Clock, 
@@ -843,6 +844,9 @@ export function MaintenanceStaffDashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Floating Panic Button */}
+      <PanicButton />
     </div>
   );
 }
