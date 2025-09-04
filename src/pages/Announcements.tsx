@@ -393,7 +393,7 @@ export default function Announcements() {
           created_at,
           is_edited,
           parent_comment_id,
-          profiles!announcement_comments_user_id_fkey(full_name, avatar_url)
+          profiles(full_name, avatar_url)
         `)
         .eq('announcement_id', announcementId)
         .is('parent_comment_id', null)
