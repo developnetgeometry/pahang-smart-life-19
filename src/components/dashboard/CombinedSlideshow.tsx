@@ -104,12 +104,31 @@ export function CombinedSlideshow() {
           .order('date_time', { ascending: true })
           .limit(3);
 
-        // Fetch announcements with translation fields
+        // Fetch announcements with same logic as Announcements page
         const { data: announcementsData, error: announcementsError } = await supabase
           .from('announcements')
-          .select('id, title, content, title_en, title_ms, content_en, content_ms, type, is_published, is_urgent, publish_at, expire_at, image_url, created_at')
+          .select(`
+            id, 
+            title, 
+            content, 
+            title_en, 
+            title_ms, 
+            content_en, 
+            content_ms, 
+            type, 
+            is_published, 
+            is_urgent, 
+            publish_at, 
+            expire_at, 
+            image_url, 
+            created_at,
+            scope,
+            district_id,
+            community_id
+          `)
           .eq('is_published', true)
-          .or(`expire_at.is.null,expire_at.gt.${new Date().toISOString()}`)
+          .lte('publish_at', new Date().toISOString())
+          .or('expire_at.is.null,expire_at.gt.' + new Date().toISOString())
           .order('is_urgent', { ascending: false })
           .order('created_at', { ascending: false })
           .limit(3);
