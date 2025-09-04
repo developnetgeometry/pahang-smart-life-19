@@ -142,11 +142,12 @@ export default function Login() {
           
           // Update the profile with registration details
           const profileUpdate: any = {
-            phone: phone.trim() || null,
+            mobile_no: phone.trim() || null,
             district_id: districtId?.replace('district-', '') || districtId,
             community_id: communityId?.replace('community-', '') || communityId,
             address: location.trim(),
             language: language,
+            pdpa_declare: pdpaAccepted,
             is_active: true
           };
 
