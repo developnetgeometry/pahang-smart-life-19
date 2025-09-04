@@ -67,15 +67,22 @@ export const useChatRooms = () => {
 
       console.log('Fetched rooms data:', roomsData);
 
-      const processedRooms = roomsData?.map(room => ({
-        ...room,
-        member_count: room.chat_room_members?.length || 0,
-        last_message: room.chat_messages?.[0] ? {
-          text: room.chat_messages[0].message_text,
-          sender_name: room.chat_messages[0].profiles?.full_name || 'Unknown',
-          created_at: room.chat_messages[0].created_at
-        } : undefined
-      })) || [];
+      const processedRooms = roomsData?.map(room => {
+        // Sort messages by created_at to get the latest one
+        const sortedMessages = room.chat_messages?.sort((a: any, b: any) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        
+        return {
+          ...room,
+          member_count: room.chat_room_members?.length || 0,
+          last_message: sortedMessages?.[0] ? {
+            text: sortedMessages[0].message_text,
+            sender_name: sortedMessages[0].profiles?.full_name || 'Unknown',
+            created_at: sortedMessages[0].created_at
+          } : undefined
+        };
+      }) || [];
 
       console.log('Processed rooms:', processedRooms);
       
