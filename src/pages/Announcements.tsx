@@ -384,38 +384,59 @@ export default function Announcements() {
   const fetchComments = async (announcementId: string) => {
     try {
       setCommentsLoading(true);
-      const { data, error } = await supabase
+      
+      // First, get the comments
+      const { data: commentsData, error: commentsError } = await supabase
         .from('announcement_comments')
-        .select(`
-          id,
-          content,
-          user_id,
-          created_at,
-          is_edited,
-          parent_comment_id,
-          profiles(full_name, avatar_url)
-        `)
+        .select('*')
         .eq('announcement_id', announcementId)
         .is('parent_comment_id', null)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching comments:', error);
+      if (commentsError) {
+        console.error('Error fetching comments:', commentsError);
         setComments([]);
         return;
       }
 
-      const transformedComments: Comment[] = data?.map(comment => ({
-        id: comment.id,
-        content: comment.content,
-        user_id: comment.user_id,
-        user_name: (comment.profiles as any)?.full_name || 'Anonymous',
-        user_avatar: (comment.profiles as any)?.avatar_url,
-        created_at: comment.created_at,
-        is_edited: comment.is_edited,
-        parent_comment_id: comment.parent_comment_id,
-        replies: []
-      })) || [];
+      if (!commentsData || commentsData.length === 0) {
+        setComments([]);
+        return;
+      }
+
+      // Get unique user IDs
+      const userIds = [...new Set(commentsData.map(comment => comment.user_id))];
+      
+      // Fetch user profiles separately
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      }
+
+      // Create a map of user profiles
+      const profilesMap = new Map();
+      profilesData?.forEach(profile => {
+        profilesMap.set(profile.id, profile);
+      });
+
+      const transformedComments: Comment[] = commentsData.map(comment => {
+        const profile = profilesMap.get(comment.user_id);
+        return {
+          id: comment.id,
+          content: comment.content,
+          user_id: comment.user_id,
+          user_name: profile?.full_name || 'Anonymous',
+          user_avatar: profile?.avatar_url,
+          created_at: comment.created_at,
+          is_edited: comment.is_edited,
+          parent_comment_id: comment.parent_comment_id,
+          replies: []
+        };
+      });
 
       setComments(transformedComments);
     } catch (error) {
