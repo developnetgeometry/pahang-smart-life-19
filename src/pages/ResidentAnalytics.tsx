@@ -857,49 +857,69 @@ export default function ResidentAnalytics() {
                           </div>
                         </div>
                         <div className="flex gap-2 ml-4">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditListing(item)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleItemStatus(item.id, item.is_active)}
-                            title={item.is_active ? t.deactivate : t.activate}
-                          >
-                            {item.is_active ? (
-                              <ToggleRight className="h-4 w-4 text-green-600" />
-                            ) : (
-                              <ToggleLeft className="h-4 w-4 text-gray-400" />
-                            )}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => item.is_available ? markAsSold(item.id) : markAsAvailable(item.id)}
-                            title={item.is_available ? t.markAsSold : t.markAsAvailable}
-                          >
-                            {item.is_available ? (
-                              <Package className="h-4 w-4 text-orange-600" />
-                            ) : (
-                              <Package className="h-4 w-4 text-red-600" />
-                            )}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => deleteItem(item.id)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                           <Button
+                             type="button"
+                             variant="outline"
+                             size="sm"
+                             onClick={(e) => {
+                               e.preventDefault();
+                               e.stopPropagation();
+                               console.log('Edit button clicked');
+                               handleEditListing(item);
+                             }}
+                           >
+                             <Edit className="h-4 w-4" />
+                           </Button>
+                           <Button
+                             type="button"
+                             variant="outline"
+                             size="sm"
+                             onClick={(e) => {
+                               e.preventDefault();
+                               e.stopPropagation();
+                               console.log('Toggle status button clicked');
+                               toggleItemStatus(item.id, item.is_active);
+                             }}
+                             title={item.is_active ? t.deactivate : t.activate}
+                           >
+                             {item.is_active ? (
+                               <ToggleRight className="h-4 w-4 text-green-600" />
+                             ) : (
+                               <ToggleLeft className="h-4 w-4 text-gray-400" />
+                             )}
+                           </Button>
+                           <Button
+                             type="button"
+                             variant="outline"
+                             size="sm"
+                             onClick={(e) => {
+                               e.preventDefault();
+                               e.stopPropagation();
+                               console.log('Mark as sold/available button clicked');
+                               item.is_available ? markAsSold(item.id) : markAsAvailable(item.id);
+                             }}
+                             title={item.is_available ? t.markAsSold : t.markAsAvailable}
+                           >
+                             {item.is_available ? (
+                               <Package className="h-4 w-4 text-orange-600" />
+                             ) : (
+                               <Package className="h-4 w-4 text-red-600" />
+                             )}
+                           </Button>
+                           <Button
+                             type="button"
+                             variant="outline"
+                             size="sm"
+                             onClick={(e) => {
+                               e.preventDefault();
+                               e.stopPropagation();
+                               console.log('Delete button clicked');
+                               deleteItem(item.id);
+                             }}
+                             className="text-destructive hover:text-destructive"
+                           >
+                             <Trash2 className="h-4 w-4" />
+                           </Button>
                         </div>
                       </div>
                     </div>
