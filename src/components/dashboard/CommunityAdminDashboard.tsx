@@ -1,6 +1,5 @@
 import React from 'react';
 import { useFloorPlans } from '@/hooks/use-floor-plans';
-import { InteractiveUnitEditor } from '@/components/location/InteractiveUnitEditor';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
