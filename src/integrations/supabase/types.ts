@@ -69,6 +69,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_access_cards_district_id"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       access_logs: {
@@ -131,6 +138,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_access_logs_card_id"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "access_cards"
             referencedColumns: ["id"]
           },
         ]
@@ -278,6 +292,13 @@ export type Database = {
             referencedRelation: "announcements"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_announcement_bookmarks_announcement_id"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
         ]
       }
       announcement_comments: {
@@ -324,6 +345,20 @@ export type Database = {
           },
           {
             foreignKeyName: "announcement_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "announcement_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_announcement_comments_announcement_id"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_announcement_comments_parent_id"
             columns: ["parent_comment_id"]
             isOneToOne: false
             referencedRelation: "announcement_comments"
@@ -563,6 +598,20 @@ export type Database = {
           },
           {
             foreignKeyName: "announcements_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_announcements_community_id"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_announcements_district_id"
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
@@ -1124,6 +1173,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_bookings_facility_id"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
         ]
       }
       bulk_operations: {
@@ -1357,6 +1413,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_chat_messages_room_id"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
         ]
       }
       chat_room_members: {
@@ -1394,6 +1457,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_chat_room_members_room_id"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
             referencedColumns: ["id"]
           },
         ]
