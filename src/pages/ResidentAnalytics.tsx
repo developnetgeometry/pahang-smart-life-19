@@ -12,11 +12,37 @@ import {
   TrendingUp,
   Eye,
   Calendar,
-  Star
+  Star,
+  Plus,
+  Edit,
+  Trash2,
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+
+interface MarketplaceItem {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  condition: string;
+  location: string;
+  image: string;
+  stock_quantity: number;
+  sold_count: number;
+  view_count: number;
+  is_active: boolean;
+  created_at: string;
+}
 
 interface ResidentStats {
   totalPurchases: number;
@@ -29,6 +55,10 @@ interface ResidentStats {
   recentSales: any[];
   monthlySpending: { [key: string]: number };
   categorySpending: { [key: string]: number };
+  myListings: MarketplaceItem[];
+  totalListings: number;
+  activeListings: number;
+  totalViews: number;
 }
 
 export default function ResidentAnalytics() {
@@ -47,8 +77,18 @@ export default function ResidentAnalytics() {
     recentPurchases: [],
     recentSales: [],
     monthlySpending: {},
-    categorySpending: {}
+    categorySpending: {},
+    myListings: [],
+    totalListings: 0,
+    activeListings: 0,
+    totalViews: 0
   });
+  
+  const [editingItem, setEditingItem] = useState<MarketplaceItem | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [categories, setCategories] = useState<string[]>([
+    'Electronics', 'Furniture', 'Clothing', 'Books', 'Sports & Recreation', 'Others'
+  ]);
 
   const text = {
     en: {
@@ -57,6 +97,7 @@ export default function ResidentAnalytics() {
       overview: 'Overview',
       purchases: 'Purchase History',
       sales: 'My Sales',
+      listings: 'My Listings',
       favorites: 'Saved Items',
       totalPurchases: 'Total Purchases',
       totalSpent: 'Total Spent',
@@ -83,7 +124,48 @@ export default function ResidentAnalytics() {
       pending: 'Pending',
       delivered: 'Delivered',
       cancelled: 'Cancelled',
-      viewDetails: 'View Details'
+      viewDetails: 'View Details',
+      myListings: 'My Listings',
+      totalListings: 'Total Listings',
+      activeListings: 'Active Listings',
+      totalViews: 'Total Views',
+      manageListings: 'Manage your marketplace listings',
+      noListings: 'No listings yet',
+      noListingsDesc: 'Create your first listing to start selling',
+      createListing: 'Create Listing',
+      editListing: 'Edit Listing',
+      updateListing: 'Update Listing',
+      deleteListing: 'Delete Listing',
+      toggleStatus: 'Toggle Status',
+      active: 'Active',
+      inactive: 'Inactive',
+      views: 'Views',
+      sold: 'Sold',
+      stock: 'Stock',
+      priceLabel: 'Price',
+      conditionLabel: 'Condition',
+      categoryLabel: 'Category',
+      actions: 'Actions',
+      edit: 'Edit',
+      delete: 'Delete',
+      activate: 'Activate',
+      deactivate: 'Deactivate',
+      itemTitle: 'Title',
+      itemDescription: 'Description',
+      itemLocation: 'Location',
+      selectCategory: 'Select Category',
+      selectCondition: 'Select Condition',
+      new: 'New',
+      likeNew: 'Like New',
+      good: 'Good',
+      fair: 'Fair',
+      cancel: 'Cancel',
+      save: 'Save Changes',
+      deleteConfirm: 'Are you sure you want to delete this listing?',
+      updateSuccess: 'Listing updated successfully',
+      updateError: 'Failed to update listing',
+      deleteSuccess: 'Listing deleted successfully',
+      deleteError: 'Failed to delete listing'
     },
     ms: {
       title: 'Aktiviti Marketplace Saya',
@@ -91,6 +173,7 @@ export default function ResidentAnalytics() {
       overview: 'Gambaran Keseluruhan',
       purchases: 'Sejarah Pembelian',
       sales: 'Jualan Saya',
+      listings: 'Senarai Saya',
       favorites: 'Item Tersimpan',
       totalPurchases: 'Jumlah Pembelian',
       totalSpent: 'Jumlah Dibelanja',
@@ -117,7 +200,48 @@ export default function ResidentAnalytics() {
       pending: 'Menunggu',
       delivered: 'Dihantar',
       cancelled: 'Dibatalkan',
-      viewDetails: 'Lihat Butiran'
+      viewDetails: 'Lihat Butiran',
+      myListings: 'Senarai Saya',
+      totalListings: 'Jumlah Senarai',
+      activeListings: 'Senarai Aktif',
+      totalViews: 'Jumlah Paparan',
+      manageListings: 'Uruskan senarai marketplace anda',
+      noListings: 'Belum ada senarai',
+      noListingsDesc: 'Cipta senarai pertama untuk mula menjual',
+      createListing: 'Cipta Senarai',
+      editListing: 'Edit Senarai',
+      updateListing: 'Kemaskini Senarai',
+      deleteListing: 'Padam Senarai',
+      toggleStatus: 'Tukar Status',
+      active: 'Aktif',
+      inactive: 'Tidak Aktif',
+      views: 'Paparan',
+      sold: 'Dijual',
+      stock: 'Stok',
+      priceLabel: 'Harga',
+      conditionLabel: 'Keadaan',
+      categoryLabel: 'Kategori',
+      actions: 'Tindakan',
+      edit: 'Edit',
+      delete: 'Padam',
+      activate: 'Aktifkan',
+      deactivate: 'Nyahaktifkan',
+      itemTitle: 'Tajuk',
+      itemDescription: 'Penerangan',
+      itemLocation: 'Lokasi',
+      selectCategory: 'Pilih Kategori',
+      selectCondition: 'Pilih Keadaan',
+      new: 'Baru',
+      likeNew: 'Seperti Baru',
+      good: 'Baik',
+      fair: 'Sederhana',
+      cancel: 'Batal',
+      save: 'Simpan Perubahan',
+      deleteConfirm: 'Adakah anda pasti mahu memadamkan senarai ini?',
+      updateSuccess: 'Senarai berjaya dikemaskini',
+      updateError: 'Gagal mengemas kini senarai',
+      deleteSuccess: 'Senarai berjaya dipadamkan',
+      deleteError: 'Gagal memadamkan senarai'
     }
   };
 
@@ -160,13 +284,27 @@ export default function ResidentAnalytics() {
 
       if (favoritesError) throw favoritesError;
 
+      // Fetch user's marketplace listings
+      const { data: listings, error: listingsError } = await supabase
+        .from('marketplace_items')
+        .select('*')
+        .eq('seller_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (listingsError) throw listingsError;
+
       // Calculate purchase stats
       const purchasesList = purchases || [];
       const salesList = sales || [];
+      const listingsList = listings || [];
       
       const totalSpent = purchasesList.reduce((sum, order) => sum + order.total_amount, 0);
       const revenueEarned = salesList.reduce((sum, order) => sum + order.total_amount, 0);
       const averageOrderValue = purchasesList.length > 0 ? totalSpent / purchasesList.length : 0;
+      
+      // Calculate listing stats
+      const totalViews = listingsList.reduce((sum, item) => sum + (item.view_count || 0), 0);
+      const activeListings = listingsList.filter(item => item.is_active).length;
 
       // Calculate monthly spending (last 6 months)
       const monthlySpending = {};
@@ -219,7 +357,11 @@ export default function ResidentAnalytics() {
         recentPurchases: purchasesList.slice(0, 5),
         recentSales: salesList.slice(0, 5),
         monthlySpending,
-        categorySpending
+        categorySpending,
+        myListings: listingsList,
+        totalListings: listingsList.length,
+        activeListings,
+        totalViews
       });
 
     } catch (error) {
@@ -232,6 +374,114 @@ export default function ResidentAnalytics() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleItemStatus = async (itemId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('marketplace_items')
+        .update({ is_active: !currentStatus })
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      toast({
+        title: t.updateSuccess
+      });
+
+      fetchResidentStats(); // Refresh data
+    } catch (error) {
+      console.error('Error updating item status:', error);
+      toast({
+        title: t.updateError,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const deleteItem = async (itemId: string) => {
+    if (!confirm(t.deleteConfirm)) return;
+
+    try {
+      const { error } = await supabase
+        .from('marketplace_items')
+        .delete()
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      toast({
+        title: t.deleteSuccess
+      });
+
+      fetchResidentStats(); // Refresh data
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast({
+        title: t.deleteError,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleEditListing = (item: MarketplaceItem) => {
+    setEditingItem(item);
+    setIsEditDialogOpen(true);
+  };
+
+  const saveEditedListing = async () => {
+    if (!editingItem) return;
+
+    try {
+      const { error } = await supabase
+        .from('marketplace_items')
+        .update({
+          title: editingItem.title,
+          description: editingItem.description,
+          price: editingItem.price,
+          category: editingItem.category,
+          condition: editingItem.condition,
+          location: editingItem.location,
+          stock_quantity: editingItem.stock_quantity
+        })
+        .eq('id', editingItem.id);
+
+      if (error) throw error;
+
+      toast({
+        title: t.updateSuccess
+      });
+
+      setIsEditDialogOpen(false);
+      setEditingItem(null);
+      fetchResidentStats(); // Refresh data
+    } catch (error) {
+      console.error('Error updating listing:', error);
+      toast({
+        title: t.updateError,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const getConditionColor = (condition: string) => {
+    switch (condition) {
+      case 'new': return 'bg-green-100 text-green-800';
+      case 'like-new': return 'bg-blue-100 text-blue-800';
+      case 'good': return 'bg-yellow-100 text-yellow-800';
+      case 'fair': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getConditionText = (condition: string) => {
+    const conditionMap = {
+      'new': t.new,
+      'like-new': t.likeNew,
+      'good': t.good,
+      'fair': t.fair
+    };
+    return conditionMap[condition] || condition;
   };
 
   const StatCard = ({ title, value, icon: Icon, color = "text-primary", subtitle = "" }) => (
@@ -307,6 +557,7 @@ export default function ResidentAnalytics() {
           <TabsTrigger value="overview">{t.overview}</TabsTrigger>
           <TabsTrigger value="purchases">{t.purchases}</TabsTrigger>
           <TabsTrigger value="sales">{t.sales}</TabsTrigger>
+          <TabsTrigger value="listings">{t.listings}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -347,6 +598,28 @@ export default function ResidentAnalytics() {
               value={`RM${stats.revenueEarned.toFixed(2)}`} 
               icon={DollarSign}
               color="text-emerald-600"
+            />
+          </div>
+
+          {/* Listing Management Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <StatCard 
+              title={t.totalListings} 
+              value={stats.totalListings} 
+              icon={Package}
+              color="text-blue-600"
+            />
+            <StatCard 
+              title={t.activeListings} 
+              value={stats.activeListings} 
+              icon={Eye}
+              color="text-green-600"
+            />
+            <StatCard 
+              title={t.totalViews} 
+              value={stats.totalViews} 
+              icon={Eye}
+              color="text-purple-600"
             />
           </div>
 
@@ -471,7 +744,230 @@ export default function ResidentAnalytics() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="listings" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t.myListings}</CardTitle>
+              <CardDescription>{t.manageListings}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {stats.myListings.length === 0 ? (
+                <div className="text-center py-8">
+                  <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="font-medium mb-2">{t.noListings}</h3>
+                  <p className="text-muted-foreground mb-4">{t.noListingsDesc}</p>
+                  <Button onClick={() => navigate('/marketplace')}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t.createListing}
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {stats.myListings.map((item) => (
+                    <div key={item.id} className="p-4 border rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-medium">{item.title}</h3>
+                            <Badge 
+                              variant={item.is_active ? "default" : "secondary"}
+                            >
+                              {item.is_active ? t.active : t.inactive}
+                            </Badge>
+                            <Badge className={getConditionColor(item.condition)}>
+                              {getConditionText(item.condition)}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                            {item.description}
+                          </p>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span>{t.priceLabel}: RM{item.price.toFixed(2)}</span>
+                            <span>{t.categoryLabel}: {item.category}</span>
+                            <span>{t.stock}: {item.stock_quantity}</span>
+                            <span>{t.views}: {item.view_count || 0}</span>
+                            <span>{t.sold}: {item.sold_count || 0}</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 ml-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditListing(item)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleItemStatus(item.id, item.is_active)}
+                          >
+                            {item.is_active ? (
+                              <ToggleRight className="h-4 w-4 text-green-600" />
+                            ) : (
+                              <ToggleLeft className="h-4 w-4 text-gray-400" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteItem(item.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <Button 
+                    onClick={() => navigate('/marketplace')} 
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t.createListing}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
+
+      {/* Edit Listing Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t.editListing}</DialogTitle>
+            <DialogDescription>
+              Update your marketplace listing information
+            </DialogDescription>
+          </DialogHeader>
+          {editingItem && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="title">{t.itemTitle}</Label>
+                <Input
+                  id="title"
+                  value={editingItem.title}
+                  onChange={(e) => setEditingItem({
+                    ...editingItem,
+                    title: e.target.value
+                  })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="description">{t.itemDescription}</Label>
+                <Textarea
+                  id="description"
+                  value={editingItem.description}
+                  onChange={(e) => setEditingItem({
+                    ...editingItem,
+                    description: e.target.value
+                  })}
+                  rows={3}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="price">{t.priceLabel} (RM)</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    step="0.01"
+                    value={editingItem.price}
+                    onChange={(e) => setEditingItem({
+                      ...editingItem,
+                      price: parseFloat(e.target.value) || 0
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="stock">{t.stock}</Label>
+                  <Input
+                    id="stock"
+                    type="number"
+                    value={editingItem.stock_quantity}
+                    onChange={(e) => setEditingItem({
+                      ...editingItem,
+                      stock_quantity: parseInt(e.target.value) || 0
+                    })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="category">{t.categoryLabel}</Label>
+                  <Select
+                    value={editingItem.category}
+                    onValueChange={(value) => setEditingItem({
+                      ...editingItem,
+                      category: value
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t.selectCategory} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="condition">{t.conditionLabel}</Label>
+                  <Select
+                    value={editingItem.condition}
+                    onValueChange={(value) => setEditingItem({
+                      ...editingItem,
+                      condition: value
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t.selectCondition} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">{t.new}</SelectItem>
+                      <SelectItem value="like-new">{t.likeNew}</SelectItem>
+                      <SelectItem value="good">{t.good}</SelectItem>
+                      <SelectItem value="fair">{t.fair}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="location">{t.itemLocation}</Label>
+                <Input
+                  id="location"
+                  value={editingItem.location}
+                  onChange={(e) => setEditingItem({
+                    ...editingItem,
+                    location: e.target.value
+                  })}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditDialogOpen(false);
+                    setEditingItem(null);
+                  }}
+                >
+                  {t.cancel}
+                </Button>
+                <Button onClick={saveEditedListing}>
+                  {t.save}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
