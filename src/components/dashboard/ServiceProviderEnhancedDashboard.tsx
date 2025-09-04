@@ -14,12 +14,14 @@ import {
   Users,
   Calendar,
   Shield,
-  AlertTriangle
+  AlertTriangle,
+  Building
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { WeatherWidget } from './WeatherWidget';
 import SecurityAlertButton from '@/components/security/SecurityAlertButton';
+import { BusinessSetupModal } from '@/components/service-provider/BusinessSetupModal';
 
 interface ServiceProviderStats {
   totalOrders: number;
@@ -29,6 +31,14 @@ interface ServiceProviderStats {
   pendingOrders: number;
   recentOrders: any[];
   topServices: any[];
+}
+
+interface BusinessProfile {
+  id: string;
+  business_name: string;
+  business_type?: string;
+  is_verified: boolean;
+  service_areas: string[];
 }
 
 export default function ServiceProviderEnhancedDashboard() {
@@ -45,7 +55,9 @@ export default function ServiceProviderEnhancedDashboard() {
     recentOrders: [],
     topServices: []
   });
+  const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showBusinessSetup, setShowBusinessSetup] = useState(false);
 
   const text = {
     en: {
@@ -116,9 +128,33 @@ export default function ServiceProviderEnhancedDashboard() {
 
   useEffect(() => {
     if (user) {
+      fetchBusinessProfile();
       fetchServiceProviderStats();
     }
   }, [user]);
+
+  const fetchBusinessProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('service_provider_businesses')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      
+      setBusinessProfile(data);
+      
+      // Show setup modal if no business profile exists
+      if (!data) {
+        setShowBusinessSetup(true);
+      }
+    } catch (error) {
+      console.error('Error fetching business profile:', error);
+    }
+  };
 
   const fetchServiceProviderStats = async () => {
     if (!user) return;
@@ -256,8 +292,23 @@ export default function ServiceProviderEnhancedDashboard() {
         <div>
           <h1 className="text-3xl font-bold text-foreground">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
+          {businessProfile && (
+            <div className="flex items-center gap-2 mt-2">
+              <Building className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">{businessProfile.business_name}</span>
+              {businessProfile.is_verified && (
+                <Badge variant="secondary" className="text-xs">Verified</Badge>
+              )}
+            </div>
+          )}
         </div>
-        <SecurityAlertButton />
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowBusinessSetup(true)}>
+            <Building className="w-4 h-4 mr-1" />
+            Business Profile
+          </Button>
+          <SecurityAlertButton />
+        </div>
       </div>
 
       {/* Security Alert Card */}
@@ -473,6 +524,16 @@ export default function ServiceProviderEnhancedDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Business Setup Modal */}
+      <BusinessSetupModal 
+        open={showBusinessSetup}
+        onOpenChange={setShowBusinessSetup}
+        onComplete={() => {
+          fetchBusinessProfile();
+          setShowBusinessSetup(false);
+        }}
+      />
     </div>
   );
 }

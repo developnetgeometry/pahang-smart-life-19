@@ -160,6 +160,7 @@ export type Database = {
           product_type: string | null
           product_weight: number | null
           return_policy: string | null
+          service_areas: string[] | null
           shipping_cost: number | null
           shipping_required: boolean | null
           start_date: string | null
@@ -194,6 +195,7 @@ export type Database = {
           product_type?: string | null
           product_weight?: number | null
           return_policy?: string | null
+          service_areas?: string[] | null
           shipping_cost?: number | null
           shipping_required?: boolean | null
           start_date?: string | null
@@ -228,6 +230,7 @@ export type Database = {
           product_type?: string | null
           product_weight?: number | null
           return_policy?: string | null
+          service_areas?: string[] | null
           shipping_cost?: number | null
           shipping_required?: boolean | null
           start_date?: string | null
@@ -5058,6 +5061,8 @@ export type Database = {
           price: number
           seller_id: string | null
           seller_type: string
+          service_areas: string[] | null
+          service_type: string | null
           shipping_required: boolean | null
           sku: string | null
           sold_count: number | null
@@ -5088,6 +5093,8 @@ export type Database = {
           price: number
           seller_id?: string | null
           seller_type?: string
+          service_areas?: string[] | null
+          service_type?: string | null
           shipping_required?: boolean | null
           sku?: string | null
           sold_count?: number | null
@@ -5118,6 +5125,8 @@ export type Database = {
           price?: number
           seller_id?: string | null
           seller_type?: string
+          service_areas?: string[] | null
+          service_type?: string | null
           shipping_required?: boolean | null
           sku?: string | null
           sold_count?: number | null
@@ -7785,6 +7794,60 @@ export type Database = {
           },
         ]
       }
+      service_provider_businesses: {
+        Row: {
+          business_address: string | null
+          business_email: string | null
+          business_name: string
+          business_phone: string | null
+          business_registration_number: string | null
+          business_type: string | null
+          created_at: string | null
+          id: string
+          is_verified: boolean | null
+          license_expiry: string | null
+          license_number: string | null
+          service_areas: string[] | null
+          updated_at: string | null
+          user_id: string
+          verification_documents: Json | null
+        }
+        Insert: {
+          business_address?: string | null
+          business_email?: string | null
+          business_name: string
+          business_phone?: string | null
+          business_registration_number?: string | null
+          business_type?: string | null
+          created_at?: string | null
+          id?: string
+          is_verified?: boolean | null
+          license_expiry?: string | null
+          license_number?: string | null
+          service_areas?: string[] | null
+          updated_at?: string | null
+          user_id: string
+          verification_documents?: Json | null
+        }
+        Update: {
+          business_address?: string | null
+          business_email?: string | null
+          business_name?: string
+          business_phone?: string | null
+          business_registration_number?: string | null
+          business_type?: string | null
+          created_at?: string | null
+          id?: string
+          is_verified?: boolean | null
+          license_expiry?: string | null
+          license_number?: string | null
+          service_areas?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+          verification_documents?: Json | null
+        }
+        Relationships: []
+      }
       service_provider_profiles: {
         Row: {
           application_id: string | null
@@ -10156,6 +10219,18 @@ export type Database = {
       }
       process_workflow_escalations: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      service_provider_serves_area: {
+        Args: { area_id: string; provider_id: string }
+        Returns: boolean
+      }
+      setup_service_provider: {
+        Args: {
+          p_business_name: string
+          p_business_type?: string
+          p_service_areas?: string[]
+        }
         Returns: string
       }
       update_user_presence: {
