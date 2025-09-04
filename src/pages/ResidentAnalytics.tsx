@@ -858,6 +858,7 @@ export default function ResidentAnalytics() {
                         </div>
                         <div className="flex gap-2 ml-4">
                           <Button
+                            type="button"
                             variant="outline"
                             size="sm"
                             onClick={() => handleEditListing(item)}
@@ -865,6 +866,7 @@ export default function ResidentAnalytics() {
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
+                            type="button"
                             variant="outline"
                             size="sm"
                             onClick={() => toggleItemStatus(item.id, item.is_active)}
@@ -877,6 +879,7 @@ export default function ResidentAnalytics() {
                             )}
                           </Button>
                           <Button
+                            type="button"
                             variant="outline"
                             size="sm"
                             onClick={() => item.is_available ? markAsSold(item.id) : markAsAvailable(item.id)}
@@ -889,6 +892,7 @@ export default function ResidentAnalytics() {
                             )}
                           </Button>
                           <Button
+                            type="button"
                             variant="outline"
                             size="sm"
                             onClick={() => deleteItem(item.id)}
