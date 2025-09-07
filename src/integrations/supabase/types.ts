@@ -2018,6 +2018,7 @@ export type Database = {
           complaint_id: string
           created_at: string
           id: string
+          internal_comments: string | null
           is_internal: boolean
           responder_id: string
           response_text: string
@@ -2030,6 +2031,7 @@ export type Database = {
           complaint_id: string
           created_at?: string
           id?: string
+          internal_comments?: string | null
           is_internal?: boolean
           responder_id: string
           response_text: string
@@ -2042,6 +2044,7 @@ export type Database = {
           complaint_id?: string
           created_at?: string
           id?: string
+          internal_comments?: string | null
           is_internal?: boolean
           responder_id?: string
           response_text?: string

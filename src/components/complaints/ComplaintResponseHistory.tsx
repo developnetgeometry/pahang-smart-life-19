@@ -25,6 +25,7 @@ interface ComplaintResponse {
   response_text: string;
   response_type: string;
   is_internal: boolean;
+  internal_comments?: string;
   attachments?: string[];
   status_update: string | null;
   created_at: string;
@@ -74,6 +75,7 @@ export default function ComplaintResponseHistory({ complaintId, refreshKey }: Co
         response_text: item.response_text,
         response_type: item.response_type,
         is_internal: item.is_internal,
+        internal_comments: item.internal_comments,
         attachments: item.attachments || [],
         status_update: item.status_update,
         created_at: item.created_at,
@@ -252,6 +254,22 @@ export default function ComplaintResponseHistory({ complaintId, refreshKey }: Co
                       </div>
                     )}
                   </div>
+
+                  {response.internal_comments && (
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                      <div className="flex items-start space-x-2">
+                        <EyeOff className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-xs font-medium text-yellow-700 dark:text-yellow-300 mb-1">
+                            {language === 'en' ? 'Internal Comments (Staff Only)' : 'Komen Dalaman (Kakitangan Sahaja)'}
+                          </p>
+                          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                            {response.internal_comments}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               
