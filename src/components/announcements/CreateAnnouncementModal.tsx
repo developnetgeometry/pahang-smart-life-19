@@ -171,24 +171,41 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
+      const fileName = `${user?.id}/${Date.now()}.${fileExt}`;
       const filePath = `announcements/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      console.log('Uploading image:', fileName, 'to path:', filePath);
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('public')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('public')
         .getPublicUrl(filePath);
 
-      setImages(prev => [...prev, publicUrl]);
+      console.log('Generated public URL:', publicUrl);
+
+      setImages(prev => {
+        const updated = [...prev, publicUrl];
+        console.log('Updated images array:', updated);
+        return updated;
+      });
+
+      toast({
+        title: language === 'en' ? 'Image uploaded successfully' : 'Gambar berjaya dimuat naik',
+        variant: 'default'
+      });
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
         title: language === 'en' ? 'Upload failed' : 'Muat naik gagal',
+        description: error.message,
         variant: 'destructive'
       });
     } finally {
@@ -482,6 +499,11 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                         src={image} 
                         alt={`Upload ${index + 1}`}
                         className="w-full h-24 object-cover rounded-md border"
+                        onLoad={() => console.log('Image loaded successfully:', image)}
+                        onError={(e) => {
+                          console.error('Image failed to load:', image);
+                          console.error('Error event:', e);
+                        }}
                       />
                       <Button
                         size="sm"
@@ -493,12 +515,23 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                       </Button>
                     </div>
                   ))}
+                  {uploading && (
+                    <div className="border-2 border-dashed border-primary/25 rounded-md h-24 flex items-center justify-center bg-primary/5">
+                      <div className="flex flex-col items-center gap-2 text-primary">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                        <span className="text-xs">{t.uploading}</span>
+                      </div>
+                    </div>
+                  )}
                   <div className="border-2 border-dashed border-muted-foreground/25 rounded-md h-24 flex items-center justify-center">
                     <input
                       type="file"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file && file.type.startsWith('image/')) handleImageUpload(file);
+                        if (file && file.type.startsWith('image/')) {
+                          console.log('Selected file:', file.name, file.type);
+                          handleImageUpload(file);
+                        }
                       }}
                       className="hidden"
                       id="image-upload"
@@ -507,13 +540,18 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                     />
                     <label 
                       htmlFor="image-upload" 
-                      className="flex flex-col items-center gap-2 text-muted-foreground cursor-pointer hover:text-foreground"
+                      className="flex flex-col items-center gap-2 text-muted-foreground cursor-pointer hover:text-foreground disabled:opacity-50"
                     >
                       <ImagePlus className="h-6 w-6" />
                       <span className="text-xs">{uploading ? t.uploading : t.addImage}</span>
                     </label>
                   </div>
                 </div>
+                {images.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {images.length} image{images.length !== 1 ? 's' : ''} uploaded
+                  </p>
+                )}
               </div>
 
               <div>
