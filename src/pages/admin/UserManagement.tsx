@@ -189,6 +189,7 @@ export default function UserManagement() {
         district_id: profile.district_id || ''
       }));
 
+      console.log('Fetched users:', formattedUsers.map(u => ({id: u.id, name: u.name, status: u.status})));
       setUsers(formattedUsers);
     } catch (error) {
       console.error('Error:', error);
@@ -283,19 +284,25 @@ export default function UserManagement() {
 
   const handleApproveUser = async (userId: string) => {
     try {
+      console.log('Approving user:', userId);
       const { error } = await supabase
         .from('profiles')
         .update({ account_status: 'approved' })
         .eq('id', userId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Update error:', error);
+        throw error;
+      }
 
+      console.log('User approved successfully, refreshing list...');
       toast({
         title: t.userApproved,
         description: language === 'en' ? 'User can now login to the system' : 'Pengguna kini boleh log masuk ke sistem',
       });
 
-      fetchUsers(); // Refresh the user list
+      await fetchUsers(); // Refresh the user list
+      console.log('User list refreshed');
     } catch (error) {
       console.error('Error approving user:', error);
       toast({
