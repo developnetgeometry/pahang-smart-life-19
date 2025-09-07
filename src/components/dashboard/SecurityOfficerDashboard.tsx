@@ -68,9 +68,12 @@ export function SecurityOfficerDashboard() {
   };
 
   const handlePatrolStart = (area: string, time: string) => {
-    toast({
-      title: language === 'en' ? 'Patrol Started' : 'Rondaan Dimulakan',
-      description: language === 'en' ? `Started patrol for ${area} at ${time}` : `Rondaan dimulakan untuk ${area} pada ${time}`,
+    // Navigate to patrol interface
+    navigate('/patrol-interface', { 
+      state: { 
+        patrolArea: area, 
+        patrolTime: time 
+      } 
     });
   };
 

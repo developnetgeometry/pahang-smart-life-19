@@ -72,6 +72,7 @@ import EnhancedEvents from './pages/EnhancedEvents';
 import ModerationPanel from './components/discussions/ModerationPanel';
 import PrecisionMapping from "./pages/PrecisionMapping";
 import MaintenanceComplaintCenterPage from "./pages/MaintenanceComplaintCenter";
+import PatrolInterfacePage from "./pages/PatrolInterface";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -622,6 +623,18 @@ const App = () => (
                   <Layout>
                     <PanicAlerts />
                   </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/patrol-interface"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["security_officer"]}>
+                    <Layout>
+                      <PatrolInterfacePage />
+                    </Layout>
+                  </RequireRoles>
                 </ProtectedRoute>
               }
             />
