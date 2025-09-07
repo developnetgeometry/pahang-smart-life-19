@@ -12,6 +12,8 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { ZoomIn, ZoomOut, RotateCcw, Search, Square, Edit, Trash2, Save, Eye, MapPin, Users, Phone, Mail } from 'lucide-react';
 import { useUnits, Unit } from '@/hooks/use-units';
 import { useFloorPlans } from '@/hooks/use-floor-plans';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 interface InteractiveUnitEditorProps {
@@ -53,6 +55,7 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
 }) => {
   const { units, loading, createUnit, updateUnit, deleteUnit, fetchUnitsByFloorPlan } = useUnits();
   const { floorPlans, loading: floorPlansLoading } = useFloorPlans();
+  const { user } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -93,6 +96,9 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Real-time subscription ref
+  const [realtimeChannel, setRealtimeChannel] = useState<any>(null);
+
   // Load units when floor plan changes
   useEffect(() => {
     if (selectedFloorPlan) {
@@ -113,6 +119,19 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
   const handleFloorPlanChange = (floorPlanId: string) => {
     setSelectedFloorPlan(floorPlanId);
     onFloorPlanChange?.(floorPlanId);
+    
+    // Update image URL based on selected floor plan
+    if (floorPlanId && floorPlans.length > 0) {
+      const floorPlan = floorPlans.find(fp => fp.id === floorPlanId);
+      if (floorPlan) {
+        setCurrentImageUrl(floorPlan.image_url);
+        
+        // Broadcast change to all residents if admin
+        if (isAdminMode) {
+          broadcastFloorPlanChange(floorPlanId, floorPlan.image_url);
+        }
+      }
+    }
   };
 
   // Filter units based on search term and selected floor plan
@@ -146,6 +165,126 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedUnits = filteredUnits.slice(startIndex, endIndex);
+
+  // Set up real-time subscriptions
+  useEffect(() => {
+    if (!user?.id) return;
+
+    // Get user's district/community for the channel
+    const setupRealtimeSubscription = async () => {
+      try {
+        // Get user's district from profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('district_id, community_id')
+          .eq('id', user.id)
+          .single();
+
+        if (!profile?.district_id) return;
+
+        // Create a channel for this district/community
+        const channelName = `community_updates_${profile.district_id}`;
+        const channel = supabase.channel(channelName);
+
+        // Listen for floor plan changes
+        channel.on('broadcast', { event: 'floor_plan_changed' }, (payload) => {
+          console.log('Floor plan changed:', payload);
+          const { floorPlanId: newFloorPlanId, imageUrl: newImageUrl, changedBy } = payload.payload;
+          
+          // Only update if it's not the current user making the change (to avoid loops)
+          if (changedBy !== user.id) {
+            setSelectedFloorPlan(newFloorPlanId);
+            setCurrentImageUrl(newImageUrl);
+            toast.info('Floor plan updated by admin', {
+              description: 'The community map has been updated'
+            });
+            
+            // Fetch units for the new floor plan
+            if (newFloorPlanId) {
+              fetchUnitsByFloorPlan(newFloorPlanId);
+            }
+          }
+        });
+
+        // Listen for unit changes
+        channel.on('broadcast', { event: 'units_updated' }, (payload) => {
+          console.log('Units updated:', payload);
+          const { changedBy, floorPlanId: updatedFloorPlanId } = payload.payload;
+          
+          // Only update if it's not the current user making the change
+          if (changedBy !== user.id && updatedFloorPlanId === selectedFloorPlan) {
+            // Refresh units data
+            fetchUnitsByFloorPlan(selectedFloorPlan);
+            toast.info('Units updated by admin', {
+              description: 'Community unit information has been updated'
+            });
+          }
+        });
+
+        // Subscribe to the channel
+        channel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Subscribed to real-time updates for district:', profile.district_id);
+          }
+        });
+
+        setRealtimeChannel(channel);
+
+      } catch (error) {
+        console.error('Error setting up real-time subscription:', error);
+      }
+    };
+
+    setupRealtimeSubscription();
+
+    // Cleanup function
+    return () => {
+      if (realtimeChannel) {
+        supabase.removeChannel(realtimeChannel);
+      }
+    };
+  }, [user?.id, selectedFloorPlan, fetchUnitsByFloorPlan]);
+
+  // Broadcast floor plan changes (admin only)
+  const broadcastFloorPlanChange = useCallback(async (floorPlanId: string, imageUrl: string) => {
+    if (!realtimeChannel || !user?.id || !isAdminMode) return;
+
+    try {
+      await realtimeChannel.send({
+        type: 'broadcast',
+        event: 'floor_plan_changed',
+        payload: {
+          floorPlanId,
+          imageUrl,
+          changedBy: user.id,
+          timestamp: new Date().toISOString()
+        }
+      });
+      console.log('Broadcasted floor plan change to all residents');
+    } catch (error) {
+      console.error('Error broadcasting floor plan change:', error);
+    }
+  }, [realtimeChannel, user?.id, isAdminMode]);
+
+  // Broadcast unit changes (admin only)
+  const broadcastUnitsUpdate = useCallback(async (floorPlanId: string) => {
+    if (!realtimeChannel || !user?.id || !isAdminMode) return;
+
+    try {
+      await realtimeChannel.send({
+        type: 'broadcast',
+        event: 'units_updated', 
+        payload: {
+          floorPlanId,
+          changedBy: user.id,
+          timestamp: new Date().toISOString()
+        }
+      });
+      console.log('Broadcasted units update to all residents');
+    } catch (error) {
+      console.error('Error broadcasting units update:', error);
+    }
+  }, [realtimeChannel, user?.id, isAdminMode]);
 
   const resetForm = () => {
     setFormData({
@@ -305,6 +444,11 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
       setShowUnitForm(false);
       resetForm();
       setNewBoxCoordinates(null);
+      
+      // Broadcast unit changes to all residents if admin
+      if (isAdminMode && selectedFloorPlan) {
+        broadcastUnitsUpdate(selectedFloorPlan);
+      }
     }
   };
 
@@ -314,6 +458,11 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
       if (success) {
         setShowUnitForm(false);
         resetForm();
+        
+        // Broadcast unit changes to all residents if admin
+        if (isAdminMode && selectedFloorPlan) {
+          broadcastUnitsUpdate(selectedFloorPlan);
+        }
       }
     }
   };
@@ -581,6 +730,16 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                 <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg">
                   <span className="text-xs font-mono">{Math.round(scale * 100)}%</span>
                 </div>
+
+                {/* Real-time connection status */}
+                {realtimeChannel && (
+                  <div className="absolute top-4 right-4 bg-green-500/90 text-white rounded-lg px-2 py-1 shadow-lg">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                      <span className="text-xs font-medium">Live Updates</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>
