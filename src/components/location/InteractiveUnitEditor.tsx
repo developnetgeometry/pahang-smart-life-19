@@ -110,12 +110,18 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
     onFloorPlanChange?.(floorPlanId);
   };
 
-  // Auto-fit image when it loads
-  const filteredUnits = units.filter(unit =>
-    unit.unit_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    unit.owner_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    unit.address?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter units based on search term and selected floor plan
+  const filteredUnits = units.filter(unit => {
+    // First filter by floor plan if one is selected
+    const matchesFloorPlan = !selectedFloorPlan || unit.floor_plan_id === selectedFloorPlan;
+    
+    // Then filter by search term
+    const matchesSearch = unit.unit_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      unit.owner_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      unit.address?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesFloorPlan && matchesSearch;
+  });
 
   const resetForm = () => {
     setFormData({
@@ -646,7 +652,12 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                       <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <h3 className="text-lg font-semibold mb-2">No Owners Found</h3>
                       <p className="text-muted-foreground">
-                        {searchTerm ? 'No owners match your search criteria.' : 'No owners have been added to this community yet.'}
+                        {searchTerm 
+                          ? 'No owners match your search criteria.' 
+                          : selectedFloorPlan 
+                            ? 'No owners have been added to this floor plan yet.'
+                            : 'Select a floor plan to view owners or add new units.'
+                        }
                       </p>
                     </div>
                   )}
