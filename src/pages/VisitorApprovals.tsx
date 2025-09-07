@@ -41,17 +41,23 @@ export default function VisitorApprovals() {
   const { language, user } = useAuth();
   const { isModuleEnabled } = useModuleAccess();
   const { toast } = useToast();
+  
+  // State management
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVisitor, setSelectedVisitor] = useState<Visitor | null>(null);
   
+  // Dialog states
+  const [showQRDialog, setShowQRDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  
   // QR Scanner states
   const [scanning, setScanning] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [manualCode, setManualCode] = useState('');
-  const [showQRDialog, setShowQRDialog] = useState(false);
-  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  
+  // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
