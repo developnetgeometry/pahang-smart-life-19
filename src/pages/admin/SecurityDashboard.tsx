@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +40,34 @@ interface SystemStatus {
 
 export default function SecurityDashboard() {
   const { language } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
+
+  const handleAlerts = () => {
+    navigate('/panic-alerts');
+    toast({
+      title: language === 'en' ? 'Security Alerts' : 'Amaran Keselamatan',
+      description: language === 'en' ? 'Navigating to security alerts...' : 'Navigasi ke amaran keselamatan...',
+    });
+  };
+
+  const handleSettings = () => {
+    navigate('/admin/security-settings');
+    toast({
+      title: language === 'en' ? 'Security Settings' : 'Tetapan Keselamatan',
+      description: language === 'en' ? 'Opening security settings...' : 'Membuka tetapan keselamatan...',
+    });
+  };
+
+  const handleEventDetails = (eventId: string, eventTitle: string) => {
+    toast({
+      title: language === 'en' ? 'Event Details' : 'Butiran Peristiwa',
+      description: language === 'en' ? `Viewing details for: ${eventTitle}` : `Melihat butiran untuk: ${eventTitle}`,
+    });
+    // Navigate to detailed event view
+    navigate(`/admin/security-events/${eventId}`);
+  };
 
   const text = {
     en: {
@@ -213,13 +242,13 @@ export default function SecurityDashboard() {
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleAlerts}>
             <Bell className="h-4 w-4 mr-2" />
-            Alerts
+            {language === 'en' ? 'Alerts' : 'Amaran'}
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleSettings}>
             <Settings className="h-4 w-4 mr-2" />
-            Settings
+            {language === 'en' ? 'Settings' : 'Tetapan'}
           </Button>
         </div>
       </div>
@@ -354,7 +383,12 @@ export default function SecurityDashboard() {
                       <Badge className={getStatusColor(event.status)}>
                         {getStatusText(event.status)}
                       </Badge>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEventDetails(event.id, event.title)}
+                        title={t.viewDetails}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
                     </div>

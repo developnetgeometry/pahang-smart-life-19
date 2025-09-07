@@ -51,6 +51,29 @@ export function SecurityOfficerDashboard() {
     }
   };
 
+  const handleCameraView = (cameraName: string) => {
+    toast({
+      title: language === 'en' ? 'Camera View' : 'Paparan Kamera',
+      description: language === 'en' ? `Opening ${cameraName} camera feed...` : `Membuka paparan kamera ${cameraName}...`,
+    });
+    navigate('/cctv-live');
+  };
+
+  const handleIncidentReview = (incidentType: string) => {
+    toast({
+      title: language === 'en' ? 'Incident Review' : 'Semakan Insiden',
+      description: language === 'en' ? `Reviewing ${incidentType} incident...` : `Menyemak insiden ${incidentType}...`,
+    });
+    navigate('/admin/security-dashboard');
+  };
+
+  const handlePatrolStart = (area: string, time: string) => {
+    toast({
+      title: language === 'en' ? 'Patrol Started' : 'Rondaan Dimulakan',
+      description: language === 'en' ? `Started patrol for ${area} at ${time}` : `Rondaan dimulakan untuk ${area} pada ${time}`,
+    });
+  };
+
   const securityMetrics = [
     {
       title: language === 'en' ? 'CCTV Cameras' : 'Kamera CCTV',
@@ -223,7 +246,12 @@ export function SecurityOfficerDashboard() {
                       {camera.status}
                     </Badge>
                     {camera.status === 'online' && (
-                      <Button size="sm" variant="ghost">
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => handleCameraView(camera.name)}
+                        title={language === 'en' ? 'View Camera Feed' : 'Lihat Paparan Kamera'}
+                      >
                         <Eye className="h-3 w-3" />
                       </Button>
                     )}
@@ -261,7 +289,11 @@ export function SecurityOfficerDashboard() {
                 {incident.status === 'resolved' ? (
                   <CheckCircle className="h-4 w-4 text-green-500" />
                 ) : (
-                  <Button size="sm" variant="outline">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => handleIncidentReview(incident.type)}
+                  >
                     {language === 'en' ? 'Review' : 'Semak'}
                   </Button>
                 )}
@@ -294,7 +326,11 @@ export function SecurityOfficerDashboard() {
                   <Badge className={getStatusColor(patrol.status)}>
                     {patrol.status}
                   </Badge>
-                  <Button size="sm" variant="outline">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => handlePatrolStart(patrol.area, patrol.time)}
+                  >
                     {language === 'en' ? 'Start' : 'Mula'}
                   </Button>
                 </div>
