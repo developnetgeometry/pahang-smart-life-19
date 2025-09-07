@@ -26,7 +26,7 @@ interface User {
 }
 
 export default function UserManagement() {
-  const { language } = useAuth();
+  const { language, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
@@ -365,7 +365,9 @@ export default function UserManagement() {
           .insert({
             user_id: editingId,
             role: form.role as any,
-            is_active: true
+            is_active: true,
+            assigned_by: user?.id,
+            assigned_at: new Date().toISOString()
           });
 
         if (roleError) throw roleError;
