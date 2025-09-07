@@ -100,8 +100,17 @@ export const FloorPlanManagement: React.FC = () => {
           id="name"
           placeholder="Enter floor plan name (e.g., Building A - Level 1)"
           value={formData.name}
-          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+          onChange={(e) => {
+            console.log('Input change:', e.target.value);
+            setFormData(prev => ({ ...prev, name: e.target.value }));
+          }}
+          disabled={loading}
+          autoFocus={!isEdit}
         />
+        {/* Debug info */}
+        <p className="text-xs text-gray-500 mt-1">
+          Current value: "{formData.name}" | Loading: {loading.toString()} | Edit mode: {isEdit.toString()}
+        </p>
       </div>
 
       <div>
