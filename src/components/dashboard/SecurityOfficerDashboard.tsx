@@ -306,42 +306,6 @@ export function SecurityOfficerDashboard() {
         </Card>
       </div>
 
-      {/* Patrol Schedule */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            {language === 'en' ? 'Patrol Schedule' : 'Jadual Rondaan'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {patrolSchedule.map((patrol, index) => (
-              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1 text-sm font-medium">
-                    <Clock className="h-4 w-4" />
-                    {patrol.time}
-                  </div>
-                  <span className="text-sm">{patrol.area}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge className={getStatusColor(patrol.status)}>
-                    {patrol.status}
-                  </Badge>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handlePatrolStart(patrol.area, patrol.time)}
-                  >
-                    {language === 'en' ? 'Start' : 'Mula'}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Quick Actions */}
       <Card>
