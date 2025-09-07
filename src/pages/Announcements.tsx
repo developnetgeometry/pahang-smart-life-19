@@ -553,7 +553,7 @@ export default function Announcements() {
     try {
       setLoading(true);
       
-      // Simplified query - only select columns that exist in the database
+      // Select all necessary columns including images and attachments
       const { data, error } = await supabase
         .from('announcements')
         .select(`
@@ -568,7 +568,10 @@ export default function Announcements() {
           expire_at,
           created_at,
           author_id,
-          scope
+          scope,
+          images,
+          attachments,
+          reading_time_minutes
         `)
         .eq('is_published', true)
         .lte('publish_at', new Date().toISOString())
@@ -583,14 +586,17 @@ export default function Announcements() {
         title: a.title,
         content: a.content,
         type: a.type || 'general',
-        scope: a.scope || 'district', // Use database scope or default
+        scope: a.scope || 'district',
         is_urgent: a.is_urgent || false,
         is_published: a.is_published,
-        is_pinned: a.is_pinned || false, // Use database is_pinned field
+        is_pinned: a.is_pinned || false,
         publish_at: a.publish_at,
         expire_at: a.expire_at,
         created_at: a.created_at,
         author_id: a.author_id,
+        images: a.images || [],
+        attachments: a.attachments || [],
+        reading_time_minutes: a.reading_time_minutes || 1,
         has_poll: false
       })) : [];
 
@@ -610,9 +616,15 @@ export default function Announcements() {
         is_urgent: announcement.is_urgent,
         publish_at: announcement.publish_at,
         expire_at: announcement.expire_at,
-        has_poll: announcement.has_poll
+        has_poll: announcement.has_poll,
+        images: Array.isArray(announcement.images) ? announcement.images as string[] : 
+                (announcement.images ? [announcement.images as string] : []),
+        attachments: Array.isArray(announcement.attachments) ? announcement.attachments as Array<{name: string; url: string; size?: number}> : 
+                    (announcement.attachments ? [announcement.attachments as {name: string; url: string; size?: number}] : []),
+        reading_time_minutes: announcement.reading_time_minutes
       }));
 
+      console.log('Fetched announcements with images:', transformedAnnouncements);
       setAnnouncements(transformedAnnouncements);
     } catch (error) {
       console.error('Error fetching announcements:', error);
@@ -1098,7 +1110,7 @@ export default function Announcements() {
                   <div className="space-y-3">
                     <h4 className="font-semibold flex items-center gap-2">
                       <ImageIcon className="w-4 h-4" />
-                      {t.images}
+                      {t.images} ({selectedAnnouncement.images.length})
                     </h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {selectedAnnouncement.images.map((image, index) => (
@@ -1108,6 +1120,11 @@ export default function Announcements() {
                           alt={`Announcement image ${index + 1}`}
                           className="rounded-lg border object-cover aspect-square cursor-pointer hover:opacity-80 transition-opacity"
                           onClick={() => window.open(image, '_blank')}
+                          onLoad={() => console.log('Image loaded successfully:', image)}
+                          onError={(e) => {
+                            console.error('Image failed to load:', image);
+                            console.error('Error event:', e);
+                          }}
                         />
                       ))}
                     </div>
