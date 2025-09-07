@@ -23,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import WorkOrderManager from '@/components/complaints/WorkOrderManager';
 import ComplaintEscalationDialog from '@/components/complaints/ComplaintEscalationDialog';
 import FacilityManagerComplaintForm from '@/components/complaints/FacilityManagerComplaintForm';
+import ComplaintResponseDialog from '@/components/complaints/ComplaintResponseDialog';
 import { useUserRoles } from '@/hooks/use-user-roles';
 
 interface Complaint {
@@ -507,6 +508,11 @@ export default function ComplaintsManagement() {
                             </Badge>
                             
                             <div className="flex gap-2">
+                              <ComplaintResponseDialog
+                                complaintId={complaint.id}
+                                currentStatus={complaint.status}
+                                onResponseAdded={() => setRefreshKey(prev => prev + 1)}
+                              />
                               <Button 
                                 variant="ghost" 
                                 size="sm"

@@ -19,6 +19,9 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import ComplaintResponseHistory from '@/components/complaints/ComplaintResponseHistory';
+import ComplaintResponseDialog from '@/components/complaints/ComplaintResponseDialog';
+import { useUserRoles } from '@/hooks/use-user-roles';
 
 interface Complaint {
   id: string;
@@ -47,8 +50,18 @@ export default function ComplaintDetail() {
   const navigate = useNavigate();
   const { language } = useAuth();
   const { t } = useTranslation(language || 'ms');
+  const { hasRole } = useUserRoles();
   const [complaint, setComplaint] = useState<Complaint | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Check if user can respond to complaints
+  const canRespond = hasRole('facility_manager' as any) || 
+                     hasRole('community_admin' as any) || 
+                     hasRole('district_coordinator' as any) || 
+                     hasRole('state_admin' as any) ||
+                     hasRole('security_officer' as any) ||
+                     hasRole('maintenance_staff' as any);
 
   useEffect(() => {
     const fetchComplaint = async () => {
@@ -186,6 +199,14 @@ export default function ComplaintDetail() {
           <ArrowLeft className="w-4 h-4 mr-2" />
           {language === 'en' ? 'Back to Complaints' : 'Kembali ke Aduan'}
         </Button>
+        
+        {canRespond && (
+          <ComplaintResponseDialog
+            complaintId={complaint.id}
+            currentStatus={complaint.status}
+            onResponseAdded={() => setRefreshKey(prev => prev + 1)}
+          />
+        )}
         
         <div className="flex items-center space-x-2">
           <Badge className={getStatusColor(complaint.status)}>
@@ -344,6 +365,12 @@ export default function ComplaintDetail() {
           )}
         </CardContent>
       </Card>
+
+      {/* Response History */}
+      <ComplaintResponseHistory 
+        complaintId={complaint.id} 
+        refreshKey={refreshKey}
+      />
     </div>
   );
 }

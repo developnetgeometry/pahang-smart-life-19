@@ -14,6 +14,7 @@ import { Plus, FileText, Clock, AlertTriangle, CheckCircle, Upload, X, Loader2, 
 import { useToast } from '@/hooks/use-toast';
 import ComplaintEscalationPanel from '@/components/complaints/ComplaintEscalationPanel';
 import RealTimeNotificationCenter from '@/components/notifications/RealTimeNotificationCenter';
+import ComplaintResponseHistory from '@/components/complaints/ComplaintResponseHistory';
 
 interface Complaint {
   id: string;

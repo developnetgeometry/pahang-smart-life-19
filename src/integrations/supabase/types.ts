@@ -2012,6 +2012,53 @@ export type Database = {
           },
         ]
       }
+      complaint_responses: {
+        Row: {
+          attachments: string[] | null
+          complaint_id: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          responder_id: string
+          response_text: string
+          response_type: string
+          status_update: string | null
+          updated_at: string
+        }
+        Insert: {
+          attachments?: string[] | null
+          complaint_id: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          responder_id: string
+          response_text: string
+          response_type?: string
+          status_update?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attachments?: string[] | null
+          complaint_id?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          responder_id?: string
+          response_text?: string
+          response_type?: string
+          status_update?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "complaint_responses_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       complaints: {
         Row: {
           assigned_to: string | null
