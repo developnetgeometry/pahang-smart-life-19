@@ -331,23 +331,129 @@ export default function ActivePanicAlerts() {
 
                       <div className="space-y-3">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <Button
-                            onClick={() => updateAlertStatus(alert.id, 'responded', responseNotes)}
-                            className="w-full h-12 text-sm font-medium"
-                            variant="default"
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            {language === 'en' ? 'Mark as Responded' : 'Tandakan sebagai Direspon'}
-                          </Button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                className="w-full h-12 text-sm font-medium"
+                                variant="default"
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                {language === 'en' ? 'Mark as Responded' : 'Tandakan sebagai Direspon'}
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>
+                                  {language === 'en' ? 'Confirm Response' : 'Sahkan Respons'}
+                                </DialogTitle>
+                                <DialogDescription>
+                                  {language === 'en' 
+                                    ? 'Please provide details about your response to this panic alert.'
+                                    : 'Sila berikan butiran mengenai respons anda kepada amaran panik ini.'
+                                  }
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <label className="text-sm font-medium block mb-2">
+                                    {language === 'en' ? 'Response Details (Required)' : 'Butiran Respons (Diperlukan)'}
+                                  </label>
+                                  <Textarea
+                                    value={responseNotes}
+                                    onChange={(e) => setResponseNotes(e.target.value)}
+                                    placeholder={
+                                      language === 'en' 
+                                        ? 'Describe the actions taken in response to this alert...'
+                                        : 'Huraikan tindakan yang diambil sebagai respons kepada amaran ini...'
+                                    }
+                                    className="min-h-[100px]"
+                                    required
+                                  />
+                                </div>
+                                <Button
+                                  onClick={() => {
+                                    if (responseNotes.trim()) {
+                                      updateAlertStatus(alert.id, 'responded', responseNotes);
+                                    } else {
+                                      toast({
+                                        title: language === 'en' ? 'Required Field' : 'Medan Diperlukan',
+                                        description: language === 'en' 
+                                          ? 'Please provide response details before proceeding.'
+                                          : 'Sila berikan butiran respons sebelum meneruskan.',
+                                        variant: 'destructive',
+                                      });
+                                    }
+                                  }}
+                                  className="w-full"
+                                  disabled={!responseNotes.trim()}
+                                >
+                                  {language === 'en' ? 'Confirm Response' : 'Sahkan Respons'}
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                           
-                          <Button
-                            onClick={() => updateAlertStatus(alert.id, 'resolved', responseNotes)}
-                            className="w-full h-12 text-sm font-medium"
-                            variant="default"
-                          >
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                            {language === 'en' ? 'Mark as Resolved' : 'Tandakan sebagai Selesai'}
-                          </Button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                className="w-full h-12 text-sm font-medium"
+                                variant="default"
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                {language === 'en' ? 'Mark as Resolved' : 'Tandakan sebagai Selesai'}
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>
+                                  {language === 'en' ? 'Confirm Resolution' : 'Sahkan Penyelesaian'}
+                                </DialogTitle>
+                                <DialogDescription>
+                                  {language === 'en' 
+                                    ? 'Please provide details about how this panic alert was resolved.'
+                                    : 'Sila berikan butiran mengenai bagaimana amaran panik ini diselesaikan.'
+                                  }
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <label className="text-sm font-medium block mb-2">
+                                    {language === 'en' ? 'Resolution Details (Required)' : 'Butiran Penyelesaian (Diperlukan)'}
+                                  </label>
+                                  <Textarea
+                                    value={responseNotes}
+                                    onChange={(e) => setResponseNotes(e.target.value)}
+                                    placeholder={
+                                      language === 'en' 
+                                        ? 'Describe how the situation was resolved and any follow-up actions...'
+                                        : 'Huraikan bagaimana situasi diselesaikan dan sebarang tindakan susulan...'
+                                    }
+                                    className="min-h-[100px]"
+                                    required
+                                  />
+                                </div>
+                                <Button
+                                  onClick={() => {
+                                    if (responseNotes.trim()) {
+                                      updateAlertStatus(alert.id, 'resolved', responseNotes);
+                                    } else {
+                                      toast({
+                                        title: language === 'en' ? 'Required Field' : 'Medan Diperlukan',
+                                        description: language === 'en' 
+                                          ? 'Please provide resolution details before proceeding.'
+                                          : 'Sila berikan butiran penyelesaian sebelum meneruskan.',
+                                        variant: 'destructive',
+                                      });
+                                    }
+                                  }}
+                                  className="w-full"
+                                  disabled={!responseNotes.trim()}
+                                >
+                                  {language === 'en' ? 'Confirm Resolution' : 'Sahkan Penyelesaian'}
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         </div>
 
                         <Button
