@@ -344,59 +344,71 @@ export function CommunityAdminDashboard() {
             )}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Upcoming Events */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            {language === 'en' ? 'Upcoming Community Events' : 'Acara Komuniti Akan Datang'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {loading ? (
-              <div className="space-y-4">
-                {[1, 2].map((i) => (
-                  <div key={i} className="flex items-center justify-between p-4 border rounded-lg animate-pulse">
-                    <div className="flex-1">
-                      <div className="h-4 bg-muted rounded mb-2 w-3/4" />
-                      <div className="h-3 bg-muted rounded w-1/2" />
+        {/* Upcoming Events */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              {language === 'en' ? 'Upcoming Community Events' : 'Acara Komuniti Akan Datang'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {loading ? (
+                <div className="space-y-4">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="flex items-center justify-between p-4 border rounded-lg animate-pulse">
+                      <div className="flex-1">
+                        <div className="h-4 bg-muted rounded mb-2 w-3/4" />
+                        <div className="h-3 bg-muted rounded w-1/2" />
+                      </div>
+                      <div className="h-8 bg-muted rounded w-16" />
                     </div>
-                    <div className="h-8 bg-muted rounded w-16" />
-                  </div>
-                ))}
-              </div>
-            ) : upcomingEvents.length > 0 ? (
-              upcomingEvents.map((event, index) => (
-                <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <h4 className="font-medium">{event.title}</h4>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                      <span>{event.date}</span>
-                      <Badge variant={event.status === 'scheduled' ? 'default' : 'secondary'}>
-                        {event.status === 'scheduled' 
-                          ? (language === 'en' ? 'Scheduled' : 'Dijadualkan')
-                          : event.status
-                        }
-                      </Badge>
+                  ))}
+                </div>
+              ) : upcomingEvents.length > 0 ? (
+                upcomingEvents.map((event, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <h4 className="font-medium">{event.title}</h4>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                        <span>{event.date}</span>
+                        <Badge variant={event.status === 'scheduled' ? 'default' : 'secondary'}>
+                          {event.status === 'scheduled' 
+                            ? (language === 'en' ? 'Scheduled' : 'Dijadualkan')
+                            : event.status
+                          }
+                        </Badge>
+                      </div>
                     </div>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => navigate('/events')}
+                    >
+                      {language === 'en' ? 'Manage' : 'Urus'}
+                    </Button>
                   </div>
-                  <Button size="sm" variant="outline">
-                    {language === 'en' ? 'Manage' : 'Urus'}
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>{language === 'en' ? 'No upcoming events' : 'Tiada acara akan datang'}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-4"
+                    onClick={() => navigate('/events')}
+                  >
+                    {language === 'en' ? 'Create Event' : 'Cipta Acara'}
                   </Button>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>{language === 'en' ? 'No upcoming events' : 'Tiada acara akan datang'}</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Pending Role Requests */}
       {pendingRoleRequests.length > 0 && (
