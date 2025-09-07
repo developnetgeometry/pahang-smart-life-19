@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { ImageUpload } from '@/components/ui/image-upload';
 import { X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,6 +27,7 @@ interface Facility {
   hourly_rate: number;
   amenities: string[];
   rules: string[];
+  images: string[];
   operating_hours: any;
 }
 
@@ -52,6 +54,7 @@ export function FacilityConfigModal({
     hourly_rate: 0,
     amenities: [] as string[],
     rules: [] as string[],
+    images: [] as string[],
     operating_hours: {
       monday: { start: '08:00', end: '22:00', closed: false },
       tuesday: { start: '08:00', end: '22:00', closed: false },
@@ -75,6 +78,7 @@ export function FacilityConfigModal({
         hourly_rate: facility.hourly_rate || 0,
         amenities: facility.amenities || [],
         rules: facility.rules || [],
+        images: facility.images || [],
         operating_hours: facility.operating_hours || formData.operating_hours
       });
     } else {
@@ -87,6 +91,7 @@ export function FacilityConfigModal({
         hourly_rate: 0,
         amenities: [],
         rules: [],
+        images: [],
         operating_hours: {
           monday: { start: '08:00', end: '22:00', closed: false },
           tuesday: { start: '08:00', end: '22:00', closed: false },
@@ -154,6 +159,7 @@ export function FacilityConfigModal({
         hourly_rate: formData.hourly_rate,
         amenities: formData.amenities,
         rules: formData.rules,
+        images: formData.images,
         operating_hours: formData.operating_hours,
       };
 
@@ -327,6 +333,28 @@ export function FacilityConfigModal({
                 </Badge>
               ))}
             </div>
+          </div>
+
+          {/* Facility Images */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Facility Images</h3>
+            <ImageUpload
+              bucket="facility-images"
+              maxFiles={5}
+              existingImages={formData.images}
+              onUploadComplete={(url) => {
+                setFormData(prev => ({
+                  ...prev,
+                  images: [...prev.images, url]
+                }));
+              }}
+              onRemoveImage={(url) => {
+                setFormData(prev => ({
+                  ...prev,
+                  images: prev.images.filter(img => img !== url)
+                }));
+              }}
+            />
           </div>
         </div>
 
