@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar, MapPin, Users, Clock, Plus, Search, Car, Dumbbell, Waves, TreePine, Loader2, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { TimeSlotPicker } from '@/components/facilities/TimeSlotPicker';
 
 // Import facility images
 import communityGymImage from '@/assets/community-gym.jpg';
@@ -562,7 +563,7 @@ export default function Facilities() {
       )}
 
       <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
-        <DialogContent className="sm:max-w-[525px]">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t.bookingTitle}</DialogTitle>
             <DialogDescription>{t.bookingSubtitle}</DialogDescription>
@@ -577,7 +578,7 @@ export default function Facilities() {
                 )}
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="date">{t.date}</Label>
                   <Input 
@@ -588,25 +589,22 @@ export default function Facilities() {
                     min={new Date().toISOString().split('T')[0]}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="startTime">{t.startTime}</Label>
-                  <Input 
-                    id="startTime" 
-                    type="time" 
-                    value={bookingData.startTime}
-                    onChange={(e) => setBookingData(prev => ({ ...prev, startTime: e.target.value }))}
+                
+                {bookingData.date && selectedFacility && (
+                  <TimeSlotPicker
+                    facilityId={selectedFacility.id}
+                    selectedDate={bookingData.date}
+                    selectedStartTime={bookingData.startTime}
+                    selectedEndTime={bookingData.endTime}
+                    onTimeSlotSelect={(startTime, endTime) => {
+                      setBookingData(prev => ({
+                        ...prev,
+                        startTime,
+                        endTime
+                      }));
+                    }}
                   />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="endTime">{t.endTime}</Label>
-                <Input 
-                  id="endTime" 
-                  type="time" 
-                  value={bookingData.endTime}
-                  onChange={(e) => setBookingData(prev => ({ ...prev, endTime: e.target.value }))}
-                />
+                )}
               </div>
               
               <div className="space-y-2">
