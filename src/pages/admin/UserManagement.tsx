@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, UserPlus, Search, Filter, MoreVertical, Edit, Trash2, Shield, ShieldCheck, Loader2 } from 'lucide-react';
+import { Users, UserPlus, Search, Filter, MoreVertical, Edit, Trash2, Shield, ShieldCheck, Loader2, UserCheck, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -20,7 +20,7 @@ interface User {
   phone: string;
   unit: string;
   role: string;
-  status: 'active' | 'inactive' | 'pending';
+  status: 'active' | 'inactive' | 'pending' | 'approved' | 'rejected';
   joinDate: string;
   district_id: string;
 }
@@ -37,6 +37,7 @@ export default function UserManagement() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+
   const text = {
     en: {
       title: 'User Management',
@@ -54,6 +55,8 @@ export default function UserManagement() {
       active: 'Active',
       inactive: 'Inactive',
       pending: 'Pending',
+      approved: 'Approved',
+      rejected: 'Rejected',
       name: 'Name',
       email: 'Email',
       phone: 'Phone',
@@ -69,10 +72,14 @@ export default function UserManagement() {
       cancel: 'Cancel',
       edit: 'Edit',
       delete: 'Delete',
+      approve: 'Approve',
+      reject: 'Reject',
       permissions: 'Permissions',
       userCreated: 'User created successfully!',
       userUpdated: 'User updated successfully!',
-      userDeleted: 'User deleted successfully!'
+      userDeleted: 'User deleted successfully!',
+      userApproved: 'User approved successfully!',
+      userRejected: 'User rejected successfully!'
     },
     ms: {
       title: 'Pengurusan Pengguna',
@@ -90,6 +97,8 @@ export default function UserManagement() {
       active: 'Aktif',
       inactive: 'Tidak Aktif',
       pending: 'Menunggu',
+      approved: 'Diluluskan',
+      rejected: 'Ditolak',
       name: 'Nama',
       email: 'E-mel',
       phone: 'Telefon',
@@ -105,10 +114,14 @@ export default function UserManagement() {
       cancel: 'Batal',
       edit: 'Edit',
       delete: 'Padam',
+      approve: 'Luluskan',
+      reject: 'Tolak',
       permissions: 'Kebenaran',
       userCreated: 'Pengguna berjaya dicipta!',
       userUpdated: 'Pengguna berjaya dikemaskini!',
-      userDeleted: 'Pengguna berjaya dipadam!'
+      userDeleted: 'Pengguna berjaya dipadam!',
+      userApproved: 'Pengguna berjaya diluluskan!',
+      userRejected: 'Pengguna berjaya ditolak!'
     }
   };
 
@@ -131,6 +144,7 @@ export default function UserManagement() {
           phone,
           unit_number,
           district_id,
+          account_status,
           created_at
         `);
 
@@ -169,7 +183,7 @@ export default function UserManagement() {
         phone: profile.phone || '',
         unit: profile.unit_number || '',
         role: roleMap.get(profile.id)?.[0] || 'resident',
-        status: 'active' as const,
+        status: (profile.account_status || 'active') as User['status'],
         joinDate: profile.created_at ? new Date(profile.created_at).toISOString().slice(0, 10) : '',
         district_id: profile.district_id || ''
       }));
@@ -201,9 +215,11 @@ export default function UserManagement() {
 
   const statuses = [
     { value: 'all', label: t.allStatus },
+    { value: 'pending', label: t.pending },
+    { value: 'approved', label: t.approved },
+    { value: 'rejected', label: t.rejected },
     { value: 'active', label: t.active },
-    { value: 'inactive', label: t.inactive },
-    { value: 'pending', label: t.pending }
+    { value: 'inactive', label: t.inactive }
   ];
 
   const getRoleColor = (role: string) => {
@@ -213,7 +229,6 @@ export default function UserManagement() {
       case 'district_coordinator': return 'bg-indigo-100 text-indigo-800';
       case 'security_officer': return 'bg-blue-100 text-blue-800';
       case 'maintenance_staff': return 'bg-orange-100 text-orange-800';
-      case 'security_officer': return 'bg-blue-100 text-blue-800';
       case 'service_provider': return 'bg-cyan-100 text-cyan-800';
       case 'community_leader': return 'bg-emerald-100 text-emerald-800';
       case 'resident': return 'bg-green-100 text-green-800';
@@ -223,8 +238,10 @@ export default function UserManagement() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case 'approved': 
       case 'active': return 'bg-green-100 text-green-800';
-      case 'inactive': return 'bg-red-100 text-red-800';
+      case 'inactive': 
+      case 'rejected': return 'bg-red-100 text-red-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -237,7 +254,6 @@ export default function UserManagement() {
       case 'district_coordinator': return 'District Coordinator';
       case 'security_officer': return t.security;
       case 'maintenance_staff': return t.maintenance;
-      case 'security_officer': return 'Security Officer';
       case 'service_provider': return 'Service Provider';
       case 'community_leader': return 'Community Leader';
       case 'resident': return t.resident;
@@ -250,6 +266,8 @@ export default function UserManagement() {
       case 'active': return t.active;
       case 'inactive': return t.inactive;
       case 'pending': return t.pending;
+      case 'approved': return t.approved;
+      case 'rejected': return t.rejected;
       default: return status;
     }
   };
@@ -261,6 +279,56 @@ export default function UserManagement() {
     const matchesStatus = selectedStatus === 'all' || user.status === selectedStatus;
     return matchesSearch && matchesRole && matchesStatus;
   });
+
+  const handleApproveUser = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ account_status: 'approved' })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: t.userApproved,
+        description: language === 'en' ? 'User can now login to the system' : 'Pengguna kini boleh log masuk ke sistem',
+      });
+
+      fetchUsers(); // Refresh the user list
+    } catch (error) {
+      console.error('Error approving user:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to approve user',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleRejectUser = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ account_status: 'rejected' })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: t.userRejected,
+        description: language === 'en' ? 'User registration has been rejected' : 'Pendaftaran pengguna telah ditolak',
+      });
+
+      fetchUsers(); // Refresh the user list
+    } catch (error) {
+      console.error('Error rejecting user:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to reject user',
+        variant: 'destructive'
+      });
+    }
+  };
 
   const handleCreateUser = async () => {
     if (!form.name || !form.email || !form.role || !form.status) {
@@ -276,7 +344,8 @@ export default function UserManagement() {
           .update({
             full_name: form.name,
             phone: form.phone,
-            unit_number: form.unit
+            unit_number: form.unit,
+            account_status: form.status
           })
           .eq('id', editingId);
 
@@ -293,7 +362,6 @@ export default function UserManagement() {
         toast({ title: t.userUpdated });
       } else {
         // For new users, they would need to be created through auth signup
-        // This is a simplified version - in practice, you'd need proper user creation
         toast({ 
           title: 'Info', 
           description: 'User creation requires authentication setup. Please use the proper registration flow.',
@@ -493,41 +561,63 @@ export default function UserManagement() {
               ) : (
                 filteredUsers.map((user) => (
                   <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-4">
-                  <Avatar>
-                    <AvatarImage src="" />
-                    <AvatarFallback>
-                      {user.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h4 className="font-medium">{user.name}</h4>
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      <p>{user.email}</p>
-                      <p>{user.phone}</p>
-                      <p>{t.unit}: {user.unit}</p>
-                      <p>{t.joinDate}: {user.joinDate}</p>
+                    <div className="flex items-center gap-4">
+                      <Avatar>
+                        <AvatarImage src="" />
+                        <AvatarFallback>
+                          {user.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h4 className="font-medium">{user.name}</h4>
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <p>{user.email}</p>
+                          <p>{user.phone}</p>
+                          <p>{t.unit}: {user.unit}</p>
+                          <p>{t.joinDate}: {user.joinDate}</p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge className={getRoleColor(user.role)}>
-                    {getRoleText(user.role)}
-                  </Badge>
-                  <Badge className={getStatusColor(user.status)}>
-                    {getStatusText(user.status)}
-                  </Badge>
-                  <div className="flex gap-1">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(user)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => navigate(`/admin/permissions/${user.id}`)}>
-                      <Shield className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDelete(user.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                    <div className="flex items-center gap-3">
+                      <Badge className={getRoleColor(user.role)}>
+                        {getRoleText(user.role)}
+                      </Badge>
+                      <Badge className={getStatusColor(user.status)}>
+                        {getStatusText(user.status)}
+                      </Badge>
+                      <div className="flex gap-1">
+                        {user.status === 'pending' && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleApproveUser(user.id)}
+                              className="text-green-600 hover:text-green-700"
+                              title={t.approve}
+                            >
+                              <UserCheck className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleRejectUser(user.id)}
+                              className="text-red-600 hover:text-red-700"
+                              title={t.reject}
+                            >
+                              <UserX className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                        <Button variant="outline" size="sm" onClick={() => handleEdit(user)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/admin/permissions/${user.id}`)}>
+                          <Shield className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleDelete(user.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))

@@ -148,6 +148,7 @@ export default function Login() {
             address: location.trim(),
             language: language,
             pdpa_declare: pdpaAccepted,
+            account_status: 'pending',
             is_active: true
           };
 
@@ -193,8 +194,8 @@ export default function Login() {
           toast({
             title: language === 'en' ? 'Account Created!' : 'Akaun Dicipta!',
             description: language === 'en' 
-              ? 'Your account has been created successfully. You can now sign in.'
-              : 'Akaun anda telah berjaya dicipta. Anda boleh log masuk sekarang.',
+              ? 'Your account has been created and is pending approval. You will be able to sign in once approved by the community admin.'
+              : 'Akaun anda telah dicipta dan sedang menunggu kelulusan. Anda boleh log masuk setelah diluluskan oleh pentadbir komuniti.',
           });
 
           // Switch to sign in mode

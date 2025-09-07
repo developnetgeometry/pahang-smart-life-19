@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const [{ data: profile }, { data: roleRows }] = await Promise.all([
         supabase
           .from('profiles')
-          .select('full_name, email, district_id, language_preference')
+          .select('full_name, email, district_id, language_preference, account_status')
           .eq('id', userId)
           .maybeSingle(),
         supabase
@@ -93,6 +93,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .eq('user_id', userId)
           .eq('is_active', true),
       ]);
+
+      // Check if account is approved
+      if (profile?.account_status !== 'approved') {
+        console.log('User account not approved, status:', profile?.account_status);
+        // Sign out user if account is not approved
+        await supabase.auth.signOut();
+        setUser(null);
+        setRoles([]);
+        return;
+      }
 
       let districtName = '';
       if (profile?.district_id) {
