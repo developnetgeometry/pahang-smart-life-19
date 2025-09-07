@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Clock, Search, Shield, Users, Car, CheckCircle, XCircle, AlertTriangle, Eye, UserCheck, Scan, QrCode, Camera, CameraOff } from 'lucide-react';
+import { Calendar, Clock, Search, Shield, Users, Car, CheckCircle, XCircle, AlertTriangle, Eye, Scan, QrCode, Camera, CameraOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -45,15 +45,13 @@ export default function VisitorApprovals() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVisitor, setSelectedVisitor] = useState<Visitor | null>(null);
-  const [showApprovalDialog, setShowApprovalDialog] = useState(false);
-  const [approvalNotes, setApprovalNotes] = useState('');
-  const [approvalAction, setApprovalAction] = useState<'approved' | 'denied'>('approved');
   
   // QR Scanner states
   const [scanning, setScanning] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [manualCode, setManualCode] = useState('');
   const [showQRDialog, setShowQRDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -147,50 +145,13 @@ export default function VisitorApprovals() {
       }
 
       setSelectedVisitor(data as any);
-      setShowApprovalDialog(true);
+      setShowDetailsDialog(true);
       setShowQRDialog(false);
     } catch (error) {
       console.error('Error processing visitor code:', error);
       toast({
         title: 'Error',
         description: 'Failed to process visitor code.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleApproval = async () => {
-    if (!selectedVisitor) return;
-
-    try {
-      const { error } = await supabase
-        .from('visitors')
-        .update({ 
-          status: approvalAction,
-          approved_by: user?.id,
-          notes: approvalNotes || null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', selectedVisitor.id);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Success',
-        description: language === 'en' 
-          ? `Visitor request ${approvalAction === 'approved' ? 'approved' : 'denied'} successfully` 
-          : `Permintaan pelawat berjaya ${approvalAction === 'approved' ? 'diluluskan' : 'ditolak'}`,
-      });
-
-      fetchVisitors();
-      setShowApprovalDialog(false);
-      setApprovalNotes('');
-      setSelectedVisitor(null);
-    } catch (error) {
-      console.error('Error updating visitor status:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update visitor status',
         variant: 'destructive',
       });
     }
@@ -215,7 +176,7 @@ export default function VisitorApprovals() {
       });
 
       fetchVisitors();
-      setShowApprovalDialog(false);
+      setShowDetailsDialog(false);
       setSelectedVisitor(null);
     } catch (error) {
       console.error('Error checking in visitor:', error);
@@ -246,7 +207,7 @@ export default function VisitorApprovals() {
       });
 
       fetchVisitors();
-      setShowApprovalDialog(false);
+      setShowDetailsDialog(false);
       setSelectedVisitor(null);
     } catch (error) {
       console.error('Error checking out visitor:', error);
@@ -310,11 +271,6 @@ export default function VisitorApprovals() {
     (visitor.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const pendingCount = filteredVisitors.filter(v => v.status === 'pending').length;
-  const approvedCount = filteredVisitors.filter(v => v.status === 'approved').length;
-  const deniedCount = filteredVisitors.filter(v => v.status === 'denied').length;
-  const totalCount = filteredVisitors.length;
-
   // Check if visitor management module is enabled
   if (!isModuleEnabled('visitor_management')) {
     return (
@@ -357,211 +313,13 @@ export default function VisitorApprovals() {
         </Button>
       </div>
 
-      <Tabs defaultValue="approvals" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="approvals" className="flex items-center space-x-2">
-            <UserCheck className="w-4 h-4" />
-            <span>{language === 'en' ? 'Visitor Approvals' : 'Kelulusan Pelawat'}</span>
-          </TabsTrigger>
+      <Tabs defaultValue="checkins" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-1">
           <TabsTrigger value="checkins" className="flex items-center space-x-2">
             <Shield className="w-4 h-4" />
             <span>{language === 'en' ? 'Check-ins' : 'Daftar Masuk'}</span>
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="approvals" className="space-y-6">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder={language === 'en' ? 'Search by visitor or host name...' : 'Cari mengikut nama pelawat atau tuan rumah...'}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-blue-500/10 rounded-lg">
-                    <Users className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm text-muted-foreground">
-                      {language === 'en' ? 'Total Requests' : 'Jumlah Permintaan'}
-                    </p>
-                    <p className="text-2xl font-bold">{totalCount}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-orange-500/10 rounded-lg">
-                    <AlertTriangle className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm text-muted-foreground">
-                      {language === 'en' ? 'Pending' : 'Menunggu'}
-                    </p>
-                    <p className="text-2xl font-bold">{pendingCount}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-green-500/10 rounded-lg">
-                    <CheckCircle className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm text-muted-foreground">
-                      {language === 'en' ? 'Approved' : 'Diluluskan'}
-                    </p>
-                    <p className="text-2xl font-bold">{approvedCount}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-red-500/10 rounded-lg">
-                    <XCircle className="w-6 h-6 text-red-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm text-muted-foreground">
-                      {language === 'en' ? 'Denied' : 'Ditolak'}
-                    </p>
-                    <p className="text-2xl font-bold">{deniedCount}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Visitors List for Approvals */}
-          <div className="space-y-4">
-            {filteredVisitors.filter(v => v.status === 'pending').map((visitor) => (
-              <Card key={visitor.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg flex items-center space-x-2">
-                        <Users className="w-5 h-5" />
-                        <span>{visitor.visitor_name}</span>
-                      </CardTitle>
-                      <CardDescription className="flex items-center space-x-4 mt-2">
-                        <span>{visitor.visitor_phone}</span>
-                        {visitor.visitor_ic && (
-                          <span>IC: {visitor.visitor_ic}</span>
-                        )}
-                        {visitor.vehicle_plate && (
-                          <span className="flex items-center">
-                            <Car className="w-4 h-4 mr-1" />
-                            {visitor.vehicle_plate}
-                          </span>
-                        )}
-                      </CardDescription>
-                    </div>
-                    <Badge className={`${getStatusColor(visitor.status)} text-white flex items-center space-x-1`}>
-                      {getStatusIcon(visitor.status)}
-                      <span>{getStatusText(visitor.status)}</span>
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center">
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <span className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {visitor.visit_date} at {visitor.visit_time}
-                        </span>
-                      </div>
-                      <p className="text-sm">
-                        <span className="font-medium">
-                          {language === 'en' ? 'Purpose:' : 'Tujuan:'}
-                        </span> {visitor.purpose}
-                      </p>
-                      <p className="text-sm">
-                        <span className="font-medium">
-                          {language === 'en' ? 'Host:' : 'Tuan Rumah:'}
-                        </span> {visitor.profiles?.full_name || 'N/A'}
-                      </p>
-                      {visitor.notes && (
-                        <p className="text-sm">
-                          <span className="font-medium">
-                            {language === 'en' ? 'Notes:' : 'Catatan:'}
-                          </span> {visitor.notes}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          setSelectedVisitor(visitor);
-                          setShowApprovalDialog(true);
-                        }}
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        {language === 'en' ? 'Review' : 'Semak'}
-                      </Button>
-                      <Button 
-                        size="sm"
-                        onClick={() => {
-                          setSelectedVisitor(visitor);
-                          setApprovalAction('approved');
-                          setShowApprovalDialog(true);
-                        }}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        {language === 'en' ? 'Approve' : 'Luluskan'}
-                      </Button>
-                      <Button 
-                        size="sm"
-                        onClick={() => {
-                          setSelectedVisitor(visitor);
-                          setApprovalAction('denied');
-                          setShowApprovalDialog(true);
-                        }}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        <XCircle className="w-4 h-4 mr-2" />
-                        {language === 'en' ? 'Deny' : 'Tolak'}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-
-            {filteredVisitors.filter(v => v.status === 'pending').length === 0 && (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <UserCheck className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium text-foreground mb-2">
-                    {language === 'en' ? 'No pending approvals' : 'Tiada kelulusan tertunda'}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {language === 'en' 
-                      ? 'All visitor requests have been processed.'
-                      : 'Semua permintaan pelawat telah diproses.'
-                    }
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </TabsContent>
 
         <TabsContent value="checkins" className="space-y-6">
           {/* Approved/Checked-in Visitors */}
@@ -620,7 +378,7 @@ export default function VisitorApprovals() {
                         size="sm"
                         onClick={() => {
                           setSelectedVisitor(visitor);
-                          setShowApprovalDialog(true);
+                          setShowDetailsDialog(true);
                         }}
                       >
                         <Eye className="w-4 h-4 mr-2" />
@@ -747,8 +505,8 @@ export default function VisitorApprovals() {
         </DialogContent>
       </Dialog>
 
-      {/* Approval Dialog */}
-      <Dialog open={showApprovalDialog} onOpenChange={setShowApprovalDialog}>
+      {/* Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
@@ -802,48 +560,6 @@ export default function VisitorApprovals() {
                 <p className="text-sm font-medium">{selectedVisitor.profiles?.full_name || 'N/A'}</p>
               </div>
               
-              {selectedVisitor.status === 'pending' && (
-                <>
-                  <div>
-                    <Label htmlFor="notes">
-                      {language === 'en' ? 'Notes (Optional)' : 'Catatan (Pilihan)'}
-                    </Label>
-                    <Textarea
-                      id="notes"
-                      placeholder={language === 'en' 
-                        ? 'Add any notes or reasons for your decision...'
-                        : 'Tambah sebarang catatan atau sebab untuk keputusan anda...'
-                      }
-                      value={approvalNotes}
-                      onChange={(e) => setApprovalNotes(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="flex space-x-2 pt-4">
-                    <Button 
-                      onClick={() => {
-                        setApprovalAction('approved');
-                        handleApproval();
-                      }}
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      {language === 'en' ? 'Approve' : 'Luluskan'}
-                    </Button>
-                    <Button 
-                      onClick={() => {
-                        setApprovalAction('denied');
-                        handleApproval();
-                      }}
-                      className="flex-1 bg-red-600 hover:bg-red-700"
-                    >
-                      <XCircle className="w-4 h-4 mr-2" />
-                      {language === 'en' ? 'Deny' : 'Tolak'}
-                    </Button>
-                  </div>
-                </>
-              )}
-
               {/* Action Buttons for Check-in/out */}
               {selectedVisitor.status === 'approved' && (
                 <div className="flex space-x-2 pt-4">
