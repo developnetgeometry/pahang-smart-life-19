@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { ZoomIn, ZoomOut, RotateCcw, Search, Square, Edit, Trash2, Save, Eye, MapPin, Users, Phone, Mail } from 'lucide-react';
 import { useUnits, Unit } from '@/hooks/use-units';
 import { useFloorPlans } from '@/hooks/use-floor-plans';
@@ -88,6 +89,10 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
   // Legend state
   const [isLegendExpanded, setIsLegendExpanded] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   // Load units when floor plan changes
   useEffect(() => {
     if (selectedFloorPlan) {
@@ -122,6 +127,17 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
     
     return matchesFloorPlan && matchesSearch;
   });
+
+  // Reset pagination when search term or floor plan changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedFloorPlan]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredUnits.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUnits = filteredUnits.slice(startIndex, endIndex);
 
   const resetForm = () => {
     setFormData({
@@ -583,69 +599,107 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="grid gap-4">
-                  {filteredUnits.map((unit) => (
-                    <Card key={unit.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedUnit(unit)}>
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h3 className="font-semibold text-lg">{unit.owner_name}</h3>
-                              <Badge className={getUnitTypeBadge(unit.unit_type)}>
-                                {unit.unit_type}
-                              </Badge>
-                              <Badge variant={unit.occupancy_status === 'occupied' ? 'default' : 'secondary'}>
-                                {unit.occupancy_status}
-                              </Badge>
-                            </div>
-                            
-                            <div className="space-y-1 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4" />
-                                <span>Unit {unit.unit_number}</span>
+                <div>
+                  <div className="grid gap-4">
+                    {paginatedUnits.map((unit) => (
+                      <Card key={unit.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedUnit(unit)}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="font-semibold text-lg">{unit.owner_name}</h3>
+                                <Badge className={getUnitTypeBadge(unit.unit_type)}>
+                                  {unit.unit_type}
+                                </Badge>
+                                <Badge variant={unit.occupancy_status === 'occupied' ? 'default' : 'secondary'}>
+                                  {unit.occupancy_status}
+                                </Badge>
                               </div>
                               
-                              {unit.address && (
+                              <div className="space-y-1 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-2">
                                   <MapPin className="h-4 w-4" />
-                                  <span>{unit.address}</span>
+                                  <span>Unit {unit.unit_number}</span>
                                 </div>
-                              )}
+                                
+                                {unit.address && (
+                                  <div className="flex items-center gap-2">
+                                    <MapPin className="h-4 w-4" />
+                                    <span>{unit.address}</span>
+                                  </div>
+                                )}
+                                
+                                {unit.phone_number && (
+                                  <div className="flex items-center gap-2">
+                                    <Phone className="h-4 w-4" />
+                                    <span>{unit.phone_number}</span>
+                                  </div>
+                                )}
+                                
+                                {unit.email && (
+                                  <div className="flex items-center gap-2">
+                                    <Mail className="h-4 w-4" />
+                                    <span>{unit.email}</span>
+                                  </div>
+                                )}
+                              </div>
                               
-                              {unit.phone_number && (
-                                <div className="flex items-center gap-2">
-                                  <Phone className="h-4 w-4" />
-                                  <span>{unit.phone_number}</span>
-                                </div>
-                              )}
-                              
-                              {unit.email && (
-                                <div className="flex items-center gap-2">
-                                  <Mail className="h-4 w-4" />
-                                  <span>{unit.email}</span>
+                              {unit.notes && (
+                                <div className="mt-2 text-sm text-gray-600">
+                                  <strong>Notes:</strong> {unit.notes}
                                 </div>
                               )}
                             </div>
                             
-                            {unit.notes && (
-                              <div className="mt-2 text-sm text-gray-600">
-                                <strong>Notes:</strong> {unit.notes}
-                              </div>
-                            )}
+                            <div className="ml-4">
+                              <Button variant="outline" size="sm" onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedUnit(unit);
+                              }}>
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
-                          
-                          <div className="ml-4">
-                            <Button variant="outline" size="sm" onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedUnit(unit);
-                            }}>
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="mt-6 flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground">
+                        Showing {startIndex + 1}-{Math.min(endIndex, filteredUnits.length)} of {filteredUnits.length} owners
+                      </div>
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious 
+                              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                              className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            />
+                          </PaginationItem>
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <PaginationItem key={page}>
+                              <PaginationLink
+                                onClick={() => setCurrentPage(page)}
+                                isActive={currentPage === page}
+                                className="cursor-pointer"
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ))}
+                          <PaginationItem>
+                            <PaginationNext 
+                              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                              className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
                   
                   {filteredUnits.length === 0 && !loading && (
                     <div className="text-center py-12">
