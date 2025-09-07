@@ -45,6 +45,7 @@ export default function Facilities() {
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [bookingData, setBookingData] = useState({
     date: '',
     startTime: '',
@@ -121,20 +122,20 @@ export default function Facilities() {
   const t = text[language];
 
   // Fetch facilities from Supabase - ALWAYS call this hook
-  useEffect(() => {
-    // Only fetch if module is enabled
+  const fetchFacilities = async () => {
     if (!isModuleEnabled('facilities')) {
       setLoading(false);
       return;
     }
-    const fetchFacilities = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('facilities')
-          .select('*')
-          .eq('is_available', true);
+    
+    setRefreshing(true);
+    try {
+      const { data, error } = await supabase
+        .from('facilities')
+        .select('*')
+        .eq('is_available', true);
 
-        if (error) throw error;
+      if (error) throw error;
 
         // Helper function to get fallback image based on facility name/type
         const getFallbackImage = (facilityName: string) => {
@@ -161,78 +162,8 @@ export default function Facilities() {
           hourlyRate: facility.hourly_rate ? Number(facility.hourly_rate) : undefined
         }));
 
-        // Use demo data if database is empty, otherwise use transformed data
-        if (transformedFacilities.length === 0) {
-          setFacilities([
-            {
-              id: '1',
-              name: language === 'en' ? 'Community Gym' : 'Gim Komuniti',
-              description: language === 'en' ? 'Fully equipped fitness center with modern equipment' : 'Pusat kecergasan lengkap dengan peralatan moden',
-              location: 'Block A, Ground Floor',
-              capacity: 20,
-              availability: 'available',
-              amenities: ['Treadmills', 'Weight Training', 'Air Conditioning', 'Lockers'],
-              image: communityGymImage,
-              hourlyRate: 10
-            },
-            {
-              id: '2',
-              name: language === 'en' ? 'Swimming Pool' : 'Kolam Renang',
-              description: language === 'en' ? 'Olympic-size swimming pool with children\'s area' : 'Kolam renang saiz olimpik dengan kawasan kanak-kanak',
-              location: 'Recreation Area',
-              capacity: 50,
-              availability: 'available',
-              amenities: ['Lifeguard', 'Changing Rooms', 'Pool Equipment', 'Shower'],
-              image: swimmingPoolImage
-            },
-            {
-              id: '3',
-              name: language === 'en' ? 'Function Hall A' : 'Dewan Majlis A',
-              description: language === 'en' ? 'Large multipurpose hall for events and gatherings' : 'Dewan serbaguna besar untuk acara dan perhimpunan',
-              location: 'Block B, Level 2',
-              capacity: 100,
-              availability: 'available',
-              amenities: ['Sound System', 'Projector', 'Tables & Chairs', 'Kitchen Access'],
-              image: functionHallImage,
-              hourlyRate: 50
-            },
-            {
-              id: '4',
-              name: language === 'en' ? 'Children\'s Playground' : 'Taman Kanak-Kanak',
-              description: language === 'en' ? 'Safe playground area for children with modern equipment' : 'Kawasan permainan selamat untuk kanak-kanak dengan peralatan moden',
-              location: 'Recreation Area',
-              capacity: 25,
-              availability: 'available',
-              amenities: ['Swings', 'Slides', 'Climbing frames', 'Soft play area', 'Benches for parents'],
-              image: playgroundFacilityImage
-            },
-            {
-              id: '5',
-              name: language === 'en' ? 'Prayer Hall' : 'Surau Pahang Prima',
-              description: language === 'en' ? 'Prayer hall for Muslim community members' : 'Surau untuk ahli komuniti Muslim',
-              location: 'Block C, Ground Floor',
-              capacity: 100,
-              availability: 'available',
-              amenities: ['Prayer mats', 'Ablution area', 'Air conditioning', 'Sound system for Azan'],
-              image: prayerHallFacilityImage
-            },
-            {
-              id: '6',
-              name: language === 'en' ? 'Community Garden' : 'Taman Komuniti',
-              description: language === 'en' ? 'Beautiful garden area for relaxation and community activities' : 'Kawasan taman yang indah untuk berehat dan aktiviti komuniti',
-              location: 'Central Area',
-              capacity: 50,
-              availability: 'available',
-              amenities: ['Walking paths', 'Benches', 'Landscaping', 'Gazebo'],
-              image: gardenFacilityImage
-            }
-          ]);
-        } else {
-          setFacilities(transformedFacilities);
-        }
-      } catch (error) {
-        console.error('Error fetching facilities:', error);
-        // Fallback to demo data
+      // Use database data or demo data if database is empty
+      if (transformedFacilities.length === 0) {
         setFacilities([
           {
             id: '1',
@@ -265,13 +196,85 @@ export default function Facilities() {
             amenities: ['Sound System', 'Projector', 'Tables & Chairs', 'Kitchen Access'],
             image: functionHallImage,
             hourlyRate: 50
+          },
+          {
+            id: '4',
+            name: language === 'en' ? 'Children\'s Playground' : 'Taman Kanak-Kanak',
+            description: language === 'en' ? 'Safe playground area for children with modern equipment' : 'Kawasan permainan selamat untuk kanak-kanak dengan peralatan moden',
+            location: 'Recreation Area',
+            capacity: 25,
+            availability: 'available',
+            amenities: ['Swings', 'Slides', 'Climbing frames', 'Soft play area', 'Benches for parents'],
+            image: playgroundFacilityImage
+          },
+          {
+            id: '5',
+            name: language === 'en' ? 'Prayer Hall' : 'Surau Pahang Prima',
+            description: language === 'en' ? 'Prayer hall for Muslim community members' : 'Surau untuk ahli komuniti Muslim',
+            location: 'Block C, Ground Floor',
+            capacity: 100,
+            availability: 'available',
+            amenities: ['Prayer mats', 'Ablution area', 'Air conditioning', 'Sound system for Azan'],
+            image: prayerHallFacilityImage
+          },
+          {
+            id: '6',
+            name: language === 'en' ? 'Community Garden' : 'Taman Komuniti',
+            description: language === 'en' ? 'Beautiful garden area for relaxation and community activities' : 'Kawasan taman yang indah untuk berehat dan aktiviti komuniti',
+            location: 'Central Area',
+            capacity: 50,
+            availability: 'available',
+            amenities: ['Walking paths', 'Benches', 'Landscaping', 'Gazebo'],
+            image: gardenFacilityImage
           }
         ]);
-      } finally {
-        setLoading(false);
+      } else {
+        setFacilities(transformedFacilities);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching facilities:', error);
+      // Fallback to demo data
+      setFacilities([
+        {
+          id: '1',
+          name: language === 'en' ? 'Community Gym' : 'Gim Komuniti',
+          description: language === 'en' ? 'Fully equipped fitness center with modern equipment' : 'Pusat kecergasan lengkap dengan peralatan moden',
+          location: 'Block A, Ground Floor',
+          capacity: 20,
+          availability: 'available',
+          amenities: ['Treadmills', 'Weight Training', 'Air Conditioning', 'Lockers'],
+          image: communityGymImage,
+          hourlyRate: 10
+        },
+        {
+          id: '2',
+          name: language === 'en' ? 'Swimming Pool' : 'Kolam Renang',
+          description: language === 'en' ? 'Olympic-size swimming pool with children\'s area' : 'Kolam renang saiz olimpik dengan kawasan kanak-kanak',
+          location: 'Recreation Area',
+          capacity: 50,
+          availability: 'available',
+          amenities: ['Lifeguard', 'Changing Rooms', 'Pool Equipment', 'Shower'],
+          image: swimmingPoolImage
+        },
+        {
+          id: '3',
+          name: language === 'en' ? 'Function Hall A' : 'Dewan Majlis A',
+          description: language === 'en' ? 'Large multipurpose hall for events and gatherings' : 'Dewan serbaguna besar untuk acara dan perhimpunan',
+          location: 'Block B, Level 2',
+          capacity: 100,
+          availability: 'available',
+          amenities: ['Sound System', 'Projector', 'Tables & Chairs', 'Kitchen Access'],
+          image: functionHallImage,
+          hourlyRate: 50
+        }
+      ]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
+  useEffect(() => {
     fetchFacilities();
   }, [language, isModuleEnabled]);
 
@@ -442,6 +445,18 @@ export default function Facilities() {
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
+        <Button 
+          variant="outline" 
+          onClick={fetchFacilities}
+          disabled={refreshing}
+        >
+          {refreshing ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Plus className="h-4 w-4 mr-2" />
+          )}
+          {refreshing ? 'Refreshing...' : 'Refresh'}
+        </Button>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
@@ -589,6 +604,14 @@ export default function Facilities() {
                     min={new Date().toISOString().split('T')[0]}
                   />
                 </div>
+                
+                {!bookingData.date && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      📅 Please select a date above to see available time slots
+                    </p>
+                  </div>
+                )}
                 
                 {bookingData.date && selectedFacility && (
                   <TimeSlotPicker
