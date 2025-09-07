@@ -6326,6 +6326,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string | null
           address: string | null
           age: number | null
           agree_declare: boolean | null
@@ -6389,6 +6390,7 @@ export type Database = {
           vehicle_plate_number: string | null
         }
         Insert: {
+          account_status?: string | null
           address?: string | null
           age?: number | null
           agree_declare?: boolean | null
@@ -6452,6 +6454,7 @@ export type Database = {
           vehicle_plate_number?: string | null
         }
         Update: {
+          account_status?: string | null
           address?: string | null
           age?: number | null
           agree_declare?: boolean | null
@@ -10089,6 +10092,10 @@ export type Database = {
       }
       is_module_enabled_for_district: {
         Args: { district_id?: string; module_name: string }
+        Returns: boolean
+      }
+      is_user_account_approved: {
+        Args: { user_id?: string }
         Returns: boolean
       }
       manage_workflow_state: {
