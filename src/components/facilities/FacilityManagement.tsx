@@ -137,12 +137,6 @@ export function FacilityManagement() {
             }
           </p>
         </div>
-        {canManageFacilities && (
-          <Button onClick={() => setShowConfigModal(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Facility
-          </Button>
-        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -268,6 +262,16 @@ export function FacilityManagement() {
 
         {/* Facilities Overview */}
         <TabsContent value="facilities" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold">Facilities Overview</h2>
+            {canManageFacilities && (
+              <Button onClick={() => setShowConfigModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Facility
+              </Button>
+            )}
+          </div>
+          
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {facilities.map((facility) => (
               <Card key={facility.id} className="relative">
@@ -370,9 +374,10 @@ export function FacilityManagement() {
         open={showConfigModal}
         onOpenChange={setShowConfigModal}
         facility={selectedFacility}
-        onSave={() => {
-          fetchFacilities();
+        onSave={async () => {
+          await fetchFacilities();
           setSelectedFacility(null);
+          setShowConfigModal(false);
         }}
       />
     </div>
