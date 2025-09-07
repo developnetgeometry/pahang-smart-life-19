@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -30,7 +30,7 @@ export const useUnits = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  const fetchUnits = async (floorPlanId?: string) => {
+  const fetchUnits = useCallback(async (floorPlanId?: string) => {
     try {
       setLoading(true);
       let query = supabase
@@ -48,20 +48,29 @@ export const useUnits = () => {
       if (error) {
         console.error('Error fetching units:', error);
         toast.error('Failed to fetch units');
+        setUnits([]);
         return;
       }
 
-      setUnits((data || []).map(unit => ({
+      // Successfully fetched data, even if it's empty
+      const mappedUnits = (data || []).map(unit => ({
         ...unit,
         unit_type: unit.unit_type as 'residential' | 'commercial' | 'facility'
-      })));
+      }));
+      
+      setUnits(mappedUnits);
+      
+      // Log for debugging
+      console.log(`Fetched ${mappedUnits.length} units${floorPlanId ? ` for floor plan ${floorPlanId}` : ''}`);
+      
     } catch (error) {
       console.error('Error fetching units:', error);
       toast.error('Failed to fetch units');
+      setUnits([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const createUnit = async (unitData: Omit<Unit, 'id' | 'created_at' | 'updated_at' | 'created_by'>) => {
     try {
@@ -176,9 +185,9 @@ export const useUnits = () => {
     if (user) {
       fetchUnits();
     }
-  }, [user]);
+  }, [user, fetchUnits]);
 
-  const fetchUnitsByFloorPlan = (floorPlanId: string) => fetchUnits(floorPlanId);
+  const fetchUnitsByFloorPlan = useCallback((floorPlanId: string) => fetchUnits(floorPlanId), [fetchUnits]);
 
   return {
     units,
