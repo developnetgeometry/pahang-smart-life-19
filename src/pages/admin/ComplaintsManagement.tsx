@@ -389,12 +389,6 @@ export default function ComplaintsManagement() {
       {/* Tabs and Filters */}
       <div className="space-y-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">All Complaints</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-            <TabsTrigger value="investigating">In Progress</TabsTrigger>
-            <TabsTrigger value="resolved">Resolved</TabsTrigger>
-          </TabsList>
 
           {/* Search and Filters */}
           <div className="flex flex-col sm:flex-row gap-4 py-4">
