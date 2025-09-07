@@ -107,14 +107,23 @@ export default function MyComplaints() {
 
     setSubmitting(true);
     try {
-      // Get user's district_id from their profile
+      // Get comprehensive user profile data for logging
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('district_id')
+        .select('district_id, community_id, full_name, phone, unit_number')
         .eq('id', user.id)
         .single();
 
       if (profileError) throw profileError;
+
+      console.log('Submitting complaint with complainant details:', {
+        complainant_id: user.id,
+        complainant_name: profileData.full_name,
+        complainant_phone: profileData.phone,
+        complainant_unit: profileData.unit_number,
+        district_id: profileData.district_id,
+        community_id: profileData.community_id
+      });
 
       const { error } = await supabase
         .from('complaints')
@@ -134,6 +143,9 @@ export default function MyComplaints() {
 
       toast({
         title: language === 'en' ? 'Complaint submitted successfully' : 'Aduan berjaya dihantar',
+        description: language === 'en' 
+          ? 'Your complaint has been logged and will be reviewed by the appropriate team.'
+          : 'Aduan anda telah direkodkan dan akan dikaji oleh pasukan yang berkenaan.'
       });
 
       // Reset form
@@ -151,6 +163,9 @@ export default function MyComplaints() {
       console.error('Error submitting complaint:', error);
       toast({
         title: language === 'en' ? 'Error submitting complaint' : 'Ralat menghantar aduan',
+        description: language === 'en' 
+          ? 'Failed to submit complaint. Please check your information and try again.'
+          : 'Gagal menghantar aduan. Sila semak maklumat anda dan cuba lagi.',
         variant: 'destructive'
       });
     } finally {

@@ -43,6 +43,17 @@ interface Complaint {
   escalated_at: string | null;
   escalated_by: string | null;
   auto_escalated: boolean;
+  complainant_profile?: {
+    full_name: string;
+    email: string;
+    phone?: string;
+    unit_number?: string;
+    avatar_url?: string;
+  };
+  assigned_staff?: {
+    full_name: string;
+    email: string;
+  };
 }
 
 export default function ComplaintDetail() {
@@ -74,11 +85,25 @@ export default function ComplaintDetail() {
       try {
         const { data, error } = await supabase
           .from('complaints')
-          .select('*')
+          .select(`
+            *,
+            complainant_profile:profiles!complainant_id (
+              full_name,
+              email,
+              phone,
+              unit_number,
+              avatar_url
+            ),
+            assigned_staff:profiles!assigned_to (
+              full_name,
+              email
+            )
+          `)
           .eq('id', id)
           .single();
 
         if (error) throw error;
+        console.log('Complaint with complainant details:', data);
         setComplaint(data);
       } catch (error) {
         console.error('Error fetching complaint:', error);
@@ -279,6 +304,48 @@ export default function ComplaintDetail() {
 
           {/* Status Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Complainant Information */}
+            {canRespond && complaint.complainant_profile && (
+              <Card>
+                <CardContent className="p-4">
+                  <h4 className="font-semibold mb-3 flex items-center">
+                    <User className="w-4 h-4 mr-2" />
+                    {language === 'en' ? 'Complainant Details' : 'Butiran Pengadu'}
+                  </h4>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">
+                        {language === 'en' ? 'Name:' : 'Nama:'}
+                      </span>
+                      <span className="font-medium">{complaint.complainant_profile.full_name}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">
+                        {language === 'en' ? 'Email:' : 'E-mel:'}
+                      </span>
+                      <span className="text-xs">{complaint.complainant_profile.email}</span>
+                    </div>
+                    {complaint.complainant_profile.phone && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">
+                          {language === 'en' ? 'Phone:' : 'Telefon:'}
+                        </span>
+                        <span>{complaint.complainant_profile.phone}</span>
+                      </div>
+                    )}
+                    {complaint.complainant_profile.unit_number && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">
+                          {language === 'en' ? 'Unit:' : 'Unit:'}
+                        </span>
+                        <span>{complaint.complainant_profile.unit_number}</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             <Card>
               <CardContent className="p-4">
                 <h4 className="font-semibold mb-3 flex items-center">
@@ -306,17 +373,6 @@ export default function ComplaintDetail() {
                       <span>{format(new Date(complaint.resolved_at), 'dd/MM/yyyy HH:mm')}</span>
                     </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <h4 className="font-semibold mb-3 flex items-center">
-                  <User className="w-4 h-4 mr-2" />
-                  {language === 'en' ? 'Details' : 'Butiran'}
-                </h4>
-                <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
                       {language === 'en' ? 'Escalation Level:' : 'Tahap Peningkatan:'}
@@ -333,12 +389,12 @@ export default function ComplaintDetail() {
                       </span>
                     </div>
                   )}
-                  {complaint.assigned_to && (
+                  {complaint.assigned_staff && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">
                         {language === 'en' ? 'Assigned To:' : 'Ditugaskan Kepada:'}
                       </span>
-                      <span>{language === 'en' ? 'Staff Member' : 'Ahli Kakitangan'}</span>
+                      <span className="font-medium">{complaint.assigned_staff.full_name}</span>
                     </div>
                   )}
                 </div>
