@@ -31,6 +31,7 @@ export default function ComplaintResponseDialog({
   const [responseType, setResponseType] = useState('update');
   const [statusUpdate, setStatusUpdate] = useState<'pending' | 'in_progress' | 'resolved' | 'closed'>(currentStatus as any);
   const [isInternal, setIsInternal] = useState(false);
+  const [internalComments, setInternalComments] = useState('');
 
   const handleSubmitResponse = async () => {
     if (!responseText.trim() || !user) return;
@@ -46,7 +47,8 @@ export default function ComplaintResponseDialog({
           response_text: responseText.trim(),
           response_type: responseType,
           is_internal: isInternal,
-          status_update: responseType === 'status_change' ? statusUpdate : null
+          status_update: responseType === 'status_change' ? statusUpdate : null,
+          internal_comments: isInternal && internalComments.trim() ? internalComments.trim() : null
         });
 
       if (responseError) throw responseError;
@@ -75,6 +77,7 @@ export default function ComplaintResponseDialog({
       setResponseType('update');
       setStatusUpdate(currentStatus as any);
       setIsInternal(false);
+      setInternalComments('');
       setOpen(false);
       onResponseAdded();
 
@@ -182,11 +185,36 @@ export default function ComplaintResponseDialog({
             />
             <Label htmlFor="internal" className="text-sm">
               {language === 'en' 
-                ? 'Internal note (not visible to complainant)'
-                : 'Nota dalaman (tidak kelihatan kepada pengadu)'
+                ? 'Add internal comments (visible only to staff)'
+                : 'Tambah komen dalaman (hanya kelihatan kepada kakitangan)'
               }
             </Label>
           </div>
+
+          {isInternal && (
+            <div className="space-y-2">
+              <Label htmlFor="internal-comments">
+                {language === 'en' ? 'Internal Comments' : 'Komen Dalaman'}
+              </Label>
+              <Textarea
+                id="internal-comments"
+                placeholder={language === 'en' 
+                  ? 'Add internal notes for staff only...'
+                  : 'Tambah nota dalaman untuk kakitangan sahaja...'
+                }
+                value={internalComments}
+                onChange={(e) => setInternalComments(e.target.value)}
+                rows={3}
+                className="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800"
+              />
+              <p className="text-xs text-muted-foreground">
+                {language === 'en'
+                  ? 'This field is only visible to staff members and will not be shown to the complainant.'
+                  : 'Medan ini hanya kelihatan kepada kakitangan dan tidak akan ditunjukkan kepada pengadu.'
+                }
+              </p>
+            </div>
+          )}
 
           {responseType === 'resolution' && (
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
