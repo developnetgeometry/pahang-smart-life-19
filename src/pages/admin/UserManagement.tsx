@@ -160,8 +160,9 @@ export default function UserManagement() {
 
       // Get user roles separately
       const { data: userRoles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id, role');
+        .from('enhanced_user_roles')
+        .select('user_id, role')
+        .eq('is_active', true);
 
       if (rolesError) {
         console.error('Error fetching roles:', rolesError);
@@ -183,7 +184,7 @@ export default function UserManagement() {
         phone: profile.phone || '',
         unit: profile.unit_number || '',
         role: roleMap.get(profile.id)?.[0] || 'resident',
-        status: (profile.account_status || 'active') as User['status'],
+        status: (profile.account_status || 'pending') as User['status'],
         joinDate: profile.created_at ? new Date(profile.created_at).toISOString().slice(0, 10) : '',
         district_id: profile.district_id || ''
       }));
