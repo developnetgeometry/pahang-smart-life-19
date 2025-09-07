@@ -352,23 +352,17 @@ export default function UserManagement() {
 
         if (profileError) throw profileError;
 
-        // Update user role - first deactivate existing roles
-        const { error: deactivateError } = await supabase
-          .from('enhanced_user_roles')
-          .update({ is_active: false })
-          .eq('user_id', editingId);
-
-        if (deactivateError) throw deactivateError;
-
-        // Insert new active role
+        // Update user role - use upsert to handle existing roles
         const { error: roleError } = await supabase
           .from('enhanced_user_roles')
-          .insert({
+          .upsert({
             user_id: editingId,
             role: form.role as any,
             is_active: true,
             assigned_by: user?.id,
             assigned_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id,role'
           });
 
         if (roleError) throw roleError;
