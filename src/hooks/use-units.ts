@@ -40,6 +40,7 @@ export const useUnits = () => {
 
       // Filter by floor plan if specified
       if (floorPlanId) {
+        console.log('Filtering by floor plan ID:', floorPlanId);
         query = query.eq('floor_plan_id', floorPlanId);
       }
 
@@ -52,12 +53,16 @@ export const useUnits = () => {
         return;
       }
 
+      console.log('Raw units data from database:', data);
+      console.log('Number of units fetched:', data?.length || 0);
+      
       // Successfully fetched data, even if it's empty
       const mappedUnits = (data || []).map(unit => ({
         ...unit,
         unit_type: unit.unit_type as 'residential' | 'commercial' | 'facility'
       }));
       
+      console.log('Mapped units:', mappedUnits);
       setUnits(mappedUnits);
       
       // Log for debugging

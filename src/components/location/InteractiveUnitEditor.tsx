@@ -125,6 +125,14 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
       unit.owner_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       unit.address?.toLowerCase().includes(searchTerm.toLowerCase());
     
+    console.log(`Unit ${unit.unit_number} (${unit.owner_name}):`, {
+      floor_plan_id: unit.floor_plan_id,
+      selectedFloorPlan,
+      matchesFloorPlan,
+      matchesSearch,
+      finalMatch: matchesFloorPlan && matchesSearch
+    });
+    
     return matchesFloorPlan && matchesSearch;
   });
 
