@@ -65,7 +65,7 @@ export function FacilityManagement() {
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Check user permissions - using correct role names
+  // Check user permissions - using enhanced role system
   const isFacilityManager = hasRole('facility_manager');
   const canManageBookings = hasRole('facility_manager') || hasRole('maintenance_staff') || 
                            hasRole('community_admin') || hasRole('district_coordinator') || 
