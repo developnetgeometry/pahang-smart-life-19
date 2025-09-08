@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Star, MapPin, Phone, Mail, Search, Filter, User, Clock } from "lucide-react";
+import { Star, MapPin, Phone, Navigation, Search, Filter, User, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ServiceProvider {
@@ -169,8 +169,17 @@ export default function ServiceProviders() {
     window.open(`tel:${phone}`, '_self');
   };
 
-  const handleEmailService = (email: string) => {
-    window.open(`mailto:${email}`, '_self');
+  const handleNavigateToService = (businessName: string) => {
+    const coordinates = getServiceCoordinates(businessName);
+    if (coordinates) {
+      // Use Google Maps for universal compatibility
+      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`;
+      window.open(mapsUrl, '_blank');
+    } else {
+      // Fallback to search by business name
+      const searchUrl = `https://www.google.com/maps/search/${encodeURIComponent(businessName)}`;
+      window.open(searchUrl, '_blank');
+    }
   };
 
   return (
@@ -320,17 +329,15 @@ export default function ServiceProviders() {
                       Call
                     </Button>
                   )}
-                  {service.contact_email && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleEmailService(service.contact_email!)}
-                    >
-                      <Mail className="w-3 h-3 mr-1" />
-                      Email
-                    </Button>
-                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => handleNavigateToService(service.business_name)}
+                  >
+                    <Navigation className="w-3 h-3 mr-1" />
+                    Directions
+                  </Button>
                 </div>
               </CardContent>
             </Card>
