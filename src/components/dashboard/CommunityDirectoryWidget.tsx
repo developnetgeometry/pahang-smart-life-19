@@ -139,7 +139,7 @@ export function CommunityDirectoryWidget({ language }: CommunityDirectoryWidgetP
           className="w-full mt-3"
           onClick={() => navigate('/directory')}
         >
-          {language === 'en' ? 'View Full Directory' : 'Lihat Direktori Penuh'}
+          {language === 'en' ? 'View Important Contact' : 'Lihat Hubungan Penting'}
         </Button>
       </CardContent>
     </Card>
