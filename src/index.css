@@ -47,18 +47,24 @@
 
     --radius: 0.5rem;
 
-    /* Government Gradients */
+    /* Modern Communication Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 70%));
-    --gradient-government: linear-gradient(135deg, hsl(217 91% 60%), hsl(213 94% 68%));
+    --gradient-community: linear-gradient(135deg, hsl(217 91% 60%), hsl(213 94% 68%));
+    --gradient-sunset: linear-gradient(135deg, hsl(35 90% 55%), hsl(0 84% 60%));
     --gradient-hero: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(213 94% 68%) 100%);
+    --gradient-glass: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
 
-    /* Shadows */
-    --shadow-elegant: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    --shadow-government: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    /* Enhanced Shadows with Glow Effects */
+    --shadow-elegant: 0 10px 30px -10px rgba(37, 99, 235, 0.3);
+    --shadow-community: 0 4px 20px -5px rgba(37, 99, 235, 0.2);
+    --shadow-glow: 0 0 40px rgba(59, 130, 246, 0.4);
+    --shadow-glass: 0 8px 32px rgba(31, 38, 135, 0.37);
 
-    /* Animations */
+    /* Smooth Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-spring: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     /* Government Sidebar - Dark Blue #1E3A8A */
     --sidebar-background: 219 84% 27%;

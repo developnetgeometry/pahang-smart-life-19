@@ -16,16 +16,18 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
+      <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/20">
         <AppSidebar />
         
         <div className="flex flex-1 flex-col overflow-hidden">
-          <header className="flex h-16 items-center border-b border-border px-4 bg-card shadow-sm">
+          <header className="flex h-16 items-center border-b border-border/50 px-4 bg-card/80 backdrop-blur-lg shadow-elegant supports-[backdrop-filter]:bg-card/60">
             <SidebarTrigger className="mr-4" />
             <Header />
           </header>
-          <main className="flex-1 overflow-y-auto p-6 bg-background">
-            {children}
+          <main className="flex-1 overflow-y-auto p-6 bg-transparent">
+            <div className="animate-fade-in">
+              {children}
+            </div>
           </main>
         </div>
       </div>
