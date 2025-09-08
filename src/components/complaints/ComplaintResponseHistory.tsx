@@ -53,7 +53,6 @@ export default function ComplaintResponseHistory({ complaintId, refreshKey }: Co
 
   const fetchResponses = async () => {
     try {
-      console.log('Fetching responses for complaint:', complaintId);
       // First get the complaint responses
       const { data: responsesData, error: responsesError } = await supabase
         .from('complaint_responses')

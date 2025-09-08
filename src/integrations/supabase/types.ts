@@ -5375,6 +5375,7 @@ export type Database = {
           district_id: string | null
           id: string
           module_name: string
+          performed_by: string | null
           reference_id: string | null
           reference_table: string | null
           user_id: string
@@ -5387,6 +5388,7 @@ export type Database = {
           district_id?: string | null
           id?: string
           module_name: string
+          performed_by?: string | null
           reference_id?: string | null
           reference_table?: string | null
           user_id: string
@@ -5399,6 +5401,7 @@ export type Database = {
           district_id?: string | null
           id?: string
           module_name?: string
+          performed_by?: string | null
           reference_id?: string | null
           reference_table?: string | null
           user_id?: string
