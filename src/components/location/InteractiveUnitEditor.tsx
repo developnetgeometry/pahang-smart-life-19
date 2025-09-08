@@ -496,7 +496,7 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                 {loading ? 'Loading...' : `${filteredUnits.length} Units`}
               </Badge>
             </div>
-            {floorPlans.length > 0 && (
+            {floorPlans.length > 0 && isAdminMode && (
               <Select value={selectedFloorPlan} onValueChange={handleFloorPlanChange}>
                 <SelectTrigger className="w-64">
                   <SelectValue placeholder="Select floor plan" />
