@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { QuickServicesWidget } from './QuickServicesWidget';
-import { UpcomingEventsWidget } from './UpcomingEventsWidget';
+
 import { WeatherWidget } from './WeatherWidget';
 import { CommunityDirectoryWidget } from './CommunityDirectoryWidget';
 import { PrayerTimesWidget } from './PrayerTimesWidget';
@@ -243,10 +243,6 @@ export function ResidentDashboard() {
       />
 
 
-      {/* Upcoming Events */}
-      <div className="grid grid-cols-1 gap-6">
-        <UpcomingEventsWidget language={language} />
-      </div>
 
       {/* Additional Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
