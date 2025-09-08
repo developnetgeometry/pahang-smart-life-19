@@ -91,7 +91,12 @@ export function useHouseholdAccounts() {
       
       // Check current user authentication
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('Current session check:', { hasSession: !!session, sessionError });
+      console.log('Current session check:', { 
+        hasSession: !!session, 
+        sessionError,
+        userId: session?.user?.id,
+        contextUserId: user.id 
+      });
       
       if (sessionError) {
         console.error('Session error:', sessionError);
@@ -100,6 +105,12 @@ export function useHouseholdAccounts() {
       
       if (!session?.user) {
         throw new Error('Authentication session missing! Please refresh the page and log in again.');
+      }
+
+      // Verify user.id matches session.user.id
+      if (user.id !== session.user.id) {
+        console.error('User ID mismatch:', { contextUserId: user.id, sessionUserId: session.user.id });
+        throw new Error('User session mismatch. Please refresh the page and try again.');
       }
 
       // Check if spouse account already exists and is active
@@ -201,10 +212,14 @@ export function useHouseholdAccounts() {
           }
         });
 
-        if (authError) throw authError;
+        if (authError) {
+          console.error('Auth signup error:', authError);
+          throw new Error(`Failed to create account: ${authError.message}`);
+        }
         if (!authData.user) throw new Error('Failed to create user account');
         
         spouseUserId = authData.user.id;
+        console.log('New user created:', { spouseUserId, email: spouseData.email });
 
         // Get current user's profile for district and community info
         const { data: userProfile } = await supabase
@@ -224,7 +239,10 @@ export function useHouseholdAccounts() {
           })
           .eq('id', spouseUserId);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile update error:', profileError);
+          throw new Error(`Failed to update profile: ${profileError.message}`);
+        }
 
         // Create household account link
         console.log('Creating household account link...', {
@@ -245,6 +263,12 @@ export function useHouseholdAccounts() {
 
         if (householdError) {
           console.error('Household account creation error:', householdError);
+          console.error('Error details:', {
+            code: householdError.code,
+            message: householdError.message,
+            details: householdError.details,
+            hint: householdError.hint
+          });
           throw new Error(`Failed to link spouse account: ${householdError.message}`);
         }
         
@@ -252,8 +276,10 @@ export function useHouseholdAccounts() {
       }
 
       await fetchAccounts();
+      console.log('Spouse account creation completed successfully');
       return { id: spouseUserId };
     } catch (error) {
+      console.error('Spouse account creation failed:', error);
       throw error;
     }
   };
