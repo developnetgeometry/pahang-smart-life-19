@@ -5366,6 +5366,50 @@ export type Database = {
           },
         ]
       }
+      module_activities: {
+        Row: {
+          activity_data: Json | null
+          activity_type: string
+          created_at: string
+          district_id: string | null
+          id: string
+          module_name: string
+          reference_id: string | null
+          reference_table: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_data?: Json | null
+          activity_type: string
+          created_at?: string
+          district_id?: string | null
+          id?: string
+          module_name: string
+          reference_id?: string | null
+          reference_table?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_data?: Json | null
+          activity_type?: string
+          created_at?: string
+          district_id?: string | null
+          id?: string
+          module_name?: string
+          reference_id?: string | null
+          reference_table?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_activities_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           announcements: boolean | null
