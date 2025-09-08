@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>CCTV Viewer</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+      body {
+        margin: 0;
+        background: #111;
+        color: #eee;
+        font-family: system-ui, sans-serif;
+      }
+      .wrap {
+        padding: 16px;
+      }
+      video {
+        width: 100%;
+        max-width: 960px;
+        background: #000;
+        display: block;
+      }
+      h2 {
+        margin: 24px 0 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h2>Cam 1</h2>
+      <video id="cam1" controls playsinline muted></video>
+
+      <h2>Cam 2</h2>
+      <video id="cam2" controls playsinline muted></video>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const sources = [
+          { id: "cam1", url: "/hls/cam1/index.m3u8" },
+          { id: "cam2", url: "/hls/cam2/index.m3u8" },
+        ];
+        sources.forEach(({ id, url }) => attach(id, url));
+      });
+
+      function attach(id, url) {
+        const video = document.getElementById(id);
+        if (!video) return console.error("Missing <video> with id:", id);
+
+        if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          // Safari
+          video.src = url;
+        } else if (window.Hls && Hls.isSupported()) {
+          const hls = new Hls({ maxBufferLength: 10 });
+          hls.loadSource(url);
+          hls.attachMedia(video);
+        } else {
+          video.outerHTML = `<p>Your browser can't play HLS.</p>`;
+        }
+      }
+    </script>
+  </body>
+</html>

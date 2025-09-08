@@ -50,11 +50,9 @@ export default function StreamPlayer({
     return "auto" as const;
   }, [src]);
 
-  // For external HLS streams that might have CORS issues, use proxy
+  // For external streams, skip proxy for now and let them fail gracefully
   const getProxiedSrc = (originalSrc: string) => {
-    if (mjpegProxy && (originalSrc.includes('ngrok') || originalSrc.startsWith('http://'))) {
-      return `${mjpegProxy}?url=${encodeURIComponent(originalSrc)}`;
-    }
+    // For now, return original src and let CORS errors be handled by the player
     return originalSrc;
   };
 

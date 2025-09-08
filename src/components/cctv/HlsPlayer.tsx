@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import Hls from "hls.js";
+import Hls, { HlsConfig, Events, ErrorTypes } from "hls.js";
 
 interface HlsPlayerProps {
   src: string;
@@ -31,9 +31,44 @@ export const HlsPlayer: React.FC<HlsPlayerProps> = ({
     // Otherwise use hls.js
     let hls: Hls | null = null;
     if (Hls.isSupported()) {
-      hls = new Hls({ enableWorker: true });
+      // Configure HLS.js with CORS support and ngrok headers
+      const hlsConfig: Partial<HlsConfig> = {
+        enableWorker: true,
+        xhrSetup: (xhr: XMLHttpRequest, url: string) => {
+          // Add headers for ngrok and other cross-origin requests
+          xhr.setRequestHeader("ngrok-skip-browser-warning", "true");
+          xhr.setRequestHeader(
+            "User-Agent",
+            "Mozilla/5.0 (compatible; HLS-Player)"
+          );
+          xhr.withCredentials = false; // Ensure no credentials for CORS
+        },
+      };
+
+      hls = new Hls(hlsConfig);
       hls.loadSource(src);
       hls.attachMedia(video);
+
+      // Handle errors gracefully
+      hls.on(Events.ERROR, (event, data) => {
+        if (data.fatal) {
+          console.error("HLS.js fatal error:", data);
+          switch (data.type) {
+            case ErrorTypes.NETWORK_ERROR:
+              console.log("Network error, attempting to recover...");
+              hls?.startLoad();
+              break;
+            case ErrorTypes.MEDIA_ERROR:
+              console.log("Media error, attempting to recover...");
+              hls?.recoverMediaError();
+              break;
+            default:
+              console.log("Unrecoverable error, destroying HLS instance");
+              hls?.destroy();
+              break;
+          }
+        }
+      });
     }
 
     return () => {

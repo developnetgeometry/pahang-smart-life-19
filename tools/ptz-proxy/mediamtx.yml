@@ -1,0 +1,19 @@
+paths:
+  cam:
+    # URL-encode @ as %40
+    # source: rtsp://admin:Netgeometry%40200@192.168.0.60:554/stream
+    source: rtsp://netgeo:year2000@202.186.89.223:554/Streaming/Channels/101
+    sourceProtocol: tcp
+    sourceOnDemand: no
+
+  #   http://202.186.89.223:8888/ch201/index.m3u8
+
+  #   docker run --rm -it \
+  # -p 8554:8554 -p 8888:8888 \
+  # -e MTX_PATHS_CH201_SOURCE='rtsp://netgeo:year2000@202.186.89.223:554/Streaming/Channels/201' \
+  # -e MTX_PATHS_CH201_SOURCEPROTOCOL='tcp' \
+  # -e MTX_PATHS_CH201_SOURCEONDEMAND='no' \
+  # bluenviron/mediamtx:latest
+
+
+  # https://600fbe6f6422.ngrok-free.app/ch201/index.m3u8
