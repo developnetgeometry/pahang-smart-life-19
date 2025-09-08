@@ -131,138 +131,121 @@ export default function PanicAlertHistory({ language }: PanicAlertHistoryProps) 
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5" />
-            {language === 'en' ? 'Panic Alert History' : 'Sejarah Amaran Panik'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="animate-pulse p-4 border rounded-lg">
-                <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            ))}
+      <div className="space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="animate-pulse p-6 border rounded-lg">
+            <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
           </div>
-        </CardContent>
-      </Card>
+        ))}
+      </div>
     );
   }
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5" />
-            {language === 'en' ? 'My Panic Alert History' : 'Sejarah Amaran Panik Saya'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {alerts.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>{language === 'en' ? 'No panic alerts found' : 'Tiada amaran panik dijumpai'}</p>
-            </div>
-          ) : (
-            <ScrollArea className="h-96">
-              <div className="space-y-4">
-                {alerts.map((alert, index) => (
-                  <div key={alert.id}>
-                    <div className="p-4 border rounded-lg space-y-3">
-                      {/* Header with status and timestamp */}
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                          <Badge className={getStatusColor(alert.alert_status)}>
-                            {getStatusIcon(alert.alert_status)}
-                            <span className="ml-2">{getStatusText(alert.alert_status)}</span>
-                          </Badge>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Clock className="w-4 h-4" />
-                            {formatDateTime(alert.created_at)}
-                          </div>
-                        </div>
-                        
-                        {/* Location button */}
-                        {alert.location_latitude && alert.location_longitude && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openMaps(alert)}
-                            className="flex items-center gap-1"
-                          >
-                            <MapPin className="w-4 h-4" />
-                            {language === 'en' ? 'View Location' : 'Lihat Lokasi'}
-                          </Button>
-                        )}
-                      </div>
-
-                      {/* Location details */}
-                      {alert.location_address && (
-                        <div className="flex items-start gap-2 text-sm">
-                          <Navigation className="w-4 h-4 mt-0.5 text-muted-foreground" />
-                          <span className="text-muted-foreground">{alert.location_address}</span>
-                        </div>
-                      )}
-
-                      {/* Response details */}
-                      {(alert.alert_status !== 'active') && (
-                        <div className="bg-muted/50 p-3 rounded-lg space-y-2">
-                          <h4 className="font-medium text-sm flex items-center gap-2">
-                            <MessageSquare className="w-4 h-4" />
-                            {language === 'en' ? 'Security Response' : 'Tindak Balas Keselamatan'}
-                          </h4>
-                          
-                          {alert.responded_by && (
-                            <p className="text-sm text-muted-foreground">
-                              <strong>
-                                {language === 'en' ? 'Responded by ID: ' : 'Ditindak balas oleh ID: '}
-                              </strong>
-                              {alert.responded_by}
-                            </p>
-                          )}
-                          
-                          {alert.response_time && (
-                            <p className="text-sm text-muted-foreground">
-                              <strong>
-                                {language === 'en' ? 'Response time: ' : 'Masa tindak balas: '}
-                              </strong>
-                              {formatDateTime(alert.response_time)}
-                            </p>
-                          )}
-                          
-                          {alert.notes && (
-                            <div className="space-y-1">
-                              <strong className="text-sm">
-                                {language === 'en' ? 'Comments:' : 'Komen:'}
-                              </strong>
-                              <p className="text-sm bg-white dark:bg-gray-900 p-2 rounded border">
-                                {alert.notes}
-                              </p>
-                            </div>
-                          )}
-                          
-                          {alert.updated_at !== alert.created_at && (
-                            <p className="text-xs text-muted-foreground">
-                              {language === 'en' ? 'Last updated: ' : 'Kemas kini terakhir: '}
-                              {formatDateTime(alert.updated_at)}
-                            </p>
-                          )}
-                        </div>
-                      )}
+      <div className="space-y-6">
+        {alerts.length === 0 ? (
+          <div className="text-center py-12">
+            <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <h3 className="text-lg font-medium text-muted-foreground mb-2">
+              {language === 'en' ? 'No panic alerts found' : 'Tiada amaran panik dijumpai'}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {language === 'en' 
+                ? 'Your panic alert history will appear here when you use the panic button.' 
+                : 'Sejarah amaran panik anda akan muncul di sini apabila anda menggunakan butang panik.'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {alerts.map((alert) => (
+              <div key={alert.id} className="p-6 border rounded-lg bg-card space-y-4">
+                {/* Header with status and timestamp */}
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <Badge className={getStatusColor(alert.alert_status)}>
+                      {getStatusIcon(alert.alert_status)}
+                      <span className="ml-2">{getStatusText(alert.alert_status)}</span>
+                    </Badge>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Clock className="w-4 h-4" />
+                      {formatDateTime(alert.created_at)}
                     </div>
-                    
-                    {index < alerts.length - 1 && <Separator className="my-4" />}
                   </div>
-                ))}
+                  
+                  {/* Location button */}
+                  {alert.location_latitude && alert.location_longitude && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openMaps(alert)}
+                      className="flex items-center gap-1"
+                    >
+                      <MapPin className="w-4 h-4" />
+                      {language === 'en' ? 'View Location' : 'Lihat Lokasi'}
+                    </Button>
+                  )}
+                </div>
+
+                {/* Location details */}
+                {alert.location_address && (
+                  <div className="flex items-start gap-2 text-sm">
+                    <Navigation className="w-4 h-4 mt-0.5 text-muted-foreground" />
+                    <span className="text-muted-foreground">{alert.location_address}</span>
+                  </div>
+                )}
+
+                {/* Response details */}
+                {(alert.alert_status !== 'active') && (
+                  <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+                    <h4 className="font-medium text-sm flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" />
+                      {language === 'en' ? 'Security Response' : 'Tindak Balas Keselamatan'}
+                    </h4>
+                    
+                    {alert.responded_by && (
+                      <p className="text-sm text-muted-foreground">
+                        <strong>
+                          {language === 'en' ? 'Responded by ID: ' : 'Ditindak balas oleh ID: '}
+                        </strong>
+                        {alert.responded_by}
+                      </p>
+                    )}
+                    
+                    {alert.response_time && (
+                      <p className="text-sm text-muted-foreground">
+                        <strong>
+                          {language === 'en' ? 'Response time: ' : 'Masa tindak balas: '}
+                        </strong>
+                        {formatDateTime(alert.response_time)}
+                      </p>
+                    )}
+                    
+                    {alert.notes && (
+                      <div className="space-y-1">
+                        <strong className="text-sm">
+                          {language === 'en' ? 'Comments:' : 'Komen:'}
+                        </strong>
+                        <p className="text-sm bg-background p-3 rounded border">
+                          {alert.notes}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {alert.updated_at !== alert.created_at && (
+                      <p className="text-xs text-muted-foreground">
+                        {language === 'en' ? 'Last updated: ' : 'Kemas kini terakhir: '}
+                        {formatDateTime(alert.updated_at)}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
-            </ScrollArea>
-          )}
-        </CardContent>
-      </Card>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Location viewer dialog */}
       {selectedLocation && (
