@@ -50,6 +50,14 @@ export default function StreamPlayer({
     return "auto" as const;
   }, [src]);
 
+  // For external HLS streams that might have CORS issues, use proxy
+  const getProxiedSrc = (originalSrc: string) => {
+    if (mjpegProxy && (originalSrc.includes('ngrok') || originalSrc.startsWith('http://'))) {
+      return `${mjpegProxy}?url=${encodeURIComponent(originalSrc)}`;
+    }
+    return originalSrc;
+  };
+
   useEffect(() => {
     setError(null);
   }, [src, strategy]);
@@ -57,7 +65,7 @@ export default function StreamPlayer({
   if (strategy === "hls") {
     return (
       <HlsPlayer
-        src={src}
+        src={getProxiedSrc(src)}
         className={className}
         autoPlay={autoPlay}
         controls={controls}
@@ -122,7 +130,7 @@ export default function StreamPlayer({
   if (isHls(src)) {
     return (
       <HlsPlayer
-        src={src}
+        src={getProxiedSrc(src)}
         className={className}
         autoPlay={autoPlay}
         controls={controls}
