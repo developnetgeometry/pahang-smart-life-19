@@ -54,7 +54,7 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
   onFloorPlanChange
 }) => {
   const { units, loading, createUnit, updateUnit, deleteUnit, fetchUnitsByFloorPlan } = useUnits();
-  const { floorPlans, loading: floorPlansLoading } = useFloorPlans();
+  const { floorPlans, loading: floorPlansLoading, refetchFloorPlans } = useFloorPlans();
   const { user } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -105,6 +105,16 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
       fetchUnitsByFloorPlan(selectedFloorPlan);
     }
   }, [selectedFloorPlan, fetchUnitsByFloorPlan]);
+
+  // Auto-select first floor plan if none is selected and data is loaded
+  useEffect(() => {
+    if (!selectedFloorPlan && floorPlans.length > 0 && !floorPlansLoading) {
+      const firstFloorPlan = floorPlans[0];
+      setSelectedFloorPlan(firstFloorPlan.id);
+      setCurrentImageUrl(firstFloorPlan.image_url);
+      fetchUnitsByFloorPlan(firstFloorPlan.id);
+    }
+  }, [selectedFloorPlan, floorPlans, floorPlansLoading, fetchUnitsByFloorPlan]);
 
   // Update current image URL when floor plan changes
   useEffect(() => {
@@ -193,6 +203,9 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
           
           // Only update if it's not the current user making the change (to avoid loops)
           if (changedBy !== user.id) {
+            // Refresh floor plans data to get latest updates
+            refetchFloorPlans();
+            
             setSelectedFloorPlan(newFloorPlanId);
             setCurrentImageUrl(newImageUrl);
             toast.info('Floor plan updated by admin', {
@@ -230,6 +243,14 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
 
         setRealtimeChannel(channel);
 
+        // Auto-select first floor plan if none is selected and floor plans exist
+        if (!selectedFloorPlan && floorPlans.length > 0) {
+          const firstFloorPlan = floorPlans[0];
+          setSelectedFloorPlan(firstFloorPlan.id);
+          setCurrentImageUrl(firstFloorPlan.image_url);
+          fetchUnitsByFloorPlan(firstFloorPlan.id);
+        }
+
       } catch (error) {
         console.error('Error setting up real-time subscription:', error);
       }
@@ -243,7 +264,7 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
         supabase.removeChannel(realtimeChannel);
       }
     };
-  }, [user?.id, selectedFloorPlan, fetchUnitsByFloorPlan]);
+  }, [user?.id, selectedFloorPlan, fetchUnitsByFloorPlan, floorPlans, refetchFloorPlans]);
 
   // Broadcast floor plan changes (admin only)
   const broadcastFloorPlanChange = useCallback(async (floorPlanId: string, imageUrl: string) => {

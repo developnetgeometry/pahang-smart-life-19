@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useFloorPlans } from '@/hooks/use-floor-plans';
 import { useImageManagement } from '@/hooks/use-image-management';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -68,9 +69,55 @@ export const FloorPlanManagement: React.FC = () => {
     });
 
     if (result) {
+      // Broadcast the floor plan change to all users
+      await broadcastFloorPlanUpdate(editingFloorPlan.id, formData.image_url);
+      
       setEditingFloorPlan(null);
       setFormData({ name: '', image_url: '', version: 1 });
-      toast.success('Floor plan updated successfully');
+      toast.success('Floor plan updated and broadcast to all users');
+    }
+  };
+
+  // Broadcast floor plan updates to all users
+  const broadcastFloorPlanUpdate = async (floorPlanId: string, imageUrl: string) => {
+    try {
+      // Get current user's district to broadcast to the right channel
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('district_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.district_id) return;
+
+      // Create channel and broadcast
+      const channelName = `community_updates_${profile.district_id}`;
+      const channel = supabase.channel(channelName);
+      
+      await channel.send({
+        type: 'broadcast',
+        event: 'floor_plan_changed',
+        payload: {
+          floorPlanId,
+          imageUrl,
+          changedBy: user.id,
+          timestamp: new Date().toISOString()
+        }
+      });
+
+      // Subscribe briefly to ensure the message is sent
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setTimeout(() => {
+            supabase.removeChannel(channel);
+          }, 1000);
+        }
+      });
+    } catch (error) {
+      console.error('Failed to broadcast floor plan update:', error);
     }
   };
 
