@@ -125,67 +125,39 @@ export default function Login() {
         const redirectUrl = `${window.location.origin}/`;
         
         // Pass all signup data as metadata for the trigger to handle
+        const metadata: Record<string, any> = {
+          full_name: fullName.trim(),
+          mobile_no: phone.trim() || null,
+          district_id: districtId?.replace('district-', '') || districtId,
+          community_id: communityId?.replace('community-', '') || communityId,
+          address: location.trim(),
+          language: language,
+          pdpa_declare: pdpaAccepted,
+          signup_flow: selectedRole // This tells the trigger which role to assign
+        };
+
+        // Add service provider specific metadata
+        if (selectedRole === 'service_provider') {
+          metadata.business_name = businessName.trim();
+          metadata.business_type = businessType.trim();
+          metadata.business_description = 'Service provider registered via signup';
+          metadata.experience_years = yearsOfExperience.trim();
+          metadata.contact_phone = phone.trim();
+        }
+
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: { 
             emailRedirectTo: redirectUrl,
-            data: {
-              full_name: fullName.trim(),
-              mobile_no: phone.trim() || null,
-              district_id: districtId?.replace('district-', '') || districtId,
-              community_id: communityId?.replace('community-', '') || communityId,
-              address: location.trim(),
-              language: language,
-              pdpa_declare: pdpaAccepted
-            }
+            data: metadata
           }
         });
         
         if (signUpError) throw signUpError;
         
         if (authData.user) {
-          // Handle service provider application separately since it's not user profile data
-          if (selectedRole === 'service_provider') {
-            const { error: applicationError } = await supabase
-              .from('service_provider_applications')
-              .insert({
-                applicant_id: authData.user.id,
-                district_id: districtId?.replace('district-', '') || districtId,
-                business_name: businessName.trim(),
-                business_type: businessType.trim(),
-                business_description: `Service provider registered via signup`,
-                contact_person: fullName.trim(),
-                contact_phone: phone.trim(),
-                contact_email: email.trim(),
-                business_address: location.trim(),
-                experience_years: parseInt(yearsOfExperience) || 0,
-                status: 'pending'
-              });
-
-            if (applicationError) {
-              console.error('Service provider application error:', applicationError);
-              throw new Error(`Service provider application failed: ${applicationError.message}`);
-            }
-
-            // For service providers, we need to assign the role manually since trigger only assigns 'resident'
-            const { error: roleError } = await supabase
-              .from('enhanced_user_roles')
-              .insert({
-                user_id: authData.user.id,
-                role: 'service_provider',
-                district_id: districtId?.replace('district-', '') || districtId,
-                assigned_by: authData.user.id,
-                is_active: true
-              });
-
-            if (roleError) {
-              console.error('Service provider role assignment error:', roleError);
-              throw new Error(`Service provider role assignment failed: ${roleError.message}`);
-            }
-
-            console.log('Service provider application and role created successfully');
-          }
+          // All data creation is now handled by the database trigger
 
           // Show success message
           toast({
