@@ -74,6 +74,7 @@ import PrecisionMapping from "./pages/PrecisionMapping";
 import MaintenanceComplaintCenterPage from "./pages/MaintenanceComplaintCenter";
 import PatrolInterfacePage from "./pages/PatrolInterface";
 import FacilityComplaintCenterPage from "./pages/FacilityComplaintCenter";
+import ServiceProviders from "./pages/ServiceProviders";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -249,6 +250,16 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <Marketplace />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/service-providers"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ServiceProviders />
                   </Layout>
                 </ProtectedRoute>
               }

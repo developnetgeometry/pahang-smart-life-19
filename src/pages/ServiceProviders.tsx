@@ -2,15 +2,11 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Phone, ArrowRight, Mail, Clock, User } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Star, MapPin, Phone, Mail, Search, Filter, User, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-interface QuickServicesWidgetProps {
-  language: 'en' | 'ms';
-}
-
-interface ServiceItem {
+interface ServiceProvider {
   id: string;
   title: string;
   description?: string;
@@ -25,7 +21,6 @@ interface ServiceItem {
   rating?: number;
   review_count?: number;
   distance?: number;
-  location?: string;
 }
 
 interface UserLocation {
@@ -46,7 +41,7 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 };
 
-// Mock coordinates for service locations (in a real app, these would be in the database)
+// Mock coordinates for service locations
 const getServiceCoordinates = (businessName: string): { lat: number; lng: number } | null => {
   const mockCoordinates: Record<string, { lat: number; lng: number }> = {
     "Ahmad Plumbing Solutions": { lat: 3.2255, lng: 101.4531 },
@@ -56,12 +51,13 @@ const getServiceCoordinates = (businessName: string): { lat: number; lng: number
   return mockCoordinates[businessName] || null;
 };
 
-export function QuickServicesWidget({ language }: QuickServicesWidgetProps) {
-  const navigate = useNavigate();
-  const [services, setServices] = useState<ServiceItem[]>([]);
+export default function ServiceProviders() {
+  const [services, setServices] = useState<ServiceProvider[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [locationError, setLocationError] = useState<string>('');
+  const [categories, setCategories] = useState<string[]>([]);
 
   // Get user's geolocation
   useEffect(() => {
@@ -75,14 +71,12 @@ export function QuickServicesWidget({ language }: QuickServicesWidgetProps) {
         },
         (error) => {
           console.warn('Geolocation error:', error);
-          setLocationError('Location access denied');
           // Set default location (Kuala Selangor area)
           setUserLocation({ latitude: 3.2278, longitude: 101.4551 });
         },
         { timeout: 10000, enableHighAccuracy: false }
       );
     } else {
-      setLocationError('Geolocation not supported');
       setUserLocation({ latitude: 3.2278, longitude: 101.4551 });
     }
   }, []);
@@ -106,8 +100,7 @@ export function QuickServicesWidget({ language }: QuickServicesWidgetProps) {
             service_areas
           `)
           .eq('is_active', true)
-          .eq('product_type', 'service')
-          .limit(3);
+          .eq('product_type', 'service');
 
         if (error) {
           console.error('Error fetching services:', error);
@@ -148,6 +141,10 @@ export function QuickServicesWidget({ language }: QuickServicesWidgetProps) {
         }
 
         setServices(servicesWithDistance);
+        
+        // Extract unique categories
+        const uniqueCategories = Array.from(new Set(servicesWithDistance.map(s => s.category)));
+        setCategories(uniqueCategories);
       } catch (error) {
         console.error('Error fetching services:', error);
       } finally {
@@ -160,6 +157,14 @@ export function QuickServicesWidget({ language }: QuickServicesWidgetProps) {
     }
   }, [userLocation]);
 
+  const filteredServices = services.filter(service => {
+    const matchesSearch = service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         service.business_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         service.category.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || service.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
   const handleCallService = (phone: string) => {
     window.open(`tel:${phone}`, '_self');
   };
@@ -169,47 +174,83 @@ export function QuickServicesWidget({ language }: QuickServicesWidgetProps) {
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center justify-between">
-          <span>{language === 'en' ? 'Nearby Services' : 'Perkhidmatan Berdekatan'}</span>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => navigate('/marketplace')}
+    <div className="container mx-auto p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">Service Providers</h1>
+        <p className="text-muted-foreground">Find reliable service providers near you</p>
+      </div>
+
+      {/* Search and Filter */}
+      <div className="flex gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Input
+            placeholder="Search services or providers..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-muted-foreground" />
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="px-3 py-2 border rounded-md bg-background"
           >
-            <ArrowRight className="w-4 h-4" />
-          </Button>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="p-3 bg-muted/30 rounded-lg animate-pulse">
-                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-muted rounded w-1/2"></div>
-              </div>
+            <option value="all">All Categories</option>
+            {categories.map(category => (
+              <option key={category} value={category}>
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </option>
             ))}
-          </div>
-        ) : services.length === 0 ? (
-          <div className="text-center py-4 text-muted-foreground">
-            {language === 'en' ? 'No services available' : 'Tiada perkhidmatan tersedia'}
-          </div>
-        ) : (
-          services.map((service) => (
-            <div key={service.id} className="p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-all duration-200 cursor-pointer border border-transparent hover:border-muted">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-sm truncate">{service.title}</h4>
-                  <div className="flex items-center gap-1 mt-1">
-                    <User className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                    <p className="text-xs text-muted-foreground truncate">{service.business_name}</p>
-                  </div>
-                  
-                  {/* Rating and Reviews */}
-                  {service.rating && (
+          </select>
+        </div>
+      </div>
+
+      {/* Results */}
+      {loading ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-4">
+                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-1/2 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-2/3"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : filteredServices.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">No service providers found matching your criteria</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredServices.map((service) => (
+            <Card key={service.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-lg truncate">{service.title}</CardTitle>
                     <div className="flex items-center gap-1 mt-1">
+                      <User className="w-3 h-3 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground truncate">{service.business_name}</p>
+                    </div>
+                  </div>
+                  {service.price && (
+                    <Badge variant="outline">
+                      {service.currency || 'RM'}{service.price}
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              
+              <CardContent className="space-y-3">
+                {/* Rating and Distance */}
+                <div className="flex items-center justify-between">
+                  {service.rating && (
+                    <div className="flex items-center gap-1">
                       <div className="flex items-center">
                         {[...Array(5)].map((_, i) => (
                           <Star 
@@ -227,14 +268,6 @@ export function QuickServicesWidget({ language }: QuickServicesWidgetProps) {
                       </span>
                     </div>
                   )}
-                </div>
-                
-                <div className="flex flex-col items-end gap-1 ml-2">
-                  {service.price && (
-                    <Badge variant="outline" className="text-xs">
-                      {service.currency || 'RM'}{service.price}
-                    </Badge>
-                  )}
                   {service.distance && (
                     <Badge variant="secondary" className="text-xs">
                       {service.distance < 1 
@@ -244,95 +277,66 @@ export function QuickServicesWidget({ language }: QuickServicesWidgetProps) {
                     </Badge>
                   )}
                 </div>
-              </div>
-              
-              {/* Category and Service Areas */}
-              <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                <div className="flex items-center gap-1">
-                  <span className="capitalize bg-primary/10 text-primary px-2 py-1 rounded">
-                    {service.category}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  <span>
-                    {service.distance 
-                      ? (language === 'en' ? 'Near you' : 'Berdekatan anda')
-                      : (language === 'en' ? 'Nearby' : 'Berdekatan')
-                    }
-                  </span>
-                </div>
-              </div>
 
-              {/* Service Areas */}
-              {service.service_areas && service.service_areas.length > 0 && (
-                <div className="mb-2">
-                  <div className="flex flex-wrap gap-1">
-                    {service.service_areas.slice(0, 2).map((area, index) => (
-                      <span key={index} className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
-                        {area}
-                      </span>
-                    ))}
-                    {service.service_areas.length > 2 && (
-                      <span className="text-xs text-muted-foreground">
-                        +{service.service_areas.length - 2} more
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-              
-              {/* Contact Actions and Status */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                {/* Description */}
+                {service.description && (
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {service.description}
+                  </p>
+                )}
+
+                {/* Category and Status */}
+                <div className="flex items-center justify-between">
+                  <Badge variant="default" className="text-xs capitalize">
+                    {service.category}
+                  </Badge>
                   <Badge variant="default" className="text-xs">
                     <Clock className="w-3 h-3 mr-1" />
-                    {language === 'en' ? 'Available' : 'Tersedia'}
+                    Available
                   </Badge>
                 </div>
-                
-                <div className="flex items-center gap-1">
+
+                {/* Service Areas */}
+                {service.service_areas && service.service_areas.length > 0 && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <MapPin className="w-3 h-3" />
+                    <span>Serves: {service.service_areas.slice(0, 2).join(', ')}</span>
+                    {service.service_areas.length > 2 && (
+                      <span>+{service.service_areas.length - 2} more</span>
+                    )}
+                  </div>
+                )}
+
+                {/* Contact Actions */}
+                <div className="flex gap-2 pt-2">
                   {service.contact_phone && (
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      className="h-6 px-2 text-xs"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCallService(service.contact_phone!);
-                      }}
+                      className="flex-1"
+                      onClick={() => handleCallService(service.contact_phone!)}
                     >
-                      <Phone className="w-3 h-3" />
+                      <Phone className="w-3 h-3 mr-1" />
+                      Call
                     </Button>
                   )}
                   {service.contact_email && (
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      className="h-6 px-2 text-xs"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEmailService(service.contact_email!);
-                      }}
+                      className="flex-1"
+                      onClick={() => handleEmailService(service.contact_email!)}
                     >
-                      <Mail className="w-3 h-3" />
+                      <Mail className="w-3 h-3 mr-1" />
+                      Email
                     </Button>
                   )}
                 </div>
-              </div>
-            </div>
-          ))
-        )}
-        
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full mt-3"
-          onClick={() => navigate('/service-providers')}
-        >
-          {language === 'en' ? 'View All Nearby Services' : 'Lihat Semua Perkhidmatan Berdekatan'}
-        </Button>
-      </CardContent>
-    </Card>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
