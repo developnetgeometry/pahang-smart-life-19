@@ -74,6 +74,7 @@ export function AppSidebar() {
     // Personal Activities - available to all users
     const personalItems = [
       { title: t("myComplaints"), url: "/my-complaints", icon: FileText },
+      { title: "Panic Alerts", url: "/panic-alerts", icon: AlertTriangle },
     ];
     
     // Add visitor management if module is enabled
