@@ -87,8 +87,17 @@ export function useHouseholdAccounts() {
     if (!user) throw new Error('Please log in to create a spouse account');
 
     try {
+      console.log('Starting spouse account creation for:', spouseData.email);
+      
       // Check current user authentication
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser();
+      console.log('Current user check:', { currentUser: !!currentUser, authError });
+      
+      if (authError) {
+        console.error('Auth error:', authError);
+        throw new Error(`Authentication error: ${authError.message}`);
+      }
+      
       if (!currentUser) {
         throw new Error('Authentication session expired. Please log in again.');
       }
@@ -140,14 +149,28 @@ export function useHouseholdAccounts() {
 
         // Check if there's an inactive household account to reactivate
         if (inactiveAccounts && inactiveAccounts.length > 0) {
+          console.log('Reactivating existing household account:', inactiveAccounts[0].id);
+          
           const { error: reactivateError } = await supabase
             .from('household_accounts')
             .update({ is_active: true })
             .eq('id', inactiveAccounts[0].id);
 
-          if (reactivateError) throw reactivateError;
+          if (reactivateError) {
+            console.error('Reactivation error:', reactivateError);
+            throw new Error(`Failed to reactivate spouse account: ${reactivateError.message}`);
+          }
+          
+          console.log('Household account reactivated successfully');
         } else {
           // Create new household account link
+          console.log('Creating new household account link for existing user...', {
+            primary_account_id: user.id,
+            linked_account_id: spouseUserId,
+            relationship_type: 'spouse',
+            created_by: user.id,
+          });
+          
           const { error: householdError } = await supabase
             .from('household_accounts')
             .insert({
@@ -157,7 +180,12 @@ export function useHouseholdAccounts() {
               created_by: user.id,
             });
 
-          if (householdError) throw householdError;
+          if (householdError) {
+            console.error('Household account creation error (existing user):', householdError);
+            throw new Error(`Failed to link existing spouse account: ${householdError.message}`);
+          }
+          
+          console.log('Household account link created successfully for existing user');
         }
       } else {
         // Create new authentication account for spouse
@@ -199,6 +227,13 @@ export function useHouseholdAccounts() {
         if (profileError) throw profileError;
 
         // Create household account link
+        console.log('Creating household account link...', {
+          primary_account_id: user.id,
+          linked_account_id: spouseUserId,
+          relationship_type: 'spouse',
+          created_by: user.id,
+        });
+        
         const { error: householdError } = await supabase
           .from('household_accounts')
           .insert({
@@ -208,7 +243,12 @@ export function useHouseholdAccounts() {
             created_by: user.id,
           });
 
-        if (householdError) throw householdError;
+        if (householdError) {
+          console.error('Household account creation error:', householdError);
+          throw new Error(`Failed to link spouse account: ${householdError.message}`);
+        }
+        
+        console.log('Household account link created successfully');
       }
 
       await fetchAccounts();
