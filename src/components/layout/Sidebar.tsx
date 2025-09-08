@@ -14,6 +14,11 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   LayoutDashboard,
   Calendar,
   Users,
@@ -428,55 +433,82 @@ export function AppSidebar() {
     .filter((group) => group.items.length > 0);
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" variant="floating">
       {/* Logo section */}
-      <div className="flex h-16 items-center border-b border-border px-4">
+      <div className="flex h-16 items-center border-b border-border/30 px-4 bg-gradient-to-r from-primary/5 via-accent/5 to-transparent backdrop-blur-sm">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow animate-scale-in">
             <span className="text-sm font-bold text-primary-foreground">
               SC
             </span>
           </div>
           {!isCollapsed && (
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-sidebar-foreground">
+            <div className="flex flex-col animate-fade-in">
+              <span className="text-sm font-semibold text-foreground bg-gradient-primary bg-clip-text text-transparent">
                 Smart Community
               </span>
-              <span className="text-xs text-sidebar-accent-foreground opacity-75">Pahang</span>
+              <span className="text-xs text-muted-foreground opacity-75">Pahang</span>
             </div>
           )}
         </div>
       </div>
 
-      <SidebarContent>
+      <SidebarContent className="px-2">
         {filteredNavigation.map((group, groupIndex) => (
-          <SidebarGroup key={groupIndex}>
+          <SidebarGroup key={groupIndex} className="animate-fade-in">
             {!isCollapsed && (
-              <SidebarGroupLabel className="text-muted-foreground">
+              <SidebarGroupLabel className="text-muted-foreground font-medium text-xs uppercase tracking-wide bg-gradient-subtle px-3 py-2 rounded-lg mb-2">
                 {group.label}
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
               <SidebarMenu>
-                {group.items.map((item) => (
-                  <SidebarMenuItem key={item.url}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.url}
-                        className={({ isActive }) =>
-                          `flex items-center space-x-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-                            isActive
-                              ? "bg-primary text-primary-foreground"
-                              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                          }`
-                        }
-                      >
-                        <item.icon className="h-4 w-4" />
-                        {!isCollapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {group.items.map((item) => {
+                  const isCurrentActive = location.pathname === item.url;
+                  return (
+                    <SidebarMenuItem key={item.url}>
+                      <SidebarMenuButton asChild>
+                        {isCollapsed ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <NavLink
+                                to={item.url}
+                                className={`flex items-center justify-center rounded-xl p-3 transition-all duration-300 group relative overflow-hidden ${
+                                  isCurrentActive
+                                    ? "bg-gradient-primary text-primary-foreground shadow-glow scale-105"
+                                    : "text-muted-foreground hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 hover:text-foreground hover:shadow-community hover:scale-105 backdrop-blur-sm"
+                                }`}
+                              >
+                                <item.icon className="h-5 w-5 transition-transform group-hover:scale-110" />
+                                {isCurrentActive && (
+                                  <div className="absolute inset-0 bg-gradient-primary opacity-20 animate-pulse rounded-xl" />
+                                )}
+                              </NavLink>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" className="bg-card/90 backdrop-blur-lg border border-border/50 shadow-elegant">
+                              <p className="font-medium">{item.title}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <NavLink
+                            to={item.url}
+                            className={`flex items-center space-x-3 rounded-xl px-4 py-3 text-sm transition-all duration-300 group relative overflow-hidden ${
+                              isCurrentActive
+                                ? "bg-gradient-primary text-primary-foreground shadow-glow"
+                                : "text-muted-foreground hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 hover:text-foreground hover:shadow-community backdrop-blur-sm"
+                            }`}
+                          >
+                            <item.icon className="h-5 w-5 transition-transform group-hover:scale-110" />
+                            <span className="font-medium">{item.title}</span>
+                            {isCurrentActive && (
+                              <div className="absolute inset-0 bg-gradient-primary opacity-20 animate-pulse rounded-xl" />
+                            )}
+                          </NavLink>
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
