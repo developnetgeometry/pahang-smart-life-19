@@ -53,35 +53,51 @@ export default function ComplaintResponseHistory({ complaintId, refreshKey }: Co
 
   const fetchResponses = async () => {
     try {
-      const { data, error } = await supabase
+      // First get the complaint responses
+      const { data: responsesData, error: responsesError } = await supabase
         .from('complaint_responses')
-        .select(`
-          *,
-          responder_profile:profiles!responder_id (
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('complaint_id', complaintId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (responsesError) throw responsesError;
+
+      // Then get the responder profiles separately
+      const responderIds = [...new Set(responsesData?.map(r => r.responder_id).filter(Boolean) || [])];
       
-      // Type-safe conversion with proper error handling
-      const typedResponses: ComplaintResponse[] = (data || []).map(item => ({
-        id: item.id,
-        complaint_id: item.complaint_id,
-        responder_id: item.responder_id,
-        response_text: item.response_text,
-        response_type: item.response_type,
-        is_internal: item.is_internal,
-        internal_comments: item.internal_comments,
-        attachments: item.attachments || [],
-        status_update: item.status_update,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-        responder_profile: (item as any).responder_profile || null
-      }));
+      let profilesData: any[] = [];
+      if (responderIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', responderIds);
+        
+        if (!profilesError) {
+          profilesData = profiles || [];
+        }
+      }
+
+      // Combine the data
+      const typedResponses: ComplaintResponse[] = (responsesData || []).map(item => {
+        const responderProfile = profilesData.find(p => p.id === item.responder_id);
+        return {
+          id: item.id,
+          complaint_id: item.complaint_id,
+          responder_id: item.responder_id,
+          response_text: item.response_text,
+          response_type: item.response_type,
+          is_internal: item.is_internal,
+          internal_comments: item.internal_comments,
+          attachments: item.attachments || [],
+          status_update: item.status_update,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          responder_profile: responderProfile ? {
+            full_name: responderProfile.full_name,
+            avatar_url: responderProfile.avatar_url
+          } : null
+         };
+      });
       
       setResponses(typedResponses);
     } catch (error) {
