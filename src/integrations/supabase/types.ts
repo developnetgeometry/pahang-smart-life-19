@@ -9942,6 +9942,20 @@ export type Database = {
         Args: { other_user_id: string }
         Returns: string
       }
+      create_service_provider_application_on_signup: {
+        Args: {
+          p_applicant_id: string
+          p_business_address: string
+          p_business_name: string
+          p_business_type: string
+          p_contact_email: string
+          p_contact_person: string
+          p_contact_phone: string
+          p_district_id: string
+          p_experience_years?: number
+        }
+        Returns: string
+      }
       create_work_order_from_complaint: {
         Args: {
           p_assigned_to?: string
