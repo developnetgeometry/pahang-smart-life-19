@@ -5376,6 +5376,7 @@ export type Database = {
           id: string
           module_name: string
           performed_by: string | null
+          performed_by_role: string | null
           reference_id: string | null
           reference_table: string | null
           user_id: string
@@ -5389,6 +5390,7 @@ export type Database = {
           id?: string
           module_name: string
           performed_by?: string | null
+          performed_by_role?: string | null
           reference_id?: string | null
           reference_table?: string | null
           user_id: string
@@ -5402,6 +5404,7 @@ export type Database = {
           id?: string
           module_name?: string
           performed_by?: string | null
+          performed_by_role?: string | null
           reference_id?: string | null
           reference_table?: string | null
           user_id?: string
