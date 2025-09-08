@@ -614,7 +614,7 @@ export default function MyComplaints() {
                             <Clock className="w-4 h-4 mr-1" />
                             {new Date(complaint.created_at).toLocaleDateString()}
                           </span>
-                          <Badge variant="outline" className={`text-white ${getStatusColor(complaint.status)}`}>
+                          <Badge className={`text-white ${getStatusColor(complaint.status)} shadow-community`}>
                             {complaint.status}
                           </Badge>
                           <span>{complaint.category}</span>
