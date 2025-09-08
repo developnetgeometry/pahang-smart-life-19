@@ -76,14 +76,18 @@ export function AppSidebar() {
       items: [{ title: t("dashboard"), url: "/", icon: LayoutDashboard }],
     });
 
-    // Personal Activities - available to all users
+    // Personal Activities - available to all users (except facility managers get limited access)
     const personalItems = [
       { title: t("myComplaints"), url: "/my-complaints", icon: FileText },
-      { title: "Panic Alerts", url: "/panic-alerts", icon: AlertTriangle },
     ];
     
-    // Add visitor management if module is enabled
-    if (isModuleEnabled('visitor_management')) {
+    // Add panic alerts for non-facility managers
+    if (!hasRole('facility_manager')) {
+      personalItems.push({ title: "Panic Alerts", url: "/panic-alerts", icon: AlertTriangle });
+    }
+    
+    // Add visitor management if module is enabled and not facility manager
+    if (isModuleEnabled('visitor_management') && !hasRole('facility_manager')) {
       personalItems.push({ title: "My Visitors", url: "/my-visitors", icon: UserCheck });
     }
     
@@ -92,25 +96,27 @@ export function AppSidebar() {
       items: personalItems,
     });
 
-    // Community Hub - available to all users
-    const communityItems = [
-      {
-        title: t("communication"),
-        url: "/communication-hub",
-        icon: MessageSquare,
-      },
-      { title: t("announcements"), url: "/announcements", icon: Megaphone },
-    ];
-    
-    // Add discussions if module is enabled
-    if (isModuleEnabled('discussions')) {
-      communityItems.push({ title: t("discussions"), url: "/discussions", icon: MessageSquare });
+    // Community Hub - available to all users except facility managers
+    if (!hasRole('facility_manager')) {
+      const communityItems = [
+        {
+          title: t("communication"),
+          url: "/communication-hub",
+          icon: MessageSquare,
+        },
+        { title: t("announcements"), url: "/announcements", icon: Megaphone },
+      ];
+      
+      // Add discussions if module is enabled
+      if (isModuleEnabled('discussions')) {
+        communityItems.push({ title: t("discussions"), url: "/discussions", icon: MessageSquare });
+      }
+      
+      nav.push({
+        label: t("communityHub"),
+        items: communityItems,
+      });
     }
-    
-    nav.push({
-      label: t("communityHub"),
-      items: communityItems,
-    });
 
     // Services & Facilities - available to all users
     const servicesItems = [];
