@@ -268,11 +268,12 @@ export const FacilityManagerDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="facilities">Facilities</TabsTrigger>
           <TabsTrigger value="bookings">Bookings</TabsTrigger>
           <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+          <TabsTrigger value="complaints">Complaints</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -410,6 +411,53 @@ export const FacilityManagerDashboard = () => {
                 Schedule preventive maintenance, track repair requests, manage service providers, 
                 and ensure optimal facility conditions.
               </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="complaints" className="space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  Facility Complaint Center
+                </CardTitle>
+                <CardDescription>Monitor and manage facility-related complaints</CardDescription>
+              </div>
+              <Button asChild>
+                <Link to="/facility-complaint-center">View All Complaints</Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Access the dedicated complaint center to view, track, and manage all 
+                facility-related complaints including maintenance issues, booking problems, 
+                and amenity concerns.
+              </p>
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="h-4 w-4 text-orange-600" />
+                    <span className="font-medium">Pending</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Complaints awaiting action</p>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Wrench className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium">In Progress</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Currently being addressed</p>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="h-4 w-4 text-green-600" />
+                    <span className="font-medium">Resolved</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Successfully completed</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
