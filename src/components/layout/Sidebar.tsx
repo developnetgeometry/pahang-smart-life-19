@@ -112,6 +112,11 @@ export function AppSidebar() {
         communityItems.push({ title: t("discussions"), url: "/discussions", icon: MessageSquare });
       }
       
+      // Add marketplace if module is enabled
+      if (isModuleEnabled('marketplace')) {
+        communityItems.push({ title: t("marketplace"), url: "/marketplace", icon: ShoppingCart });
+      }
+      
       nav.push({
         label: t("communityHub"),
         items: communityItems,
