@@ -152,12 +152,29 @@ export default function Login() {
             is_active: true
           };
 
-          // Add service provider specific data
+          // Add service provider specific data by creating an application
           if (selectedRole === 'service_provider') {
-            profileUpdate.business_name = businessName.trim();
-            profileUpdate.business_type = businessType.trim();
-            profileUpdate.license_number = licenseNumber.trim() || null;
-            profileUpdate.years_of_experience = parseInt(yearsOfExperience) || null;
+            // Create service provider application instead of adding to profiles
+            const { error: applicationError } = await supabase
+              .from('service_provider_applications')
+              .insert({
+                applicant_id: authData.user.id,
+                district_id: districtId?.replace('district-', '') || districtId,
+                business_name: businessName.trim(),
+                business_type: businessType.trim(),
+                business_description: `Service provider registered via signup`,
+                contact_person: fullName.trim(),
+                contact_phone: phone.trim(),
+                contact_email: email.trim(),
+                business_address: location.trim(),
+                experience_years: parseInt(yearsOfExperience) || 0,
+                status: 'pending'
+              });
+
+            if (applicationError) {
+              console.error('Service provider application error:', applicationError);
+              throw new Error(`Service provider application failed: ${applicationError.message}`);
+            }
           }
 
           const { error: profileError } = await supabase
