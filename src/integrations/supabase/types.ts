@@ -4005,7 +4005,7 @@ export type Database = {
       household_accounts: {
         Row: {
           created_at: string | null
-          created_by: string | null
+          created_by: string
           id: string
           is_active: boolean | null
           linked_account_id: string
@@ -4016,7 +4016,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          created_by?: string | null
+          created_by: string
           id?: string
           is_active?: boolean | null
           linked_account_id: string
@@ -4027,7 +4027,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          created_by?: string | null
+          created_by?: string
           id?: string
           is_active?: boolean | null
           linked_account_id?: string
