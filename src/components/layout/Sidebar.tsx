@@ -437,10 +437,12 @@ export function AppSidebar() {
       {/* Logo section */}
       <div className="flex h-16 items-center border-b border-border/30 px-4 bg-gradient-to-r from-primary/5 via-accent/5 to-transparent backdrop-blur-sm">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow animate-scale-in">
-            <span className="text-sm font-bold text-primary-foreground">
-              SC
-            </span>
+          <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow animate-scale-in p-1">
+            <img 
+              src="/lovable-uploads/8b5530a7-fe2b-4d5c-bcf6-5f679ad0e912.png" 
+              alt="Smart Community Logo" 
+              className="w-full h-full object-contain rounded-md"
+            />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col animate-fade-in">
