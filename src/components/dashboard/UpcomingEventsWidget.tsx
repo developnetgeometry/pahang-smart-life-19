@@ -79,58 +79,5 @@ export function UpcomingEventsWidget({
     if (category.includes('Meeting') || category.includes('Mesyuarat')) return 'bg-blue-500';
     return 'bg-gray-500';
   };
-  return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-primary" />
-          {language === 'en' ? 'Upcoming Events' : 'Acara Akan Datang'}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            ))}
-          </div>
-        ) : events.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            {language === 'en' ? 'No upcoming events' : 'Tiada acara akan datang'}
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {events.map((event) => (
-              <div key={event.id} className="border-l-4 border-primary/20 pl-3 space-y-1">
-                <h4 className="font-medium text-sm line-clamp-2">{event.title}</h4>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Clock className="w-3 h-3" />
-                  {formatDate(event.date)} • {event.time}
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <MapPin className="w-3 h-3" />
-                  {event.location}
-                </div>
-                <Badge variant="secondary" className="text-xs">
-                  {event.category}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        )}
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="w-full mt-4" 
-          onClick={() => navigate('/events')}
-        >
-          {language === 'en' ? 'View All Events' : 'Lihat Semua Acara'}
-          <ArrowRight className="w-4 h-4 ml-1" />
-        </Button>
-      </CardContent>
-    </Card>
-  );
+  return;
 }
