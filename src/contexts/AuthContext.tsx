@@ -81,6 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Load profile + roles for a given user id
   const loadProfileAndRoles = async (userId: string) => {
     try {
+      console.log('loadProfileAndRoles called for userId:', userId);
       const [{ data: profile }, { data: roleRows }] = await Promise.all([
         supabase
           .from('profiles')
@@ -117,7 +118,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const roleList: UserRole[] = (roleRows || []).map(r => r.role as UserRole);
       const primaryRole: UserRole = roleList[0] || 'resident';
       
+      console.log('Profile data:', profile);
+      console.log('Role rows from database:', roleRows);
       console.log('Loaded roles for user:', userId, 'roles:', roleList);
+      console.log('Primary role:', primaryRole);
       
       // Update language from profile if available
       const profileLanguage = profile?.language_preference as Language;
@@ -148,6 +152,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(userObj);
       setRoles(userObj.available_roles);
+      console.log('Final user object:', userObj);
+      console.log('Final roles set:', userObj.available_roles);
     } catch (e) {
       console.error('Failed to load profile/roles', e);
       setUser(null);
