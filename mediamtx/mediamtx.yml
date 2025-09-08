@@ -1,0 +1,17 @@
+hls: yes
+hlsVariant: lowLatency
+hlsSegmentDuration: 1.92s   # 48 frames
+hlsPartDuration: 0.32s      # 8 frames
+hlsSegmentCount: 8        # must be >= 7
+
+# replace old 'protocols' with:
+rtspTransports: [tcp]
+
+paths:
+  cam1:
+    sourceOnDemand: no
+    source: rtsp://admin:zash1234@192.168.100.249:554/cam/realmonitor?channel=1&subtype=0
+
+  cam2:
+    sourceOnDemand: no
+    source: rtsp://admin:zash1234@192.168.100.249:554/cam/realmonitor?channel=1&subtype=1

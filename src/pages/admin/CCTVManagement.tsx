@@ -464,6 +464,37 @@ export default function CCTVManagement() {
       if (!/^https?:\/\/.+\.m3u8(\?.*)?$/i.test(hlsUrl)) {
         throw new Error("URL must be an HLS .m3u8 over http(s)");
       }
+
+      // For cross-origin URLs (like ngrok), skip fetch validation and rely on player handling
+      try {
+        const url = new URL(hlsUrl);
+        const isLocalhost =
+          url.hostname === "localhost" || url.hostname === "127.0.0.1";
+        const isSameOrigin = url.origin === window.location.origin;
+
+        if (!isLocalhost && !isSameOrigin) {
+          console.log(
+            "Skipping validation for cross-origin HLS URL, will rely on player CORS handling"
+          );
+          return; // Skip validation for cross-origin URLs
+        }
+
+        // Only validate same-origin or localhost URLs
+        const response = await fetch(hlsUrl, {
+          method: "HEAD",
+          cache: "no-cache",
+        });
+        if (!response.ok && response.status !== 405) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+      } catch (error: any) {
+        // If validation fails, log warning but don't block - let player handle it
+        console.warn(
+          "HLS URL validation failed, proceeding anyway:",
+          error.message
+        );
+      }
+
       const video = document.createElement("video");
       const supportsNative =
         video.canPlayType("application/vnd.apple.mpegurl") !== "";
@@ -493,7 +524,20 @@ export default function CCTVManagement() {
           const onError = (err?: any) => {
             window.clearTimeout(timer);
             cleanup();
-            reject(err || new Error("Failed to load HLS manifest"));
+            // For CORS-related errors during validation, be more permissive
+            if (
+              err &&
+              (err.message?.includes("CORS") ||
+                err.message?.includes("network"))
+            ) {
+              console.warn(
+                "HLS validation failed with network/CORS error, assuming stream will work:",
+                err.message
+              );
+              resolve(); // Allow it through - let the actual player handle CORS
+            } else {
+              reject(err || new Error("Failed to load HLS manifest"));
+            }
           };
 
           if (supportsNative) {
@@ -505,8 +549,10 @@ export default function CCTVManagement() {
             hls = new Hls({ enableWorker: true });
             hls.on(Hls.Events.MANIFEST_PARSED, onSuccess);
             hls.on(Hls.Events.ERROR, (_evt, data) => {
-              if (data?.fatal)
-                onError(new Error(`${data.type}:${data.details}`));
+              if (data?.fatal) {
+                const errorMsg = `${data.type}:${data.details}`;
+                onError(new Error(errorMsg));
+              }
             });
             hls.loadSource(hlsUrl);
             hls.attachMedia(video);
@@ -838,116 +884,127 @@ export default function CCTVManagement() {
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
-        {(hasRole('admin') || hasRole('security_officer') || hasRole('manager') || hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin') || hasRole('facility_manager')) && (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={addDemoCamera}
-            disabled={isTesting}
-          >
-            {isTesting ? "Adding..." : "Add Demo Camera"}
-          </Button>
-          <Dialog
-            open={isAddCameraOpen}
-            onOpenChange={(open) => {
-              setIsAddCameraOpen(open);
-              if (!open)
-                setNewCam({ name: "", location: "", type: "", streamUrl: "" });
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                {t.addCamera}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[525px]">
-              <DialogHeader>
-                <DialogTitle>{t.addCameraTitle}</DialogTitle>
-                <DialogDescription>{t.addCameraSubtitle}</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">{t.cameraName}</Label>
-                  <Input
-                    id="name"
-                    placeholder={t.cameraName}
-                    value={newCam.name}
-                    onChange={(e) =>
-                      setNewCam((prev) => ({ ...prev, name: e.target.value }))
-                    }
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+        {(hasRole("admin") ||
+          hasRole("security_officer") ||
+          hasRole("manager") ||
+          hasRole("community_admin") ||
+          hasRole("district_coordinator") ||
+          hasRole("state_admin") ||
+          hasRole("facility_manager")) && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={addDemoCamera}
+              disabled={isTesting}
+            >
+              {isTesting ? "Adding..." : "Add Demo Camera"}
+            </Button>
+            <Dialog
+              open={isAddCameraOpen}
+              onOpenChange={(open) => {
+                setIsAddCameraOpen(open);
+                if (!open)
+                  setNewCam({
+                    name: "",
+                    location: "",
+                    type: "",
+                    streamUrl: "",
+                  });
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t.addCamera}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[525px]">
+                <DialogHeader>
+                  <DialogTitle>{t.addCameraTitle}</DialogTitle>
+                  <DialogDescription>{t.addCameraSubtitle}</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="location">{t.cameraLocation}</Label>
+                    <Label htmlFor="name">{t.cameraName}</Label>
                     <Input
-                      id="location"
-                      placeholder={t.cameraLocation}
-                      value={newCam.location}
+                      id="name"
+                      placeholder={t.cameraName}
+                      value={newCam.name}
+                      onChange={(e) =>
+                        setNewCam((prev) => ({ ...prev, name: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="location">{t.cameraLocation}</Label>
+                      <Input
+                        id="location"
+                        placeholder={t.cameraLocation}
+                        value={newCam.location}
+                        onChange={(e) =>
+                          setNewCam((prev) => ({
+                            ...prev,
+                            location: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="type">{t.cameraType}</Label>
+                      <Select
+                        value={newCam.type}
+                        onValueChange={(v) =>
+                          setNewCam((prev) => ({
+                            ...prev,
+                            type: v as CCTVCamera["type"],
+                          }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={t.cameraType} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="indoor">{t.indoor}</SelectItem>
+                          <SelectItem value="outdoor">{t.outdoor}</SelectItem>
+                          <SelectItem value="entrance">{t.entrance}</SelectItem>
+                          <SelectItem value="parking">{t.parking}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="streamUrl">
+                      {t.streamUrl} (HLS .m3u8, MJPEG, MP4/WebM or RTSP via
+                      gateway)
+                    </Label>
+                    <Input
+                      id="streamUrl"
+                      placeholder="https://.../stream.m3u8 | http://.../nphMotionJpeg | rtsp://..."
+                      value={newCam.streamUrl}
                       onChange={(e) =>
                         setNewCam((prev) => ({
                           ...prev,
-                          location: e.target.value,
+                          streamUrl: e.target.value,
                         }))
                       }
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="type">{t.cameraType}</Label>
-                    <Select
-                      value={newCam.type}
-                      onValueChange={(v) =>
-                        setNewCam((prev) => ({
-                          ...prev,
-                          type: v as CCTVCamera["type"],
-                        }))
-                      }
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsAddCameraOpen(false)}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t.cameraType} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="indoor">{t.indoor}</SelectItem>
-                        <SelectItem value="outdoor">{t.outdoor}</SelectItem>
-                        <SelectItem value="entrance">{t.entrance}</SelectItem>
-                        <SelectItem value="parking">{t.parking}</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      {t.cancel}
+                    </Button>
+                    <Button onClick={handleAddCamera} disabled={isTesting}>
+                      {isTesting ? "Testing..." : t.addCameraBtn}
+                    </Button>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="streamUrl">
-                    {t.streamUrl} (HLS .m3u8, MJPEG, MP4/WebM or RTSP via
-                    gateway)
-                  </Label>
-                  <Input
-                    id="streamUrl"
-                    placeholder="https://.../stream.m3u8 | http://.../nphMotionJpeg | rtsp://..."
-                    value={newCam.streamUrl}
-                    onChange={(e) =>
-                      setNewCam((prev) => ({
-                        ...prev,
-                        streamUrl: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsAddCameraOpen(false)}
-                  >
-                    {t.cancel}
-                  </Button>
-                  <Button onClick={handleAddCamera} disabled={isTesting}>
-                    {isTesting ? "Testing..." : t.addCameraBtn}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         )}
       </div>
 
@@ -1078,84 +1135,98 @@ export default function CCTVManagement() {
                       <Badge className={getStatusColor(camera.status)}>
                         {t[camera.status as keyof typeof t] || camera.status}
                       </Badge>
-                      {(hasRole('admin') || hasRole('security_officer') || hasRole('manager') || hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin') || hasRole('facility_manager')) && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditCam({
-                            id: camera.id,
-                            name: camera.name,
-                            location: camera.location,
-                            type: camera.type,
-                            streamUrl: camera.streamUrl,
-                            isActive: camera.status === "online",
-                          });
-                          setIsEditCameraOpen(true);
-                        }}
-                        aria-label="Edit camera"
-                      >
-                        <Settings className="h-4 w-4" />
-                      </Button>
+                      {(hasRole("admin") ||
+                        hasRole("security_officer") ||
+                        hasRole("manager") ||
+                        hasRole("community_admin") ||
+                        hasRole("district_coordinator") ||
+                        hasRole("state_admin") ||
+                        hasRole("facility_manager")) && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditCam({
+                              id: camera.id,
+                              name: camera.name,
+                              location: camera.location,
+                              type: camera.type,
+                              streamUrl: camera.streamUrl,
+                              isActive: camera.status === "online",
+                            });
+                            setIsEditCameraOpen(true);
+                          }}
+                          aria-label="Edit camera"
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
                       )}
-                      {(hasRole('admin') || hasRole('security_officer') || hasRole('manager') || hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin') || hasRole('facility_manager')) && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            aria-label="Delete camera"
-                            onClick={() => setDeleteTarget(camera)}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete camera?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will
-                              permanently delete the camera "
-                              {deleteTarget?.name}".
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel
-                              onClick={() => setDeleteTarget(null)}
+                      {(hasRole("admin") ||
+                        hasRole("security_officer") ||
+                        hasRole("manager") ||
+                        hasRole("community_admin") ||
+                        hasRole("district_coordinator") ||
+                        hasRole("state_admin") ||
+                        hasRole("facility_manager")) && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              aria-label="Delete camera"
+                              onClick={() => setDeleteTarget(camera)}
                             >
-                              Cancel
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                              className="bg-red-600 hover:bg-red-700"
-                              onClick={async () => {
-                                if (!deleteTarget) return;
-                                const id = deleteTarget.id;
-                                const { error } = await supabase
-                                  .from("cctv_cameras")
-                                  .delete()
-                                  .eq("id", id);
-                                if (error) {
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Delete camera?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will
+                                permanently delete the camera "
+                                {deleteTarget?.name}".
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel
+                                onClick={() => setDeleteTarget(null)}
+                              >
+                                Cancel
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-red-600 hover:bg-red-700"
+                                onClick={async () => {
+                                  if (!deleteTarget) return;
+                                  const id = deleteTarget.id;
+                                  const { error } = await supabase
+                                    .from("cctv_cameras")
+                                    .delete()
+                                    .eq("id", id);
+                                  if (error) {
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to delete camera",
+                                    });
+                                    return;
+                                  }
+                                  setCameras((prev) =>
+                                    prev.filter((c) => c.id !== id)
+                                  );
+                                  setDeleteTarget(null);
                                   toast({
-                                    title: "Error",
-                                    description: "Failed to delete camera",
+                                    title: "Deleted",
+                                    description: "Camera removed",
                                   });
-                                  return;
-                                }
-                                setCameras((prev) =>
-                                  prev.filter((c) => c.id !== id)
-                                );
-                                setDeleteTarget(null);
-                                toast({
-                                  title: "Deleted",
-                                  description: "Camera removed",
-                                });
-                              }}
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                                }}
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       )}
                     </div>
                   </div>
@@ -1194,25 +1265,31 @@ export default function CCTVManagement() {
                       <Eye className="h-4 w-4 mr-1" />
                       {t.liveView}
                     </Button>
-                    {(hasRole('admin') || hasRole('security_officer') || hasRole('manager') || hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin') || hasRole('facility_manager')) && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setEditCam({
-                          id: camera.id,
-                          name: camera.name,
-                          location: camera.location,
-                          type: camera.type,
-                          streamUrl: camera.streamUrl,
-                          isActive: camera.status === "online",
-                        });
-                        setIsEditCameraOpen(true);
-                      }}
-                    >
-                      <Settings className="h-4 w-4 mr-1" />
-                      {t.settings}
-                    </Button>
+                    {(hasRole("admin") ||
+                      hasRole("security_officer") ||
+                      hasRole("manager") ||
+                      hasRole("community_admin") ||
+                      hasRole("district_coordinator") ||
+                      hasRole("state_admin") ||
+                      hasRole("facility_manager")) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditCam({
+                            id: camera.id,
+                            name: camera.name,
+                            location: camera.location,
+                            type: camera.type,
+                            streamUrl: camera.streamUrl,
+                            isActive: camera.status === "online",
+                          });
+                          setIsEditCameraOpen(true);
+                        }}
+                      >
+                        <Settings className="h-4 w-4 mr-1" />
+                        {t.settings}
+                      </Button>
                     )}
                   </div>
                 </CardContent>
@@ -1431,156 +1508,168 @@ export default function CCTVManagement() {
             </div>
 
             {/* Camera Controls - Admin Only */}
-            {(hasRole('admin') || hasRole('security_officer') || hasRole('manager') || hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin') || hasRole('facility_manager')) && (
-            <div className="lg:w-80 space-y-4">
-              {/* RTSP Connection */}
-              {liveViewCamera && (
+            {(hasRole("admin") ||
+              hasRole("security_officer") ||
+              hasRole("manager") ||
+              hasRole("community_admin") ||
+              hasRole("district_coordinator") ||
+              hasRole("state_admin") ||
+              hasRole("facility_manager")) && (
+              <div className="lg:w-80 space-y-4">
+                {/* RTSP Connection */}
+                {liveViewCamera && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        {rtspConnected ? (
+                          <Wifi className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <WifiOff className="h-4 w-4 text-red-500" />
+                        )}
+                        {t.rtspConnection}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="space-y-2">
+                        <div className="text-xs text-muted-foreground">
+                          Stream URL (HLS .m3u8, MJPEG, MP4/WebM or RTSP via
+                          gateway)
+                        </div>
+                        <Input
+                          value={editStreamUrl}
+                          onChange={(e) => setEditStreamUrl(e.target.value)}
+                          placeholder="https://.../stream.m3u8 | http://.../nphMotionJpeg | rtsp://..."
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Badge
+                          variant={rtspConnected ? "default" : "secondary"}
+                        >
+                          {rtspConnected ? t.connected : t.disconnected}
+                        </Badge>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={saveStreamUrl}
+                            disabled={isTesting}
+                          >
+                            {isTesting ? "Testing..." : "Save"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleRtspConnection}
+                            disabled={!editStreamUrl}
+                          >
+                            {rtspConnected ? t.disconnect : t.connect}
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Motion Detection Settings */}
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm flex items-center gap-2">
-                      {rtspConnected ? (
-                        <Wifi className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <WifiOff className="h-4 w-4 text-red-500" />
-                      )}
-                      {t.rtspConnection}
+                      <Activity className="h-4 w-4" />
+                      {t.motionDetection}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="space-y-2">
-                      <div className="text-xs text-muted-foreground">
-                        Stream URL (HLS .m3u8, MJPEG, MP4/WebM or RTSP via
-                        gateway)
-                      </div>
-                      <Input
-                        value={editStreamUrl}
-                        onChange={(e) => setEditStreamUrl(e.target.value)}
-                        placeholder="https://.../stream.m3u8 | http://.../nphMotionJpeg | rtsp://..."
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <label
+                        htmlFor="motion-detection-modal"
+                        className="text-sm font-medium"
+                      >
+                        {t.enableMotionDetection}
+                      </label>
+                      <Switch
+                        id="motion-detection-modal"
+                        checked={motionDetectionEnabled}
+                        onCheckedChange={setMotionDetectionEnabled}
                       />
                     </div>
-                    <div className="flex items-center justify-between">
-                      <Badge variant={rtspConnected ? "default" : "secondary"}>
-                        {rtspConnected ? t.connected : t.disconnected}
-                      </Badge>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={saveStreamUrl}
-                          disabled={isTesting}
-                        >
-                          {isTesting ? "Testing..." : "Save"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={handleRtspConnection}
-                          disabled={!editStreamUrl}
-                        >
-                          {rtspConnected ? t.disconnect : t.connect}
-                        </Button>
+
+                    {motionDetectionEnabled && (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-sm font-medium">
+                            {t.sensitivity}
+                          </label>
+                          <div className="flex items-center space-x-3 mt-2">
+                            <span className="text-xs text-muted-foreground">
+                              1
+                            </span>
+                            <Slider
+                              value={motionSensitivity}
+                              onValueChange={setMotionSensitivity}
+                              max={100}
+                              min={1}
+                              step={1}
+                              className="flex-1"
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              100
+                            </span>
+                          </div>
+                          <div className="text-center mt-1">
+                            <span className="text-sm font-medium">
+                              {motionSensitivity[0]}%
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
-              )}
 
-              {/* Motion Detection Settings */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Activity className="h-4 w-4" />
-                    {t.motionDetection}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <label
-                      htmlFor="motion-detection-modal"
-                      className="text-sm font-medium"
-                    >
-                      {t.enableMotionDetection}
-                    </label>
-                    <Switch
-                      id="motion-detection-modal"
-                      checked={motionDetectionEnabled}
-                      onCheckedChange={setMotionDetectionEnabled}
-                    />
-                  </div>
-
-                  {motionDetectionEnabled && (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium">
-                          {t.sensitivity}
-                        </label>
-                        <div className="flex items-center space-x-3 mt-2">
-                          <span className="text-xs text-muted-foreground">
-                            1
-                          </span>
-                          <Slider
-                            value={motionSensitivity}
-                            onValueChange={setMotionSensitivity}
-                            max={100}
-                            min={1}
-                            step={1}
-                            className="flex-1"
-                          />
-                          <span className="text-xs text-muted-foreground">
-                            100
-                          </span>
-                        </div>
-                        <div className="text-center mt-1">
-                          <span className="text-sm font-medium">
-                            {motionSensitivity[0]}%
-                          </span>
-                        </div>
-                      </div>
+                {/* Recording Controls */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">{t.recording}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Status:</span>
+                      <Badge
+                        variant={
+                          liveViewCamera?.recording
+                            ? "destructive"
+                            : "secondary"
+                        }
+                      >
+                        {liveViewCamera?.recording
+                          ? t.recording
+                          : t.notRecording}
+                      </Badge>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Recording Controls */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">{t.recording}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Status:</span>
-                    <Badge
+                    <Button
+                      className="w-full"
                       variant={
-                        liveViewCamera?.recording ? "destructive" : "secondary"
+                        liveViewCamera?.recording ? "destructive" : "default"
+                      }
+                      onClick={() =>
+                        liveViewCamera && handleToggleRecording(liveViewCamera)
                       }
                     >
-                      {liveViewCamera?.recording ? t.recording : t.notRecording}
-                    </Badge>
-                  </div>
-                  <Button
-                    className="w-full"
-                    variant={
-                      liveViewCamera?.recording ? "destructive" : "default"
-                    }
-                    onClick={() =>
-                      liveViewCamera && handleToggleRecording(liveViewCamera)
-                    }
-                  >
-                    {liveViewCamera?.recording ? (
-                      <>
-                        <Pause className="h-4 w-4 mr-2" />
-                        {t.stopRecording}
-                      </>
-                    ) : (
-                      <>
-                        <Play className="h-4 w-4 mr-2" />
-                        {t.startRecording}
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+                      {liveViewCamera?.recording ? (
+                        <>
+                          <Pause className="h-4 w-4 mr-2" />
+                          {t.stopRecording}
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4 mr-2" />
+                          {t.startRecording}
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
             )}
           </div>
         </DialogContent>

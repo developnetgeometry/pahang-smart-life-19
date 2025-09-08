@@ -1,0 +1,40 @@
+services:
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx
+    restart: unless-stopped
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml:ro
+    ports:
+      - "8554:8554" # RTSP out
+      - "8888:8888" # HLS/HTTP
+      - "1935:1935" # RTMP (optional)
+    environment:
+      - MTX_LOGLEVEL=info
+      - NVR_USER=${NVR_USER}
+      - NVR_PASS=${NVR_PASS}
+      - NVR_HOST=${NVR_HOST}
+      - NVR_RTSP=${NVR_RTSP}
+
+  viewer:
+    image: nginx:alpine
+    container_name: cctv-viewer
+    restart: unless-stopped
+    volumes:
+      - ./viewer:/usr/share/nginx/html:ro
+      - ./nginx-viewer.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - mediamtx
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    command: ["http", "viewer:80"]
+    ports:
+      - "4040:4040"
+    depends_on:
+      - viewer
