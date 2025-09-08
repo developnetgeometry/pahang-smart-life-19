@@ -121,11 +121,6 @@ export function AppSidebar() {
     // Services & Facilities - available to all users
     const servicesItems = [];
     
-    // Add marketplace if module is enabled
-    if (isModuleEnabled('marketplace')) {
-      servicesItems.push({ title: t("marketplace"), url: "/marketplace", icon: ShoppingCart });
-    }
-    
     // Service Provider specific items
     if (hasRole("service_provider") && isModuleEnabled('marketplace')) {
       servicesItems.push({ 
@@ -144,16 +139,6 @@ export function AppSidebar() {
     // Add bookings if module is enabled (exclude facility managers - they manage facilities, don't book them)
     if (isModuleEnabled('bookings') && !hasRole('facility_manager')) {
       servicesItems.push({ title: "My Bookings", url: "/my-bookings", icon: Calendar });
-    }
-    
-    // Add service requests if module is enabled
-    if (isModuleEnabled('service_requests')) {
-      servicesItems.push({ title: "Service Requests", url: "/service-requests", icon: Clipboard });
-    }
-    
-    // Add CCTV if module is enabled
-    if (isModuleEnabled('cctv')) {
-      servicesItems.push({ title: t("cctvManagement"), url: "/cctv-live-feed", icon: Camera });
     }
     
     if (servicesItems.length > 0) {
@@ -289,12 +274,6 @@ export function AppSidebar() {
           title: t("facilitiesManagement"),
           url: "/admin/facilities",
           icon: Building,
-          requiredRoles: ["facility_manager", "state_admin", "community_admin"],
-        },
-        {
-          title: "Floor Plan Management",
-          url: "/admin/floor-plans",
-          icon: Monitor,
           requiredRoles: ["facility_manager", "state_admin", "community_admin"],
         },
         {
