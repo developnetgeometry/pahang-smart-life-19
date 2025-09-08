@@ -84,13 +84,19 @@ export function useHouseholdAccounts() {
     full_name: string;
     mobile_no?: string;
   }) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user) throw new Error('Please log in to create a spouse account');
 
     try {
+      // Check current user authentication
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        throw new Error('Authentication session expired. Please log in again.');
+      }
+
       // Check if spouse account already exists and is active
       const existingSpouse = accounts.find(acc => acc.relationship_type === 'spouse');
       if (existingSpouse) {
-        throw new Error('Spouse account already exists');
+        throw new Error('A spouse account already exists for this household');
       }
 
       // Check if there's an inactive household account for this user
@@ -219,9 +225,15 @@ export function useHouseholdAccounts() {
     mobile_no?: string;
     permissions?: Partial<HouseholdAccount['permissions']>;
   }) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user) throw new Error('Please log in to create a tenant account');
 
     try {
+      // Check current user authentication
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        throw new Error('Authentication session expired. Please log in again.');
+      }
+      
       // Create authentication account for tenant
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: tenantData.email,
