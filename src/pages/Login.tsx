@@ -123,13 +123,21 @@ export default function Login() {
         }
 
         const redirectUrl = `${window.location.origin}/`;
+        
+        // Pass all signup data as metadata for the trigger to handle
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: { 
             emailRedirectTo: redirectUrl,
             data: {
-              full_name: fullName.trim()
+              full_name: fullName.trim(),
+              mobile_no: phone.trim() || null,
+              district_id: districtId?.replace('district-', '') || districtId,
+              community_id: communityId?.replace('community-', '') || communityId,
+              address: location.trim(),
+              language: language,
+              pdpa_declare: pdpaAccepted
             }
           }
         });
@@ -137,77 +145,7 @@ export default function Login() {
         if (signUpError) throw signUpError;
         
         if (authData.user) {
-          // Wait for the trigger to create the basic profile, then update it
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Brief delay for trigger
-          
-          // Update the profile with registration details
-          const profileUpdate: any = {
-            mobile_no: phone.trim() || null,
-            district_id: districtId?.replace('district-', '') || districtId,
-            community_id: communityId?.replace('community-', '') || communityId,
-            address: location.trim(),
-            language: language,
-            pdpa_declare: pdpaAccepted,
-            account_status: 'pending',
-            is_active: true
-          };
-
-          // Add service provider specific data by creating an application
-          if (selectedRole === 'service_provider') {
-            // Create service provider application instead of adding to profiles
-            const { error: applicationError } = await supabase
-              .from('service_provider_applications')
-              .insert({
-                applicant_id: authData.user.id,
-                district_id: districtId?.replace('district-', '') || districtId,
-                business_name: businessName.trim(),
-                business_type: businessType.trim(),
-                business_description: `Service provider registered via signup`,
-                contact_person: fullName.trim(),
-                contact_phone: phone.trim(),
-                contact_email: email.trim(),
-                business_address: location.trim(),
-                experience_years: parseInt(yearsOfExperience) || 0,
-                status: 'pending'
-              });
-
-            if (applicationError) {
-              console.error('Service provider application error:', applicationError);
-              throw new Error(`Service provider application failed: ${applicationError.message}`);
-            }
-          }
-
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update(profileUpdate)
-            .eq('id', authData.user.id);
-
-          if (profileError) {
-            console.error('Profile update error:', profileError);
-            throw new Error(`Profile update failed: ${profileError.message}`);
-          }
-
-          console.log('Profile updated successfully for user:', authData.user.id);
-
-          // Assign selected role using enhanced_user_roles table
-          const roleData = {
-            user_id: authData.user.id,
-            role: selectedRole as any,
-            district_id: districtId?.replace('district-', '') || districtId,
-            assigned_by: authData.user.id, // Self-assigned during registration
-            is_active: true
-          };
-
-          const { error: roleError } = await supabase
-            .from('enhanced_user_roles')
-            .insert(roleData);
-
-          if (roleError) {
-            console.error('Role assignment error:', roleError);
-            throw new Error(`Role assignment failed: ${roleError.message}`);
-          }
-
-          // Create service provider application after successful role assignment
+          // Handle service provider application separately since it's not user profile data
           if (selectedRole === 'service_provider') {
             const { error: applicationError } = await supabase
               .from('service_provider_applications')
@@ -230,7 +168,23 @@ export default function Login() {
               throw new Error(`Service provider application failed: ${applicationError.message}`);
             }
 
-            console.log('Service provider application created successfully');
+            // For service providers, we need to assign the role manually since trigger only assigns 'resident'
+            const { error: roleError } = await supabase
+              .from('enhanced_user_roles')
+              .insert({
+                user_id: authData.user.id,
+                role: 'service_provider',
+                district_id: districtId?.replace('district-', '') || districtId,
+                assigned_by: authData.user.id,
+                is_active: true
+              });
+
+            if (roleError) {
+              console.error('Service provider role assignment error:', roleError);
+              throw new Error(`Service provider role assignment failed: ${roleError.message}`);
+            }
+
+            console.log('Service provider application and role created successfully');
           }
 
           // Show success message
