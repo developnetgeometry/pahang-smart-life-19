@@ -1,12 +1,33 @@
+# General settings
+logLevel: info
+
+# API settings
+api: yes
+apiAddress: 0.0.0.0:9997
+
+# Metrics settings  
+metrics: yes
+metricsAddress: 0.0.0.0:9998
+
+# RTSP settings
+rtsp: yes
+rtspAddress: 0.0.0.0:8554
+rtspTransports: [tcp]
+
+# HLS settings
 hls: yes
+hlsAddress: 0.0.0.0:8888
 hlsVariant: lowLatency
 hlsSegmentDuration: 1.92s   # 48 frames
 hlsPartDuration: 0.32s      # 8 frames
 hlsSegmentCount: 8        # must be >= 7
+hlsAllowOrigin: "*"
 
-# replace old 'protocols' with:
-rtspTransports: [tcp]
+# WebRTC settings
+webrtc: yes
+webrtcAddress: 0.0.0.0:8889
 
+# Path configurations
 paths:
   cam1:
     sourceOnDemand: no

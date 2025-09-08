@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -14,51 +14,91 @@
       }
       .wrap {
         padding: 16px;
+        max-width: 960px;
+        margin: 0 auto;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      button {
+        background: #2b2b2b;
+        color: #eee;
+        border: 1px solid #444;
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #3a3a3a;
       }
       video {
         width: 100%;
-        max-width: 960px;
+        max-height: 70vh;
         background: #000;
-        display: block;
+        border-radius: 12px;
       }
-      h2 {
-        margin: 24px 0 8px;
+      .url {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        color: #aaa;
+        word-break: break-all;
       }
     </style>
   </head>
   <body>
     <div class="wrap">
-      <h2>Cam 1</h2>
-      <video id="cam1" controls playsinline muted></video>
-
-      <h2>Cam 2</h2>
-      <video id="cam2" controls playsinline muted></video>
+      <h2 style="margin-top: 0">CCTV Viewer</h2>
+      <div class="row">
+        <button onclick="setCam('cam1')">cam1</button>
+        <button onclick="setCam('cam2')">cam2</button>
+      </div>
+      <p class="url" id="u"></p>
+      <video id="v" controls autoplay muted playsinline></video>
     </div>
 
     <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const sources = [
-          { id: "cam1", url: "/hls/cam1/index.m3u8" },
-          { id: "cam2", url: "/hls/cam2/index.m3u8" },
-        ];
-        sources.forEach(({ id, url }) => attach(id, url));
-      });
+      const video = document.getElementById("v");
+      const urlBox = document.getElementById("u");
 
-      function attach(id, url) {
-        const video = document.getElementById(id);
-        if (!video) return console.error("Missing <video> with id:", id);
+      function streamUrlFor(cam) {
+        // same-origin through Nginx → avoids CORS headaches
+        return `/hls/${cam}/index.m3u8`;
+      }
 
+      function setCam(cam) {
+        const url = streamUrlFor(cam);
+        urlBox.textContent = url;
+
+        // Safari can play HLS natively
         if (video.canPlayType("application/vnd.apple.mpegurl")) {
-          // Safari
           video.src = url;
-        } else if (window.Hls && Hls.isSupported()) {
+          video.play().catch(() => {});
+          return;
+        }
+
+        if (window.Hls && Hls.isSupported()) {
+          if (window._hls) {
+            try {
+              window._hls.destroy();
+            } catch {}
+          }
           const hls = new Hls({ maxBufferLength: 10 });
           hls.loadSource(url);
           hls.attachMedia(video);
-        } else {
-          video.outerHTML = `<p>Your browser can't play HLS.</p>`;
+          window._hls = hls;
+          return;
         }
+
+        // Fallback
+        video.outerHTML = `<p>Your browser can't play HLS.</p>`;
       }
+
+      // default camera from query ?cam=cam2
+      const params = new URLSearchParams(location.search);
+      setCam(params.get("cam") || "cam1");
     </script>
   </body>
 </html>
