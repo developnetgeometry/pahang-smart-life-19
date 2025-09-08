@@ -32,13 +32,21 @@ interface TenantFormData {
 }
 
 export function HouseholdAccountManager() {
-  const { accounts, loading, createSpouseAccount, createTenantAccount, removeAccount, updatePermissions, canAddSpouse } = useHouseholdAccounts();
+  const { accounts, loading, createSpouseAccount, createTenantAccount, removeAccount, updatePermissions, canAddSpouse, refetch } = useHouseholdAccounts();
   const { toast } = useToast();
   
   const [spouseDialogOpen, setSpouseDialogOpen] = useState(false);
   const [tenantDialogOpen, setTenantDialogOpen] = useState(false);
   const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
+
+  const handleRefresh = async () => {
+    await refetch();
+    toast({
+      title: "Refreshed",
+      description: "Household accounts updated",
+    });
+  };
 
   const spouseForm = useForm<SpouseFormData>();
   const tenantForm = useForm<TenantFormData>({
@@ -127,6 +135,9 @@ export function HouseholdAccountManager() {
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
           Household Accounts
+          <Button variant="ghost" size="sm" onClick={handleRefresh} className="ml-auto">
+            Refresh
+          </Button>
         </CardTitle>
         <CardDescription>
           Manage spouse and tenant accounts linked to your primary account

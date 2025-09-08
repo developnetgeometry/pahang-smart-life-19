@@ -78,6 +78,17 @@ export function useHouseholdAccounts() {
     fetchAccounts();
   }, [user]);
 
+  // Force refresh on component mount to ensure latest data
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (user) {
+        fetchAccounts();
+      }
+    }, 5000); // Refresh every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [user]);
+
   const createSpouseAccount = async (spouseData: {
     email: string;
     password: string;
