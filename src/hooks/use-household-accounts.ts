@@ -369,7 +369,8 @@ export function useHouseholdAccounts() {
   };
 
   const canAddSpouse = () => {
-    return !accounts.some(acc => acc.relationship_type === 'spouse');
+    // Only check active accounts
+    return !accounts.some(acc => acc.relationship_type === 'spouse' && acc.is_active);
   };
 
   return {
