@@ -144,26 +144,6 @@ export function ResidentDashboard() {
   // Filter quick actions based on enabled modules
   const quickActions = allQuickActions.filter(action => isModuleEnabled(action.module));
 
-  const recentActivities = [
-    {
-      type: 'announcement',
-      title: language === 'en' ? 'New community announcement posted' : 'Pengumuman komuniti baharu disiarkan',
-      time: 'Today 2:30 PM',
-      status: 'completed'
-    },
-    {
-      type: 'complaint',
-      title: language === 'en' ? 'Complaint resolved' : 'Aduan diselesaikan',
-      time: 'Yesterday 4:15 PM',
-      status: 'completed'
-    },
-    {
-      type: 'announcement',
-      title: language === 'en' ? 'Security protocol updated' : 'Protokol keselamatan dikemaskini',
-      time: '3 days ago',
-      status: 'completed'
-    }
-  ];
 
   const getUpdateIcon = (type: string) => {
     switch (type) {
@@ -262,8 +242,46 @@ export function ResidentDashboard() {
       />
 
 
-      {/* Upcoming Events */}
-      <UpcomingEventsWidget language={language} />
+      {/* Recent Activities and Upcoming Events */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Activities */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              {language === 'en' ? 'Recent Activities' : 'Aktiviti Terkini'}
+            </CardTitle>
+            <CardDescription>
+              {language === 'en' ? 'Latest community updates and activities' : 'Kemaskini dan aktiviti komuniti terkini'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {recentActivities.length > 0 ? (
+              recentActivities.map((activity, index) => {
+                const Icon = getActivityIcon(activity.type);
+                return (
+                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg border">
+                    <Icon className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{activity.title}</p>
+                      <p className="text-xs text-muted-foreground">{activity.time}</p>
+                    </div>
+                    <Badge variant="outline" className={getStatusColor(activity.status)}>
+                      {activity.status}
+                    </Badge>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">
+                {language === 'en' ? 'No recent activities' : 'Tiada aktiviti terkini'}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <UpcomingEventsWidget language={language} />
+      </div>
 
       {/* Additional Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
