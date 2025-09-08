@@ -14,6 +14,7 @@ import { PrayerTimesWidget } from './PrayerTimesWidget';
 import InteractiveUnitEditor from '@/components/location/InteractiveUnitEditor';
 import { CombinedSlideshow } from './CombinedSlideshow';
 import PanicButton from '@/components/emergency/PanicButton';
+import PanicAlertHistory from '@/components/emergency/PanicAlertHistory';
 import { useModuleAccess } from '@/hooks/use-module-access';
 import { 
   Calendar, 
@@ -251,6 +252,11 @@ export function ResidentDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <QuickServicesWidget language={language} />
         <CommunityDirectoryWidget language={language} />
+      </div>
+
+      {/* Panic Alert History */}
+      <div className="grid grid-cols-1 gap-6">
+        <PanicAlertHistory language={language} />
       </div>
 
       {/* Community Update Details Dialog */}
