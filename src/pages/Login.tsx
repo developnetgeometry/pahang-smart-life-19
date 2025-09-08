@@ -266,7 +266,7 @@ export default function Login() {
 
   return (
     <div 
-      className="min-h-screen relative flex items-center justify-center p-4"
+      className="min-h-screen w-full max-w-full overflow-x-hidden relative flex items-center justify-center p-4"
       style={{
         backgroundImage: `url('/lovable-uploads/7687f368-63da-4bc0-a610-d88851aebf13.png')`,
         backgroundSize: 'cover',

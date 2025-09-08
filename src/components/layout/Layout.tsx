@@ -16,7 +16,7 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="flex min-h-screen w-full max-w-full overflow-x-hidden bg-gradient-to-br from-background via-background to-muted/20">
         <AppSidebar />
         
         <div className="flex flex-1 flex-col overflow-hidden">
@@ -24,7 +24,7 @@ export function Layout({ children }: LayoutProps) {
             <SidebarTrigger className="mr-4" />
             <Header />
           </header>
-          <main className="flex-1 overflow-y-auto p-6 bg-transparent">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 bg-transparent">
             <div className="animate-fade-in">
               {children}
             </div>
