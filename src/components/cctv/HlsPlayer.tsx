@@ -42,6 +42,9 @@ export const HlsPlayer: React.FC<HlsPlayerProps> = ({
             "Mozilla/5.0 (compatible; HLS-Player)"
           );
           xhr.withCredentials = false; // Ensure no credentials for CORS
+
+          // Set timeout for better error handling
+          xhr.timeout = 10000;
         },
       };
 
