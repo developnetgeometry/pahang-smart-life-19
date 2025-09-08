@@ -87,62 +87,126 @@ export function useHouseholdAccounts() {
     if (!user) throw new Error('User not authenticated');
 
     try {
-      // Check if spouse account already exists
+      // Check if spouse account already exists and is active
       const existingSpouse = accounts.find(acc => acc.relationship_type === 'spouse');
       if (existingSpouse) {
         throw new Error('Spouse account already exists');
       }
 
-      // Create authentication account for spouse
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: spouseData.email,
-        password: spouseData.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: spouseData.full_name,
-            mobile_no: spouseData.mobile_no || '',
-          }
-        }
-      });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user account');
-
-      // Get current user's profile for district and community info
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('district_id, community_id')
-        .eq('id', user.id)
-        .single();
-
-      // Update the spouse profile with additional data
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          full_name: spouseData.full_name,
-          mobile_no: spouseData.mobile_no,
-          district_id: userProfile?.district_id,
-          community_id: userProfile?.community_id,
-        })
-        .eq('id', authData.user.id);
-
-      if (profileError) throw profileError;
-
-      // Create household account link
-      const { error: householdError } = await supabase
+      // Check if there's an inactive household account for this user
+      const { data: inactiveAccounts } = await supabase
         .from('household_accounts')
-        .insert({
-          primary_account_id: user.id,
-          linked_account_id: authData.user.id,
-          relationship_type: 'spouse',
-          created_by: user.id,
+        .select('id, linked_account_id')
+        .eq('primary_account_id', user.id)
+        .eq('relationship_type', 'spouse')
+        .eq('is_active', false);
+
+      // Check if user already exists in auth system
+      const { data: existingProfiles } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('email', spouseData.email);
+
+      let spouseUserId: string;
+
+      if (existingProfiles && existingProfiles.length > 0) {
+        // User already exists, use existing user ID
+        spouseUserId = existingProfiles[0].id;
+        
+        // Update the existing profile with new data
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('district_id, community_id')
+          .eq('id', user.id)
+          .single();
+
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            full_name: spouseData.full_name,
+            mobile_no: spouseData.mobile_no,
+            district_id: userProfile?.district_id,
+            community_id: userProfile?.community_id,
+          })
+          .eq('id', spouseUserId);
+
+        if (profileError) throw profileError;
+
+        // Check if there's an inactive household account to reactivate
+        if (inactiveAccounts && inactiveAccounts.length > 0) {
+          const { error: reactivateError } = await supabase
+            .from('household_accounts')
+            .update({ is_active: true })
+            .eq('id', inactiveAccounts[0].id);
+
+          if (reactivateError) throw reactivateError;
+        } else {
+          // Create new household account link
+          const { error: householdError } = await supabase
+            .from('household_accounts')
+            .insert({
+              primary_account_id: user.id,
+              linked_account_id: spouseUserId,
+              relationship_type: 'spouse',
+              created_by: user.id,
+            });
+
+          if (householdError) throw householdError;
+        }
+      } else {
+        // Create new authentication account for spouse
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: spouseData.email,
+          password: spouseData.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`,
+            data: {
+              full_name: spouseData.full_name,
+              mobile_no: spouseData.mobile_no || '',
+            }
+          }
         });
 
-      if (householdError) throw householdError;
+        if (authError) throw authError;
+        if (!authData.user) throw new Error('Failed to create user account');
+        
+        spouseUserId = authData.user.id;
+
+        // Get current user's profile for district and community info
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('district_id, community_id')
+          .eq('id', user.id)
+          .single();
+
+        // Update the spouse profile with additional data
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            full_name: spouseData.full_name,
+            mobile_no: spouseData.mobile_no,
+            district_id: userProfile?.district_id,
+            community_id: userProfile?.community_id,
+          })
+          .eq('id', spouseUserId);
+
+        if (profileError) throw profileError;
+
+        // Create household account link
+        const { error: householdError } = await supabase
+          .from('household_accounts')
+          .insert({
+            primary_account_id: user.id,
+            linked_account_id: spouseUserId,
+            relationship_type: 'spouse',
+            created_by: user.id,
+          });
+
+        if (householdError) throw householdError;
+      }
 
       await fetchAccounts();
-      return authData.user;
+      return { id: spouseUserId };
     } catch (error) {
       throw error;
     }
