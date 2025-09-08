@@ -313,11 +313,11 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
   const replyToMessage = messages.find(msg => msg.id === replyToMessageId);
 
   return (
-    <div className="flex h-[600px] border rounded-lg overflow-hidden bg-background">
+    <div className="flex h-[600px] border rounded-xl overflow-hidden bg-gradient-to-br from-background via-background to-muted/30 shadow-lg backdrop-blur-sm animate-fade-in">
       {/* Chat List Sidebar */}
-      <div className="w-1/3 border-r flex flex-col">
+      <div className="w-1/3 border-r border-border/50 flex flex-col bg-gradient-to-b from-muted/20 to-transparent backdrop-blur-sm">
         {/* Header */}
-        <div className="p-4 border-b">
+        <div className="p-4 border-b border-border/50 bg-gradient-to-r from-primary/5 to-secondary/5 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold">
               {language === 'en' ? 'Chats' : 'Sembang'}
@@ -379,22 +379,31 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
         {selectedRoom ? (
           <>
             {/* Chat Header */}
-            <div className="p-4 border-b bg-muted/50">
+            <div className="p-4 border-b border-border/50 bg-gradient-to-r from-primary/10 via-background to-secondary/10 backdrop-blur-md shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback>
-                      {getUserInitials(selectedRoom.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h4 className="font-medium">{selectedRoom.name}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedRoom.room_type === 'group' && selectedRoom.member_count && (
-                        `${selectedRoom.member_count} members`
-                      )}
-                      {selectedRoom.room_type === 'direct' && 'Direct message'}
-                    </p>
+                  <div className="relative">
+                    <Avatar className="h-10 w-10 border-2 border-primary/20 shadow-lg hover-scale">
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-primary-foreground font-semibold">
+                        {getUserInitials(selectedRoom.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-background rounded-full animate-pulse" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground/90">{selectedRoom.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        {selectedRoom.room_type === 'group' && selectedRoom.member_count && (
+                          `${selectedRoom.member_count} members`
+                        )}
+                        {selectedRoom.room_type === 'direct' && 'Direct message'}
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                        <span className="text-xs text-green-600 font-medium">Online</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <DropdownMenu>
@@ -466,11 +475,16 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
                         className={`flex gap-3 ${isOwn ? 'justify-end' : 'justify-start'}`}
                       >
                         {!isOwn && (
-                            <Avatar className={`h-8 w-8 ${showAvatar ? '' : 'invisible'}`}>
-                            <AvatarFallback className="text-xs">
-                              {getUserInitials(message.sender_profile?.full_name || 'U')}
-                            </AvatarFallback>
-                          </Avatar>
+                          <div className="relative">
+                            <Avatar className={`h-8 w-8 border-2 border-background shadow-sm hover-scale ${showAvatar ? '' : 'invisible'}`}>
+                              <AvatarFallback className="text-xs bg-gradient-to-br from-secondary to-secondary/80 text-secondary-foreground font-medium">
+                                {getUserInitials(message.sender_profile?.full_name || 'U')}
+                              </AvatarFallback>
+                            </Avatar>
+                            {showAvatar && (
+                              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-background rounded-full" />
+                            )}
+                          </div>
                         )}
 
                         <div className={`max-w-[70%] ${isOwn ? 'order-1' : ''}`}>

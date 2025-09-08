@@ -95,22 +95,32 @@ export default function RealTimePresenceIndicator({
   return (
     <div className="space-y-3">
       {/* Connection Status & Online Count */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {connectionStatus === 'online' ? (
-            <Wifi className="w-4 h-4 text-green-500" />
-          ) : (
-            <WifiOff className="w-4 h-4 text-red-500" />
-          )}
-          <Badge variant="outline" className="flex items-center gap-1">
+      <div className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-primary/5 to-secondary/5 border border-border/50 animate-fade-in">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            {connectionStatus === 'online' ? (
+              <Wifi className="w-5 h-5 text-green-500 animate-pulse" />
+            ) : (
+              <WifiOff className="w-5 h-5 text-red-500" />
+            )}
+            {connectionStatus === 'online' && (
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
+            )}
+          </div>
+          <Badge variant="outline" className="flex items-center gap-2 bg-background/80 backdrop-blur-sm hover-scale">
             <Users className="w-3 h-3" />
-            {onlineUsers.length} {language === 'en' ? 'online' : 'dalam talian'}
+            <span className="font-semibold">{onlineUsers.length}</span>
+            <span className="text-xs">{language === 'en' ? 'online' : 'dalam talian'}</span>
           </Badge>
         </div>
         
         <Badge 
           variant={connectionStatus === 'online' ? 'default' : 'destructive'}
-          className="text-xs"
+          className={`text-xs font-medium px-3 py-1 ${
+            connectionStatus === 'online' 
+              ? 'bg-gradient-to-r from-green-500 to-green-600 animate-pulse' 
+              : 'bg-gradient-to-r from-red-500 to-red-600'
+          }`}
         >
           {connectionStatus === 'online' 
             ? (language === 'en' ? 'Connected' : 'Disambung')
@@ -128,30 +138,41 @@ export default function RealTimePresenceIndicator({
             </div>
           ) : (
             <>
-              {displayUsers.map((user) => (
-                <div key={user.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+              {displayUsers.map((user, index) => (
+                <div 
+                  key={user.id} 
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gradient-to-r hover:from-primary/5 hover:to-secondary/5 transition-all duration-200 cursor-pointer group animate-fade-in hover-scale border border-transparent hover:border-border/30"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
                   <div className="relative">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="text-xs">
+                    <Avatar className="h-10 w-10 border-2 border-background shadow-sm group-hover:shadow-lg transition-shadow">
+                      <AvatarFallback className="text-sm bg-gradient-to-br from-primary/20 to-secondary/20 font-semibold">
                         {user.display_name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div 
-                      className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(user.status)}`}
+                      className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-background ${getStatusColor(user.status)} ${
+                        user.status === 'online' ? 'animate-pulse' : ''
+                      }`}
                       title={getStatusText(user.status)}
                     />
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
+                    <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
                       {user.display_name}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {user.status === 'online' 
-                        ? getStatusText(user.status)
-                        : formatLastSeen(user.last_seen)
-                      }
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-muted-foreground">
+                        {user.status === 'online' 
+                          ? getStatusText(user.status)
+                          : formatLastSeen(user.last_seen)
+                        }
+                      </p>
+                      {user.status === 'online' && (
+                        <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse"></div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

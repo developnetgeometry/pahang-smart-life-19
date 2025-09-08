@@ -40,18 +40,21 @@ export default function TypingIndicator({ typingUsers, className = '' }: TypingI
   };
 
   return (
-    <div className={`flex items-center gap-2 px-4 py-2 ${className}`}>
-      <div className="flex items-center gap-2">
-        {/* Animated Typing Dots */}
+    <div className={`flex items-center gap-3 px-4 py-3 border-t border-border/30 bg-gradient-to-r from-muted/10 to-transparent animate-fade-in ${className}`}>
+      <div className="flex items-center gap-3">
+        {/* Enhanced Animated Typing Dots */}
         <div className="flex space-x-1">
-          <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-          <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-          <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+          <div className="w-2.5 h-2.5 bg-gradient-to-r from-primary to-primary/80 rounded-full animate-typing" style={{animationDelay: '0s'}}></div>
+          <div className="w-2.5 h-2.5 bg-gradient-to-r from-primary to-primary/80 rounded-full animate-typing" style={{animationDelay: '0.2s'}}></div>
+          <div className="w-2.5 h-2.5 bg-gradient-to-r from-primary to-primary/80 rounded-full animate-typing" style={{animationDelay: '0.4s'}}></div>
         </div>
         
-        <Badge variant="secondary" className="text-xs animate-pulse">
-          {getTypingText()}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground font-medium">
+            {getTypingText()}
+          </span>
+          <div className="w-1 h-1 bg-primary rounded-full animate-pulse"></div>
+        </div>
       </div>
     </div>
   );

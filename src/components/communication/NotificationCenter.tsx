@@ -240,12 +240,16 @@ export default function NotificationCenter() {
       </Card>
 
       {/* Recent Notifications */}
-      <Card>
-        <CardHeader>
+      <Card className="border-border/50 bg-gradient-to-br from-background to-muted/20 backdrop-blur-sm shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-secondary/5 border-b border-border/30">
           <CardTitle className="flex items-center justify-between">
-            {language === 'en' ? 'Recent Notifications' : 'Notifikasi Terkini'}
-            <Badge variant="secondary">
-              {unreadCount} {language === 'en' ? 'unread' : 'belum dibaca'}
+            <div className="flex items-center gap-2">
+              <Bell className="w-5 h-5 text-primary" />
+              {language === 'en' ? 'Recent Notifications' : 'Notifikasi Terkini'}
+            </div>
+            <Badge variant="secondary" className={`${unreadCount > 0 ? 'animate-pulse bg-gradient-to-r from-primary/20 to-secondary/20' : ''}`}>
+              <span className="font-semibold">{unreadCount}</span>
+              <span className="ml-1">{language === 'en' ? 'unread' : 'belum dibaca'}</span>
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -259,17 +263,19 @@ export default function NotificationCenter() {
               notifications.slice(0, 10).map((notification) => (
                 <div 
                   key={notification.id}
-                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                    !notification.is_read ? 'border-primary bg-primary/5' : ''
+                  className={`p-4 border rounded-xl cursor-pointer transition-all duration-200 animate-fade-in hover-scale ${
+                    !notification.is_read 
+                      ? 'border-primary/30 bg-gradient-to-r from-primary/10 to-secondary/10 shadow-sm hover:shadow-lg' 
+                      : 'border-border/30 hover:border-border/50 bg-background/50 backdrop-blur-sm'
                   }`}
                   onClick={() => markAsRead(notification.id)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium text-sm">{notification.title}</h4>
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-semibold text-sm text-foreground/90">{notification.title}</h4>
                         {!notification.is_read && (
-                          <div className="w-2 h-2 bg-primary rounded-full" />
+                          <div className="w-3 h-3 bg-gradient-to-r from-primary to-secondary rounded-full animate-pulse shadow-sm" />
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">

@@ -144,14 +144,18 @@ export default function CommunicationHub() {
         )}
 
         {/* Real-time Presence Indicator */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              {language === 'en' ? 'Who\'s Online' : 'Siapa Dalam Talian'}
+        <Card className="border-border/50 bg-gradient-to-br from-background via-muted/10 to-background shadow-lg backdrop-blur-sm animate-fade-in">
+          <CardHeader className="bg-gradient-to-r from-primary/5 via-transparent to-secondary/5 border-b border-border/30">
+            <CardTitle className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg">
+                <Users className="w-5 h-5 text-primary" />
+              </div>
+              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent font-bold">
+                {language === 'en' ? "Who's Online" : 'Siapa Dalam Talian'}
+              </span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
             <RealTimePresenceIndicator showList={true} maxUsers={8} />
           </CardContent>
         </Card>
@@ -175,71 +179,87 @@ export default function CommunicationHub() {
         )}
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 animate-fade-in"
+             style={{ animationDelay: '0.2s' }}>
+          <Card className="border-border/50 bg-gradient-to-br from-blue-500/5 to-blue-600/10 hover:shadow-lg transition-all duration-300 hover-scale cursor-pointer">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-blue-500/10 rounded-lg">
+                <div className="p-3 bg-gradient-to-br from-blue-500/20 to-blue-600/30 rounded-xl shadow-sm">
                   <MessageSquare className="w-6 h-6 text-blue-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground font-medium">
                     {language === 'en' ? 'Active Users' : 'Pengguna Aktif'}
                   </p>
-                  <p className="text-2xl font-bold">
-                    {statsLoading ? '...' : communicationStats?.activeUsers || 0}
+                  <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
+                    {statsLoading ? (
+                      <span className="animate-pulse">...</span>
+                    ) : (
+                      communicationStats?.activeUsers || 0
+                    )}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-border/50 bg-gradient-to-br from-green-500/5 to-green-600/10 hover:shadow-lg transition-all duration-300 hover-scale cursor-pointer">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-green-500/10 rounded-lg">
-                  <Bell className="w-6 h-6 text-green-600" />
+                <div className="p-3 bg-gradient-to-br from-green-500/20 to-green-600/30 rounded-xl shadow-sm">
+                  <Bell className="w-6 h-6 text-green-600 animate-pulse" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground font-medium">
                     {language === 'en' ? 'Unread Messages' : 'Mesej Belum Dibaca'}
                   </p>
-                  <p className="text-2xl font-bold">
-                    {statsLoading ? '...' : communicationStats?.unreadMessages || 0}
+                  <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">
+                    {statsLoading ? (
+                      <span className="animate-pulse">...</span>
+                    ) : (
+                      communicationStats?.unreadMessages || 0
+                    )}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-border/50 bg-gradient-to-br from-purple-500/5 to-purple-600/10 hover:shadow-lg transition-all duration-300 hover-scale cursor-pointer">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-purple-500/10 rounded-lg">
+                <div className="p-3 bg-gradient-to-br from-purple-500/20 to-purple-600/30 rounded-xl shadow-sm relative">
                   <Users className="w-6 h-6 text-purple-600" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground font-medium">
                     {language === 'en' ? 'Online Now' : 'Dalam Talian Sekarang'}
                   </p>
-                  <p className="text-2xl font-bold">{onlineUsers.length}</p>
+                  <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent">
+                    {onlineUsers.length}
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-border/50 bg-gradient-to-br from-orange-500/5 to-orange-600/10 hover:shadow-lg transition-all duration-300 hover-scale cursor-pointer">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-orange-500/10 rounded-lg">
+                <div className="p-3 bg-gradient-to-br from-orange-500/20 to-orange-600/30 rounded-xl shadow-sm">
                   <Bell className="w-6 h-6 text-orange-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm text-muted-foreground">
-                    {language === 'en' ? 'Today Announcements' : 'Pengumuman Hari Ini'}
+                  <p className="text-sm text-muted-foreground font-medium">
+                    {language === 'en' ? "Today's Announcements" : 'Pengumuman Hari Ini'}
                   </p>
-                  <p className="text-2xl font-bold">
-                    {statsLoading ? '...' : communicationStats?.todayAnnouncements || 0}
+                  <p className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
+                    {statsLoading ? (
+                      <span className="animate-pulse">...</span>
+                    ) : (
+                      communicationStats?.todayAnnouncements || 0
+                    )}
                   </p>
                 </div>
               </div>
@@ -248,51 +268,61 @@ export default function CommunicationHub() {
         </div>
 
         {/* Main Communication Interface */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <MessageSquare className="w-5 h-5 mr-2" />
-              {language === 'en' ? 'Communication Tools' : 'Alat Komunikasi'}
+        <Card className="border-border/50 bg-gradient-to-br from-background via-muted/5 to-background shadow-xl backdrop-blur-sm animate-fade-in"
+              style={{ animationDelay: '0.4s' }}>
+          <CardHeader className="bg-gradient-to-r from-primary/5 via-transparent to-secondary/5 border-b border-border/30">
+            <CardTitle className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg">
+                <MessageSquare className="w-5 h-5 text-primary" />
+              </div>
+              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent font-bold">
+                {language === 'en' ? 'Communication Tools' : 'Alat Komunikasi'}
+              </span>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-muted-foreground/80">
               {language === 'en' 
-                ? 'Choose your communication method'
-                : 'Pilih kaedah komunikasi anda'
+                ? 'Connect, chat, and collaborate with your community'
+                : 'Berhubung, bersembang, dan bekerjasama dengan komuniti anda'
               }
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <CommunityChat marketplaceChat={marketplaceChat} directoryChat={directoryChat} />
           </CardContent>
         </Card>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-6 text-center">
-              <MessageSquare className="w-12 h-12 mx-auto text-primary mb-4" />
-              <h3 className="font-semibold mb-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in"
+             style={{ animationDelay: '0.6s' }}>
+          <Card className="cursor-pointer hover:shadow-xl transition-all duration-300 hover-scale bg-gradient-to-br from-background to-primary/5 border-border/50 backdrop-blur-sm group">
+            <CardContent className="p-8 text-center">
+              <div className="p-4 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl mx-auto w-fit mb-6 group-hover:scale-110 transition-transform duration-300">
+                <MessageSquare className="w-10 h-10 text-primary" />
+              </div>
+              <h3 className="font-bold mb-3 text-lg bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 {language === 'en' ? 'Start New Chat' : 'Mulakan Chat Baru'}
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {language === 'en' 
-                  ? 'Connect with community members directly'
-                  : 'Berhubung dengan ahli komuniti secara langsung'
+                  ? 'Connect with community members directly and build stronger relationships'
+                  : 'Berhubung dengan ahli komuniti secara langsung dan bina hubungan yang kuat'
                 }
               </p>
             </CardContent>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-6 text-center">
-              <Bell className="w-12 h-12 mx-auto text-primary mb-4" />
-              <h3 className="font-semibold mb-2">
-                {language === 'en' ? 'Schedule Notification' : 'Jadual Notifikasi'}
+          <Card className="cursor-pointer hover:shadow-xl transition-all duration-300 hover-scale bg-gradient-to-br from-background to-secondary/5 border-border/50 backdrop-blur-sm group">
+            <CardContent className="p-8 text-center">
+              <div className="p-4 bg-gradient-to-br from-secondary/20 to-primary/20 rounded-2xl mx-auto w-fit mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Bell className="w-10 h-10 text-secondary" />
+              </div>
+              <h3 className="font-bold mb-3 text-lg bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent">
+                {language === 'en' ? 'Smart Notifications' : 'Notifikasi Pintar'}
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {language === 'en' 
-                  ? 'Set up automated notifications and reminders'
-                  : 'Sediakan notifikasi dan peringatan automatik'
+                  ? 'Set up intelligent notifications and never miss important updates'
+                  : 'Sediakan notifikasi pintar dan jangan terlepas kemas kini penting'
                 }
               </p>
             </CardContent>
