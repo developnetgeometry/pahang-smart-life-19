@@ -207,6 +207,35 @@ export default function Login() {
             throw new Error(`Role assignment failed: ${roleError.message}`);
           }
 
+          // Create service provider application after successful role assignment
+          if (selectedRole === 'service_provider') {
+            // Brief delay to ensure authentication context and role are fully established
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            const { error: applicationError } = await supabase
+              .from('service_provider_applications')
+              .insert({
+                applicant_id: authData.user.id,
+                district_id: districtId?.replace('district-', '') || districtId,
+                business_name: businessName.trim(),
+                business_type: businessType.trim(),
+                business_description: `Service provider registered via signup`,
+                contact_person: fullName.trim(),
+                contact_phone: phone.trim(),
+                contact_email: email.trim(),
+                business_address: location.trim(),
+                experience_years: parseInt(yearsOfExperience) || 0,
+                status: 'pending'
+              });
+
+            if (applicationError) {
+              console.error('Service provider application error:', applicationError);
+              throw new Error(`Service provider application failed: ${applicationError.message}`);
+            }
+
+            console.log('Service provider application created successfully');
+          }
+
           // Show success message
           toast({
             title: language === 'en' ? 'Account Created!' : 'Akaun Dicipta!',
