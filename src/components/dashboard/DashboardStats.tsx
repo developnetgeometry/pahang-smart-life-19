@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRoles } from '@/hooks/use-user-roles';
 import { useTranslation } from '@/lib/translations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +8,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export function DashboardStats() {
-  const { language, hasRole, user } = useAuth();
+  const { language, user } = useAuth();
+  const { hasAnyRole } = useUserRoles();
   const { t } = useTranslation(language);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -103,8 +105,8 @@ export function DashboardStats() {
     }
   ] : [];
 
-  // Show resident stats by default, professional stats for admin roles
-  const showProfessionalStats = hasRole('admin') || hasRole('manager') || hasRole('security_officer');
+  // Show resident stats by default, professional stats for enhanced admin roles
+  const showProfessionalStats = hasAnyRole(['community_admin', 'district_coordinator', 'state_admin', 'facility_manager', 'security_officer']);
   
   const displayStats = showProfessionalStats ? professionalStats : residentStats;
 

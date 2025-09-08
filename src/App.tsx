@@ -54,6 +54,7 @@ import Directory from "./pages/Directory";
 import ServiceProviderApplication from "./pages/ServiceProviderApplication";
 import ServiceProviderManagement from "./pages/admin/ServiceProviderManagement";
 import ServiceProviderReview from "./pages/admin/ServiceProviderReview";
+import RoleDiagnostics from "./pages/admin/RoleDiagnostics";
 import MyApplications from "./pages/MyApplications";
 import NotFound from "./pages/NotFound";
 // New Management Modules
@@ -459,6 +460,18 @@ const App = () => (
                   <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
                     <Layout>
                       <ServiceProviderReview />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/role-diagnostics"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <RoleDiagnostics />
                     </Layout>
                   </RequireRoles>
                 </ProtectedRoute>
