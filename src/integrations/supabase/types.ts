@@ -5374,6 +5374,7 @@ export type Database = {
           description: string | null
           district_id: string | null
           id: string
+          metadata: Json | null
           module_name: string
           performed_by: string | null
           performed_by_role: string | null
@@ -5388,6 +5389,7 @@ export type Database = {
           description?: string | null
           district_id?: string | null
           id?: string
+          metadata?: Json | null
           module_name: string
           performed_by?: string | null
           performed_by_role?: string | null
@@ -5402,6 +5404,7 @@ export type Database = {
           description?: string | null
           district_id?: string | null
           id?: string
+          metadata?: Json | null
           module_name?: string
           performed_by?: string | null
           performed_by_role?: string | null
