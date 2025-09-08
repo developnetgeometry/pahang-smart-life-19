@@ -266,7 +266,7 @@ export default function ActivePanicAlerts() {
                       {language === 'en' ? 'RESPOND' : 'RESPON'}
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="w-[95vw] max-w-lg mx-auto">
+                  <DialogContent className="mx-2 sm:mx-auto">
                     <DialogHeader className="pb-4">
                       <DialogTitle className="flex items-center gap-2 text-red-600 text-lg">
                         <AlertTriangle className="w-5 h-5" />
