@@ -209,18 +209,20 @@ export default function Login() {
 
           // Create service provider application after successful role assignment
           if (selectedRole === 'service_provider') {
-            // Use the server-side function to bypass RLS issues
-            const { data: applicationId, error: applicationError } = await supabase
-              .rpc('create_service_provider_application_on_signup', {
-                p_applicant_id: authData.user.id,
-                p_district_id: districtId?.replace('district-', '') || districtId,
-                p_business_name: businessName.trim(),
-                p_business_type: businessType.trim(),
-                p_contact_person: fullName.trim(),
-                p_contact_phone: phone.trim(),
-                p_contact_email: email.trim(),
-                p_business_address: location.trim(),
-                p_experience_years: parseInt(yearsOfExperience) || 0
+            const { error: applicationError } = await supabase
+              .from('service_provider_applications')
+              .insert({
+                applicant_id: authData.user.id,
+                district_id: districtId?.replace('district-', '') || districtId,
+                business_name: businessName.trim(),
+                business_type: businessType.trim(),
+                business_description: `Service provider registered via signup`,
+                contact_person: fullName.trim(),
+                contact_phone: phone.trim(),
+                contact_email: email.trim(),
+                business_address: location.trim(),
+                experience_years: parseInt(yearsOfExperience) || 0,
+                status: 'pending'
               });
 
             if (applicationError) {
@@ -228,7 +230,7 @@ export default function Login() {
               throw new Error(`Service provider application failed: ${applicationError.message}`);
             }
 
-            console.log('Service provider application created successfully with ID:', applicationId);
+            console.log('Service provider application created successfully');
           }
 
           // Show success message
