@@ -432,9 +432,9 @@ export const FacilityManagerDashboard = () => {
         </Button>
         
         <Button asChild variant="outline" className="h-20">
-          <Link to="/my-complaints" className="flex flex-col items-center gap-2">
+          <Link to="/facility-complaint-center" className="flex flex-col items-center gap-2">
             <AlertTriangle className="h-6 w-6" />
-            <span className="text-sm">View Complaints</span>
+            <span className="text-sm">Facility Complaints</span>
           </Link>
         </Button>
         

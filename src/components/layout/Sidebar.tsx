@@ -339,10 +339,10 @@ export function AppSidebar() {
     if (hasRole("security_officer") || hasRole("state_admin") || hasRole("community_admin")) {
       securityItems.push(
         {
-          title: "Complaints Center",
-          url: "/admin/complaints",
+          title: "Facility Complaints",
+          url: "/facility-complaint-center",
           icon: AlertTriangle,
-          requiredRoles: ["security_officer", "facility_manager", "state_admin", "community_admin"],
+          requiredRoles: ["facility_manager"],
         },
         {
           title: t("panicAlerts"),

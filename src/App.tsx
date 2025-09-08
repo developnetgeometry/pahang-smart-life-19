@@ -73,6 +73,7 @@ import ModerationPanel from './components/discussions/ModerationPanel';
 import PrecisionMapping from "./pages/PrecisionMapping";
 import MaintenanceComplaintCenterPage from "./pages/MaintenanceComplaintCenter";
 import PatrolInterfacePage from "./pages/PatrolInterface";
+import FacilityComplaintCenterPage from "./pages/FacilityComplaintCenter";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -718,6 +719,18 @@ const App = () => (
             />
 
             {/* Maintenance Staff Routes */}
+            <Route
+              path="/facility-complaint-center"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["facility_manager"]}>
+                    <Layout>
+                      <FacilityComplaintCenterPage />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/work-orders-management"
               element={
