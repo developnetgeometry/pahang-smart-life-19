@@ -104,7 +104,18 @@ export default function Login() {
           throw new Error(language === 'en' ? 'Location is required' : 'Lokasi diperlukan');
         }
 
-        // Service provider validation removed - they use separate login
+        // Validate service provider specific fields
+        if (selectedRole === 'service_provider') {
+          if (!businessName.trim()) {
+            throw new Error(language === 'en' ? 'Business name is required' : 'Nama perniagaan diperlukan');
+          }
+          if (!businessType.trim()) {
+            throw new Error(language === 'en' ? 'Business type is required' : 'Jenis perniagaan diperlukan');
+          }
+          if (!yearsOfExperience.trim()) {
+            throw new Error(language === 'en' ? 'Years of experience is required' : 'Tahun pengalaman diperlukan');
+          }
+        }
 
         // Validate PDPA acceptance
         if (!pdpaAccepted) {
@@ -113,7 +124,7 @@ export default function Login() {
 
         const redirectUrl = `${window.location.origin}/`;
         
-        // Pass all signup data as metadata including signup_flow for the trigger
+        // Pass all signup data as metadata for the trigger to handle
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -126,8 +137,7 @@ export default function Login() {
               community_id: communityId?.replace('community-', '') || communityId,
               address: location.trim(),
               language: language,
-              pdpa_declare: pdpaAccepted,
-              signup_flow: 'resident' // This tells the trigger to assign resident role
+              pdpa_declare: pdpaAccepted
             }
           }
         });
@@ -135,12 +145,54 @@ export default function Login() {
         if (signUpError) throw signUpError;
         
         if (authData.user) {
-          // Show success message for resident registration
+          // Handle service provider application separately since it's not user profile data
+          if (selectedRole === 'service_provider') {
+            const { error: applicationError } = await supabase
+              .from('service_provider_applications')
+              .insert({
+                applicant_id: authData.user.id,
+                district_id: districtId?.replace('district-', '') || districtId,
+                business_name: businessName.trim(),
+                business_type: businessType.trim(),
+                business_description: `Service provider registered via signup`,
+                contact_person: fullName.trim(),
+                contact_phone: phone.trim(),
+                contact_email: email.trim(),
+                business_address: location.trim(),
+                experience_years: parseInt(yearsOfExperience) || 0,
+                status: 'pending'
+              });
+
+            if (applicationError) {
+              console.error('Service provider application error:', applicationError);
+              throw new Error(`Service provider application failed: ${applicationError.message}`);
+            }
+
+            // For service providers, we need to assign the role manually since trigger only assigns 'resident'
+            const { error: roleError } = await supabase
+              .from('enhanced_user_roles')
+              .insert({
+                user_id: authData.user.id,
+                role: 'service_provider',
+                district_id: districtId?.replace('district-', '') || districtId,
+                assigned_by: authData.user.id,
+                is_active: true
+              });
+
+            if (roleError) {
+              console.error('Service provider role assignment error:', roleError);
+              throw new Error(`Service provider role assignment failed: ${roleError.message}`);
+            }
+
+            console.log('Service provider application and role created successfully');
+          }
+
+          // Show success message
           toast({
-            title: language === 'en' ? 'Resident Account Created!' : 'Akaun Penduduk Dicipta!',
+            title: language === 'en' ? 'Account Created!' : 'Akaun Dicipta!',
             description: language === 'en' 
-              ? 'Your resident account has been created and is pending approval. You will be able to sign in once approved by the community admin.'
-              : 'Akaun penduduk anda telah dicipta dan sedang menunggu kelulusan. Anda boleh log masuk setelah diluluskan oleh pentadbir komuniti.',
+              ? 'Your account has been created and is pending approval. You will be able to sign in once approved by the community admin.'
+              : 'Akaun anda telah dicipta dan sedang menunggu kelulusan. Anda boleh log masuk setelah diluluskan oleh pentadbir komuniti.',
           });
 
           // Switch to sign in mode
@@ -150,6 +202,11 @@ export default function Login() {
           setDistrictId('');
           setCommunityId('');
           setLocation('');
+          setSelectedRole('resident');
+          setBusinessName('');
+          setBusinessType('');
+          setLicenseNumber('');
+          setYearsOfExperience('');
           setPdpaAccepted(false);
           setPassword('');
         }
@@ -234,18 +291,6 @@ export default function Login() {
           BM
         </Button>
       </div>
-
-      {/* Service Provider Login Link */}
-      <div className="absolute top-4 left-4 z-10">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => window.location.href = '/service-provider/login'}
-          className="text-white hover:bg-white/20"
-        >
-          {language === 'en' ? 'Service Provider?' : 'Penyedia Perkhidmatan?'} →
-        </Button>
-      </div>
       <div className="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
         {/* Left side - Hero content */}
         <div className="text-center lg:text-left space-y-6 text-white">
@@ -255,7 +300,7 @@ export default function Login() {
               <span className="font-medium">{t('pahangState')}</span>
             </div>
             <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
-              {language === 'en' ? 'Resident Portal' : 'Portal Penduduk'}
+              {t('smartCommunity')}
             </h1>
             <p className="text-xl text-white/90 max-w-lg">
               {language === 'en' 
@@ -294,13 +339,13 @@ export default function Login() {
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold">
                 {mode === 'signIn'
-                  ? (language === 'en' ? 'Resident Login' : 'Log Masuk Penduduk')
-                  : (language === 'en' ? 'Register as Resident' : 'Daftar sebagai Penduduk')}
+                  ? t('signIn')
+                  : (language === 'en' ? 'Create Account' : 'Buat Akaun')}
               </CardTitle>
               <CardDescription>
                 {mode === 'signIn'
-                  ? (language === 'en' ? 'Access your community resident portal' : 'Akses portal penduduk komuniti anda')
-                  : (language === 'en' ? 'Join your community as a resident' : 'Sertai komuniti anda sebagai penduduk')}
+                  ? (language === 'en' ? 'Access your smart community platform' : 'Akses platform komuniti pintar anda')
+                  : (language === 'en' ? 'Join your smart community platform' : 'Sertai platform komuniti pintar anda')}
               </CardDescription>
               <div className="mt-2 flex justify-center gap-2">
                 <Button type="button" variant={mode === 'signIn' ? 'default' : 'outline'} size="sm" onClick={() => setMode('signIn')}>
@@ -321,7 +366,26 @@ export default function Login() {
                 
                 {mode === 'signUp' && (
                   <>
-                    {/* Role selection removed - this is now resident-only login */}
+                    <div className="space-y-2">
+                      <Label htmlFor="role">
+                        {language === 'en' ? 'Select Role' : 'Pilih Peranan'} *
+                      </Label>
+                      <Select value={selectedRole} onValueChange={setSelectedRole} required>
+                        <SelectTrigger className="transition-smooth">
+                          <SelectValue placeholder={
+                            language === 'en' ? 'Choose your role' : 'Pilih peranan anda'
+                          } />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="resident">
+                            {language === 'en' ? 'Resident' : 'Penduduk'}
+                          </SelectItem>
+                          <SelectItem value="service_provider">
+                            {language === 'en' ? 'Service Provider' : 'Penyedia Perkhidmatan'}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="fullName">
