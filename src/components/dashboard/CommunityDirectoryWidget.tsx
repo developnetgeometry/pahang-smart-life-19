@@ -77,7 +77,7 @@ export function CommunityDirectoryWidget({ language }: CommunityDirectoryWidgetP
         <CardTitle className="text-lg flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            <span>{language === 'en' ? 'Community Directory' : 'Direktori Komuniti'}</span>
+            <span>{language === 'en' ? 'Important Contact' : 'Hubungan Penting'}</span>
           </div>
           <Button 
             variant="ghost" 
