@@ -277,6 +277,12 @@ export function AppSidebar() {
           requiredRoles: ["facility_manager", "state_admin", "community_admin"],
         },
         {
+          title: "Facility Complaints",
+          url: "/facility-complaint-center",
+          icon: AlertTriangle,
+          requiredRoles: ["facility_manager", "state_admin", "community_admin"],
+        },
+        {
           title: t("maintenanceManagement"),
           url: "/admin/maintenance",
           icon: Wrench,
@@ -328,12 +334,6 @@ export function AppSidebar() {
     const securityItems = [];
     if (hasRole("security_officer") || hasRole("state_admin") || hasRole("community_admin")) {
       securityItems.push(
-        {
-          title: "Facility Complaints",
-          url: "/facility-complaint-center",
-          icon: AlertTriangle,
-          requiredRoles: ["facility_manager"],
-        },
         {
           title: t("panicAlerts"),
           url: "/panic-alerts",
