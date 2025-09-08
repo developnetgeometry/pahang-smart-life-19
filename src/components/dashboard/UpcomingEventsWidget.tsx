@@ -79,5 +79,70 @@ export function UpcomingEventsWidget({
     if (category.includes('Meeting') || category.includes('Mesyuarat')) return 'bg-blue-500';
     return 'bg-gray-500';
   };
-  return;
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          {language === 'en' ? 'Upcoming Events' : 'Acara Akan Datang'}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {loading ? (
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+              </div>
+            ))}
+          </div>
+        ) : events.length === 0 ? (
+          <p className="text-muted-foreground text-center py-4">
+            {language === 'en' ? 'No upcoming events' : 'Tiada acara akan datang'}
+          </p>
+        ) : (
+          <>
+            {events.map((event) => (
+              <div key={event.id} className="p-3 border rounded-lg space-y-2">
+                <div className="flex items-start justify-between">
+                  <h4 className="font-medium text-sm line-clamp-2">{event.title}</h4>
+                  <Badge variant="secondary" className={`text-xs ${getCategoryColor(event.category)}`}>
+                    {event.category}
+                  </Badge>
+                </div>
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-3 w-3" />
+                    {formatDate(event.date)}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3 w-3" />
+                    {event.time}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-3 w-3" />
+                    {event.location}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-3 w-3" />
+                    {event.attendees}/{event.maxAttendees}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full"
+              onClick={() => navigate('/events')}
+            >
+              {language === 'en' ? 'View All Events' : 'Lihat Semua Acara'}
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
