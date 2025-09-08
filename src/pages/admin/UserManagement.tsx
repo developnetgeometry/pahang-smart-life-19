@@ -19,6 +19,9 @@ interface User {
   email: string;
   phone: string;
   unit: string;
+  address: string;
+  community_id: string;
+  language: string;
   role: string;
   status: 'active' | 'inactive' | 'pending' | 'approved' | 'rejected';
   joinDate: string;
@@ -33,7 +36,25 @@ export default function UserManagement() {
   const [selectedRole, setSelectedRole] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [form, setForm] = useState<{ name: string; email: string; phone: string; unit: string; role: string; status: User['status'] | '' }>({ name: '', email: '', phone: '', unit: '', role: '', status: '' });
+  const [form, setForm] = useState<{ 
+    name: string; 
+    email: string; 
+    phone: string; 
+    unit: string; 
+    address: string;
+    role: string; 
+    status: User['status'] | '';
+    language: string;
+  }>({ 
+    name: '', 
+    email: '', 
+    phone: '', 
+    unit: '', 
+    address: '',
+    role: '', 
+    status: '',
+    language: 'ms'
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +82,7 @@ export default function UserManagement() {
       email: 'Email',
       phone: 'Phone',
       unit: 'Unit',
+      address: 'Address',
       joinDate: 'Join Date',
       actions: 'Actions',
       createUser: 'Create New User',
@@ -103,6 +125,7 @@ export default function UserManagement() {
       email: 'E-mel',
       phone: 'Telefon',
       unit: 'Unit',
+      address: 'Alamat',
       joinDate: 'Tarikh Sertai',
       actions: 'Tindakan',
       createUser: 'Cipta Pengguna Baru',
@@ -141,9 +164,13 @@ export default function UserManagement() {
           id,
           full_name,
           email,
+          mobile_no,
           phone,
           unit_number,
           district_id,
+          community_id,
+          address,
+          language,
           account_status,
           created_at
         `);
@@ -181,8 +208,11 @@ export default function UserManagement() {
         id: profile.id,
         name: profile.full_name || 'Unknown User',
         email: profile.email || '',
-        phone: profile.phone || '',
+        phone: profile.mobile_no || profile.phone || '',
         unit: profile.unit_number || '',
+        address: profile.address || '',
+        community_id: profile.community_id || '',
+        language: profile.language || 'ms',
         role: roleMap.get(profile.id)?.[0] || 'resident',
         status: (profile.account_status || 'pending') as User['status'],
         joinDate: profile.created_at ? new Date(profile.created_at).toISOString().slice(0, 10) : '',
@@ -344,8 +374,9 @@ export default function UserManagement() {
           .from('profiles')
           .update({
             full_name: form.name,
-            phone: form.phone,
+            mobile_no: form.phone,
             unit_number: form.unit,
+            address: form.address,
             account_status: form.status
           })
           .eq('id', editingId);
@@ -380,7 +411,7 @@ export default function UserManagement() {
 
       setIsCreateOpen(false);
       setEditingId(null);
-      setForm({ name: '', email: '', phone: '', unit: '', role: '', status: '' });
+      setForm({ name: '', email: '', phone: '', unit: '', address: '', role: '', status: '', language: 'ms' });
       fetchUsers(); // Refresh the user list
     } catch (error) {
       console.error('Error saving user:', error);
@@ -394,7 +425,7 @@ export default function UserManagement() {
 
   const handleEdit = (user: User) => {
     setEditingId(user.id);
-    setForm({ name: user.name, email: user.email, phone: user.phone, unit: user.unit, role: user.role, status: user.status });
+    setForm({ name: user.name, email: user.email, phone: user.phone, unit: user.unit, address: user.address, role: user.role, status: user.status, language: user.language });
     setIsCreateOpen(true);
   };
 
@@ -437,7 +468,7 @@ export default function UserManagement() {
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={(open) => { setIsCreateOpen(open); if (!open) { setEditingId(null); setForm({ name: '', email: '', phone: '', unit: '', role: '', status: '' }); } }}>
+        <Dialog open={isCreateOpen} onOpenChange={(open) => { setIsCreateOpen(open); if (!open) { setEditingId(null); setForm({ name: '', email: '', phone: '', unit: '', address: '', role: '', status: '', language: 'ms' }); } }}>
           <DialogTrigger asChild>
             <Button>
               <UserPlus className="h-4 w-4 mr-2" />
@@ -465,6 +496,10 @@ export default function UserManagement() {
               <div className="space-y-2">
                 <Label htmlFor="unit">{t.unit}</Label>
                 <Input id="unit" placeholder={t.unit} value={form.unit} onChange={(e) => setForm(prev => ({ ...prev, unit: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">{t.address}</Label>
+                <Input id="address" placeholder={t.address} value={form.address} onChange={(e) => setForm(prev => ({ ...prev, address: e.target.value }))} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -576,15 +611,18 @@ export default function UserManagement() {
                           {user.name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
-                        <h4 className="font-medium">{user.name}</h4>
-                        <div className="text-sm text-muted-foreground space-y-1">
-                          <p>{user.email}</p>
-                          <p>{user.phone}</p>
-                          <p>{t.unit}: {user.unit}</p>
-                          <p>{t.joinDate}: {user.joinDate}</p>
-                        </div>
-                      </div>
+                       <div>
+                         <h4 className="font-medium">{user.name}</h4>
+                         <div className="text-sm text-muted-foreground space-y-1">
+                           <p>{user.email}</p>
+                           <p>{user.phone}</p>
+                           <p>{t.unit}: {user.unit}</p>
+                           {user.address && <p>{t.address}: {user.address}</p>}
+                           {user.community_id && <p>Community: {user.community_id}</p>}
+                           <p>Language: {user.language === 'en' ? 'English' : 'Bahasa Malaysia'}</p>
+                           <p>{t.joinDate}: {user.joinDate}</p>
+                         </div>
+                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge className={getRoleColor(user.role)}>
