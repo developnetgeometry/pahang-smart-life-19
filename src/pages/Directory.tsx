@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Phone, MapPin, Clock, Users, Search, Mail, MessageCircle } from "lucide-react";
+import { Phone, MapPin, Clock, Users, Search, Mail } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -65,18 +65,6 @@ export default function Directory() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleMessageContact = (contact: Contact) => {
-    navigate('/communication-hub', { 
-      state: { 
-        directoryChat: {
-          contactId: contact.id,
-          contactName: contact.name,
-          contactTitle: contact.role
-        }
-      }
-    });
   };
 
   const handleCallContact = (phoneNumber: string) => {
@@ -226,13 +214,9 @@ export default function Directory() {
                         </div>
                         
                         <div className="flex gap-2 pt-2">
-                          <Button size="sm" variant="outline" className="flex-1" onClick={() => handleCallContact(contact.phone)}>
+                          <Button size="sm" variant="outline" className="w-full" onClick={() => handleCallContact(contact.phone)}>
                             <Phone className="w-3 h-3 mr-1" />
                             {language === 'en' ? 'Call' : 'Panggil'}
-                          </Button>
-                          <Button size="sm" variant="outline" className="flex-1" onClick={() => handleMessageContact(contact)}>
-                            <MessageCircle className="w-3 h-3 mr-1" />
-                            {language === 'en' ? 'Message' : 'Mesej'}
                           </Button>
                         </div>
                       </CardContent>
