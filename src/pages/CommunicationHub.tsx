@@ -15,6 +15,7 @@ import {
 import CommunityChat from '@/components/communication/CommunityChat';
 import { useCommunicationStats } from '@/hooks/use-communication-stats';
 import { useUserPresence } from '@/hooks/use-user-presence';
+import RealTimePresenceIndicator from '@/components/communication/RealTimePresenceIndicator';
 import { NotificationTest } from '@/components/communication/NotificationTest';
 
 import SmartNotifications from '@/components/communication/SmartNotifications';
@@ -141,6 +142,19 @@ export default function CommunicationHub() {
             </CardContent>
           </Card>
         )}
+
+        {/* Real-time Presence Indicator */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              {language === 'en' ? 'Who\'s Online' : 'Siapa Dalam Talian'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RealTimePresenceIndicator showList={true} maxUsers={8} />
+          </CardContent>
+        </Card>
 
         {/* Notification Settings */}
         {showNotifications && (

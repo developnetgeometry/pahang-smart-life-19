@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotificationSystem } from '@/hooks/use-notification-system';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Bell, 
   MessageSquare, 
@@ -14,7 +16,9 @@ import {
   Mail,
   Smartphone,
   Volume2,
-  VolumeX
+  VolumeX,
+  Check,
+  Trash2
 } from 'lucide-react';
 
 interface NotificationSettings {
@@ -30,6 +34,16 @@ interface NotificationSettings {
 
 export default function NotificationCenter() {
   const { language } = useAuth();
+  const { toast } = useToast();
+  const { 
+    notifications, 
+    unreadCount, 
+    preferences, 
+    markAsRead, 
+    markAllAsRead, 
+    updatePreferences 
+  } = useNotificationSystem();
+  
   const [settings, setSettings] = useState<NotificationSettings>({
     messages: true,
     calls: true,
@@ -41,11 +55,33 @@ export default function NotificationCenter() {
     push: true
   });
 
-  const updateSetting = (key: keyof NotificationSettings) => {
+  const updateSetting = async (key: keyof NotificationSettings) => {
+    const newValue = !settings[key];
     setSettings(prev => ({
       ...prev,
-      [key]: !prev[key]
+      [key]: newValue
     }));
+
+    // Save to database via notification system hook
+    try {
+      await updatePreferences({ [key]: newValue });
+      toast({
+        title: language === 'en' ? 'Settings Updated' : 'Tetapan Dikemas Kini',
+        description: language === 'en' ? 'Notification preferences saved' : 'Pilihan notifikasi disimpan',
+      });
+    } catch (error) {
+      console.error('Error updating preferences:', error);
+      // Revert on error
+      setSettings(prev => ({
+        ...prev,
+        [key]: !newValue
+      }));
+      toast({
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' ? 'Failed to save preferences' : 'Gagal menyimpan pilihan',
+        variant: 'destructive',
+      });
+    }
   };
 
   const notificationTypes = [
@@ -203,13 +239,70 @@ export default function NotificationCenter() {
         </CardContent>
       </Card>
 
+      {/* Recent Notifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            {language === 'en' ? 'Recent Notifications' : 'Notifikasi Terkini'}
+            <Badge variant="secondary">
+              {unreadCount} {language === 'en' ? 'unread' : 'belum dibaca'}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {language === 'en' ? 'No notifications' : 'Tiada notifikasi'}
+              </div>
+            ) : (
+              notifications.slice(0, 10).map((notification) => (
+                <div 
+                  key={notification.id}
+                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                    !notification.is_read ? 'border-primary bg-primary/5' : ''
+                  }`}
+                  onClick={() => markAsRead(notification.id)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium text-sm">{notification.title}</h4>
+                        {!notification.is_read && (
+                          <div className="w-2 h-2 bg-primary rounded-full" />
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {notification.message}
+                      </p>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(notification.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          
+          {notifications.length > 0 && (
+            <div className="flex justify-between pt-4 border-t">
+              <Button variant="outline" size="sm" onClick={markAllAsRead}>
+                <Check className="w-4 h-4 mr-2" />
+                {language === 'en' ? 'Mark All Read' : 'Tanda Semua Dibaca'}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Quick Actions */}
       <div className="flex space-x-2">
         <Button variant="outline" className="flex-1">
           <VolumeX className="w-4 h-4 mr-2" />
           {language === 'en' ? 'Mute All' : 'Bisukan Semua'}
         </Button>
-        <Button className="flex-1">
+        <Button className="flex-1" onClick={() => toast({ title: 'Settings saved successfully' })}>
           {language === 'en' ? 'Save Settings' : 'Simpan Tetapan'}
         </Button>
       </div>

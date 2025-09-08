@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { useNotificationSystem } from '@/hooks/use-notification-system';
 import { 
   Bell,
   BellOff,
@@ -59,6 +60,12 @@ interface SmartNotification {
 export default function SmartNotifications() {
   const { user, language } = useAuth();
   const { toast } = useToast();
+  const { 
+    notifications: realNotifications, 
+    unreadCount: realUnreadCount, 
+    markAsRead: realMarkAsRead, 
+    markAllAsRead: realMarkAllAsRead 
+  } = useNotificationSystem();
   const [notifications, setNotifications] = useState<SmartNotification[]>([]);
   const [preferences, setPreferences] = useState<NotificationPreference[]>([
     {
@@ -244,7 +251,8 @@ export default function SmartNotifications() {
     return language === 'en' ? `${diffDays}d ago` : `${diffDays}h lalu`;
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // Use real unread count from hook, fallback to local count
+  const unreadCount = realUnreadCount || notifications.filter(n => !n.read).length;
 
   return (
     <div className="space-y-6">
@@ -344,7 +352,10 @@ export default function SmartNotifications() {
             {language === 'en' ? 'Recent Notifications' : 'Notifikasi Terkini'}
             <div className="flex gap-2">
               {unreadCount > 0 && (
-                <Button variant="outline" size="sm" onClick={markAllAsRead}>
+                <Button variant="outline" size="sm" onClick={() => {
+                  realMarkAllAsRead();
+                  markAllAsRead();
+                }}>
                   {language === 'en' ? 'Mark All Read' : 'Tanda Semua Dibaca'}
                 </Button>
               )}

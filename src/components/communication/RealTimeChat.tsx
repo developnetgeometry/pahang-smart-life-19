@@ -35,53 +35,93 @@ export function RealTimeChat({ selectedChannel }: Props) {
     scrollToBottom();
   }, [messages]);
 
-  // Simulate real-time chat with demo data and subscriptions
+  // Load real messages from database and set up real-time subscriptions
   useEffect(() => {
-    // Load initial messages for the channel
-    const loadMessages = () => {
-      const demoMessages: Message[] = [
-        {
-          id: '1',
-          content: language === 'en' 
-            ? 'Welcome to the community chat! Feel free to ask questions or share updates.'
-            : 'Selamat datang ke sembang komuniti! Jangan ragu untuk bertanya atau berkongsi maklumat.',
-          sender_name: 'Community Admin',
-          sender_role: 'admin',
-          created_at: new Date(Date.now() - 3600000).toISOString(),
-          channel: selectedChannel
-        },
-        {
-          id: '2',
-          content: language === 'en'
-            ? 'Has anyone noticed the new security cameras at the main entrance? They look great!'
-            : 'Ada sesiapa perasan kamera keselamatan baru di pintu masuk utama? Nampak bagus!',
-          sender_name: 'Ahmad Rahman',
-          sender_role: 'resident',
-          created_at: new Date(Date.now() - 1800000).toISOString(),
-          channel: selectedChannel
-        },
-        {
-          id: '3',
-          content: language === 'en'
-            ? 'Yes, they were installed last week as part of our security upgrade program.'
-            : 'Ya, ia dipasang minggu lepas sebagai sebahagian daripada program peningkatan keselamatan kami.',
-          sender_name: 'Security Team',
-          sender_role: 'security',
-          created_at: new Date(Date.now() - 900000).toISOString(),
-          channel: selectedChannel
+    const loadMessages = async () => {
+      try {
+        // Fetch messages from the database based on channel
+        const { data: chatMessages, error } = await supabase
+          .from('chat_messages')
+          .select(`
+            id,
+            message_text,
+            created_at,
+            sender_id,
+            profiles!inner(full_name, email)
+          `)
+          .eq('room_id', selectedChannel)
+          .eq('is_deleted', false)
+          .order('created_at', { ascending: true })
+          .limit(50);
+
+        if (error) {
+          console.error('Error loading messages:', error);
+          return;
         }
-      ];
-      setMessages(demoMessages);
+
+        // Transform database messages to UI format
+        const transformedMessages: Message[] = (chatMessages || []).map(msg => ({
+          id: msg.id,
+          content: msg.message_text,
+          sender_name: msg.profiles?.full_name || msg.profiles?.email || 'Unknown User',
+          sender_role: 'resident', // Default role - could be enhanced to fetch user roles
+          created_at: msg.created_at,
+          channel: selectedChannel
+        }));
+
+        setMessages(transformedMessages);
+      } catch (error) {
+        console.error('Error loading messages:', error);
+        // Fallback to welcome message if no messages exist
+        if (messages.length === 0) {
+          const welcomeMessage: Message = {
+            id: 'welcome',
+            content: language === 'en' 
+              ? 'Welcome to the community chat! Feel free to ask questions or share updates.'
+              : 'Selamat datang ke sembang komuniti! Jangan ragu untuk bertanya atau berkongsi maklumat.',
+            sender_name: 'Community Admin',
+            sender_role: 'admin',
+            created_at: new Date().toISOString(),
+            channel: selectedChannel
+          };
+          setMessages([welcomeMessage]);
+        }
+      }
     };
 
     loadMessages();
 
-    // Set up real-time subscription
+    // Set up real-time subscriptions for both messages and presence
     const channel = supabase
       .channel(`chat-${selectedChannel}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `room_id=eq.${selectedChannel}`
+      }, async (payload) => {
+        // Fetch sender profile for new message
+        const { data: senderProfile } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', payload.new.sender_id)
+          .single();
+
+        const newMessage: Message = {
+          id: payload.new.id,
+          content: payload.new.message_text,
+          sender_name: senderProfile?.full_name || senderProfile?.email || 'Unknown User',
+          sender_role: 'resident',
+          created_at: payload.new.created_at,
+          channel: selectedChannel
+        };
+
+        setMessages(prev => [...prev, newMessage]);
+      })
       .on('presence', { event: 'sync' }, () => {
         const newState = channel.presenceState();
-        setOnlineUsers(Object.values(newState).flat());
+        const users = Object.values(newState).flat();
+        setOnlineUsers(users);
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
         console.log('User joined:', key, newPresences);
@@ -94,8 +134,8 @@ export function RealTimeChat({ selectedChannel }: Props) {
           // Track user presence
           await channel.track({
             user_id: user?.id,
-            display_name: user?.display_name,
-            role: user?.user_role,
+            display_name: user?.display_name || user?.email || 'Anonymous',
+            role: user?.user_role || 'resident',
             online_at: new Date().toISOString()
           });
         }
@@ -109,25 +149,32 @@ export function RealTimeChat({ selectedChannel }: Props) {
   const sendMessage = async () => {
     if (!newMessage.trim() || !user) return;
 
-    const message: Message = {
-      id: Date.now().toString(),
-      content: newMessage,
-      sender_name: user.display_name,
-      sender_role: user.user_role,
-      created_at: new Date().toISOString(),
-      channel: selectedChannel
-    };
-
-    // Add to local state immediately for instant feedback
-    setMessages(prev => [...prev, message]);
-    setNewMessage('');
+    const messageText = newMessage.trim();
+    setNewMessage(''); // Clear input immediately for better UX
 
     try {
-      // In a real implementation, this would save to Supabase
-      // and broadcast to other users via real-time subscriptions
-      console.log('Sending message:', message);
+      // Save message to database - this will trigger the real-time subscription
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({
+          room_id: selectedChannel,
+          sender_id: user.id,
+          message_text: messageText,
+          message_type: 'text'
+        });
+
+      if (error) {
+        console.error('Error sending message:', error);
+        // Restore message on error
+        setNewMessage(messageText);
+        return;
+      }
+
+      console.log('Message sent successfully');
     } catch (error) {
       console.error('Error sending message:', error);
+      // Restore message on error
+      setNewMessage(messageText);
     }
   };
 
@@ -253,21 +300,18 @@ export function RealTimeChat({ selectedChannel }: Props) {
               <div className="w-2 h-2 bg-green-500 rounded-full" />
             </div>
 
-            {/* Demo Online Users */}
-            {[
-              { name: 'Ahmad Rahman', role: 'resident' },
-              { name: 'Security Team', role: 'security' },
-              { name: 'Maintenance Staff', role: 'manager' },
-              { name: 'Sarah Lee', role: 'resident' }
-            ].map((demoUser, index) => (
-              <div key={index} className="flex items-center gap-2 p-2 hover:bg-muted/30 rounded-lg transition-colors">
+            {/* Real Online Users */}
+            {onlineUsers.map((onlineUser: any, index) => (
+              <div key={onlineUser.user_id || index} className="flex items-center gap-2 p-2 hover:bg-muted/30 rounded-lg transition-colors">
                 <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-                  {demoUser.name.charAt(0)}
+                  {(onlineUser.display_name || 'U').charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{demoUser.name}</p>
-                  <Badge className={getRoleColor(demoUser.role)}>
-                    {demoUser.role}
+                  <p className="text-sm font-medium truncate">
+                    {onlineUser.display_name || 'Anonymous User'}
+                  </p>
+                  <Badge className={getRoleColor(onlineUser.role || 'resident')}>
+                    {onlineUser.role || 'resident'}
                   </Badge>
                 </div>
                 <div className="w-2 h-2 bg-green-500 rounded-full" />
