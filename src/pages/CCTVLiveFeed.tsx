@@ -96,6 +96,7 @@ export default function CCTVLiveFeed() {
   const { isModuleEnabled } = useModuleAccess();
   const [selectedCamera, setSelectedCamera] = useState("all");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [motionDetectionEnabled, setMotionDetectionEnabled] = useState(false);
   const [motionSensitivity, setMotionSensitivity] = useState([30]);
   const [motionEvents] = useState<
@@ -587,13 +588,23 @@ export default function CCTVLiveFeed() {
                             {t.liveFeed}
                           </Badge>
                         )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsFullscreen(!isFullscreen)}
-                        >
-                          <Maximize className="h-4 w-4" />
-                        </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsFullscreen(!isFullscreen)}
+                          >
+                            <Maximize className="h-4 w-4" />
+                          </Button>
+                          {isPlaying && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setIsPlaying(false)}
+                            >
+                              <Square className="h-4 w-4 mr-1" />
+                              Stop
+                            </Button>
+                          )}
                       </div>
                     </div>
                   </CardHeader>
@@ -607,10 +618,28 @@ export default function CCTVLiveFeed() {
                       <div className="absolute inset-0 flex items-center justify-center">
                         {mainCamera?.status === "online" &&
                         mainCamera?.rtspUrl ? (
-                          <StreamPlayer
-                            src={mainCamera.rtspUrl}
-                            className="w-full h-full object-contain"
-                          />
+                          <>
+                            {!isPlaying ? (
+                              <div className="text-white text-center">
+                                <Video className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                                <p className="text-lg mb-4">{t.liveFeed}</p>
+                                <Button
+                                  size="lg"
+                                  onClick={() => setIsPlaying(true)}
+                                  className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                                >
+                                  <Play className="h-6 w-6 mr-2" />
+                                  {t.play}
+                                </Button>
+                              </div>
+                            ) : (
+                              <StreamPlayer
+                                src={mainCamera.rtspUrl}
+                                className="w-full h-full object-contain"
+                                autoPlay={true}
+                              />
+                            )}
+                          </>
                         ) : (
                           <div className="text-white text-center">
                             <VideoOff className="h-16 w-16 mx-auto mb-4 opacity-50" />

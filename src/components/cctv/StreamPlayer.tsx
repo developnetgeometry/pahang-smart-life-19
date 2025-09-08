@@ -32,7 +32,7 @@ const isRtsp = (url: string) => url.toLowerCase().startsWith("rtsp://");
 export default function StreamPlayer({
   src,
   className,
-  autoPlay = true,
+  autoPlay = false,
   controls = true,
   muted = true,
 }: Props) {
