@@ -48,7 +48,6 @@ import {
   ZoomOut,
   Home,
   Play,
-  Square,
   Wifi,
   WifiOff,
   Activity,
@@ -96,7 +95,6 @@ export default function CCTVLiveFeed() {
   const { isModuleEnabled } = useModuleAccess();
   const [selectedCamera, setSelectedCamera] = useState("all");
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [motionDetectionEnabled, setMotionDetectionEnabled] = useState(false);
   const [motionSensitivity, setMotionSensitivity] = useState([30]);
   const [motionEvents] = useState<
@@ -224,13 +222,15 @@ export default function CCTVLiveFeed() {
   const t = text[language];
 
   // Check if CCTV module is enabled
-  if (!isModuleEnabled('cctv')) {
+  if (!isModuleEnabled("cctv")) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-12">
           <div className="text-center">
             <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
+            <h3 className="text-lg font-medium text-foreground mb-2">
+              Module Disabled
+            </h3>
             <p className="text-sm text-muted-foreground">
               The CCTV module is not enabled for this community.
             </p>
@@ -543,655 +543,609 @@ export default function CCTVLiveFeed() {
 
   return (
     <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
-            <p className="text-muted-foreground">{t.subtitle}</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <RotateCcw className="h-4 w-4 mr-2" />
-              {t.refresh}
-            </Button>
-            <Button variant="outline" size="sm">
-              <Settings className="h-4 w-4 mr-2" />
-              {t.settings}
-            </Button>
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
+          <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm">
+            <RotateCcw className="h-4 w-4 mr-2" />
+            {t.refresh}
+          </Button>
+          <Button variant="outline" size="sm">
+            <Settings className="h-4 w-4 mr-2" />
+            {t.settings}
+          </Button>
+        </div>
+      </div>
 
-        <Tabs defaultValue="live" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="live">{t.liveFeed}</TabsTrigger>
-            <TabsTrigger value="recordings">{t.recordings}</TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="live" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="live">{t.liveFeed}</TabsTrigger>
+          <TabsTrigger value="recordings">{t.recordings}</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="live" className="mt-6">
-            <div className="flex flex-col lg:flex-row gap-6">
-              {/* Main Feed */}
-              <div className="flex-1">
-                <Card className="overflow-hidden">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-lg">
-                          {mainCamera?.name || t.liveFeed}
-                        </CardTitle>
-                        <CardDescription>
-                          {mainCamera?.location}
-                        </CardDescription>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {mainCamera?.status === "online" && (
-                          <Badge variant="outline" className="text-green-600">
-                            <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse" />
-                            {t.liveFeed}
-                          </Badge>
-                        )}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setIsFullscreen(!isFullscreen)}
-                          >
-                            <Maximize className="h-4 w-4" />
-                          </Button>
-                          {isPlaying && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setIsPlaying(false)}
-                            >
-                              <Square className="h-4 w-4 mr-1" />
-                              Stop
-                            </Button>
-                          )}
-                      </div>
+        <TabsContent value="live" className="mt-6">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Main Feed */}
+            <div className="flex-1">
+              <Card className="overflow-hidden">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">
+                        {mainCamera?.name || t.liveFeed}
+                      </CardTitle>
+                      <CardDescription>{mainCamera?.location}</CardDescription>
                     </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div
-                      className={`bg-black relative ${
-                        isFullscreen ? "h-screen" : "aspect-video"
-                      }`}
-                    >
-                      {/* Main Video Feed */}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        {mainCamera?.status === "online" &&
-                        mainCamera?.rtspUrl ? (
-                          <>
-                            {!isPlaying ? (
-                              <div className="text-white text-center">
-                                <Video className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                                <p className="text-lg mb-4">{t.liveFeed}</p>
-                                <Button
-                                  size="lg"
-                                  onClick={() => setIsPlaying(true)}
-                                  className="bg-white/20 hover:bg-white/30 text-white border-white/30"
-                                >
-                                  <Play className="h-6 w-6 mr-2" />
-                                  {t.play}
-                                </Button>
-                              </div>
-                            ) : (
-                              <StreamPlayer
-                                src={mainCamera.rtspUrl}
-                                className="w-full h-full object-contain"
-                                autoPlay={true}
-                              />
-                            )}
-                          </>
-                        ) : (
-                          <div className="text-white text-center">
-                            <VideoOff className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                            <p className="text-lg mb-2">{t.cameraOffline}</p>
-                            <p className="text-sm opacity-75">
-                              {mainCamera?.name}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* PTZ Controls Overlay */}
-                      {mainCamera?.hasPtz && (
-                        <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-sm rounded-lg p-3 text-white">
-                          <div className="text-xs font-medium mb-2">
-                            {t.ptzControls}
-                          </div>
-
-                          {/* Pan/Tilt */}
-                          <div className="mb-3">
-                            <div className="text-xs mb-1">
-                              {t.pan} / {t.tilt}
-                            </div>
-                            <div className="grid grid-cols-3 gap-1 w-20">
-                              <div></div>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
-                                onClick={() => handlePtzControl("up")}
-                              >
-                                <ChevronUp className="h-3 w-3" />
-                              </Button>
-                              <div></div>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
-                                onClick={() => handlePtzControl("left")}
-                              >
-                                <ChevronLeft className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
-                                onClick={() => handlePtzControl("home")}
-                              >
-                                <Home className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
-                                onClick={() => handlePtzControl("right")}
-                              >
-                                <ChevronRight className="h-3 w-3" />
-                              </Button>
-                              <div></div>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
-                                onClick={() => handlePtzControl("down")}
-                              >
-                                <ChevronDown className="h-3 w-3" />
-                              </Button>
-                              <div></div>
-                            </div>
-                          </div>
-
-                          {/* Zoom */}
-                          <div className="mb-3">
-                            <div className="text-xs mb-1">{t.zoom}</div>
-                            <div className="flex gap-1 justify-center">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
-                                onClick={() => handleZoom("out")}
-                              >
-                                <ZoomOut className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
-                                onClick={() => handleZoom("in")}
-                              >
-                                <ZoomIn className="h-3 w-3" />
-                              </Button>
-                            </div>
-                            <div className="text-xs text-center mt-1">
-                              {ptzPosition.zoom.toFixed(1)}x
-                            </div>
-                          </div>
-
-                          {/* Position */}
-                          <div className="text-xs space-y-1 mb-3">
-                            <div>
-                              {t.pan}: {ptzPosition.pan}°
-                            </div>
-                            <div>
-                              {t.tilt}: {ptzPosition.tilt}°
-                            </div>
-                          </div>
-
-                          {/* Presets */}
-                          {mainCamera.presets &&
-                            mainCamera.presets.length > 0 && (
-                              <div>
-                                <div className="text-xs mb-1">{t.presets}</div>
-                                <div className="flex flex-wrap gap-1">
-                                  {mainCamera.presets.map((preset) => (
-                                    <Button
-                                      key={preset}
-                                      size="sm"
-                                      variant="outline"
-                                      className="text-xs h-5 px-2 bg-white/20 border-white/30 text-white hover:bg-white/30"
-                                      onClick={() => handlePreset(preset)}
-                                    >
-                                      {preset}
-                                    </Button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
+                    <div className="flex items-center gap-2">
+                      {mainCamera?.status === "online" && (
+                        <Badge variant="outline" className="text-green-600">
+                          <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse" />
+                          {t.liveFeed}
+                        </Badge>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsFullscreen(!isFullscreen)}
+                      >
+                        <Maximize className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div
+                    className={`bg-black relative ${
+                      isFullscreen ? "h-screen" : "aspect-video"
+                    }`}
+                  >
+                    {/* Main Video Feed */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      {mainCamera?.status === "online" &&
+                      mainCamera?.rtspUrl ? (
+                        <StreamPlayer
+                          src={mainCamera.rtspUrl}
+                          className="w-full h-full object-contain"
+                          autoPlay={false}
+                          controls={true}
+                          muted={true}
+                        />
+                      ) : (
+                        <div className="text-white text-center">
+                          <VideoOff className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                          <p className="text-lg mb-2">{t.cameraOffline}</p>
+                          <p className="text-sm opacity-75">
+                            {mainCamera?.name}
+                          </p>
                         </div>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
 
-                {/* Camera Controls */}
-                <div className="mt-4 space-y-4">
-                  <Select
-                    value={selectedCamera}
-                    onValueChange={setSelectedCamera}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t.selectCamera} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t.allCameras}</SelectItem>
-                      {accessibleCameras.map((camera) => (
-                        <SelectItem key={camera.id} value={camera.id}>
-                          {camera.name} - {camera.location}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    {/* PTZ Controls Overlay */}
+                    {mainCamera?.hasPtz && (
+                      <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-sm rounded-lg p-3 text-white">
+                        <div className="text-xs font-medium mb-2">
+                          {t.ptzControls}
+                        </div>
 
-                  {/* RTSP Connection */}
-                  {mainCamera && (
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          {rtspConnected ? (
-                            <Wifi className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <WifiOff className="h-4 w-4 text-red-500" />
+                        {/* Pan/Tilt */}
+                        <div className="mb-3">
+                          <div className="text-xs mb-1">
+                            {t.pan} / {t.tilt}
+                          </div>
+                          <div className="grid grid-cols-3 gap-1 w-20">
+                            <div></div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                              onClick={() => handlePtzControl("up")}
+                            >
+                              <ChevronUp className="h-3 w-3" />
+                            </Button>
+                            <div></div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                              onClick={() => handlePtzControl("left")}
+                            >
+                              <ChevronLeft className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                              onClick={() => handlePtzControl("home")}
+                            >
+                              <Home className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                              onClick={() => handlePtzControl("right")}
+                            >
+                              <ChevronRight className="h-3 w-3" />
+                            </Button>
+                            <div></div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                              onClick={() => handlePtzControl("down")}
+                            >
+                              <ChevronDown className="h-3 w-3" />
+                            </Button>
+                            <div></div>
+                          </div>
+                        </div>
+
+                        {/* Zoom */}
+                        <div className="mb-3">
+                          <div className="text-xs mb-1">{t.zoom}</div>
+                          <div className="flex gap-1 justify-center">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                              onClick={() => handleZoom("out")}
+                            >
+                              <ZoomOut className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 w-6 p-0 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                              onClick={() => handleZoom("in")}
+                            >
+                              <ZoomIn className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <div className="text-xs text-center mt-1">
+                            {ptzPosition.zoom.toFixed(1)}x
+                          </div>
+                        </div>
+
+                        {/* Position */}
+                        <div className="text-xs space-y-1 mb-3">
+                          <div>
+                            {t.pan}: {ptzPosition.pan}°
+                          </div>
+                          <div>
+                            {t.tilt}: {ptzPosition.tilt}°
+                          </div>
+                        </div>
+
+                        {/* Presets */}
+                        {mainCamera.presets &&
+                          mainCamera.presets.length > 0 && (
+                            <div>
+                              <div className="text-xs mb-1">{t.presets}</div>
+                              <div className="flex flex-wrap gap-1">
+                                {mainCamera.presets.map((preset) => (
+                                  <Button
+                                    key={preset}
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs h-5 px-2 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                                    onClick={() => handlePreset(preset)}
+                                  >
+                                    {preset}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
                           )}
-                          {t.rtspConnection}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="text-xs">
-                          <span className="text-muted-foreground">URL: </span>
-                          <span className="font-mono text-xs break-all">
-                            {mainCamera.rtspUrl}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <Badge
-                            variant={rtspConnected ? "default" : "secondary"}
-                          >
-                            {rtspConnected ? t.connected : t.disconnected}
-                          </Badge>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={handleRtspConnection}
-                          >
-                            {rtspConnected ? t.disconnect : t.connect}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-                  {/* Motion Detection */}
+              {/* Camera Controls */}
+              <div className="mt-4 space-y-4">
+                <Select
+                  value={selectedCamera}
+                  onValueChange={setSelectedCamera}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t.selectCamera} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t.allCameras}</SelectItem>
+                    {accessibleCameras.map((camera) => (
+                      <SelectItem key={camera.id} value={camera.id}>
+                        {camera.name} - {camera.location}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* RTSP Connection */}
+                {mainCamera && (
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm flex items-center gap-2">
-                        <Activity className="h-4 w-4" />
-                        {t.motionDetection}
+                        {rtspConnected ? (
+                          <Wifi className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <WifiOff className="h-4 w-4 text-red-500" />
+                        )}
+                        {t.rtspConnection}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">
-                          {t.enableMotionDetection}
+                    <CardContent className="space-y-3">
+                      <div className="text-xs">
+                        <span className="text-muted-foreground">URL: </span>
+                        <span className="font-mono text-xs break-all">
+                          {mainCamera.rtspUrl}
                         </span>
-                        <Switch
-                          checked={motionDetectionEnabled}
-                          onCheckedChange={setMotionDetectionEnabled}
-                        />
                       </div>
-
-                      {motionDetectionEnabled && (
-                        <>
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">
-                                {t.sensitivity}: {motionSensitivity[0]}
-                              </span>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <span>Low</span>
-                                <span>High</span>
-                              </div>
-                            </div>
-                            <Slider
-                              value={motionSensitivity}
-                              onValueChange={setMotionSensitivity}
-                              max={100}
-                              min={1}
-                              step={1}
-                              className="w-full"
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <div className="text-sm font-medium">
-                              {t.recentEvents}
-                            </div>
-                            <div className="p-3 border rounded-lg bg-muted/30">
-                              {motionEvents.length > 0 ? (
-                                <div className="space-y-2">
-                                  {motionEvents.map((event) => (
-                                    <div
-                                      key={event.id}
-                                      className="text-xs p-2 bg-background rounded border"
-                                    >
-                                      <div className="font-medium">
-                                        {event.camera}
-                                      </div>
-                                      <div className="text-muted-foreground">
-                                        {event.timestamp}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <div className="text-sm text-muted-foreground text-center py-2">
-                                  {t.noMotionEvents}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </>
-                      )}
+                      <div className="flex items-center justify-between">
+                        <Badge
+                          variant={rtspConnected ? "default" : "secondary"}
+                        >
+                          {rtspConnected ? t.connected : t.disconnected}
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleRtspConnection}
+                        >
+                          {rtspConnected ? t.disconnect : t.connect}
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
-                </div>
-              </div>
+                )}
 
-              {/* Camera List */}
-              <div className="w-full lg:w-80">
+                {/* Motion Detection */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{t.allCameras}</CardTitle>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Activity className="h-4 w-4" />
+                      {t.motionDetection}
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    {accessibleCameras.map((camera) => (
-                      <div
-                        key={camera.id}
-                        className={`p-3 border rounded-lg cursor-pointer transition-colors hover:bg-muted ${
-                          selectedCamera === camera.id
-                            ? "border-primary bg-muted"
-                            : ""
-                        }`}
-                        onClick={() => setSelectedCamera(camera.id)}
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <h4 className="font-medium text-sm">
-                              {camera.name}
-                            </h4>
-                            <p className="text-xs text-muted-foreground">
-                              {camera.location}
-                            </p>
-                          </div>
-                          <Badge
-                            className={getStatusColor(camera.status)}
-                            variant="secondary"
-                          >
-                            {getStatusText(camera.status)}
-                          </Badge>
-                        </div>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">{t.enableMotionDetection}</span>
+                      <Switch
+                        checked={motionDetectionEnabled}
+                        onCheckedChange={setMotionDetectionEnabled}
+                      />
+                    </div>
 
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-2">
-                            {getSignalIcon(camera.signal)}
-                            <span>{getSignalText(camera.signal)}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {camera.isRecording ? (
-                              <Eye className="h-3 w-3 text-red-500" />
-                            ) : (
-                              <EyeOff className="h-3 w-3 text-gray-400" />
-                            )}
-                            <span
-                              className={
-                                camera.isRecording
-                                  ? "text-red-500"
-                                  : "text-gray-400"
-                              }
-                            >
-                              {camera.isRecording
-                                ? t.recording
-                                : t.notRecording}
+                    {motionDetectionEnabled && (
+                      <>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">
+                              {t.sensitivity}: {motionSensitivity[0]}
                             </span>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>Low</span>
+                              <span>High</span>
+                            </div>
                           </div>
+                          <Slider
+                            value={motionSensitivity}
+                            onValueChange={setMotionSensitivity}
+                            max={100}
+                            min={1}
+                            step={1}
+                            className="w-full"
+                          />
                         </div>
 
-                        <div className="mt-2 text-xs text-muted-foreground">
-                          {t.lastUpdate}: {camera.lastUpdate}
+                        <div className="space-y-2">
+                          <div className="text-sm font-medium">
+                            {t.recentEvents}
+                          </div>
+                          <div className="p-3 border rounded-lg bg-muted/30">
+                            {motionEvents.length > 0 ? (
+                              <div className="space-y-2">
+                                {motionEvents.map((event) => (
+                                  <div
+                                    key={event.id}
+                                    className="text-xs p-2 bg-background rounded border"
+                                  >
+                                    <div className="font-medium">
+                                      {event.camera}
+                                    </div>
+                                    <div className="text-muted-foreground">
+                                      {event.timestamp}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-sm text-muted-foreground text-center py-2">
+                                {t.noMotionEvents}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               </div>
             </div>
-          </TabsContent>
 
-          <TabsContent value="recordings" className="mt-6">
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-semibold mb-2">{t.recordings}</h2>
-                <p className="text-muted-foreground">{t.recordingsSubtitle}</p>
-              </div>
+            {/* Camera List */}
+            <div className="w-full lg:w-80">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">{t.allCameras}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {accessibleCameras.map((camera) => (
+                    <div
+                      key={camera.id}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors hover:bg-muted ${
+                        selectedCamera === camera.id
+                          ? "border-primary bg-muted"
+                          : ""
+                      }`}
+                      onClick={() => setSelectedCamera(camera.id)}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm">{camera.name}</h4>
+                          <p className="text-xs text-muted-foreground">
+                            {camera.location}
+                          </p>
+                        </div>
+                        <Badge
+                          className={getStatusColor(camera.status)}
+                          variant="secondary"
+                        >
+                          {getStatusText(camera.status)}
+                        </Badge>
+                      </div>
 
-              {mockRecordings.length > 0 ? (
-                <div className="grid gap-4">
-                  {mockRecordings.map((recording) => (
-                    <Card key={recording.id} className="overflow-hidden">
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 space-y-3">
-                            <div className="flex items-center gap-2">
-                              <Badge
-                                variant={
-                                  recording.eventType === "alarm"
-                                    ? "destructive"
-                                    : "secondary"
-                                }
-                                className="capitalize"
-                              >
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          {getSignalIcon(camera.signal)}
+                          <span>{getSignalText(camera.signal)}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {camera.isRecording ? (
+                            <Eye className="h-3 w-3 text-red-500" />
+                          ) : (
+                            <EyeOff className="h-3 w-3 text-gray-400" />
+                          )}
+                          <span
+                            className={
+                              camera.isRecording
+                                ? "text-red-500"
+                                : "text-gray-400"
+                            }
+                          >
+                            {camera.isRecording ? t.recording : t.notRecording}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        {t.lastUpdate}: {camera.lastUpdate}
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="recordings" className="mt-6">
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold mb-2">{t.recordings}</h2>
+              <p className="text-muted-foreground">{t.recordingsSubtitle}</p>
+            </div>
+
+            {mockRecordings.length > 0 ? (
+              <div className="grid gap-4">
+                {mockRecordings.map((recording) => (
+                  <Card key={recording.id} className="overflow-hidden">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={
+                                recording.eventType === "alarm"
+                                  ? "destructive"
+                                  : "secondary"
+                              }
+                              className="capitalize"
+                            >
+                              {t[recording.eventType as keyof typeof t] ||
+                                recording.eventType}
+                            </Badge>
+                            <span className="text-sm font-medium">
+                              {recording.cameraName}
+                            </span>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">
+                                {t.eventType}:{" "}
+                              </span>
+                              <span className="capitalize">
                                 {t[recording.eventType as keyof typeof t] ||
                                   recording.eventType}
-                              </Badge>
-                              <span className="text-sm font-medium">
-                                {recording.cameraName}
                               </span>
                             </div>
 
-                            <div className="space-y-2">
-                              <div className="text-sm">
-                                <span className="text-muted-foreground">
-                                  {t.eventType}:{" "}
-                                </span>
-                                <span className="capitalize">
-                                  {t[recording.eventType as keyof typeof t] ||
-                                    recording.eventType}
-                                </span>
-                              </div>
-
-                              <div className="text-sm">
-                                <span className="text-muted-foreground">
-                                  {language === "en"
-                                    ? "Start Time"
-                                    : "Masa Mula"}
-                                  :{" "}
-                                </span>
-                                <span className="font-mono">
-                                  {recording.startTime}
-                                </span>
-                              </div>
-
-                              <div className="text-sm">
-                                <span className="text-muted-foreground">
-                                  {language === "en"
-                                    ? "End Time"
-                                    : "Masa Tamat"}
-                                  :{" "}
-                                </span>
-                                <span className="font-mono">
-                                  {recording.endTime}
-                                </span>
-                              </div>
-
-                              <div className="flex items-center gap-4 text-sm">
-                                <div>
-                                  <span className="text-muted-foreground">
-                                    {t.duration}:{" "}
-                                  </span>
-                                  <span>{recording.duration}</span>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">
-                                    {t.fileSize}:{" "}
-                                  </span>
-                                  <span>{recording.fileSize}</span>
-                                </div>
-                              </div>
-
-                              {recording.description && (
-                                <div className="text-sm">
-                                  <span className="text-muted-foreground">
-                                    {language === "en"
-                                      ? "Description"
-                                      : "Keterangan"}
-                                    :{" "}
-                                  </span>
-                                  <span>{recording.description}</span>
-                                </div>
-                              )}
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">
+                                {language === "en" ? "Start Time" : "Masa Mula"}
+                                :{" "}
+                              </span>
+                              <span className="font-mono">
+                                {recording.startTime}
+                              </span>
                             </div>
-                          </div>
 
-                          <div className="flex flex-col gap-2">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  className="flex items-center gap-2"
-                                  onClick={() =>
-                                    setSelectedRecording(recording)
-                                  }
-                                >
-                                  <Play className="h-4 w-4" />
-                                  {t.play}
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-4xl w-full p-0">
-                                <DialogHeader className="p-6 pb-0">
-                                  <DialogTitle>{t.recordingPlayer}</DialogTitle>
-                                  <DialogDescription>
-                                    {selectedRecording?.cameraName} -{" "}
-                                    {selectedRecording?.startTime}
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="p-6 pt-0">
-                                  <div className="bg-black rounded-lg overflow-hidden mb-4">
-                                    <div className="aspect-video relative">
-                                      <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="text-white text-center">
-                                          <Video className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                                          <p className="text-lg mb-2">
-                                            {t.recordingPlayer}
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">
+                                {language === "en" ? "End Time" : "Masa Tamat"}:{" "}
+                              </span>
+                              <span className="font-mono">
+                                {recording.endTime}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-4 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">
+                                  {t.duration}:{" "}
+                                </span>
+                                <span>{recording.duration}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">
+                                  {t.fileSize}:{" "}
+                                </span>
+                                <span>{recording.fileSize}</span>
+                              </div>
+                            </div>
+
+                            {recording.description && (
+                              <div className="text-sm">
+                                <span className="text-muted-foreground">
+                                  {language === "en"
+                                    ? "Description"
+                                    : "Keterangan"}
+                                  :{" "}
+                                </span>
+                                <span>{recording.description}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                className="flex items-center gap-2"
+                                onClick={() => setSelectedRecording(recording)}
+                              >
+                                <Play className="h-4 w-4" />
+                                {t.play}
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-4xl w-full p-0">
+                              <DialogHeader className="p-6 pb-0">
+                                <DialogTitle>{t.recordingPlayer}</DialogTitle>
+                                <DialogDescription>
+                                  {selectedRecording?.cameraName} -{" "}
+                                  {selectedRecording?.startTime}
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="p-6 pt-0">
+                                <div className="bg-black rounded-lg overflow-hidden mb-4">
+                                  <div className="aspect-video relative">
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <div className="text-white text-center">
+                                        <Video className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                                        <p className="text-lg mb-2">
+                                          {t.recordingPlayer}
+                                        </p>
+                                        <p className="text-sm opacity-75">
+                                          {selectedRecording?.cameraName}
+                                        </p>
+                                        <div className="mt-4 p-2 bg-white/10 rounded">
+                                          <p className="text-xs">{t.loading}</p>
+                                          <p className="text-xs mt-1 font-mono">
+                                            {selectedRecording?.filePath}
                                           </p>
-                                          <p className="text-sm opacity-75">
-                                            {selectedRecording?.cameraName}
-                                          </p>
-                                          <div className="mt-4 p-2 bg-white/10 rounded">
-                                            <p className="text-xs">
-                                              {t.loading}
-                                            </p>
-                                            <p className="text-xs mt-1 font-mono">
-                                              {selectedRecording?.filePath}
-                                            </p>
-                                          </div>
                                         </div>
                                       </div>
                                     </div>
                                   </div>
-
-                                  {selectedRecording && (
-                                    <div className="grid grid-cols-2 gap-4 text-sm">
-                                      <div>
-                                        <span className="text-muted-foreground">
-                                          {t.eventType}:{" "}
-                                        </span>
-                                        <span className="capitalize">
-                                          {t[
-                                            selectedRecording.eventType as keyof typeof t
-                                          ] || selectedRecording.eventType}
-                                        </span>
-                                      </div>
-                                      <div>
-                                        <span className="text-muted-foreground">
-                                          {t.duration}:{" "}
-                                        </span>
-                                        <span>
-                                          {selectedRecording.duration}
-                                        </span>
-                                      </div>
-                                      <div>
-                                        <span className="text-muted-foreground">
-                                          {language === "en"
-                                            ? "Start Time"
-                                            : "Masa Mula"}
-                                          :{" "}
-                                        </span>
-                                        <span className="font-mono">
-                                          {selectedRecording.startTime}
-                                        </span>
-                                      </div>
-                                      <div>
-                                        <span className="text-muted-foreground">
-                                          {t.fileSize}:{" "}
-                                        </span>
-                                        <span>
-                                          {selectedRecording.fileSize}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  )}
                                 </div>
-                              </DialogContent>
-                            </Dialog>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="flex items-center gap-2"
-                            >
-                              <Download className="h-4 w-4" />
-                              {t.download}
-                            </Button>
-                          </div>
+
+                                {selectedRecording && (
+                                  <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        {t.eventType}:{" "}
+                                      </span>
+                                      <span className="capitalize">
+                                        {t[
+                                          selectedRecording.eventType as keyof typeof t
+                                        ] || selectedRecording.eventType}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        {t.duration}:{" "}
+                                      </span>
+                                      <span>{selectedRecording.duration}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        {language === "en"
+                                          ? "Start Time"
+                                          : "Masa Mula"}
+                                        :{" "}
+                                      </span>
+                                      <span className="font-mono">
+                                        {selectedRecording.startTime}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        {t.fileSize}:{" "}
+                                      </span>
+                                      <span>{selectedRecording.fileSize}</span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex items-center gap-2"
+                          >
+                            <Download className="h-4 w-4" />
+                            {t.download}
+                          </Button>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="p-8">
+                <div className="text-center text-muted-foreground">
+                  <Video className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg mb-2">{t.noRecordings}</p>
+                  <p className="text-sm">
+                    {language === "en"
+                      ? "Recorded events will appear here when available"
+                      : "Acara yang dirakam akan muncul di sini apabila tersedia"}
+                  </p>
                 </div>
-              ) : (
-                <Card className="p-8">
-                  <div className="text-center text-muted-foreground">
-                    <Video className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg mb-2">{t.noRecordings}</p>
-                    <p className="text-sm">
-                      {language === "en"
-                        ? "Recorded events will appear here when available"
-                        : "Acara yang dirakam akan muncul di sini apabila tersedia"}
-                    </p>
-                  </div>
-                </Card>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

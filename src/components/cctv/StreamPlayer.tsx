@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Play, Video } from "lucide-react";
 import HlsPlayer from "@/components/cctv/HlsPlayer";
 
 type Props = {
@@ -38,6 +40,7 @@ export default function StreamPlayer({
 }: Props) {
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(autoPlay);
 
   const gateway = import.meta.env.VITE_STREAM_GATEWAY_URL as string | undefined;
   const mjpegProxy = import.meta.env.VITE_MJPEG_PROXY_URL as string | undefined;
@@ -60,12 +63,34 @@ export default function StreamPlayer({
     setError(null);
   }, [src, strategy]);
 
+  // Show play button overlay if not playing
+  if (!isPlaying) {
+    return (
+      <div className={`bg-black relative ${className || ""}`}>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-white text-center">
+            <Video className="h-16 w-16 mx-auto mb-4 opacity-50" />
+            <p className="text-lg mb-4">Click to start streaming</p>
+            <Button
+              size="lg"
+              onClick={() => setIsPlaying(true)}
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+            >
+              <Play className="h-6 w-6 mr-2" />
+              Play
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (strategy === "hls") {
     return (
       <HlsPlayer
         src={getProxiedSrc(src)}
         className={className}
-        autoPlay={autoPlay}
+        autoPlay={false}
         controls={controls}
         muted={muted}
       />
@@ -77,7 +102,7 @@ export default function StreamPlayer({
       <video
         className={className}
         src={src}
-        autoPlay={autoPlay}
+        autoPlay={false}
         controls={controls}
         muted={muted}
         playsInline
@@ -107,7 +132,7 @@ export default function StreamPlayer({
         <HlsPlayer
           src={hlsFromGateway}
           className={className}
-          autoPlay={autoPlay}
+          autoPlay={false}
           controls={controls}
           muted={muted}
         />
@@ -130,7 +155,7 @@ export default function StreamPlayer({
       <HlsPlayer
         src={getProxiedSrc(src)}
         className={className}
-        autoPlay={autoPlay}
+        autoPlay={false}
         controls={controls}
         muted={muted}
       />
@@ -141,7 +166,7 @@ export default function StreamPlayer({
       <video
         className={className}
         src={src}
-        autoPlay={autoPlay}
+        autoPlay={false}
         controls={controls}
         muted={muted}
         playsInline
