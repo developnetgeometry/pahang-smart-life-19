@@ -185,7 +185,7 @@ export default function AdvertisementDetail() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="space-y-6">
           <div className="h-8 bg-muted rounded animate-pulse" />
           <div className="h-64 bg-muted rounded-lg animate-pulse" />
@@ -201,7 +201,7 @@ export default function AdvertisementDetail() {
 
   if (!advertisement) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold">Advertisement Not Found</h1>
           <p className="text-muted-foreground">
@@ -217,7 +217,7 @@ export default function AdvertisementDetail() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Button
