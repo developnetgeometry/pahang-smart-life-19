@@ -90,16 +90,16 @@ export function useHouseholdAccounts() {
       console.log('Starting spouse account creation for:', spouseData.email);
       
       // Check current user authentication
-      const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser();
-      console.log('Current user check:', { currentUser: !!currentUser, authError });
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('Current session check:', { hasSession: !!session, sessionError });
       
-      if (authError) {
-        console.error('Auth error:', authError);
-        throw new Error(`Authentication error: ${authError.message}`);
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error(`Authentication error: ${sessionError.message}`);
       }
       
-      if (!currentUser) {
-        throw new Error('Authentication session expired. Please log in again.');
+      if (!session?.user) {
+        throw new Error('Authentication session missing! Please refresh the page and log in again.');
       }
 
       // Check if spouse account already exists and is active
@@ -269,9 +269,9 @@ export function useHouseholdAccounts() {
 
     try {
       // Check current user authentication
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      if (!currentUser) {
-        throw new Error('Authentication session expired. Please log in again.');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        throw new Error('Authentication session missing! Please refresh the page and log in again.');
       }
       
       // Create authentication account for tenant
