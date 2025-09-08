@@ -5371,6 +5371,7 @@ export type Database = {
           activity_data: Json | null
           activity_type: string
           created_at: string
+          description: string | null
           district_id: string | null
           id: string
           module_name: string
@@ -5382,6 +5383,7 @@ export type Database = {
           activity_data?: Json | null
           activity_type: string
           created_at?: string
+          description?: string | null
           district_id?: string | null
           id?: string
           module_name: string
@@ -5393,6 +5395,7 @@ export type Database = {
           activity_data?: Json | null
           activity_type?: string
           created_at?: string
+          description?: string | null
           district_id?: string | null
           id?: string
           module_name?: string
