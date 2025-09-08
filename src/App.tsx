@@ -9,6 +9,7 @@ import { Layout } from "@/components/layout/Layout";
 import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import ServiceProviderLogin from "./pages/ServiceProviderLogin";
 import ComplaintDetail from "./pages/ComplaintDetail";
 import MyComplaints from "./pages/MyComplaints";
 import MyProfile from "./pages/MyProfile";
@@ -110,6 +111,14 @@ const App = () => (
               element={
                 <PublicRoute>
                   <Login />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/service-provider/login"
+              element={
+                <PublicRoute>
+                  <ServiceProviderLogin />
                 </PublicRoute>
               }
             />
