@@ -5,49 +5,65 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
-function corsHeaders(origin: string | null) {
-  return {
-    "Access-Control-Allow-Origin": origin ?? "*",
-    "Access-Control-Allow-Methods": "GET,OPTIONS",
-    "Access-Control-Allow-Headers": "*",
-  };
-}
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, cache-control",
+  "Access-Control-Allow-Credentials": "false",
+};
 
 serve(async (req) => {
   const { searchParams } = new URL(req.url);
+  
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: corsHeaders(req.headers.get("origin")),
-    });
+    return new Response(null, { headers: corsHeaders });
   }
 
   const url = searchParams.get("url");
   if (!url) {
     return new Response("Missing url param", {
       status: 400,
-      headers: corsHeaders(req.headers.get("origin")),
+      headers: corsHeaders,
     });
   }
 
+  console.log(`Proxying MJPEG stream: ${url}`);
+
   try {
-    const upstream = await fetch(url);
+    // Add User-Agent and other headers to avoid blocking
+    const upstream = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "image/*, */*",
+        "Accept-Encoding": "identity",
+        "Connection": "keep-alive",
+      },
+    });
+    
     if (!upstream.ok || !upstream.body) {
+      console.error(`Upstream error: ${upstream.status} ${upstream.statusText}`);
       return new Response(`Upstream error ${upstream.status}`, {
         status: 502,
-        headers: corsHeaders(req.headers.get("origin")),
+        headers: corsHeaders,
       });
     }
 
-    // Try to preserve content-type, default to multipart/x-mixed-replace
-    const contentType =
-      upstream.headers.get("content-type") ?? "multipart/x-mixed-replace";
-    const headers = new Headers(corsHeaders(req.headers.get("origin")));
-    headers.set("Content-Type", contentType);
-    return new Response(upstream.body, { status: 200, headers });
+    // Preserve content-type, default to multipart/x-mixed-replace for MJPEG
+    const contentType = upstream.headers.get("content-type") ?? "multipart/x-mixed-replace";
+    const responseHeaders = new Headers(corsHeaders);
+    responseHeaders.set("Content-Type", contentType);
+    responseHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
+    responseHeaders.set("Pragma", "no-cache");
+    responseHeaders.set("Expires", "0");
+    
+    console.log(`Successfully proxying stream with content-type: ${contentType}`);
+    return new Response(upstream.body, { status: 200, headers: responseHeaders });
   } catch (e) {
+    console.error(`Proxy error: ${e?.message || e}`);
     return new Response(`Proxy error: ${e?.message || e}`, {
       status: 500,
-      headers: corsHeaders(req.headers.get("origin")),
+      headers: corsHeaders,
     });
   }
 });
