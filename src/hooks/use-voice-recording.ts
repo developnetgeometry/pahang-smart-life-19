@@ -1,17 +1,19 @@
 import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/lib/translations';
 
 interface UseVoiceRecordingOptions {
   onTranscription?: (text: string) => void;
   onError?: (error: string) => void;
-  language?: string;
 }
 
 export const useVoiceRecording = ({
   onTranscription,
-  onError,
-  language = 'en'
+  onError
 }: UseVoiceRecordingOptions = {}) => {
+  const { language } = useAuth();
+  const { t } = useTranslation(language);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -64,7 +66,7 @@ export const useVoiceRecording = ({
           const { data, error } = await supabase.functions.invoke('voice-to-text', {
             body: { 
               audio: base64Audio,
-              language 
+              language: language || 'ms'
             }
           });
 
@@ -78,7 +80,7 @@ export const useVoiceRecording = ({
         } catch (error) {
           console.error('Voice processing error:', error);
           if (onError) {
-            onError(error instanceof Error ? error.message : 'Voice processing failed');
+            onError(error instanceof Error ? error.message : t('voiceProcessingFailed'));
           }
         } finally {
           setIsProcessing(false);
@@ -97,10 +99,10 @@ export const useVoiceRecording = ({
     } catch (error) {
       console.error('Recording start error:', error);
       if (onError) {
-        onError(error instanceof Error ? error.message : 'Failed to start recording');
+        onError(error instanceof Error ? error.message : t('failedToStartRecording'));
       }
     }
-  }, [language, onTranscription, onError]);
+  }, [language, onTranscription, onError, t]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {

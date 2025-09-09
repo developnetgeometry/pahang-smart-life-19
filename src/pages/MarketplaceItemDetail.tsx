@@ -400,7 +400,6 @@ export default function MarketplaceItemDetail() {
               <StarRating
                 rating={item.sellerRating}
                 size="sm"
-                language={language}
               />
             </div>
           </div>

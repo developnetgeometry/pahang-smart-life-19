@@ -1,20 +1,23 @@
 import { Star } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/lib/translations';
 
 interface StarRatingProps {
   rating: number;
   totalReviews?: number;
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
-  language?: 'en' | 'ms';
 }
 
 export default function StarRating({ 
   rating, 
   totalReviews, 
   size = 'md', 
-  showText = true,
-  language = 'en'
+  showText = true
 }: StarRatingProps) {
+  const { language } = useAuth();
+  const { t } = useTranslation(language);
+  
   const sizeClasses = {
     sm: 'h-3 w-3',
     md: 'h-4 w-4',
@@ -26,21 +29,6 @@ export default function StarRating({
     md: 'text-sm',
     lg: 'text-base'
   };
-
-  const text = {
-    en: {
-      outOf5: 'out of 5',
-      reviews: 'reviews',
-      review: 'review'
-    },
-    ms: {
-      outOf5: 'daripada 5',
-      reviews: 'ulasan',
-      review: 'ulasan'
-    }
-  };
-
-  const t = text[language];
 
   return (
     <div className="flex items-center space-x-1">
@@ -60,10 +48,10 @@ export default function StarRating({
       {showText && (
         <div className={`${textSizeClasses[size]} text-muted-foreground`}>
           <span>{rating.toFixed(1)}</span>
-          <span className="mx-1">{t.outOf5}</span>
+          <span className="mx-1">{t('outOf5')}</span>
           {totalReviews !== undefined && (
             <span>
-              ({totalReviews} {totalReviews === 1 ? t.review : t.reviews})
+              ({totalReviews} {totalReviews === 1 ? t('review') : t('reviews')})
             </span>
           )}
         </div>
