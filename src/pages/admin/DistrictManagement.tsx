@@ -44,6 +44,14 @@ export default function DistrictManagement() {
   const [selectedType, setSelectedType] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [districts, setDistricts] = useState<District[]>([]);
+  const [states, setStates] = useState<{id: string; name: string; code: string}[]>([]);
+  const [countries, setCountries] = useState<{id: string; name: string; code: string}[]>([]);
+  const [districtStatuses, setDistrictStatuses] = useState<{
+    status: string; 
+    display_name_en: string; 
+    display_name_ms: string; 
+    color_class: string;
+  }[]>([]);
   const [loading, setLoading] = useState(true);
   const [newDistrict, setNewDistrict] = useState({
     name: '',
@@ -51,8 +59,8 @@ export default function DistrictManagement() {
     area_km2: '',
     population: '',
     city: '',
-    state: 'Pahang',
-    country: 'Malaysia',
+    state: '',
+    country: '',
     address: '',
     description: '',
     latitude: '',
@@ -140,11 +148,68 @@ export default function DistrictManagement() {
   useEffect(() => {
     // Only state admins can access district management
     if (hasRole('state_admin')) {
+      fetchReferenceData();
       fetchDistricts();
     } else {
       setLoading(false);
     }
   }, [hasRole]);
+
+  const fetchReferenceData = async () => {
+    try {
+      // Fetch states
+      const { data: statesData, error: statesError } = await supabase
+        .from('states')
+        .select('id, name, code')
+        .eq('is_active', true)
+        .order('name');
+
+      if (statesError) throw statesError;
+      setStates(statesData || []);
+
+      // Fetch countries
+      const { data: countriesData, error: countriesError } = await supabase
+        .from('countries')
+        .select('id, name, code')
+        .eq('is_active', true)
+        .order('name');
+
+      if (countriesError) throw countriesError;
+      setCountries(countriesData || []);
+
+      // Fetch district statuses
+      const { data: statusesData, error: statusesError } = await supabase
+        .from('district_statuses')
+        .select('status, display_name_en, display_name_ms, color_class')
+        .eq('is_active', true)
+        .order('sort_order');
+
+      if (statusesError) throw statusesError;
+      setDistrictStatuses(statusesData || []);
+
+      // Set default values after fetching reference data
+      if (countriesData && countriesData.length > 0) {
+        const malaysia = countriesData.find(c => c.name === 'Malaysia');
+        if (malaysia) {
+          setNewDistrict(prev => ({ ...prev, country: malaysia.name }));
+        }
+      }
+
+      if (statesData && statesData.length > 0) {
+        const pahang = statesData.find(s => s.name === 'Pahang');
+        if (pahang) {
+          setNewDistrict(prev => ({ ...prev, state: pahang.name }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching reference data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load reference data',
+        variant: 'destructive'
+      });
+    }
+  };
 
   const fetchDistricts = async () => {
     try {
@@ -197,21 +262,14 @@ export default function DistrictManagement() {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'inactive': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
-    }
+    const statusData = districtStatuses.find(s => s.status === status);
+    return statusData?.color_class || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
   };
 
   const getStatusText = (status: string) => {
-    switch (status) {
-      case 'active': return t.active;
-      case 'inactive': return t.inactive;
-      case 'pending': return t.pending;
-      default: return status;
-    }
+    const statusData = districtStatuses.find(s => s.status === status);
+    if (!statusData) return status;
+    return language === 'en' ? statusData.display_name_en : statusData.display_name_ms;
   };
 
   const filteredDistricts = districts.filter(district => {
@@ -281,8 +339,8 @@ export default function DistrictManagement() {
         area_km2: '',
         population: '',
         city: '',
-        state: 'Pahang',
-        country: 'Malaysia',
+        state: states.find(s => s.name === 'Pahang')?.name || '',
+        country: countries.find(c => c.name === 'Malaysia')?.name || '',
         address: '',
         description: '',
         latitude: '',
@@ -365,19 +423,39 @@ export default function DistrictManagement() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="state">{t.state}</Label>
-                  <Input 
-                    id="state" 
+                  <Select 
                     value={newDistrict.state}
-                    onChange={(e) => setNewDistrict({...newDistrict, state: e.target.value})}
-                  />
+                    onValueChange={(value) => setNewDistrict({...newDistrict, state: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {states.map((state) => (
+                        <SelectItem key={state.id} value={state.name}>
+                          {state.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="country">{t.country}</Label>
-                  <Input 
-                    id="country" 
+                  <Select 
                     value={newDistrict.country}
-                    onChange={(e) => setNewDistrict({...newDistrict, country: e.target.value})}
-                  />
+                    onValueChange={(value) => setNewDistrict({...newDistrict, country: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countries.map((country) => (
+                        <SelectItem key={country.id} value={country.name}>
+                          {country.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -518,9 +596,11 @@ export default function DistrictManagement() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t.allStatuses}</SelectItem>
-            <SelectItem value="active">{t.active}</SelectItem>
-            <SelectItem value="inactive">{t.inactive}</SelectItem>
-            <SelectItem value="pending">{t.pending}</SelectItem>
+            {districtStatuses.map((status) => (
+              <SelectItem key={status.status} value={status.status}>
+                {language === 'en' ? status.display_name_en : status.display_name_ms}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

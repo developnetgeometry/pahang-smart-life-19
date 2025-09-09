@@ -2174,6 +2174,33 @@ export type Database = {
           },
         ]
       }
+      countries: {
+        Row: {
+          code: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          code?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       dashboard_metrics: {
         Row: {
           created_at: string | null
@@ -2647,6 +2674,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      district_statuses: {
+        Row: {
+          color_class: string
+          created_at: string | null
+          display_name_en: string
+          display_name_ms: string
+          id: string
+          is_active: boolean
+          sort_order: number
+          status: string
+        }
+        Insert: {
+          color_class: string
+          created_at?: string | null
+          display_name_en: string
+          display_name_ms: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          status: string
+        }
+        Update: {
+          color_class?: string
+          created_at?: string | null
+          display_name_en?: string
+          display_name_ms?: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          status?: string
+        }
+        Relationships: []
       }
       districts: {
         Row: {
@@ -6512,7 +6572,7 @@ export type Database = {
           ethnic_id?: string | null
           full_name?: string | null
           gender?: string | null
-          id: string
+          id?: string
           identity_no?: string | null
           identity_no_type?: string | null
           income_range?: string | null
@@ -8416,6 +8476,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      states: {
+        Row: {
+          code: string | null
+          country: string
+          created_at: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          code?: string | null
+          country?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          code?: string | null
+          country?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       status_types: {
         Row: {
