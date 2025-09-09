@@ -288,12 +288,12 @@ export default function ServiceProviderEnhancedDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">{t.title}</h1>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
           {businessProfile && (
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
               <Building className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">{businessProfile.business_name}</span>
               {businessProfile.is_verified && (
@@ -302,10 +302,11 @@ export default function ServiceProviderEnhancedDashboard() {
             </div>
           )}
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowBusinessSetup(true)}>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowBusinessSetup(true)} className="w-full sm:w-auto">
             <Building className="w-4 h-4 mr-1" />
-            Business Profile
+            <span className="hidden sm:inline">Business Profile</span>
+            <span className="sm:hidden">Profile</span>
           </Button>
           <SecurityAlertButton />
         </div>

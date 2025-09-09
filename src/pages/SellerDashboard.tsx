@@ -434,12 +434,12 @@ export default function SellerDashboard() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">{t.title}</h1>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t.title}</h1>
           <p className="text-muted-foreground mt-2">{t.subtitle}</p>
         </div>
-        <Button onClick={() => navigate('/marketplace')}>
+        <Button onClick={() => navigate('/marketplace')} className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           {t.createListing}
         </Button>

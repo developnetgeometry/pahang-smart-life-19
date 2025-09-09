@@ -2,6 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Header } from './Header';
 import { AppSidebar } from './Sidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,13 +10,14 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const { isAuthenticated } = useAuth();
+  const isMobile = useIsMobile();
 
   if (!isAuthenticated) {
     return <>{children}</>;
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={!isMobile}>
       <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/20">
         <AppSidebar />
         

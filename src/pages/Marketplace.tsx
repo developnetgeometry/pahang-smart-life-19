@@ -526,28 +526,32 @@ export default function Marketplace() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header with Cart */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">{t.title}</h1>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t.title}</h1>
           <p className="text-muted-foreground mt-2">{t.subtitle}</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-2">
           <CartIcon onClick={() => setShowCart(!showCart)} />
           {user && (
             <>
               {/* Analytics Dashboard Button */}
               <Button 
                 variant="outline" 
+                size="sm"
                 onClick={() => navigate(isServiceProvider ? '/seller-dashboard' : '/marketplace-analytics')}
+                className="w-full sm:w-auto"
               >
-                {language === 'en' ? 'My Analytics' : 'Analitik Saya'}
+                <span className="hidden sm:inline">{language === 'en' ? 'My Analytics' : 'Analitik Saya'}</span>
+                <span className="sm:hidden">{language === 'en' ? 'Analytics' : 'Analitik'}</span>
               </Button>
               
               <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button className="w-full sm:w-auto">
                     <Plus className="h-4 w-4 mr-2" />
-                    {t.newListing}
+                    <span className="hidden sm:inline">{t.newListing}</span>
+                    <span className="sm:hidden">{language === 'en' ? 'New' : 'Baru'}</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[525px]">
