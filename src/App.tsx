@@ -54,7 +54,6 @@ import Directory from "./pages/Directory";
 import ServiceProviderApplication from "./pages/ServiceProviderApplication";
 import ServiceProviderManagement from "./pages/admin/ServiceProviderManagement";
 import ServiceProviderReview from "./pages/admin/ServiceProviderReview";
-import RoleDiagnostics from "./pages/admin/RoleDiagnostics";
 import MyApplications from "./pages/MyApplications";
 import NotFound from "./pages/NotFound";
 // New Management Modules
@@ -75,7 +74,6 @@ import PrecisionMapping from "./pages/PrecisionMapping";
 import MaintenanceComplaintCenterPage from "./pages/MaintenanceComplaintCenter";
 import PatrolInterfacePage from "./pages/PatrolInterface";
 import FacilityComplaintCenterPage from "./pages/FacilityComplaintCenter";
-import ServiceProviders from "./pages/ServiceProviders";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -256,16 +254,6 @@ const App = () => (
               }
             />
             <Route
-              path="/service-providers"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <ServiceProviders />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/marketplace/item/:id"
               element={
                 <ProtectedRoute>
@@ -407,6 +395,16 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/cctv-live"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CCTVManagement />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
 
             {/* Professional view routes */}
             <Route
@@ -456,18 +454,6 @@ const App = () => (
               }
             />
             <Route
-              path="/admin/role-diagnostics"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
-                    <Layout>
-                      <RoleDiagnostics />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/admin/security"
               element={
                 <ProtectedRoute>
@@ -481,23 +467,9 @@ const App = () => (
               path="/admin/communities"
               element={
                 <ProtectedRoute>
-                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
-                    <Layout>
-                      <CommunityManagement />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/districts"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["state_admin"]}>
-                    <Layout>
-                      <DistrictManagement />
-                    </Layout>
-                  </RequireRoles>
+                  <Layout>
+                    <CommunityManagement />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -632,27 +604,13 @@ const App = () => (
               }
             />
 
-            {/* CCTV Management for admins and security officers */}
-            <Route
-              path="/admin/cctv-management"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["security_officer", "community_admin", "state_admin"]}>
-                    <Layout>
-                      <CCTVManagement />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* CCTV Live Feed for residents */}
+            {/* CCTV Management for residents */}
             <Route
               path="/cctv-live-feed"
               element={
                 <ProtectedRoute>
                   <Layout>
-                    <CCTVLiveFeed />
+                    <CCTVManagement />
                   </Layout>
                 </ProtectedRoute>
               }

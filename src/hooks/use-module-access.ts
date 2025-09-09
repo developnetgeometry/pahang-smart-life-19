@@ -65,7 +65,7 @@ export function useModuleAccess() {
         
         // Security officer gets these modules regardless of community settings
         if (hasRole('security_officer')) {
-          roleBasedModules.push('visitor_management', 'security');
+          roleBasedModules.push('cctv', 'visitor_management', 'security');
         }
         
         // Maintenance staff gets these modules regardless of community settings

@@ -187,16 +187,14 @@ export async function createTestUsers() {
         console.log(`✅ Profile updated for ${user.email}`);
       }
 
-      // Assign enhanced role
-      console.log(`🏷️ Assigning enhanced role ${user.role} to ${user.email}`);
+      // Assign role
+      console.log(`🏷️ Assigning role ${user.role} to ${user.email}`);
       const { error: roleError } = await supabase
-        .from('enhanced_user_roles')
+        .from('user_roles')
         .insert({
           user_id: userId,
           role: user.role,
-          assigned_by: userId,
           district_id: user.district_id,
-          is_active: true,
         });
 
       if (roleError) {

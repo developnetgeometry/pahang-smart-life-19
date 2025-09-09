@@ -17,7 +17,6 @@ import { createTestUsers } from '@/utils/createTestUsers';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [districtId, setDistrictId] = useState('');
@@ -104,9 +103,6 @@ export default function Login() {
         if (!location.trim()) {
           throw new Error(language === 'en' ? 'Location is required' : 'Lokasi diperlukan');
         }
-        if (!phone.trim()) {
-          throw new Error(language === 'en' ? 'Phone number is required' : 'Nombor telefon diperlukan');
-        }
 
         // Validate service provider specific fields
         if (selectedRole === 'service_provider') {
@@ -121,52 +117,78 @@ export default function Login() {
           }
         }
 
-        // Validate password confirmation
-        if (password !== confirmPassword) {
-          throw new Error(language === 'en' ? 'Passwords do not match' : 'Kata laluan tidak sepadan');
-        }
-
         // Validate PDPA acceptance
         if (!pdpaAccepted) {
           throw new Error(language === 'en' ? 'You must read and accept the PDPA to register' : 'Anda mesti membaca dan menerima PDPA untuk mendaftar');
         }
 
         const redirectUrl = `${window.location.origin}/`;
-        
-        // Pass all signup data as metadata for the trigger to handle
-        const metadata: Record<string, any> = {
-          full_name: fullName.trim(),
-          mobile_no: phone.trim() || null,
-          district_id: districtId?.replace('district-', '') || districtId,
-          community_id: communityId?.replace('community-', '') || communityId,
-          address: location.trim(),
-          language: language,
-          pdpa_declare: pdpaAccepted,
-          signup_flow: selectedRole // This tells the trigger which role to assign
-        };
-
-        // Add service provider specific metadata
-        if (selectedRole === 'service_provider') {
-          metadata.business_name = businessName.trim();
-          metadata.business_type = businessType.trim();
-          metadata.business_description = 'Service provider registered via signup';
-          metadata.experience_years = yearsOfExperience.trim();
-          metadata.contact_phone = phone.trim();
-        }
-
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: { 
             emailRedirectTo: redirectUrl,
-            data: metadata
+            data: {
+              full_name: fullName.trim()
+            }
           }
         });
         
         if (signUpError) throw signUpError;
         
         if (authData.user) {
-          // All data creation is now handled by the database trigger
+          // Wait for the trigger to create the basic profile, then update it
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Brief delay for trigger
+          
+          // Update the profile with registration details
+          const profileUpdate: any = {
+            mobile_no: phone.trim() || null,
+            district_id: districtId?.replace('district-', '') || districtId,
+            community_id: communityId?.replace('community-', '') || communityId,
+            address: location.trim(),
+            language: language,
+            pdpa_declare: pdpaAccepted,
+            account_status: 'pending',
+            is_active: true
+          };
+
+          // Add service provider specific data
+          if (selectedRole === 'service_provider') {
+            profileUpdate.business_name = businessName.trim();
+            profileUpdate.business_type = businessType.trim();
+            profileUpdate.license_number = licenseNumber.trim() || null;
+            profileUpdate.years_of_experience = parseInt(yearsOfExperience) || null;
+          }
+
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update(profileUpdate)
+            .eq('id', authData.user.id);
+
+          if (profileError) {
+            console.error('Profile update error:', profileError);
+            throw new Error(`Profile update failed: ${profileError.message}`);
+          }
+
+          console.log('Profile updated successfully for user:', authData.user.id);
+
+          // Assign selected role using enhanced_user_roles table
+          const roleData = {
+            user_id: authData.user.id,
+            role: selectedRole as any,
+            district_id: districtId?.replace('district-', '') || districtId,
+            assigned_by: authData.user.id, // Self-assigned during registration
+            is_active: true
+          };
+
+          const { error: roleError } = await supabase
+            .from('enhanced_user_roles')
+            .insert(roleData);
+
+          if (roleError) {
+            console.error('Role assignment error:', roleError);
+            throw new Error(`Role assignment failed: ${roleError.message}`);
+          }
 
           // Show success message
           toast({
@@ -190,7 +212,6 @@ export default function Login() {
           setYearsOfExperience('');
           setPdpaAccepted(false);
           setPassword('');
-          setConfirmPassword('');
         }
       }
     } catch (err: any) {
@@ -245,7 +266,7 @@ export default function Login() {
 
   return (
     <div 
-      className="min-h-screen w-full max-w-full overflow-x-hidden relative flex items-center justify-center p-4"
+      className="min-h-screen relative flex items-center justify-center p-4"
       style={{
         backgroundImage: `url('/lovable-uploads/7687f368-63da-4bc0-a610-d88851aebf13.png')`,
         backgroundSize: 'cover',
@@ -386,7 +407,7 @@ export default function Login() {
 
                     <div className="space-y-2">
                       <Label htmlFor="phone">
-                        {language === 'en' ? 'Phone Number' : 'Nombor Telefon'} *
+                        {language === 'en' ? 'Phone Number (Optional)' : 'Nombor Telefon (Pilihan)'}
                       </Label>
                       <Input
                         id="phone"
@@ -394,7 +415,6 @@ export default function Login() {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="+60123456789"
-                        required
                         className="transition-smooth"
                       />
                     </div>
@@ -572,31 +592,6 @@ export default function Login() {
                     className="transition-smooth"
                   />
                 </div>
-
-                {mode === 'signUp' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">
-                      {language === 'en' ? 'Confirm Password' : 'Sahkan Kata Laluan'}
-                    </Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      className={`transition-smooth ${
-                        confirmPassword && password !== confirmPassword 
-                          ? 'border-red-500 focus:border-red-500' 
-                          : ''
-                      }`}
-                    />
-                    {confirmPassword && password !== confirmPassword && (
-                      <p className="text-sm text-red-500">
-                        {language === 'en' ? 'Passwords do not match' : 'Kata laluan tidak sepadan'}
-                      </p>
-                    )}
-                  </div>
-                )}
 
                 {mode === 'signUp' && (
                   <div className="flex items-start space-x-2 p-3 border rounded-lg">
