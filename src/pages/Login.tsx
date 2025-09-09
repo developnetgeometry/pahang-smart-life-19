@@ -69,6 +69,9 @@ export default function Login() {
   const { t } = useTranslation(language || "ms"); // Ensure we always have a language
   const { toast } = useToast();
 
+  // Show test tools only in development or if explicitly enabled
+  const showTestTools = import.meta.env.DEV || import.meta.env.VITE_SHOW_TEST_TOOLS === 'true';
+
   // Business type field mapping
   const businessTypeFieldMap: Record<string, {
     requiresExperience: boolean;
@@ -501,6 +504,16 @@ export default function Login() {
   };
 
   const handleCreateTestUsers = async () => {
+    // Safety check to prevent accidental use in production
+    if (!showTestTools) {
+      toast({
+        variant: "destructive",
+        title: "Not Available",
+        description: "Test user creation is only available in development mode.",
+      });
+      return;
+    }
+
     console.log("🚀 Starting user creation process...");
     setIsCreatingUsers(true);
     try {
@@ -1359,7 +1372,7 @@ export default function Login() {
                   </>
                 )}
 
-                {mode === "signIn" && (
+                {mode === "signIn" && showTestTools && (
                   <>
                     <Button
                       type="button"
@@ -1387,55 +1400,57 @@ export default function Login() {
                 )}
               </form>
 
-              {/* Test Users Section */}
-              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm font-medium mb-2">
-                  {language === "en"
-                    ? "Test Credentials (10 Users - Various Roles):"
-                    : "Kredensi Ujian (10 Pengguna - Pelbagai Peranan):"}
-                </p>
-                <div className="text-xs text-muted-foreground space-y-1 max-h-40 overflow-y-auto">
-                  <p>
-                    <strong>State Admin:</strong> stateadmin@test.com /
-                    password123
+              {/* Test Users Section - Only shown in development */}
+              {showTestTools && (
+                <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                  <p className="text-sm font-medium mb-2">
+                    {language === "en"
+                      ? "Test Credentials (10 Users - Various Roles):"
+                      : "Kredensi Ujian (10 Pengguna - Pelbagai Peranan):"}
                   </p>
-                  <p>
-                    <strong>District Coordinator:</strong>{" "}
-                    districtcoord@test.com / password123
-                  </p>
-                  <p>
-                    <strong>Community Admin:</strong> communityadmin@test.com /
-                    password123
-                  </p>
-                  <p>
-                    <strong>Facility Manager:</strong> facilitymanager@test.com
-                    / password123
-                  </p>
-                  <p>
-                    <strong>Security Officer:</strong> securitynorth@test.com /
-                    password123
-                  </p>
-                  <p>
-                    <strong>Maintenance Staff:</strong>{" "}
-                    maintenancestaff@test.com / password123
-                  </p>
-                  <p>
-                    <strong>Resident:</strong> resident@test.com / password123
-                  </p>
-                  <p>
-                    <strong>Service Provider:</strong> serviceprovider@test.com
-                    / password123
-                  </p>
-                  <p>
-                    <strong>Community Leader:</strong> communityleader@test.com
-                    / password123
-                  </p>
-                  <p>
-                    <strong>State Service Manager:</strong>{" "}
-                    stateservicemgr@test.com / password123
-                  </p>
+                  <div className="text-xs text-muted-foreground space-y-1 max-h-40 overflow-y-auto">
+                    <p>
+                      <strong>State Admin:</strong> stateadmin@test.com /
+                      password123
+                    </p>
+                    <p>
+                      <strong>District Coordinator:</strong>{" "}
+                      districtcoord@test.com / password123
+                    </p>
+                    <p>
+                      <strong>Community Admin:</strong> communityadmin@test.com /
+                      password123
+                    </p>
+                    <p>
+                      <strong>Facility Manager:</strong> facilitymanager@test.com
+                      / password123
+                    </p>
+                    <p>
+                      <strong>Security Officer:</strong> securitynorth@test.com /
+                      password123
+                    </p>
+                    <p>
+                      <strong>Maintenance Staff:</strong>{" "}
+                      maintenancestaff@test.com / password123
+                    </p>
+                    <p>
+                      <strong>Resident:</strong> resident@test.com / password123
+                    </p>
+                    <p>
+                      <strong>Service Provider:</strong> serviceprovider@test.com
+                      / password123
+                    </p>
+                    <p>
+                      <strong>Community Leader:</strong> communityleader@test.com
+                      / password123
+                    </p>
+                    <p>
+                      <strong>State Service Manager:</strong>{" "}
+                      stateservicemgr@test.com / password123
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 

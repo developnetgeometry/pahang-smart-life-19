@@ -55,7 +55,9 @@ export const translations = {
     
     // Authentication
     'email': 'Email',
+    'emailPlaceholder': 'Enter your email',
     'password': 'Password',
+    'passwordPlaceholder': 'Enter your password',
     'forgotPassword': 'Forgot Password?',
     'signIn': 'Sign In',
     'signUp': 'Sign Up',
@@ -208,7 +210,9 @@ export const translations = {
     
     // Authentication
     'email': 'Emel',
+    'emailPlaceholder': 'Masukkan emel anda',
     'password': 'Kata Laluan',
+    'passwordPlaceholder': 'Masukkan kata laluan anda',
     'forgotPassword': 'Lupa Kata Laluan?',
     'signIn': 'Log Masuk',
     'signUp': 'Daftar',
