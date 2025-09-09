@@ -405,6 +405,10 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/cctv"
+              element={<Navigate to="/cctv-live-feed" replace />}
+            />
 
             {/* Professional view routes */}
             <Route

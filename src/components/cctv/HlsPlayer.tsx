@@ -1,4 +1,6 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Play, Video } from "lucide-react";
 import Hls, { HlsConfig, Events, ErrorTypes } from "hls.js";
 
 interface HlsPlayerProps {
@@ -11,16 +13,17 @@ interface HlsPlayerProps {
 
 export const HlsPlayer: React.FC<HlsPlayerProps> = ({
   src,
-  autoPlay = true,
-  controls = true,
+  autoPlay = false,
+  controls = false,
   muted = true,
   className,
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(autoPlay);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !isPlaying) return;
 
     // If native HLS is supported (Safari), just set src
     if (video.canPlayType("application/vnd.apple.mpegurl")) {
@@ -79,12 +82,34 @@ export const HlsPlayer: React.FC<HlsPlayerProps> = ({
         hls.destroy();
       }
     };
-  }, [src]);
+  }, [src, isPlaying]);
+
+  // Show play button overlay if not playing
+  if (!isPlaying) {
+    return (
+      <div className={`bg-black relative aspect-video ${className || ""}`}>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-white text-center">
+            <Video className="h-16 w-16 mx-auto mb-4 opacity-50" />
+            <p className="text-lg mb-4">Click to start streaming</p>
+            <Button
+              size="lg"
+              onClick={() => setIsPlaying(true)}
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+            >
+              <Play className="h-6 w-6 mr-2" />
+              Play
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <video
       ref={videoRef}
-      autoPlay={autoPlay}
+      autoPlay={false}
       controls={controls}
       muted={muted}
       className={className}
