@@ -183,23 +183,24 @@ export function AppSidebar() {
       });
     }
 
-    // Administration - only for state_admin and community_admin roles
+    // Administration - for state_admin, community_admin, and district_coordinator roles
     const adminItems = [];
     if (hasRole("state_admin") || hasRole("community_admin")) {
-      adminItems.push(
-        {
-          title: t("userManagement"),
-          url: "/admin/users",
-          icon: UserPlus,
-          requiredRoles: ["state_admin", "community_admin"],
-        },
-        {
-          title: t("communityManagement"),
-          url: "/admin/communities",
-          icon: Home,
-          requiredRoles: ["state_admin", "community_admin"],
-        }
-      );
+      adminItems.push({
+        title: t("userManagement"),
+        url: "/admin/users",
+        icon: UserPlus,
+        requiredRoles: ["state_admin", "community_admin"],
+      });
+    }
+
+    if (hasRole("state_admin") || hasRole("community_admin") || hasRole("district_coordinator")) {
+      adminItems.push({
+        title: t("communityManagement"),
+        url: "/admin/communities",
+        icon: Home,
+        requiredRoles: ["state_admin", "community_admin", "district_coordinator"],
+      });
     }
 
     if (hasRole("community_admin")) {
