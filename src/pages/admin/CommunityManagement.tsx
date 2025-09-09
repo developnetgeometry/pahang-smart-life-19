@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, Users, Plus, Search, MapPin, Calendar, TrendingUp, Settings } from 'lucide-react';
+import { Building2, Users, Plus, Search, MapPin, Calendar, TrendingUp, Settings, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Community {
@@ -29,6 +29,8 @@ export default function CommunityManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
+  const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
 
   const text = {
     en: {
@@ -63,7 +65,12 @@ export default function CommunityManagement() {
       communityCreated: 'Community created successfully!',
       occupancyRate: 'Occupancy Rate',
       totalRevenue: 'Total Revenue',
-      avgFee: 'Average Fee'
+      avgFee: 'Average Fee',
+      viewDetails: 'View Details',
+      communityDetails: 'Community Details',
+      basicInfo: 'Basic Information',
+      statistics: 'Statistics',
+      close: 'Close'
     },
     ms: {
       title: 'Pengurusan Komuniti',
@@ -97,7 +104,12 @@ export default function CommunityManagement() {
       communityCreated: 'Komuniti berjaya dicipta!',
       occupancyRate: 'Kadar Penghunian',
       totalRevenue: 'Jumlah Hasil',
-      avgFee: 'Fi Purata'
+      avgFee: 'Fi Purata',
+      viewDetails: 'Lihat Butiran',
+      communityDetails: 'Butiran Komuniti',
+      basicInfo: 'Maklumat Asas',
+      statistics: 'Statistik',
+      close: 'Tutup'
     }
   };
 
@@ -201,6 +213,11 @@ export default function CommunityManagement() {
       title: t.communityCreated,
     });
     setIsCreateOpen(false);
+  };
+
+  const handleViewDetails = (community: Community) => {
+    setSelectedCommunity(community);
+    setIsViewDetailsOpen(true);
   };
 
   return (
@@ -396,7 +413,8 @@ export default function CommunityManagement() {
                   {t.establishedDate}: {community.establishedDate}
                 </p>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => handleViewDetails(community)}>
+                    <Eye className="h-4 w-4 mr-1" />
                     {t.view}
                   </Button>
                   <Button variant="outline" size="sm">
@@ -408,6 +426,118 @@ export default function CommunityManagement() {
           </Card>
         ))}
       </div>
+
+      {/* View Details Dialog */}
+      <Dialog open={isViewDetailsOpen} onOpenChange={setIsViewDetailsOpen}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle>{t.communityDetails}</DialogTitle>
+            <DialogDescription>
+              {selectedCommunity?.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedCommunity && (
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">{t.basicInfo}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">{t.name}</Label>
+                      <p className="mt-1">{selectedCommunity.name}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">{t.type}</Label>
+                      <div className="mt-1">
+                        <Badge className={getTypeColor(selectedCommunity.type)}>
+                          {getTypeText(selectedCommunity.type)}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">{t.status}</Label>
+                      <div className="mt-1">
+                        <Badge className={getStatusColor(selectedCommunity.status)}>
+                          {getStatusText(selectedCommunity.status)}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">{t.address}</Label>
+                      <p className="mt-1 text-sm">{selectedCommunity.address}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">{t.establishedDate}</Label>
+                      <p className="mt-1">{new Date(selectedCommunity.establishedDate).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">{t.managementFee}</Label>
+                      <p className="mt-1">RM{selectedCommunity.managementFee}/month</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Statistics */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">{t.statistics}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">{t.totalUnits}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{selectedCommunity.totalUnits}</div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">{t.occupiedUnits}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{selectedCommunity.occupiedUnits}</div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">{t.occupancyRate}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {Math.round((selectedCommunity.occupiedUnits / selectedCommunity.totalUnits) * 100)}%
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                <Card className="mt-4">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      RM{(selectedCommunity.occupiedUnits * selectedCommunity.managementFee).toLocaleString()}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedCommunity.occupiedUnits} units × RM{selectedCommunity.managementFee}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={() => setIsViewDetailsOpen(false)}>
+                  {t.close}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

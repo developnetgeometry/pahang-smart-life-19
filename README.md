@@ -1,18 +1,4 @@
-# Welcome to your Lovable project
-
-## Project info
-
-**URL**: https://lovable.dev/projects/a44ffb98-9454-4379-8a8d-73f9f837f1f5
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/a44ffb98-9454-4379-8a8d-73f9f837f1f5) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
+# Pahang Prima
 
 **Use your preferred IDE**
 
@@ -118,15 +104,3 @@ Notes
 - HLS and MP4/WebM work out of the box in modern browsers. Safari/iOS can play HLS natively; other browsers use hls.js automatically.
 - MJPEG requires the proxy in most cases due to CORS.
 - RTSP must be converted to HLS or another browser-friendly format before playback.
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/a44ffb98-9454-4379-8a8d-73f9f837f1f5) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
