@@ -340,6 +340,10 @@ export default function CCTVManagement() {
       </div>
     );
   }
+
+  // All state declarations must be here, after the module check but before any other logic
+  const [cameras, setCameras] = useState<CCTVCamera[]>([]);
+
   // Quick demo camera insertion with a public HLS sample stream
   const addDemoCamera = async () => {
     const demoUrl = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
@@ -435,8 +439,6 @@ export default function CCTVManagement() {
     };
     load();
   }, [toast]);
-
-  const [cameras, setCameras] = useState<CCTVCamera[]>([]);
 
   const mockRecordings: Recording[] = [
     {
