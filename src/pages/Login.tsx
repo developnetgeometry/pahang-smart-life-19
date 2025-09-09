@@ -104,6 +104,9 @@ export default function Login() {
         if (!location.trim()) {
           throw new Error(language === 'en' ? 'Location is required' : 'Lokasi diperlukan');
         }
+        if (!phone.trim()) {
+          throw new Error(language === 'en' ? 'Phone number is required' : 'Nombor telefon diperlukan');
+        }
 
         // Validate service provider specific fields
         if (selectedRole === 'service_provider') {
@@ -383,7 +386,7 @@ export default function Login() {
 
                     <div className="space-y-2">
                       <Label htmlFor="phone">
-                        {language === 'en' ? 'Phone Number (Optional)' : 'Nombor Telefon (Pilihan)'}
+                        {language === 'en' ? 'Phone Number' : 'Nombor Telefon'} *
                       </Label>
                       <Input
                         id="phone"
@@ -391,6 +394,7 @@ export default function Login() {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="+60123456789"
+                        required
                         className="transition-smooth"
                       />
                     </div>
