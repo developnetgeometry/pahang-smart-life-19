@@ -781,7 +781,6 @@ export default function Marketplace() {
                     rating={item.sellerRating}
                     size="sm"
                     showText={false}
-                    language={language}
                   />
                 </div>
               </div>

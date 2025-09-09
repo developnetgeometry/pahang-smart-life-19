@@ -121,7 +121,37 @@ export const translations = {
     // System
     'smartCommunity': 'Integrated Smart City System',
     'pahangState': 'Pahang State',
-    'poweredBy': 'Powered by Smart City Initiative'
+    'poweredBy': 'Powered by Smart City Initiative',
+    
+    // New navigation items (not duplicates)
+    'moduleManagement': 'Module Management',
+    'workOrders': 'Work Orders',
+    'maintenanceComplaints': 'Maintenance Complaints',
+    'emergencyResponse': 'Emergency Response',
+    'maintenanceAssets': 'Maintenance Assets',
+    'maintenanceScheduler': 'Maintenance Scheduler',
+    'maintenanceReports': 'Maintenance Reports',
+    'floorPlanManagement': 'Floor Plan Management',
+    'assetManagement': 'Asset Management',
+    'inventoryManagement': 'Inventory Management',
+    'financialManagement': 'Financial Management',
+    'facilityComplaints': 'Facility Complaints',
+    'visitorManagement': 'Visitor Management',
+    'advertisementManagement': 'Advertisement Management',
+    'serviceRequests': 'Service Requests',
+    
+    // Ratings and Reviews
+    'outOf5': 'out of 5',
+    'reviews': 'reviews',
+    'review': 'review',
+    
+    // Voice Recording
+    'failedToStartRecording': 'Failed to start recording',
+    'voiceProcessingFailed': 'Voice processing failed',
+    
+    // Settings
+    'settings': 'Settings',
+    'notificationSettingsTitle': 'Notification Settings'
   },
   ms: {
     // Navigation
@@ -244,7 +274,37 @@ export const translations = {
     // System
     'smartCommunity': 'Sistem Komuniti Pintar',
     'pahangState': 'Negeri Pahang',
-    'poweredBy': 'Dikuasakan oleh Inisiatif Bandar Pintar'
+    'poweredBy': 'Dikuasakan oleh Inisiatif Bandar Pintar',
+    
+    // New navigation items (not duplicates)
+    'moduleManagement': 'Pengurusan Modul',
+    'workOrders': 'Pesanan Kerja',
+    'maintenanceComplaints': 'Aduan Penyelenggaraan',
+    'emergencyResponse': 'Tindak Balas Kecemasan',
+    'maintenanceAssets': 'Aset Penyelenggaraan',
+    'maintenanceScheduler': 'Penjadual Penyelenggaraan',
+    'maintenanceReports': 'Laporan Penyelenggaraan',
+    'floorPlanManagement': 'Pengurusan Pelan Lantai',
+    'assetManagement': 'Pengurusan Aset',
+    'inventoryManagement': 'Pengurusan Inventori',
+    'financialManagement': 'Pengurusan Kewangan',
+    'facilityComplaints': 'Aduan Kemudahan',
+    'visitorManagement': 'Pengurusan Pelawat',
+    'advertisementManagement': 'Pengurusan Iklan',
+    'serviceRequests': 'Permintaan Perkhidmatan',
+    
+    // Ratings and Reviews
+    'outOf5': 'daripada 5',
+    'reviews': 'ulasan',
+    'review': 'ulasan',
+    
+    // Voice Recording
+    'failedToStartRecording': 'Gagal memulakan rakaman',
+    'voiceProcessingFailed': 'Pemprosesan suara gagal',
+    
+    // Settings
+    'settings': 'Tetapan',
+    'notificationSettingsTitle': 'Tetapan Notifikasi'
   }
 };
 

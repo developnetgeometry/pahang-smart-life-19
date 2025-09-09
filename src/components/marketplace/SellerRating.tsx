@@ -124,7 +124,6 @@ export default function SellerRating({ sellerId, language }: SellerRatingProps) 
               rating={rating.average_rating}
               totalReviews={rating.total_reviews}
               size="lg"
-              language={language}
             />
           </div>
         </div>
