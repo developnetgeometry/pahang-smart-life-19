@@ -33,7 +33,40 @@ export default function UserManagement() {
   const [selectedRole, setSelectedRole] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [form, setForm] = useState<{ name: string; email: string; phone: string; unit: string; role: string; status: User['status'] | '' }>({ name: '', email: '', phone: '', unit: '', role: '', status: '' });
+  const [form, setForm] = useState<{ 
+    name: string; 
+    email: string; 
+    phone: string; 
+    unit: string; 
+    role: string; 
+    status: User['status'] | '';
+    // Role-specific fields
+    businessLicense?: string;
+    serviceAreas?: string[];
+    specialization?: string;
+    certifications?: string[];
+    licenseNumber?: string;
+    emergencyContact?: string;
+    experience?: string;
+    familySize?: number;
+    vehicleNumber?: string;
+  }>({ 
+    name: '', 
+    email: '', 
+    phone: '', 
+    unit: '', 
+    role: '', 
+    status: '',
+    businessLicense: '',
+    serviceAreas: [],
+    specialization: '',
+    certifications: [],
+    licenseNumber: '',
+    emergencyContact: '',
+    experience: '',
+    familySize: 1,
+    vehicleNumber: ''
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -394,7 +427,23 @@ export default function UserManagement() {
 
   const handleEdit = (user: User) => {
     setEditingId(user.id);
-    setForm({ name: user.name, email: user.email, phone: user.phone, unit: user.unit, role: user.role, status: user.status });
+    setForm({ 
+      name: user.name, 
+      email: user.email, 
+      phone: user.phone, 
+      unit: user.unit, 
+      role: user.role, 
+      status: user.status,
+      businessLicense: '',
+      serviceAreas: [],
+      specialization: '',
+      certifications: [],
+      licenseNumber: '',
+      emergencyContact: '',
+      experience: '',
+      familySize: 1,
+      vehicleNumber: ''
+    });
     setIsCreateOpen(true);
   };
 
@@ -437,39 +486,59 @@ export default function UserManagement() {
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={(open) => { setIsCreateOpen(open); if (!open) { setEditingId(null); setForm({ name: '', email: '', phone: '', unit: '', role: '', status: '' }); } }}>
+        <Dialog open={isCreateOpen} onOpenChange={(open) => { 
+          setIsCreateOpen(open); 
+          if (!open) { 
+            setEditingId(null); 
+            setForm({ 
+              name: '', email: '', phone: '', unit: '', role: '', status: '',
+              businessLicense: '', serviceAreas: [], specialization: '', 
+              certifications: [], licenseNumber: '', emergencyContact: '', 
+              experience: '', familySize: 1, vehicleNumber: ''
+            }); 
+          } 
+        }}>
           <DialogTrigger asChild>
             <Button>
               <UserPlus className="h-4 w-4 mr-2" />
               {t.addUser}
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[525px]">
+          <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t.createUser}</DialogTitle>
               <DialogDescription>{t.createSubtitle}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">{t.fullName}</Label>
-                <Input id="name" placeholder={t.fullName} value={form.name} onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))} />
+              {/* Basic Information */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">{t.fullName}</Label>
+                  <Input id="name" placeholder={t.fullName} value={form.name} onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">{t.email}</Label>
+                  <Input id="email" type="email" placeholder={t.email} value={form.email} onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))} />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">{t.email}</Label>
-                <Input id="email" type="email" placeholder={t.email} value={form.email} onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))} />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">{t.phone}</Label>
+                  <Input id="phone" placeholder={t.phone} value={form.phone} onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))} />
+                </div>
+                {form.role === 'resident' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="unit">{t.unit}</Label>
+                    <Input id="unit" placeholder={t.unit} value={form.unit} onChange={(e) => setForm(prev => ({ ...prev, unit: e.target.value }))} />
+                  </div>
+                )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">{t.phone}</Label>
-                <Input id="phone" placeholder={t.phone} value={form.phone} onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="unit">{t.unit}</Label>
-                <Input id="unit" placeholder={t.unit} value={form.unit} onChange={(e) => setForm(prev => ({ ...prev, unit: e.target.value }))} />
-              </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">{t.role}</Label>
-                  <Select value={form.role} onValueChange={(v) => setForm(prev => ({ ...prev, role: v }))}>
+                  <Select value={form.role} onValueChange={(v) => setForm(prev => ({ ...prev, role: v, unit: v === 'resident' ? prev.unit : '' }))}>
                     <SelectTrigger>
                       <SelectValue placeholder={t.selectRole} />
                     </SelectTrigger>
@@ -498,7 +567,129 @@ export default function UserManagement() {
                   </Select>
                 </div>
               </div>
-              <div className="flex justify-end space-x-2">
+
+              {/* Role-specific fields */}
+              {form.role === 'service_provider' && (
+                <div className="space-y-4 border-t pt-4">
+                  <h4 className="text-sm font-semibold">{language === 'en' ? 'Service Provider Details' : 'Butiran Penyedia Perkhidmatan'}</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="businessLicense">{language === 'en' ? 'Business License' : 'Lesen Perniagaan'}</Label>
+                      <Input 
+                        id="businessLicense" 
+                        placeholder={language === 'en' ? 'Enter license number' : 'Masukkan nombor lesen'} 
+                        value={form.businessLicense || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, businessLicense: e.target.value }))} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="experience">{language === 'en' ? 'Years of Experience' : 'Tahun Pengalaman'}</Label>
+                      <Input 
+                        id="experience" 
+                        placeholder={language === 'en' ? 'e.g. 5 years' : 'cth: 5 tahun'} 
+                        value={form.experience || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, experience: e.target.value }))} 
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {form.role === 'security_officer' && (
+                <div className="space-y-4 border-t pt-4">
+                  <h4 className="text-sm font-semibold">{language === 'en' ? 'Security Officer Details' : 'Butiran Pegawai Keselamatan'}</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="licenseNumber">{language === 'en' ? 'Security License' : 'Lesen Keselamatan'}</Label>
+                      <Input 
+                        id="licenseNumber" 
+                        placeholder={language === 'en' ? 'Enter license number' : 'Masukkan nombor lesen'} 
+                        value={form.licenseNumber || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, licenseNumber: e.target.value }))} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyContact">{language === 'en' ? 'Emergency Contact' : 'Hubungan Kecemasan'}</Label>
+                      <Input 
+                        id="emergencyContact" 
+                        placeholder={language === 'en' ? 'Emergency contact number' : 'Nombor hubungan kecemasan'} 
+                        value={form.emergencyContact || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, emergencyContact: e.target.value }))} 
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {form.role === 'maintenance_staff' && (
+                <div className="space-y-4 border-t pt-4">
+                  <h4 className="text-sm font-semibold">{language === 'en' ? 'Maintenance Staff Details' : 'Butiran Kakitangan Penyelenggaraan'}</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="specialization">{language === 'en' ? 'Specialization' : 'Kepakaran'}</Label>
+                      <Input 
+                        id="specialization" 
+                        placeholder={language === 'en' ? 'e.g. Electrical, Plumbing' : 'cth: Elektrik, Paip'} 
+                        value={form.specialization || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, specialization: e.target.value }))} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyContact">{language === 'en' ? 'Emergency Contact' : 'Hubungan Kecemasan'}</Label>
+                      <Input 
+                        id="emergencyContact" 
+                        placeholder={language === 'en' ? 'Emergency contact number' : 'Nombor hubungan kecemasan'} 
+                        value={form.emergencyContact || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, emergencyContact: e.target.value }))} 
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {form.role === 'resident' && (
+                <div className="space-y-4 border-t pt-4">
+                  <h4 className="text-sm font-semibold">{language === 'en' ? 'Resident Details' : 'Butiran Penduduk'}</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="familySize">{language === 'en' ? 'Family Size' : 'Saiz Keluarga'}</Label>
+                      <Input 
+                        id="familySize" 
+                        type="number" 
+                        min="1" 
+                        value={form.familySize || 1} 
+                        onChange={(e) => setForm(prev => ({ ...prev, familySize: parseInt(e.target.value) || 1 }))} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="vehicleNumber">{language === 'en' ? 'Vehicle Number' : 'Nombor Kenderaan'}</Label>
+                      <Input 
+                        id="vehicleNumber" 
+                        placeholder={language === 'en' ? 'e.g. ABC 1234' : 'cth: ABC 1234'} 
+                        value={form.vehicleNumber || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, vehicleNumber: e.target.value }))} 
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {(form.role === 'community_admin' || form.role === 'district_coordinator' || form.role === 'state_admin') && (
+                <div className="space-y-4 border-t pt-4">
+                  <h4 className="text-sm font-semibold">{language === 'en' ? 'Administrative Details' : 'Butiran Pentadbiran'}</h4>
+                  <div className="space-y-2">
+                    <Label htmlFor="experience">{language === 'en' ? 'Management Experience' : 'Pengalaman Pengurusan'}</Label>
+                    <Input 
+                      id="experience" 
+                      placeholder={language === 'en' ? 'Describe management experience' : 'Terangkan pengalaman pengurusan'} 
+                      value={form.experience || ''} 
+                      onChange={(e) => setForm(prev => ({ ...prev, experience: e.target.value }))} 
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end space-x-2 pt-4 border-t">
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
                   {t.cancel}
                 </Button>
