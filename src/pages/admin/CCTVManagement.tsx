@@ -110,7 +110,10 @@ export default function CCTVManagement() {
   const { language, hasRole } = useAuth();
   const { isModuleEnabled } = useModuleAccess();
   const { toast } = useToast();
+  
+  // All hooks must be declared at the top, before any conditional logic
   const [searchTerm, setSearchTerm] = useState("");
+  const [cameras, setCameras] = useState<CCTVCamera[]>([]);
   const [newCam, setNewCam] = useState<{
     name: string;
     location: string;
@@ -340,9 +343,6 @@ export default function CCTVManagement() {
       </div>
     );
   }
-
-  // All state declarations must be here, after the module check but before any other logic
-  const [cameras, setCameras] = useState<CCTVCamera[]>([]);
 
   // Quick demo camera insertion with a public HLS sample stream
   const addDemoCamera = async () => {
