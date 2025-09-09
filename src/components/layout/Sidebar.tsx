@@ -77,9 +77,12 @@ export function AppSidebar() {
     });
 
     // Personal Activities - available to all users (except facility managers get limited access)
-    const personalItems = [
-      { title: t("myComplaints"), url: "/my-complaints", icon: FileText },
-    ];
+    const personalItems = [];
+    
+    // Add complaints if module is enabled
+    if (isModuleEnabled('complaints')) {
+      personalItems.push({ title: t("myComplaints"), url: "/my-complaints", icon: FileText });
+    }
     
     // Add panic alerts for non-facility managers
     if (!hasRole('facility_manager')) {
@@ -106,6 +109,16 @@ export function AppSidebar() {
         },
         ...(isModuleEnabled('announcements') ? [{ title: t("announcements"), url: "/announcements", icon: Megaphone }] : []),
       ];
+      
+      // Add directory if module is enabled
+      if (isModuleEnabled('directory')) {
+        communityItems.push({ title: "Directory", url: "/directory", icon: Users });
+      }
+      
+      // Add events if module is enabled
+      if (isModuleEnabled('events')) {
+        communityItems.push({ title: "Events", url: "/events", icon: Calendar });
+      }
       
       // Add CCTV monitoring if module is enabled
       if (isModuleEnabled('cctv')) {
@@ -149,6 +162,11 @@ export function AppSidebar() {
     // Add bookings if module is enabled (exclude facility managers - they manage facilities, don't book them)
     if (isModuleEnabled('bookings') && !hasRole('facility_manager')) {
       servicesItems.push({ title: "My Bookings", url: "/my-bookings", icon: Calendar });
+    }
+    
+    // Add service requests if module is enabled
+    if (isModuleEnabled('service_requests')) {
+      servicesItems.push({ title: "Service Requests", url: "/service-requests", icon: Clipboard });
     }
     
     if (servicesItems.length > 0) {
