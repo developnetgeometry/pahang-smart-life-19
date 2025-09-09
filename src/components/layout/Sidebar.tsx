@@ -76,12 +76,16 @@ export function AppSidebar() {
       { title: t("myComplaints"), url: "/my-complaints", icon: FileText },
       { title: t("panicAlerts"), url: "/panic-alerts", icon: AlertTriangle },
     ];
-    
+
     // Add visitor management if module is enabled
-    if (isModuleEnabled('visitor_management')) {
-      personalItems.push({ title: t("myVisitors"), url: "/my-visitors", icon: UserCheck });
+    if (isModuleEnabled("visitor_management")) {
+      personalItems.push({
+        title: t("myVisitors"),
+        url: "/my-visitors",
+        icon: UserCheck,
+      });
     }
-    
+
     nav.push({
       label: t("myActivities"),
       items: personalItems,
@@ -96,12 +100,16 @@ export function AppSidebar() {
       },
       { title: t("announcements"), url: "/announcements", icon: Megaphone },
     ];
-    
+
     // Add discussions if module is enabled
-    if (isModuleEnabled('discussions')) {
-      communityItems.push({ title: t("discussions"), url: "/discussions", icon: MessageSquare });
+    if (isModuleEnabled("discussions")) {
+      communityItems.push({
+        title: t("discussions"),
+        url: "/discussions",
+        icon: MessageSquare,
+      });
     }
-    
+
     nav.push({
       label: t("communityHub"),
       items: communityItems,
@@ -109,42 +117,62 @@ export function AppSidebar() {
 
     // Services & Facilities - available to all users
     const servicesItems = [];
-    
+
     // Add marketplace if module is enabled
-    if (isModuleEnabled('marketplace')) {
-      servicesItems.push({ title: t("marketplace"), url: "/marketplace", icon: ShoppingCart });
-    }
-    
-    // Service Provider specific items
-    if (hasRole("service_provider") && isModuleEnabled('marketplace')) {
-      servicesItems.push({ 
-        title: t("advertisementManagement"), 
-        url: "/advertisements", 
-        icon: Megaphone,
-        requiredRoles: ["service_provider"]
+    if (isModuleEnabled("marketplace")) {
+      servicesItems.push({
+        title: t("marketplace"),
+        url: "/marketplace",
+        icon: ShoppingCart,
       });
     }
-    
+
+    // Service Provider specific items
+    if (hasRole("service_provider") && isModuleEnabled("marketplace")) {
+      servicesItems.push({
+        title: t("advertisementManagement"),
+        url: "/advertisements",
+        icon: Megaphone,
+        requiredRoles: ["service_provider"],
+      });
+    }
+
     // Add facilities if module is enabled
-    if (isModuleEnabled('facilities')) {
-      servicesItems.push({ title: t("facilities"), url: "/facilities", icon: Building });
+    if (isModuleEnabled("facilities")) {
+      servicesItems.push({
+        title: t("facilities"),
+        url: "/facilities",
+        icon: Building,
+      });
     }
-    
+
     // Add bookings if module is enabled (exclude facility managers - they manage facilities, don't book them)
-    if (isModuleEnabled('bookings') && !hasRole('facility_manager')) {
-      servicesItems.push({ title: t("myBookings"), url: "/my-bookings", icon: Calendar });
+    if (isModuleEnabled("bookings") && !hasRole("facility_manager")) {
+      servicesItems.push({
+        title: t("myBookings"),
+        url: "/my-bookings",
+        icon: Calendar,
+      });
     }
-    
+
     // Add service requests if module is enabled
-    if (isModuleEnabled('service_requests')) {
-      servicesItems.push({ title: t("serviceRequests"), url: "/service-requests", icon: Clipboard });
+    if (isModuleEnabled("service_requests")) {
+      servicesItems.push({
+        title: t("serviceRequests"),
+        url: "/service-requests",
+        icon: Clipboard,
+      });
     }
-    
+
     // Add CCTV if module is enabled
-    if (isModuleEnabled('cctv')) {
-      servicesItems.push({ title: t("cctvManagement"), url: "/cctv", icon: Camera });
+    if (isModuleEnabled("cctv")) {
+      servicesItems.push({
+        title: t("cctvManagement"),
+        url: "/cctv",
+        icon: Camera,
+      });
     }
-    
+
     if (servicesItems.length > 0) {
       nav.push({
         label: t("servicesAndFacilities"),
@@ -154,24 +182,40 @@ export function AppSidebar() {
 
     // Role Management & Services - for approval and service provider management roles
     const roleManagementItems = [];
-    
+
     // Role Approval Authority - for approval management roles
-    if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+    if (
+      hasRole("community_admin") ||
+      hasRole("district_coordinator") ||
+      hasRole("state_admin")
+    ) {
       roleManagementItems.push({
         title: t("roleApprovalAuthority"),
         url: "/role-management",
         icon: UserCheck,
-        requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
+        requiredRoles: [
+          "community_admin",
+          "district_coordinator",
+          "state_admin",
+        ],
       });
     }
 
     // Service Provider Management - for community admins and above
-    if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+    if (
+      hasRole("community_admin") ||
+      hasRole("district_coordinator") ||
+      hasRole("state_admin")
+    ) {
       roleManagementItems.push({
         title: t("serviceProviders"),
         url: "/admin/service-providers",
         icon: Building,
-        requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
+        requiredRoles: [
+          "community_admin",
+          "district_coordinator",
+          "state_admin",
+        ],
       });
     }
 
@@ -228,51 +272,55 @@ export function AppSidebar() {
 
     // Operations Management - for facility managers and above
     const operationsItems = [];
-    
+
     // Maintenance Staff specific items
     if (hasRole("maintenance_staff")) {
-        operationsItems.push(
-          {
-            title: t("workOrders"),
-            url: "/work-orders-management",
-            icon: Wrench,
-            requiredRoles: ["maintenance_staff"],
-          },
-          {
-            title: t("maintenanceComplaints"),
-            url: "/maintenance-complaint-center",
-            icon: MessageSquare,
-            requiredRoles: ["maintenance_staff"],
-          },
-          {
-            title: t("emergencyResponse"),
-            url: "/maintenance-emergency",
-            icon: AlertTriangle,
-            requiredRoles: ["maintenance_staff"],
-          },
-          {
-            title: t("maintenanceAssets"),
-            url: "/maintenance-assets",
-            icon: Package,
-            requiredRoles: ["maintenance_staff"],
-          },
-          {
-            title: t("maintenanceScheduler"),
-            url: "/maintenance-scheduler",
-            icon: Calendar,
-            requiredRoles: ["maintenance_staff"],
-          },
-          {
-            title: t("maintenanceReports"),
-            url: "/maintenance-reports",
-            icon: FileText,
-            requiredRoles: ["maintenance_staff"],
-          }
-        );
+      operationsItems.push(
+        {
+          title: t("workOrders"),
+          url: "/work-orders-management",
+          icon: Wrench,
+          requiredRoles: ["maintenance_staff"],
+        },
+        {
+          title: t("maintenanceComplaints"),
+          url: "/maintenance-complaint-center",
+          icon: MessageSquare,
+          requiredRoles: ["maintenance_staff"],
+        },
+        {
+          title: t("emergencyResponse"),
+          url: "/maintenance-emergency",
+          icon: AlertTriangle,
+          requiredRoles: ["maintenance_staff"],
+        },
+        {
+          title: t("maintenanceAssets"),
+          url: "/maintenance-assets",
+          icon: Package,
+          requiredRoles: ["maintenance_staff"],
+        },
+        {
+          title: t("maintenanceScheduler"),
+          url: "/maintenance-scheduler",
+          icon: Calendar,
+          requiredRoles: ["maintenance_staff"],
+        },
+        {
+          title: t("maintenanceReports"),
+          url: "/maintenance-reports",
+          icon: FileText,
+          requiredRoles: ["maintenance_staff"],
+        }
+      );
     }
-    
+
     // Facility Manager specific items
-    if (hasRole("facility_manager") || hasRole("state_admin") || hasRole("community_admin")) {
+    if (
+      hasRole("facility_manager") ||
+      hasRole("state_admin") ||
+      hasRole("community_admin")
+    ) {
       operationsItems.push(
         {
           title: t("facilitiesManagement"),
@@ -280,12 +328,12 @@ export function AppSidebar() {
           icon: Building,
           requiredRoles: ["facility_manager", "state_admin", "community_admin"],
         },
-          {
-            title: t("floorPlanManagement"),
-            url: "/admin/floor-plans",
-            icon: Monitor,
-            requiredRoles: ["facility_manager", "state_admin", "community_admin"],
-          },
+        {
+          title: t("floorPlanManagement"),
+          url: "/admin/floor-plans",
+          icon: Monitor,
+          requiredRoles: ["facility_manager", "state_admin", "community_admin"],
+        },
         {
           title: t("maintenanceManagement"),
           url: "/admin/maintenance",
@@ -294,36 +342,66 @@ export function AppSidebar() {
         }
       );
     }
-    
+
     // Admin and Facility Manager items - removed complaints center from here
 
     // Asset Management - for facility managers and above
-    if (hasRole("facility_manager") || hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+    if (
+      hasRole("facility_manager") ||
+      hasRole("community_admin") ||
+      hasRole("district_coordinator") ||
+      hasRole("state_admin")
+    ) {
       operationsItems.push({
         title: t("assetManagement"),
         url: "/asset-management",
         icon: Package,
-        requiredRoles: ["facility_manager", "community_admin", "district_coordinator", "state_admin"],
+        requiredRoles: [
+          "facility_manager",
+          "community_admin",
+          "district_coordinator",
+          "state_admin",
+        ],
       });
     }
 
     // Inventory Management - for facility managers and above
-    if (hasRole("facility_manager") || hasRole("maintenance_staff") || hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+    if (
+      hasRole("facility_manager") ||
+      hasRole("maintenance_staff") ||
+      hasRole("community_admin") ||
+      hasRole("district_coordinator") ||
+      hasRole("state_admin")
+    ) {
       operationsItems.push({
         title: t("inventoryManagement"),
         url: "/inventory-management",
         icon: BarChart3,
-        requiredRoles: ["facility_manager", "maintenance_staff", "community_admin", "district_coordinator", "state_admin"],
+        requiredRoles: [
+          "facility_manager",
+          "maintenance_staff",
+          "community_admin",
+          "district_coordinator",
+          "state_admin",
+        ],
       });
     }
 
     // Financial Management - for community admins and above
-    if (hasRole("community_admin") || hasRole("district_coordinator") || hasRole("state_admin")) {
+    if (
+      hasRole("community_admin") ||
+      hasRole("district_coordinator") ||
+      hasRole("state_admin")
+    ) {
       operationsItems.push({
         title: t("financialManagement"),
         url: "/financial-management",
         icon: DollarSign,
-        requiredRoles: ["community_admin", "district_coordinator", "state_admin"],
+        requiredRoles: [
+          "community_admin",
+          "district_coordinator",
+          "state_admin",
+        ],
       });
     }
 
@@ -336,7 +414,11 @@ export function AppSidebar() {
 
     // Security & Monitoring - for security, state_admin, and community_admin roles
     const securityItems = [];
-    if (hasRole("security_officer") || hasRole("state_admin") || hasRole("community_admin")) {
+    if (
+      hasRole("security_officer") ||
+      hasRole("state_admin") ||
+      hasRole("community_admin")
+    ) {
       securityItems.push(
         {
           title: t("facilityComplaints"),
@@ -357,29 +439,35 @@ export function AppSidebar() {
         securityItems.push(
           {
             title: t("visitorSecurity"),
-            url: "/visitor-security", 
+            url: "/visitor-security",
             icon: Shield,
-            requiredRoles: ["security_officer", "state_admin", "community_admin"],
+            requiredRoles: [
+              "security_officer",
+              "state_admin",
+              "community_admin",
+            ],
           },
           {
             title: t("visitorManagement"),
             url: "/visitor-management",
             icon: UserCheck,
-            requiredRoles: ["security_officer", "state_admin", "community_admin"],
+            requiredRoles: [
+              "security_officer",
+              "state_admin",
+              "community_admin",
+            ],
           }
         );
       }
     }
 
     if (hasRole("state_admin") || hasRole("community_admin")) {
-      securityItems.push(
-        {
-          title: t("visitorAnalytics"),
-          url: "/visitor-analytics",
-          icon: Activity,
-          requiredRoles: ["state_admin", "community_admin"],
-        }
-      );
+      securityItems.push({
+        title: t("visitorAnalytics"),
+        url: "/visitor-analytics",
+        icon: Activity,
+        requiredRoles: ["state_admin", "community_admin"],
+      });
     }
 
     if (securityItems.length > 0) {
@@ -440,9 +528,11 @@ export function AppSidebar() {
           {!isCollapsed && (
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-sidebar-foreground">
-                {t('smartCommunity')}
+                {t("smartCommunity")}
               </span>
-              <span className="text-xs text-sidebar-accent-foreground opacity-75">{t('pahangState')}</span>
+              <span className="text-xs text-sidebar-accent-foreground opacity-75">
+                {t("pahangState")}
+              </span>
             </div>
           )}
         </div>
