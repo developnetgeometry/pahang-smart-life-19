@@ -145,7 +145,7 @@ export default function VideoCallInterface() {
             { name: 'Security Check-in', type: 'audio', time: '1 day ago', duration: '12 min' },
             { name: 'Maintenance Update', type: 'video', time: '2 days ago', duration: '23 min' }
           ].map((call, index) => (
-            <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+            <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg space-y-2 sm:space-y-0">
               <div className="flex items-center space-x-3">
                 <div className={`p-2 rounded-full ${
                   call.type === 'video' ? 'bg-purple-500/10' : 'bg-blue-500/10'
@@ -193,7 +193,7 @@ export default function VideoCallInterface() {
             { title: 'Monthly Community Meeting', time: 'Tomorrow 2:00 PM', participants: 12 },
             { title: 'Facilities Planning', time: 'Friday 10:00 AM', participants: 5 }
           ].map((meeting, index) => (
-            <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+            <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg space-y-2 sm:space-y-0">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-green-500/10 rounded-full">
                   <Users className="w-4 h-4 text-green-600" />

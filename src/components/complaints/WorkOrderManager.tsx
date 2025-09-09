@@ -322,7 +322,7 @@ export default function WorkOrderManager({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>
                     {language === 'en' ? 'Work Type' : 'Jenis Kerja'}
@@ -384,7 +384,7 @@ export default function WorkOrderManager({
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="estimated_hours">
                     {language === 'en' ? 'Est. Hours' : 'Anggaran Jam'}

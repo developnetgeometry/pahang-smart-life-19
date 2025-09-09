@@ -237,9 +237,9 @@ export function SecurityOfficerDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {cctvFeeds.map((camera, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg space-y-2 sm:space-y-0">
                   <div className="flex-1">
                     <p className="text-sm font-medium">{camera.name}</p>
                     <p className="text-xs text-muted-foreground">{camera.location}</p>

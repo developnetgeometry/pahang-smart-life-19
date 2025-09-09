@@ -392,7 +392,7 @@ export default function PanicAlertManager() {
             {alerts.map((alert) => {
               const StatusIcon = getStatusIcon(alert.alert_status);
               return (
-                <div key={alert.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={alert.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg space-y-2 sm:space-y-0">
                   <div className="flex items-center gap-3">
                     <StatusIcon className="w-4 h-4" />
                     <div>

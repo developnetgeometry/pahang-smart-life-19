@@ -417,7 +417,7 @@ export default function ServiceProviderEnhancedDashboard() {
             ) : (
               <div className="space-y-4">
                 {stats.recentOrders.map((order) => (
-                  <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={order.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg space-y-2 sm:space-y-0">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <p className="font-medium">Order #{order.id.slice(-8)}</p>
@@ -488,7 +488,7 @@ export default function ServiceProviderEnhancedDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <Button 
               variant="outline" 
               className="h-20 flex-col gap-2" 

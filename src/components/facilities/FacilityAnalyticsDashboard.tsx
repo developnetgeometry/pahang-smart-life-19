@@ -486,7 +486,7 @@ export function FacilityAnalyticsDashboard() {
               <CardContent>
                 <div className="space-y-4">
                   {analytics.map((facility, index) => (
-                    <div key={facility.facility_name} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div key={facility.facility_name} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg space-y-2 sm:space-y-0">
                       <div>
                         <h4 className="font-medium">{facility.facility_name}</h4>
                         <p className="text-sm text-muted-foreground">

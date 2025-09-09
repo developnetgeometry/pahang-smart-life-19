@@ -322,7 +322,7 @@ export function StateServiceManagerDashboard() {
           <CardContent>
             <div className="space-y-4">
               {serviceTypes.map((service, index) => (
-                <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg space-y-2 sm:space-y-0">
                   <div className="flex-1">
                     <p className="text-sm font-medium">{service.type}</p>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
@@ -356,7 +356,7 @@ export function StateServiceManagerDashboard() {
         <CardContent>
           <div className="space-y-4">
             {actionItems.map((item, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+              <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg space-y-2 sm:space-y-0">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <Badge variant={getPriorityColor(item.priority) as any}>

@@ -163,7 +163,7 @@ export default function NotificationCenter() {
           {notificationTypes.map((type) => {
             const IconComponent = type.icon;
             return (
-              <div key={type.key} className="flex items-center justify-between p-3 border rounded-lg">
+              <div key={type.key} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg space-y-2 sm:space-y-0">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
                     <IconComponent className={`w-5 h-5 ${type.color}`} />
@@ -214,7 +214,7 @@ export default function NotificationCenter() {
           {deliveryMethods.map((method) => {
             const IconComponent = method.icon;
             return (
-              <div key={method.key} className="flex items-center justify-between p-3 border rounded-lg">
+              <div key={method.key} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg space-y-2 sm:space-y-0">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
                     <IconComponent className="w-5 h-5 text-muted-foreground" />

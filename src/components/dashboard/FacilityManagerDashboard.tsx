@@ -464,7 +464,7 @@ export const FacilityManagerDashboard = () => {
       </Tabs>
 
       {/* Quick Action Buttons */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <Button asChild variant="outline" className="h-20">
           <Link to="/facilities" className="flex flex-col items-center gap-2">
             <Building className="h-6 w-6" />

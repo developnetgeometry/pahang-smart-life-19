@@ -499,7 +499,7 @@ export function MaintenanceStaffDashboard() {
           <CardContent>
             <div className="space-y-4">
               {workOrders.map((order, index) => (
-                <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg space-y-2 sm:space-y-0">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <Badge variant="outline">{order.id}</Badge>
@@ -588,7 +588,7 @@ export function MaintenanceStaffDashboard() {
                       placeholder={language === 'en' ? 'Describe the issue or work completed' : 'Terangkan isu atau kerja yang selesai'}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="priority">{language === 'en' ? 'Priority' : 'Keutamaan'}</Label>
                       <Select value={reportForm.priority} onValueChange={(value) => setReportForm({...reportForm, priority: value})}>
@@ -660,7 +660,7 @@ export function MaintenanceStaffDashboard() {
                       placeholder={language === 'en' ? 'e.g., LED Bulbs, AC Filter' : 'cth: Mentol LED, Penapis AC'}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="quantity">{language === 'en' ? 'Quantity' : 'Kuantiti'}</Label>
                       <Input
@@ -744,7 +744,7 @@ export function MaintenanceStaffDashboard() {
           {selectedWorkOrder && (
             <div className="space-y-6">
               {/* Header Info */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">
                     {language === 'en' ? 'Work Order ID' : 'ID Arahan Kerja'}
@@ -770,7 +770,7 @@ export function MaintenanceStaffDashboard() {
               </div>
 
               {/* Location and Priority */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">
                     {language === 'en' ? 'Location' : 'Lokasi'}
@@ -788,7 +788,7 @@ export function MaintenanceStaffDashboard() {
               </div>
 
               {/* Dates */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">
                     {language === 'en' ? 'Assigned Date' : 'Tarikh Diberikan'}

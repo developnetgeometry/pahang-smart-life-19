@@ -492,7 +492,7 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
             <div className="space-y-4">
               <div>
                 <Label>{t.images}</Label>
-                <div className="grid grid-cols-3 gap-4 mt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
                   {images.map((image, index) => (
                     <div key={index} className="relative">
                       <img 
@@ -645,7 +645,7 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="publish_at">{t.publishAt}</Label>
                 <Input
