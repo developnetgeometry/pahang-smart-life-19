@@ -33,7 +33,7 @@ services:
     restart: unless-stopped
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
-    command: ["http", "viewer:80", "--url=$NGROK_URL"]
+    command: ["http", "viewer:80"]
     ports:
       - "4040:4040"
     depends_on:

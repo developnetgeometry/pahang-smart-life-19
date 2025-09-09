@@ -884,9 +884,9 @@ export default function CCTVManagement() {
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
-        {(hasRole("state_admin") ||
+        {(hasRole("admin") ||
           hasRole("security_officer") ||
-          hasRole("facility_manager") ||
+          hasRole("manager") ||
           hasRole("community_admin") ||
           hasRole("district_coordinator") ||
           hasRole("state_admin") ||
@@ -1135,13 +1135,13 @@ export default function CCTVManagement() {
                       <Badge className={getStatusColor(camera.status)}>
                         {t[camera.status as keyof typeof t] || camera.status}
                       </Badge>
-                       {(hasRole("state_admin") ||
-                         hasRole("security_officer") ||
-                         hasRole("facility_manager") ||
-                         hasRole("community_admin") ||
-                         hasRole("district_coordinator") ||
-                         hasRole("state_admin") ||
-                         hasRole("facility_manager")) && (
+                      {(hasRole("admin") ||
+                        hasRole("security_officer") ||
+                        hasRole("manager") ||
+                        hasRole("community_admin") ||
+                        hasRole("district_coordinator") ||
+                        hasRole("state_admin") ||
+                        hasRole("facility_manager")) && (
                         <Button
                           size="icon"
                           variant="ghost"
@@ -1161,13 +1161,13 @@ export default function CCTVManagement() {
                           <Settings className="h-4 w-4" />
                         </Button>
                       )}
-                       {(hasRole("state_admin") ||
-                         hasRole("security_officer") ||
-                         hasRole("facility_manager") ||
-                         hasRole("community_admin") ||
-                         hasRole("district_coordinator") ||
-                         hasRole("state_admin") ||
-                         hasRole("facility_manager")) && (
+                      {(hasRole("admin") ||
+                        hasRole("security_officer") ||
+                        hasRole("manager") ||
+                        hasRole("community_admin") ||
+                        hasRole("district_coordinator") ||
+                        hasRole("state_admin") ||
+                        hasRole("facility_manager")) && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
@@ -1265,13 +1265,13 @@ export default function CCTVManagement() {
                       <Eye className="h-4 w-4 mr-1" />
                       {t.liveView}
                     </Button>
-                     {(hasRole("state_admin") ||
-                       hasRole("security_officer") ||
-                       hasRole("facility_manager") ||
-                       hasRole("community_admin") ||
-                       hasRole("district_coordinator") ||
-                       hasRole("state_admin") ||
-                       hasRole("facility_manager")) && (
+                    {(hasRole("admin") ||
+                      hasRole("security_officer") ||
+                      hasRole("manager") ||
+                      hasRole("community_admin") ||
+                      hasRole("district_coordinator") ||
+                      hasRole("state_admin") ||
+                      hasRole("facility_manager")) && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -1372,7 +1372,6 @@ export default function CCTVManagement() {
                         <StreamPlayer
                           src={liveViewCamera.streamUrl}
                           className="w-full h-full object-contain"
-                          autoPlay={true}
                         />
                       ) : (
                         <div className="text-white text-center">
@@ -1386,14 +1385,14 @@ export default function CCTVManagement() {
                     </div>
 
                     {/* PTZ Controls Overlay */}
-                    {/* {liveViewCamera?.hasPtz && ( */}
-                    {/* <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-sm rounded-lg p-3 text-white"> */}
-                    {/* <div className="text-xs font-medium mb-2">
+                    {liveViewCamera?.hasPtz && (
+                      <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-sm rounded-lg p-3 text-white">
+                        <div className="text-xs font-medium mb-2">
                           {t.ptzControls}
-                        </div> */}
+                        </div>
 
-                    {/* Pan/Tilt */}
-                    {/* <div className="mb-3">
+                        {/* Pan/Tilt */}
+                        <div className="mb-3">
                           <div className="text-xs mb-1">
                             {t.pan} / {t.tilt}
                           </div>
@@ -1443,10 +1442,10 @@ export default function CCTVManagement() {
                             </Button>
                             <div></div>
                           </div>
-                        </div> */}
+                        </div>
 
-                    {/* Zoom */}
-                    {/* <div className="mb-3">
+                        {/* Zoom */}
+                        <div className="mb-3">
                           <div className="text-xs mb-1">{t.zoom}</div>
                           <div className="flex gap-1 justify-center">
                             <Button
@@ -1469,20 +1468,20 @@ export default function CCTVManagement() {
                           <div className="text-xs text-center mt-1">
                             {ptzPosition.zoom.toFixed(1)}x
                           </div>
-                        </div> */}
+                        </div>
 
-                    {/* Position */}
-                    {/* <div className="text-xs space-y-1 mb-3">
+                        {/* Position */}
+                        <div className="text-xs space-y-1 mb-3">
                           <div>
                             {t.pan}: {ptzPosition.pan}°
                           </div>
                           <div>
                             {t.tilt}: {ptzPosition.tilt}°
                           </div>
-                        </div> */}
+                        </div>
 
-                    {/* Presets */}
-                    {/* {liveViewCamera.presets &&
+                        {/* Presets */}
+                        {liveViewCamera.presets &&
                           liveViewCamera.presets.length > 0 && (
                             <div>
                               <div className="text-xs mb-1">{t.presets}</div>
@@ -1500,22 +1499,22 @@ export default function CCTVManagement() {
                                 ))}
                               </div>
                             </div>
-                          )} */}
-                    {/* </div> */}
-                    {/* )} */}
+                          )}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
             </div>
 
             {/* Camera Controls - Admin Only */}
-             {(hasRole("state_admin") ||
-               hasRole("security_officer") ||
-               hasRole("facility_manager") ||
-               hasRole("community_admin") ||
-               hasRole("district_coordinator") ||
-               hasRole("state_admin") ||
-               hasRole("facility_manager")) && (
+            {(hasRole("admin") ||
+              hasRole("security_officer") ||
+              hasRole("manager") ||
+              hasRole("community_admin") ||
+              hasRole("district_coordinator") ||
+              hasRole("state_admin") ||
+              hasRole("facility_manager")) && (
               <div className="lg:w-80 space-y-4">
                 {/* RTSP Connection */}
                 {liveViewCamera && (
@@ -1523,9 +1522,9 @@ export default function CCTVManagement() {
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm flex items-center gap-2">
                         {rtspConnected ? (
-                          <WifiOff className="h-4 w-4 text-red-500" />
-                        ) : (
                           <Wifi className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <WifiOff className="h-4 w-4 text-red-500" />
                         )}
                         {t.rtspConnection}
                       </CardTitle>
@@ -1544,9 +1543,9 @@ export default function CCTVManagement() {
                       </div>
                       <div className="flex items-center justify-between">
                         <Badge
-                          variant={rtspConnected ? "secondary" : "default"}
+                          variant={rtspConnected ? "default" : "secondary"}
                         >
-                          {rtspConnected ? t.disconnected : t.connected}
+                          {rtspConnected ? t.connected : t.disconnected}
                         </Badge>
                         <div className="flex gap-2">
                           <Button
@@ -1563,7 +1562,7 @@ export default function CCTVManagement() {
                             onClick={handleRtspConnection}
                             disabled={!editStreamUrl}
                           >
-                            {rtspConnected ? t.connect : t.disconnect}
+                            {rtspConnected ? t.disconnect : t.connect}
                           </Button>
                         </div>
                       </div>

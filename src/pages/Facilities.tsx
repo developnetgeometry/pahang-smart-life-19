@@ -276,7 +276,7 @@ export default function Facilities() {
 
   useEffect(() => {
     fetchFacilities();
-  }, [language]);
+  }, [language, isModuleEnabled]);
 
   // Check if facilities module is enabled - do this AFTER all hooks
   if (!isModuleEnabled('facilities')) {

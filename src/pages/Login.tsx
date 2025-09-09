@@ -214,7 +214,62 @@ export default function Login() {
         }
 
         if (authData.user) {
-          // All data creation is now handled by the database trigger
+          // Wait for the trigger to create the basic profile, then update it
+          await new Promise((resolve) => setTimeout(resolve, 1000)); // Brief delay for trigger
+
+          // Update the profile with registration details
+          const profileUpdate: any = {
+            mobile_no: phone.trim() || null,
+            district_id: districtId?.replace("district-", "") || districtId,
+            community_id: communityId?.replace("community-", "") || communityId,
+            address: location.trim(),
+            language: language,
+            pdpa_declare: pdpaAccepted,
+            account_status: "pending",
+            is_active: true,
+          };
+
+          // Add service provider specific data
+          if (selectedRole === "service_provider") {
+            profileUpdate.business_name = businessName.trim();
+            profileUpdate.business_type = businessType.trim();
+            profileUpdate.license_number = licenseNumber.trim() || null;
+            profileUpdate.years_of_experience =
+              parseInt(yearsOfExperience) || null;
+          }
+
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .update(profileUpdate)
+            .eq("id", authData.user.id);
+
+          if (profileError) {
+            console.error("Profile update error:", profileError);
+            throw new Error(`Profile update failed: ${profileError.message}`);
+          }
+
+          console.log(
+            "Profile updated successfully for user:",
+            authData.user.id
+          );
+
+          // Assign selected role using enhanced_user_roles table
+          const roleData = {
+            user_id: authData.user.id,
+            role: selectedRole as any,
+            district_id: districtId?.replace("district-", "") || districtId,
+            assigned_by: authData.user.id, // Self-assigned during registration
+            is_active: true,
+          };
+
+          const { error: roleError } = await supabase
+            .from("enhanced_user_roles")
+            .insert(roleData);
+
+          if (roleError) {
+            console.error("Role assignment error:", roleError);
+            throw new Error(`Role assignment failed: ${roleError.message}`);
+          }
 
           // Show success message
           toast({

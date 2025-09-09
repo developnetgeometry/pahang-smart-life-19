@@ -54,7 +54,6 @@ import Directory from "./pages/Directory";
 import ServiceProviderApplication from "./pages/ServiceProviderApplication";
 import ServiceProviderManagement from "./pages/admin/ServiceProviderManagement";
 import ServiceProviderReview from "./pages/admin/ServiceProviderReview";
-import RoleDiagnostics from "./pages/admin/RoleDiagnostics";
 import MyApplications from "./pages/MyApplications";
 import NotFound from "./pages/NotFound";
 // New Management Modules
@@ -75,7 +74,6 @@ import PrecisionMapping from "./pages/PrecisionMapping";
 import MaintenanceComplaintCenterPage from "./pages/MaintenanceComplaintCenter";
 import PatrolInterfacePage from "./pages/PatrolInterface";
 import FacilityComplaintCenterPage from "./pages/FacilityComplaintCenter";
-import ServiceProviders from "./pages/ServiceProviders";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -251,16 +249,6 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <Marketplace />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/service-providers"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <ServiceProviders />
                   </Layout>
                 </ProtectedRoute>
               }
@@ -466,18 +454,6 @@ const App = () => (
               }
             />
             <Route
-              path="/admin/role-diagnostics"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
-                    <Layout>
-                      <RoleDiagnostics />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/admin/security"
               element={
                 <ProtectedRoute>
@@ -491,23 +467,9 @@ const App = () => (
               path="/admin/communities"
               element={
                 <ProtectedRoute>
-                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
-                    <Layout>
-                      <CommunityManagement />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/districts"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["state_admin"]}>
-                    <Layout>
-                      <DistrictManagement />
-                    </Layout>
-                  </RequireRoles>
+                  <Layout>
+                    <CommunityManagement />
+                  </Layout>
                 </ProtectedRoute>
               }
             />

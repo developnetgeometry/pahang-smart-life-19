@@ -90,27 +90,16 @@ export function useHouseholdAccounts() {
       console.log('Starting spouse account creation for:', spouseData.email);
       
       // Check current user authentication
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('Current session check:', { 
-        hasSession: !!session, 
-        sessionError,
-        userId: session?.user?.id,
-        contextUserId: user.id 
-      });
+      const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser();
+      console.log('Current user check:', { currentUser: !!currentUser, authError });
       
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        throw new Error(`Authentication error: ${sessionError.message}`);
+      if (authError) {
+        console.error('Auth error:', authError);
+        throw new Error(`Authentication error: ${authError.message}`);
       }
       
-      if (!session?.user) {
-        throw new Error('Authentication session missing! Please refresh the page and log in again.');
-      }
-
-      // Verify user.id matches session.user.id
-      if (user.id !== session.user.id) {
-        console.error('User ID mismatch:', { contextUserId: user.id, sessionUserId: session.user.id });
-        throw new Error('User session mismatch. Please refresh the page and try again.');
+      if (!currentUser) {
+        throw new Error('Authentication session expired. Please log in again.');
       }
 
       // Check if spouse account already exists and is active
@@ -212,14 +201,10 @@ export function useHouseholdAccounts() {
           }
         });
 
-        if (authError) {
-          console.error('Auth signup error:', authError);
-          throw new Error(`Failed to create account: ${authError.message}`);
-        }
+        if (authError) throw authError;
         if (!authData.user) throw new Error('Failed to create user account');
         
         spouseUserId = authData.user.id;
-        console.log('New user created:', { spouseUserId, email: spouseData.email });
 
         // Get current user's profile for district and community info
         const { data: userProfile } = await supabase
@@ -239,10 +224,7 @@ export function useHouseholdAccounts() {
           })
           .eq('id', spouseUserId);
 
-        if (profileError) {
-          console.error('Profile update error:', profileError);
-          throw new Error(`Failed to update profile: ${profileError.message}`);
-        }
+        if (profileError) throw profileError;
 
         // Create household account link
         console.log('Creating household account link...', {
@@ -263,12 +245,6 @@ export function useHouseholdAccounts() {
 
         if (householdError) {
           console.error('Household account creation error:', householdError);
-          console.error('Error details:', {
-            code: householdError.code,
-            message: householdError.message,
-            details: householdError.details,
-            hint: householdError.hint
-          });
           throw new Error(`Failed to link spouse account: ${householdError.message}`);
         }
         
@@ -276,10 +252,8 @@ export function useHouseholdAccounts() {
       }
 
       await fetchAccounts();
-      console.log('Spouse account creation completed successfully');
       return { id: spouseUserId };
     } catch (error) {
-      console.error('Spouse account creation failed:', error);
       throw error;
     }
   };
@@ -295,9 +269,9 @@ export function useHouseholdAccounts() {
 
     try {
       // Check current user authentication
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        throw new Error('Authentication session missing! Please refresh the page and log in again.');
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        throw new Error('Authentication session expired. Please log in again.');
       }
       
       // Create authentication account for tenant
@@ -395,8 +369,7 @@ export function useHouseholdAccounts() {
   };
 
   const canAddSpouse = () => {
-    // Only check active accounts
-    return !accounts.some(acc => acc.relationship_type === 'spouse' && acc.is_active);
+    return !accounts.some(acc => acc.relationship_type === 'spouse');
   };
 
   return {

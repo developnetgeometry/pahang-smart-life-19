@@ -14,11 +14,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   LayoutDashboard,
   Calendar,
   Users,
@@ -76,18 +71,14 @@ export function AppSidebar() {
       items: [{ title: t("dashboard"), url: "/", icon: LayoutDashboard }],
     });
 
-    // Personal Activities - available to all users (except facility managers get limited access)
+    // Personal Activities - available to all users
     const personalItems = [
       { title: t("myComplaints"), url: "/my-complaints", icon: FileText },
+      { title: "Panic Alerts", url: "/panic-alerts", icon: AlertTriangle },
     ];
     
-    // Add panic alerts for non-facility managers
-    if (!hasRole('facility_manager')) {
-      personalItems.push({ title: "Panic Alerts", url: "/panic-alerts", icon: AlertTriangle });
-    }
-    
-    // Add visitor management if module is enabled and not facility manager
-    if (isModuleEnabled('visitor_management') && !hasRole('facility_manager')) {
+    // Add visitor management if module is enabled
+    if (isModuleEnabled('visitor_management')) {
       personalItems.push({ title: "My Visitors", url: "/my-visitors", icon: UserCheck });
     }
     
@@ -96,35 +87,33 @@ export function AppSidebar() {
       items: personalItems,
     });
 
-    // Community Hub - available to all users except facility managers
-    if (!hasRole('facility_manager')) {
-      const communityItems = [
-        {
-          title: t("communication"),
-          url: "/communication-hub",
-          icon: MessageSquare,
-        },
-        { title: t("announcements"), url: "/announcements", icon: Megaphone },
-      ];
-      
-      // Add discussions if module is enabled
-      if (isModuleEnabled('discussions')) {
-        communityItems.push({ title: t("discussions"), url: "/discussions", icon: MessageSquare });
-      }
-      
-      // Add marketplace if module is enabled
-      if (isModuleEnabled('marketplace')) {
-        communityItems.push({ title: t("marketplace"), url: "/marketplace", icon: ShoppingCart });
-      }
-      
-      nav.push({
-        label: t("communityHub"),
-        items: communityItems,
-      });
+    // Community Hub - available to all users
+    const communityItems = [
+      {
+        title: t("communication"),
+        url: "/communication-hub",
+        icon: MessageSquare,
+      },
+      { title: t("announcements"), url: "/announcements", icon: Megaphone },
+    ];
+    
+    // Add discussions if module is enabled
+    if (isModuleEnabled('discussions')) {
+      communityItems.push({ title: t("discussions"), url: "/discussions", icon: MessageSquare });
     }
+    
+    nav.push({
+      label: t("communityHub"),
+      items: communityItems,
+    });
 
     // Services & Facilities - available to all users
     const servicesItems = [];
+    
+    // Add marketplace if module is enabled
+    if (isModuleEnabled('marketplace')) {
+      servicesItems.push({ title: t("marketplace"), url: "/marketplace", icon: ShoppingCart });
+    }
     
     // Service Provider specific items
     if (hasRole("service_provider") && isModuleEnabled('marketplace')) {
@@ -144,6 +133,16 @@ export function AppSidebar() {
     // Add bookings if module is enabled (exclude facility managers - they manage facilities, don't book them)
     if (isModuleEnabled('bookings') && !hasRole('facility_manager')) {
       servicesItems.push({ title: "My Bookings", url: "/my-bookings", icon: Calendar });
+    }
+    
+    // Add service requests if module is enabled
+    if (isModuleEnabled('service_requests')) {
+      servicesItems.push({ title: "Service Requests", url: "/service-requests", icon: Clipboard });
+    }
+    
+    // Add CCTV if module is enabled
+    if (isModuleEnabled('cctv')) {
+      servicesItems.push({ title: t("cctvManagement"), url: "/cctv-live-feed", icon: Camera });
     }
     
     if (servicesItems.length > 0) {
@@ -183,24 +182,23 @@ export function AppSidebar() {
       });
     }
 
-    // Administration - for state_admin, community_admin, and district_coordinator roles
+    // Administration - only for state_admin and community_admin roles
     const adminItems = [];
     if (hasRole("state_admin") || hasRole("community_admin")) {
-      adminItems.push({
-        title: t("userManagement"),
-        url: "/admin/users",
-        icon: UserPlus,
-        requiredRoles: ["state_admin", "community_admin"],
-      });
-    }
-
-    if (hasRole("state_admin") || hasRole("community_admin") || hasRole("district_coordinator")) {
-      adminItems.push({
-        title: t("communityManagement"),
-        url: "/admin/communities",
-        icon: Home,
-        requiredRoles: ["state_admin", "community_admin", "district_coordinator"],
-      });
+      adminItems.push(
+        {
+          title: t("userManagement"),
+          url: "/admin/users",
+          icon: UserPlus,
+          requiredRoles: ["state_admin", "community_admin"],
+        },
+        {
+          title: t("communityManagement"),
+          url: "/admin/communities",
+          icon: Home,
+          requiredRoles: ["state_admin", "community_admin"],
+        }
+      );
     }
 
     if (hasRole("community_admin")) {
@@ -283,9 +281,9 @@ export function AppSidebar() {
           requiredRoles: ["facility_manager", "state_admin", "community_admin"],
         },
         {
-          title: "Facility Complaints",
-          url: "/facility-complaint-center",
-          icon: AlertTriangle,
+          title: "Floor Plan Management",
+          url: "/admin/floor-plans",
+          icon: Monitor,
           requiredRoles: ["facility_manager", "state_admin", "community_admin"],
         },
         {
@@ -340,6 +338,12 @@ export function AppSidebar() {
     const securityItems = [];
     if (hasRole("security_officer") || hasRole("state_admin") || hasRole("community_admin")) {
       securityItems.push(
+        {
+          title: "Facility Complaints",
+          url: "/facility-complaint-center",
+          icon: AlertTriangle,
+          requiredRoles: ["facility_manager"],
+        },
         {
           title: t("panicAlerts"),
           url: "/panic-alerts",
@@ -424,84 +428,55 @@ export function AppSidebar() {
     .filter((group) => group.items.length > 0);
 
   return (
-    <Sidebar collapsible="icon" variant="floating">
+    <Sidebar collapsible="icon">
       {/* Logo section */}
-      <div className="flex h-16 items-center border-b border-border/30 px-4 bg-gradient-to-r from-primary/5 via-accent/5 to-transparent backdrop-blur-sm">
+      <div className="flex h-16 items-center border-b border-border px-4">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center shadow-glow animate-scale-in p-1">
-            <img 
-              src="/lovable-uploads/8b5530a7-fe2b-4d5c-bcf6-5f679ad0e912.png" 
-              alt="Smart Community Logo" 
-              className="w-full h-full object-contain rounded-md"
-            />
+          <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+            <span className="text-sm font-bold text-primary-foreground">
+              SC
+            </span>
           </div>
           {!isCollapsed && (
-            <div className="flex flex-col animate-fade-in">
-              <span className="text-sm font-semibold text-foreground bg-gradient-primary bg-clip-text text-transparent">
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-sidebar-foreground">
                 Smart Community
               </span>
-              <span className="text-xs text-muted-foreground opacity-75">Pahang</span>
+              <span className="text-xs text-sidebar-accent-foreground opacity-75">Pahang</span>
             </div>
           )}
         </div>
       </div>
 
-      <SidebarContent className="px-2">
+      <SidebarContent>
         {filteredNavigation.map((group, groupIndex) => (
-          <SidebarGroup key={groupIndex} className="animate-fade-in">
+          <SidebarGroup key={groupIndex}>
             {!isCollapsed && (
-              <SidebarGroupLabel className="text-muted-foreground font-medium text-xs uppercase tracking-wide bg-gradient-subtle px-3 py-2 rounded-lg mb-2">
+              <SidebarGroupLabel className="text-muted-foreground">
                 {group.label}
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
               <SidebarMenu>
-                {group.items.map((item) => {
-                  const isCurrentActive = location.pathname === item.url;
-                  return (
-                    <SidebarMenuItem key={item.url}>
-                      <SidebarMenuButton asChild>
-                        {isCollapsed ? (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <NavLink
-                                to={item.url}
-                                className={`flex items-center justify-center rounded-xl p-3 transition-all duration-300 group relative overflow-hidden ${
-                                  isCurrentActive
-                                    ? "bg-gradient-primary text-primary-foreground shadow-glow scale-105"
-                                    : "text-muted-foreground hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 hover:text-foreground hover:shadow-community hover:scale-105 backdrop-blur-sm"
-                                }`}
-                              >
-                                <item.icon className="h-5 w-5 transition-transform group-hover:scale-110" />
-                                {isCurrentActive && (
-                                  <div className="absolute inset-0 bg-gradient-primary opacity-20 animate-pulse rounded-xl" />
-                                )}
-                              </NavLink>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" className="bg-card/90 backdrop-blur-lg border border-border/50 shadow-elegant">
-                              <p className="font-medium">{item.title}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        ) : (
-                          <NavLink
-                            to={item.url}
-                            className={`flex items-center space-x-3 rounded-xl px-4 py-3 text-sm transition-all duration-300 group relative overflow-hidden ${
-                              isCurrentActive
-                                ? "bg-gradient-primary text-primary-foreground shadow-glow"
-                                : "text-muted-foreground hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 hover:text-foreground hover:shadow-community backdrop-blur-sm"
-                            }`}
-                          >
-                            <item.icon className="h-5 w-5 transition-transform group-hover:scale-110" />
-                            <span className="font-medium">{item.title}</span>
-                            {isCurrentActive && (
-                              <div className="absolute inset-0 bg-gradient-primary opacity-20 animate-pulse rounded-xl" />
-                            )}
-                          </NavLink>
-                        )}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                {group.items.map((item) => (
+                  <SidebarMenuItem key={item.url}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        className={({ isActive }) =>
+                          `flex items-center space-x-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                            isActive
+                              ? "bg-primary text-primary-foreground"
+                              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                          }`
+                        }
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

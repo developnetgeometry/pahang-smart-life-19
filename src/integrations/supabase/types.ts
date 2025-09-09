@@ -1587,56 +1587,32 @@ export type Database = {
       communities: {
         Row: {
           address: string | null
-          admin_id: string | null
-          community_type: string | null
           created_at: string | null
           description: string | null
           district_id: string | null
-          established_date: string | null
           id: string
-          latitude: number | null
-          longitude: number | null
           name: string
-          occupied_units: number | null
           postal_code: string | null
-          status: string | null
-          total_units: number | null
           updated_at: string | null
         }
         Insert: {
           address?: string | null
-          admin_id?: string | null
-          community_type?: string | null
           created_at?: string | null
           description?: string | null
           district_id?: string | null
-          established_date?: string | null
           id?: string
-          latitude?: number | null
-          longitude?: number | null
           name: string
-          occupied_units?: number | null
           postal_code?: string | null
-          status?: string | null
-          total_units?: number | null
           updated_at?: string | null
         }
         Update: {
           address?: string | null
-          admin_id?: string | null
-          community_type?: string | null
           created_at?: string | null
           description?: string | null
           district_id?: string | null
-          established_date?: string | null
           id?: string
-          latitude?: number | null
-          longitude?: number | null
           name?: string
-          occupied_units?: number | null
           postal_code?: string | null
-          status?: string | null
-          total_units?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -2651,62 +2627,38 @@ export type Database = {
       districts: {
         Row: {
           address: string | null
-          area_km2: number | null
           city: string | null
-          communities_count: number | null
-          coordinator_id: string | null
           country: string | null
           created_at: string | null
           description: string | null
-          established_date: string | null
           id: string
-          latitude: number | null
-          longitude: number | null
           name: string
-          population: number | null
           postal_code: string | null
           state: string | null
-          status: string | null
           updated_at: string | null
         }
         Insert: {
           address?: string | null
-          area_km2?: number | null
           city?: string | null
-          communities_count?: number | null
-          coordinator_id?: string | null
           country?: string | null
           created_at?: string | null
           description?: string | null
-          established_date?: string | null
           id?: string
-          latitude?: number | null
-          longitude?: number | null
           name: string
-          population?: number | null
           postal_code?: string | null
           state?: string | null
-          status?: string | null
           updated_at?: string | null
         }
         Update: {
           address?: string | null
-          area_km2?: number | null
           city?: string | null
-          communities_count?: number | null
-          coordinator_id?: string | null
           country?: string | null
           created_at?: string | null
           description?: string | null
-          established_date?: string | null
           id?: string
-          latitude?: number | null
-          longitude?: number | null
           name?: string
-          population?: number | null
           postal_code?: string | null
           state?: string | null
-          status?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -4053,7 +4005,7 @@ export type Database = {
       household_accounts: {
         Row: {
           created_at: string | null
-          created_by: string
+          created_by: string | null
           id: string
           is_active: boolean | null
           linked_account_id: string
@@ -4064,7 +4016,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          created_by: string
+          created_by?: string | null
           id?: string
           is_active?: boolean | null
           linked_account_id: string
@@ -4075,7 +4027,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          created_by?: string
+          created_by?: string | null
           id?: string
           is_active?: boolean | null
           linked_account_id?: string
@@ -9988,20 +9940,6 @@ export type Database = {
       }
       create_direct_chat: {
         Args: { other_user_id: string }
-        Returns: string
-      }
-      create_service_provider_application_on_signup: {
-        Args: {
-          p_applicant_id: string
-          p_business_address: string
-          p_business_name: string
-          p_business_type: string
-          p_contact_email: string
-          p_contact_person: string
-          p_contact_phone: string
-          p_district_id: string
-          p_experience_years?: number
-        }
         Returns: string
       }
       create_work_order_from_complaint: {
