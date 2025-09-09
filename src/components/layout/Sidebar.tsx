@@ -57,8 +57,8 @@ export function AppSidebar() {
   const { language, hasRole } = useAuth();
   const { t } = useTranslation(language);
   const location = useLocation();
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
+  const { state, isMobile } = useSidebar();
+  const isCollapsed = state === "collapsed" && !isMobile;
   const { isModuleEnabled } = useModuleAccess();
 
   // Role-based navigation groups - enhanced filtering
