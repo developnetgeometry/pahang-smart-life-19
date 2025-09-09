@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRoles } from "@/hooks/use-user-roles";
 import {
   Card,
   CardContent,
@@ -107,6 +108,7 @@ type CctvRow = Database["public"]["Tables"]["cctv_cameras"]["Row"];
 
 export default function CCTVManagement() {
   const { language, hasRole } = useAuth();
+  const { hasRole: hasUserRole } = useUserRoles();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [newCam, setNewCam] = useState<{
@@ -1047,10 +1049,12 @@ export default function CCTVManagement() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="cameras">{t.cameras}</TabsTrigger>
-          <TabsTrigger value="recordings">{t.recordings}</TabsTrigger>
-        </TabsList>
+        {!hasUserRole('resident') && (
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="cameras">{t.cameras}</TabsTrigger>
+            <TabsTrigger value="recordings">{t.recordings}</TabsTrigger>
+          </TabsList>
+        )}
 
         <TabsContent value="cameras" className="space-y-6">
           {/* Filters */}
