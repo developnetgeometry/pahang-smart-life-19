@@ -10236,6 +10236,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      recalculate_community_unit_counts: {
+        Args: { community_uuid: string }
+        Returns: undefined
+      }
       service_provider_serves_area: {
         Args: { area_id: string; provider_id: string }
         Returns: boolean
