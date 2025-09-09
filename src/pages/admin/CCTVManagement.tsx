@@ -1058,7 +1058,8 @@ export default function CCTVManagement() {
 
         <TabsContent value="cameras" className="space-y-6">
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4">
+          {!hasUserRole('resident') && (
+            <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
@@ -1109,6 +1110,7 @@ export default function CCTVManagement() {
               </SelectContent>
             </Select>
           </div>
+          )}
 
           {/* Camera Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
