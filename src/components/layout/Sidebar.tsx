@@ -104,7 +104,7 @@ export function AppSidebar() {
           url: "/communication-hub",
           icon: MessageSquare,
         },
-        { title: t("announcements"), url: "/announcements", icon: Megaphone },
+        ...(isModuleEnabled('announcements') ? [{ title: t("announcements"), url: "/announcements", icon: Megaphone }] : []),
       ];
       
       // Add CCTV monitoring if module is enabled

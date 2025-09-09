@@ -407,16 +407,6 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/cctv-live"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <CCTVManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
 
             {/* Professional view routes */}
             <Route
@@ -642,13 +632,13 @@ const App = () => (
               }
             />
 
-            {/* CCTV Management for residents */}
+            {/* CCTV Live Feed for residents */}
             <Route
               path="/cctv-live-feed"
               element={
                 <ProtectedRoute>
                   <Layout>
-                    <CCTVManagement />
+                    <CCTVLiveFeed />
                   </Layout>
                 </ProtectedRoute>
               }
