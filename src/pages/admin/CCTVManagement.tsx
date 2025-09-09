@@ -125,7 +125,6 @@ export default function CCTVManagement() {
   const [communities, setCommunities] = useState<{id: string, name: string}[]>([]);
   const [isAddCameraOpen, setIsAddCameraOpen] = useState(false);
   const [isEditCameraOpen, setIsEditCameraOpen] = useState(false);
-  const [selectedCamera, setSelectedCamera] = useState("all");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [motionDetectionEnabled, setMotionDetectionEnabled] = useState(false);
   const [motionSensitivity, setMotionSensitivity] = useState([30]);
@@ -805,9 +804,6 @@ export default function CCTVManagement() {
     
     const matchesLocation = !rolePermissions.canViewFilters ||
       selectedLocation === "all" || camera.type === selectedLocation;
-    
-    const matchesCameraSelection = !rolePermissions.canViewFilters ||
-      selectedCamera === "all" || camera.id === selectedCamera;
 
     // District and community filtering based on camera data
     const matchesDistrict = !rolePermissions.canViewFilters ||
@@ -816,7 +812,7 @@ export default function CCTVManagement() {
     const matchesCommunity = !rolePermissions.canViewFilters ||
       selectedCommunity === "all" || selectedCommunity === (camera as any).community_id;
 
-    return matchesSearch && matchesStatus && matchesLocation && matchesCameraSelection && matchesDistrict && matchesCommunity;
+    return matchesSearch && matchesStatus && matchesLocation && matchesDistrict && matchesCommunity;
   });
 
   const handleAddCamera = async () => {
@@ -975,15 +971,7 @@ export default function CCTVManagement() {
 
   // moved above to set editStreamUrl
 
-  const filteredCameras =
-    selectedCamera === "all"
-      ? cameras
-      : cameras.filter((camera) => camera.id === selectedCamera);
-
-  const mainCamera =
-    selectedCamera !== "all"
-      ? cameras.find((camera) => camera.id === selectedCamera)
-      : cameras[0];
+  const mainCamera = cameras[0];
 
   const onlineCameras = cameras.filter((c) => c.status === "online").length;
   const recordingCameras = cameras.filter((c) => c.recording).length;
@@ -1203,19 +1191,6 @@ export default function CCTVManagement() {
                 <SelectItem value="outdoor">{t.outdoor}</SelectItem>
                 <SelectItem value="entrance">{t.entrance}</SelectItem>
                 <SelectItem value="parking">{t.parking}</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={selectedCamera} onValueChange={setSelectedCamera}>
-              <SelectTrigger className="w-full sm:w-[240px]">
-                <SelectValue placeholder={t.selectCamera} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t.allCameras}</SelectItem>
-                {cameras.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
               </SelectContent>
             </Select>
             <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
