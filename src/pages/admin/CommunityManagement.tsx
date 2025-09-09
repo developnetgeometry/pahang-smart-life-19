@@ -309,7 +309,7 @@ export default function CommunityManagement() {
         districtId = newCommunity.district_id || null;
       } else if (hasRole('district_coordinator')) {
         // District coordinator creates communities in their district
-        districtId = user?.district || null;
+        districtId = user?.district_id || null;
       }
 
       const { data, error } = await supabase

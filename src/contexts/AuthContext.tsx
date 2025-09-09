@@ -26,6 +26,7 @@ export interface User {
   associated_community_ids: string[];
   active_community_id: string;
   district: string;
+  district_id: string | null;
   user_role: UserRole; // primary role for display
   available_roles: UserRole[];
   // current_view_role removed - using role-based navigation
@@ -139,6 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         associated_community_ids: [],
         active_community_id: '',
         district: districtName,
+        district_id: profile?.district_id || null,
         user_role: primaryRole,
         available_roles: roleList.length ? roleList : ['resident'],
         phone: '',
