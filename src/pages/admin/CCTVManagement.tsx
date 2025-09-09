@@ -371,13 +371,13 @@ export default function CCTVManagement() {
     });
   };
 
-  // Load cameras from Supabase
+  // Load cameras from Supabase with real-time updates
   useEffect(() => {
     const load = async () => {
       const { data, error } = await supabase
         .from("cctv_cameras")
         .select(
-          "id, name, location, camera_type, resolution, stream_url, is_active, pan_tilt_zoom, created_at"
+          "id, name, location, camera_type, resolution, stream_url, is_active, pan_tilt_zoom, created_at, district_id, community_id"
         )
         .order("created_at", { ascending: false });
       if (error) {
@@ -385,7 +385,7 @@ export default function CCTVManagement() {
         toast({ title: "Error", description: "Failed to load cameras" });
         return;
       }
-      const mapped: CCTVCamera[] = (data || []).map((row: CctvRow) => ({
+      const mapped: CCTVCamera[] = (data || []).map((row: any) => ({
         id: row.id,
         name: row.name,
         location: row.location,
@@ -398,13 +398,31 @@ export default function CCTVManagement() {
           .toISOString()
           .replace("T", " ")
           .slice(0, 19),
-        communityId: "0",
+        communityId: row.community_id || "0",
         streamUrl: row.stream_url || "",
         hasPtz: !!row.pan_tilt_zoom,
       }));
       setCameras(mapped);
     };
+    
     load();
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('cctv-cameras-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'cctv_cameras'
+      }, () => {
+        // Reload cameras when any change occurs
+        load();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [toast]);
 
   const [cameras, setCameras] = useState<CCTVCamera[]>([]);
@@ -699,15 +717,58 @@ export default function CCTVManagement() {
     }
   };
 
+  // Role-based permissions configuration
+  const getRolePermissions = () => {
+    const permissions = {
+      canViewAllCameras: false,
+      canManageCameras: false,
+      canViewFilters: false,
+      canViewRecordings: false,
+      canViewTabs: false,
+      scope: 'none' as 'state' | 'district' | 'community' | 'none'
+    };
+
+    if (hasUserRole('state_admin')) {
+      return { ...permissions, canViewAllCameras: true, canManageCameras: true, canViewFilters: true, canViewRecordings: true, canViewTabs: true, scope: 'state' as const };
+    }
+    if (hasUserRole('district_coordinator')) {
+      return { ...permissions, canViewAllCameras: true, canManageCameras: true, canViewFilters: true, canViewRecordings: true, canViewTabs: true, scope: 'district' as const };
+    }
+    if (hasUserRole('community_admin')) {
+      return { ...permissions, canViewAllCameras: true, canManageCameras: true, canViewFilters: true, canViewRecordings: true, canViewTabs: true, scope: 'community' as const };
+    }
+    if (hasUserRole('security_officer')) {
+      return { ...permissions, canViewAllCameras: true, canManageCameras: true, canViewFilters: true, canViewRecordings: true, canViewTabs: true, scope: 'district' as const };
+    }
+    if (hasUserRole('community_leader')) {
+      return { ...permissions, canViewAllCameras: true, canManageCameras: false, canViewFilters: false, canViewRecordings: false, canViewTabs: false, scope: 'community' as const };
+    }
+    if (hasUserRole('resident')) {
+      return { ...permissions, canViewAllCameras: true, canManageCameras: false, canViewFilters: false, canViewRecordings: false, canViewTabs: false, scope: 'district' as const };
+    }
+    
+    return permissions;
+  };
+
+  const rolePermissions = getRolePermissions();
+
+  // Role-based camera filtering with search and status filters
   const searchFilteredCameras = cameras.filter((camera) => {
-    const matchesSearch =
+    // Basic search and filter matching
+    const matchesSearch = !rolePermissions.canViewFilters || 
       camera.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       camera.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
+    
+    const matchesStatus = !rolePermissions.canViewFilters ||
       selectedStatus === "all" || camera.status === selectedStatus;
-    const matchesLocation =
+    
+    const matchesLocation = !rolePermissions.canViewFilters ||
       selectedLocation === "all" || camera.type === selectedLocation;
-    return matchesSearch && matchesStatus && matchesLocation;
+    
+    const matchesCameraSelection = !rolePermissions.canViewFilters ||
+      selectedCamera === "all" || camera.id === selectedCamera;
+
+    return matchesSearch && matchesStatus && matchesLocation && matchesCameraSelection;
   });
 
   const handleAddCamera = async () => {
@@ -1049,7 +1110,7 @@ export default function CCTVManagement() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        {!hasUserRole('resident') && (
+        {rolePermissions.canViewTabs && (
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="cameras">{t.cameras}</TabsTrigger>
             <TabsTrigger value="recordings">{t.recordings}</TabsTrigger>
@@ -1058,7 +1119,7 @@ export default function CCTVManagement() {
 
         <TabsContent value="cameras" className="space-y-6">
           {/* Filters */}
-          {!hasUserRole('resident') && (
+          {rolePermissions.canViewFilters && (
             <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -1139,11 +1200,7 @@ export default function CCTVManagement() {
                       <Badge className={getStatusColor(camera.status)}>
                         {t[camera.status as keyof typeof t] || camera.status}
                       </Badge>
-                       {(hasRole("security_officer") ||
-                        hasRole("community_admin") ||
-                        hasRole("district_coordinator") ||
-                        hasRole("state_admin") ||
-                        hasRole("facility_manager")) && (
+                       {rolePermissions.canManageCameras && (
                         <Button
                           size="icon"
                           variant="ghost"
@@ -1163,11 +1220,7 @@ export default function CCTVManagement() {
                           <Settings className="h-4 w-4" />
                         </Button>
                       )}
-                       {(hasRole("security_officer") ||
-                        hasRole("community_admin") ||
-                        hasRole("district_coordinator") ||
-                        hasRole("state_admin") ||
-                        hasRole("facility_manager")) && (
+                       {rolePermissions.canManageCameras && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button

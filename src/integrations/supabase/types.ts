@@ -1289,6 +1289,7 @@ export type Database = {
       cctv_cameras: {
         Row: {
           camera_type: string | null
+          community_id: string | null
           created_at: string | null
           district_id: string | null
           id: string
@@ -1304,6 +1305,7 @@ export type Database = {
         }
         Insert: {
           camera_type?: string | null
+          community_id?: string | null
           created_at?: string | null
           district_id?: string | null
           id?: string
@@ -1319,6 +1321,7 @@ export type Database = {
         }
         Update: {
           camera_type?: string | null
+          community_id?: string | null
           created_at?: string | null
           district_id?: string | null
           id?: string
