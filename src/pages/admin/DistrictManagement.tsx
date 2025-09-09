@@ -347,11 +347,12 @@ export default function DistrictManagement() {
         longitude: ''
       });
       fetchDistricts();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating district:', error);
+      const errorMessage = error?.message || 'Failed to create district. Please try again.';
       toast({
         title: 'Error',
-        description: 'Failed to create district',
+        description: errorMessage,
         variant: 'destructive'
       });
     }
