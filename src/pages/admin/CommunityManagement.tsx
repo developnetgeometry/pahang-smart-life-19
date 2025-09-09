@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,21 +15,35 @@ import { useToast } from '@/hooks/use-toast';
 interface Community {
   id: string;
   name: string;
-  type: 'residential' | 'commercial' | 'mixed';
-  address: string;
-  totalUnits: number;
-  occupiedUnits: number;
-  managementFee: number;
-  establishedDate: string;
-  status: 'active' | 'under-construction' | 'planning';
+  community_type: string | null;
+  address: string | null;
+  total_units: number | null;
+  occupied_units: number | null;
+  established_date: string | null;
+  status: string;
+  district_id: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  admin_id: string | null;
+  admin_name?: string;
 }
 
 export default function CommunityManagement() {
-  const { language } = useAuth();
+  const { language, user } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newCommunity, setNewCommunity] = useState({
+    name: '',
+    community_type: 'residential',
+    address: '',
+    total_units: '',
+    latitude: '',
+    longitude: ''
+  });
 
   const text = {
     en: {
@@ -63,7 +78,8 @@ export default function CommunityManagement() {
       communityCreated: 'Community created successfully!',
       occupancyRate: 'Occupancy Rate',
       totalRevenue: 'Total Revenue',
-      avgFee: 'Average Fee'
+      avgFee: 'Average Fee',
+      totalCommunities: 'Total Communities'
     },
     ms: {
       title: 'Pengurusan Komuniti',
@@ -97,47 +113,60 @@ export default function CommunityManagement() {
       communityCreated: 'Komuniti berjaya dicipta!',
       occupancyRate: 'Kadar Penghunian',
       totalRevenue: 'Jumlah Hasil',
-      avgFee: 'Fi Purata'
+      avgFee: 'Fi Purata',
+      totalCommunities: 'Jumlah Komuniti'
     }
   };
 
   const t = text[language];
 
-  const mockCommunities: Community[] = [
-    {
-      id: '1',
-      name: 'Skyline Residences',
-      type: 'residential',
-      address: 'Jalan Bukit Bintang, 50200 Kuala Lumpur',
-      totalUnits: 350,
-      occupiedUnits: 295,
-      managementFee: 450,
-      establishedDate: '2020-03-15',
-      status: 'active'
-    },
-    {
-      id: '2',
-      name: 'Metro Business Center',
-      type: 'commercial',
-      address: 'Jalan Ampang, 50450 Kuala Lumpur',
-      totalUnits: 120,
-      occupiedUnits: 95,
-      managementFee: 850,
-      establishedDate: '2019-08-20',
-      status: 'active'
-    },
-    {
-      id: '3',
-      name: 'Garden Heights',
-      type: 'mixed',
-      address: 'Jalan Tun Razak, 50400 Kuala Lumpur',
-      totalUnits: 200,
-      occupiedUnits: 145,
-      managementFee: 550,
-      establishedDate: '2021-12-10',
-      status: 'under-construction'
+  useEffect(() => {
+    fetchCommunities();
+  }, []);
+
+  const fetchCommunities = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('communities')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Get admin names separately
+      const communitiesWithAdmins = await Promise.all(
+        (data || []).map(async (community) => {
+          if (community.admin_id) {
+            const { data: adminData } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', community.admin_id)
+              .single();
+            
+            return {
+              ...community,
+              admin_name: adminData?.full_name || 'Not assigned'
+            };
+          }
+          return {
+            ...community,
+            admin_name: 'Not assigned'
+          };
+        })
+      );
+
+      setCommunities(communitiesWithAdmins);
+    } catch (error) {
+      console.error('Error fetching communities:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load communities',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const communityTypes = [
     { value: 'all', label: t.allTypes },
@@ -182,25 +211,63 @@ export default function CommunityManagement() {
     }
   };
 
-  const filteredCommunities = mockCommunities.filter(community => {
+  const filteredCommunities = communities.filter(community => {
     const matchesSearch = community.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         community.address.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = selectedType === 'all' || community.type === selectedType;
+                         (community.address && community.address.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesType = selectedType === 'all' || community.community_type === selectedType;
     return matchesSearch && matchesType;
   });
 
   const totalStats = {
-    totalUnits: mockCommunities.reduce((sum, c) => sum + c.totalUnits, 0),
-    occupiedUnits: mockCommunities.reduce((sum, c) => sum + c.occupiedUnits, 0),
-    totalRevenue: mockCommunities.reduce((sum, c) => sum + (c.occupiedUnits * c.managementFee), 0),
-    avgFee: mockCommunities.reduce((sum, c) => sum + c.managementFee, 0) / mockCommunities.length
+    totalUnits: communities.reduce((sum, c) => sum + (c.total_units || 0), 0),
+    occupiedUnits: communities.reduce((sum, c) => sum + (c.occupied_units || 0), 0),
+    totalCommunities: communities.length,
+    avgOccupancy: communities.length > 0 ? 
+      communities.reduce((sum, c) => {
+        const occupancy = (c.total_units && c.occupied_units) ? 
+          (c.occupied_units / c.total_units) * 100 : 0;
+        return sum + occupancy;
+      }, 0) / communities.length : 0
   };
 
-  const handleCreateCommunity = () => {
-    toast({
-      title: t.communityCreated,
-    });
-    setIsCreateOpen(false);
+  const handleCreateCommunity = async () => {
+    try {
+      const { error } = await supabase
+        .from('communities')
+        .insert([{
+          name: newCommunity.name,
+          community_type: newCommunity.community_type,
+          address: newCommunity.address,
+          total_units: newCommunity.total_units ? parseInt(newCommunity.total_units) : null,
+          latitude: newCommunity.latitude ? parseFloat(newCommunity.latitude) : null,
+          longitude: newCommunity.longitude ? parseFloat(newCommunity.longitude) : null,
+          district_id: user?.district || null,
+          status: 'active'
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: t.communityCreated,
+      });
+      setIsCreateOpen(false);
+      setNewCommunity({
+        name: '',
+        community_type: 'residential',
+        address: '',
+        total_units: '',
+        latitude: '',
+        longitude: ''
+      });
+      fetchCommunities();
+    } catch (error) {
+      console.error('Error creating community:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create community',
+        variant: 'destructive'
+      });
+    }
   };
 
   return (
@@ -225,11 +292,19 @@ export default function CommunityManagement() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">{t.name}</Label>
-                <Input id="name" placeholder={t.name} />
+                <Input 
+                  id="name" 
+                  placeholder={t.name}
+                  value={newCommunity.name}
+                  onChange={(e) => setNewCommunity({...newCommunity, name: e.target.value})}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="type">{t.type}</Label>
-                <Select>
+                <Select 
+                  value={newCommunity.community_type} 
+                  onValueChange={(value) => setNewCommunity({...newCommunity, community_type: value})}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
@@ -244,21 +319,47 @@ export default function CommunityManagement() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="address">{t.address}</Label>
-                <Textarea id="address" placeholder={t.address} rows={2} />
+                <Textarea 
+                  id="address" 
+                  placeholder={t.address} 
+                  rows={2}
+                  value={newCommunity.address}
+                  onChange={(e) => setNewCommunity({...newCommunity, address: e.target.value})}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="totalUnits">{t.totalUnits}</Label>
-                  <Input id="totalUnits" type="number" placeholder="0" />
+                  <Input 
+                    id="totalUnits" 
+                    type="number" 
+                    placeholder="0"
+                    value={newCommunity.total_units}
+                    onChange={(e) => setNewCommunity({...newCommunity, total_units: e.target.value})}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="managementFee">{t.managementFee}</Label>
-                  <Input id="managementFee" type="number" placeholder="0" />
+                  <Label htmlFor="latitude">Latitude</Label>
+                  <Input 
+                    id="latitude" 
+                    type="number" 
+                    step="any"
+                    placeholder="3.1319"
+                    value={newCommunity.latitude}
+                    onChange={(e) => setNewCommunity({...newCommunity, latitude: e.target.value})}
+                  />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="description">{t.description}</Label>
-                <Textarea id="description" placeholder={t.description} rows={3} />
+                <Label htmlFor="longitude">Longitude</Label>
+                <Input 
+                  id="longitude" 
+                  type="number" 
+                  step="any"
+                  placeholder="101.6841"
+                  value={newCommunity.longitude}
+                  onChange={(e) => setNewCommunity({...newCommunity, longitude: e.target.value})}
+                />
               </div>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
@@ -302,23 +403,23 @@ export default function CommunityManagement() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.totalRevenue}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.totalCommunities}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">RM{totalStats.totalRevenue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Monthly</p>
+            <div className="text-2xl font-bold">{totalStats.totalCommunities}</div>
+            <p className="text-xs text-muted-foreground">Communities</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.avgFee}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.occupancyRate}</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">RM{Math.round(totalStats.avgFee)}</div>
-            <p className="text-xs text-muted-foreground">Per unit</p>
+            <div className="text-2xl font-bold">{Math.round(totalStats.avgOccupancy)}%</div>
+            <p className="text-xs text-muted-foreground">Average occupancy</p>
           </CardContent>
         </Card>
       </div>
@@ -359,42 +460,48 @@ export default function CommunityManagement() {
                     {community.address}
                   </CardDescription>
                 </div>
-                <div className="flex gap-2">
-                  <Badge className={getTypeColor(community.type)}>
-                    {getTypeText(community.type)}
-                  </Badge>
-                  <Badge className={getStatusColor(community.status)}>
-                    {getStatusText(community.status)}
-                  </Badge>
-                </div>
+                  <div className="flex gap-2">
+                    <Badge className={getTypeColor(community.community_type || 'residential')}>
+                      {getTypeText(community.community_type || 'residential')}
+                    </Badge>
+                    <Badge className={getStatusColor(community.status)}>
+                      {getStatusText(community.status)}
+                    </Badge>
+                  </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">{t.totalUnits}</p>
-                  <p className="font-medium">{community.totalUnits}</p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">{t.totalUnits}</p>
+                    <p className="font-medium">{community.total_units || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">{t.occupiedUnits}</p>
+                    <p className="font-medium">{community.occupied_units || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">{t.occupancy}</p>
+                    <p className="font-medium">
+                      {(community.total_units && community.occupied_units) ? Math.round((community.occupied_units / community.total_units) * 100) : 0}%
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Admin</p>
+                    <p className="font-medium">{community.admin_name}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">{t.occupiedUnits}</p>
-                  <p className="font-medium">{community.occupiedUnits}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">{t.occupancy}</p>
-                  <p className="font-medium">
-                    {Math.round((community.occupiedUnits / community.totalUnits) * 100)}%
+                
+                {(community.latitude && community.longitude) && (
+                  <div className="text-xs text-muted-foreground">
+                    📍 {community.latitude.toFixed(4)}, {community.longitude.toFixed(4)}
+                  </div>
+                )}
+                
+                <div className="flex justify-between items-center pt-2 border-t">
+                  <p className="text-xs text-muted-foreground">
+                    {t.establishedDate}: {community.established_date || 'Not set'}
                   </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">{t.managementFee}</p>
-                  <p className="font-medium">RM{community.managementFee}</p>
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center pt-2 border-t">
-                <p className="text-xs text-muted-foreground">
-                  {t.establishedDate}: {community.establishedDate}
-                </p>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm">
                     {t.view}
