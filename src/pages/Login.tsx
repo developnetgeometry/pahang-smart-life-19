@@ -33,6 +33,7 @@ import { Loader2, MapPin, Shield, Users, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { createTestUsers } from "@/utils/createTestUsers";
+import { DocumentUpload } from "@/components/ui/document-upload";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,6 +47,7 @@ export default function Login() {
   const [businessType, setBusinessType] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
   const [yearsOfExperience, setYearsOfExperience] = useState("");
+  const [uploadedDocuments, setUploadedDocuments] = useState<Record<string, Array<{ url: string; path: string; name: string }>>>({});
   const [pdpaAccepted, setPdpaAccepted] = useState(false);
   const [showPdpaDialog, setShowPdpaDialog] = useState(false);
   const [districts, setDistricts] = useState<
@@ -64,6 +66,65 @@ export default function Login() {
   const { login, language, switchLanguage } = useAuth();
   const { t } = useTranslation(language || "ms"); // Ensure we always have a language
   const { toast } = useToast();
+
+  // Business type field mapping
+  const businessTypeFieldMap: Record<string, {
+    requiresExperience: boolean;
+    requiredDocuments: Array<{ type: string; name: string; nameMs: string }>;
+  }> = {
+    electrical: {
+      requiresExperience: true,
+      requiredDocuments: [
+        { type: 'license', name: 'Electrical License', nameMs: 'Lesen Elektrik' },
+        { type: 'certificate', name: 'Safety Certificate', nameMs: 'Sijil Keselamatan' },
+        { type: 'insurance', name: 'Insurance Certificate', nameMs: 'Sijil Insurans' }
+      ]
+    },
+    plumbing: {
+      requiresExperience: true,
+      requiredDocuments: [
+        { type: 'license', name: 'Plumbing License', nameMs: 'Lesen Paip' },
+        { type: 'certificate', name: 'Trade Certificate', nameMs: 'Sijil Perdagangan' },
+        { type: 'insurance', name: 'Insurance Certificate', nameMs: 'Sijil Insurans' }
+      ]
+    },
+    security: {
+      requiresExperience: true,
+      requiredDocuments: [
+        { type: 'license', name: 'Security License', nameMs: 'Lesen Keselamatan' },
+        { type: 'background_check', name: 'Background Check', nameMs: 'Pemeriksaan Latar Belakang' },
+        { type: 'training', name: 'Security Training Certificate', nameMs: 'Sijil Latihan Keselamatan' }
+      ]
+    },
+    cleaning: {
+      requiresExperience: false,
+      requiredDocuments: [
+        { type: 'certificate', name: 'Health Certificate', nameMs: 'Sijil Kesihatan' },
+        { type: 'insurance', name: 'Insurance Certificate', nameMs: 'Sijil Insurans' }
+      ]
+    },
+    landscaping: {
+      requiresExperience: false,
+      requiredDocuments: [
+        { type: 'portfolio', name: 'Work Portfolio', nameMs: 'Portfolio Kerja' },
+        { type: 'insurance', name: 'Insurance Certificate', nameMs: 'Sijil Insurans' }
+      ]
+    },
+    maintenance: {
+      requiresExperience: true,
+      requiredDocuments: [
+        { type: 'certificate', name: 'Technical Certificate', nameMs: 'Sijil Teknikal' },
+        { type: 'insurance', name: 'Insurance Certificate', nameMs: 'Sijil Insurans' }
+      ]
+    },
+    other: {
+      requiresExperience: false,
+      requiredDocuments: [
+        { type: 'business_profile', name: 'Business Profile', nameMs: 'Profil Perniagaan' },
+        { type: 'portfolio', name: 'Work Portfolio', nameMs: 'Portfolio Kerja' }
+      ]
+    }
+  };
 
   // Load districts for registration
   useEffect(() => {
@@ -107,6 +168,34 @@ export default function Login() {
       loadCommunities();
     }
   }, [mode, districtId]);
+
+  // Reset uploaded documents when business type changes
+  useEffect(() => {
+    if (businessType) {
+      setUploadedDocuments({});
+    }
+  }, [businessType]);
+
+  const handleDocumentUpload = (documentType: string, url: string, path: string, fileName: string) => {
+    setUploadedDocuments(prev => ({
+      ...prev,
+      [documentType]: [
+        ...(prev[documentType] || []),
+        { url, path, name: fileName }
+      ]
+    }));
+  };
+
+  const handleDocumentRemove = (documentType: string, url: string) => {
+    setUploadedDocuments(prev => ({
+      ...prev,
+      [documentType]: (prev[documentType] || []).filter(doc => doc.url !== url)
+    }));
+  };
+
+  const getCurrentBusinessTypeConfig = () => {
+    return businessTypeFieldMap[businessType] || businessTypeFieldMap.other;
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -160,12 +249,27 @@ export default function Login() {
               : "Jenis perniagaan diperlukan"
           );
         }
-        if (!yearsOfExperience.trim()) {
+        
+        // Validate years of experience only if required for business type
+        const businessConfig = getCurrentBusinessTypeConfig();
+        if (businessConfig.requiresExperience && !yearsOfExperience.trim()) {
           throw new Error(
             language === "en"
-              ? "Years of experience is required"
-              : "Tahun pengalaman diperlukan"
+              ? "Years of experience is required for this business type"
+              : "Tahun pengalaman diperlukan untuk jenis perniagaan ini"
           );
+        }
+
+        // Validate required documents
+        for (const doc of businessConfig.requiredDocuments) {
+          const docsForType = uploadedDocuments[doc.type] || [];
+          if (docsForType.length === 0) {
+            throw new Error(
+              language === "en"
+                ? `${doc.name} is required`
+                : `${doc.nameMs} diperlukan`
+            );
+          }
         }
 
         // Validate PDPA acceptance
@@ -197,6 +301,7 @@ export default function Login() {
         metadata.business_description = "Service provider registered via signup";
         metadata.experience_years = yearsOfExperience.trim();
         metadata.contact_phone = phone.trim();
+        metadata.uploaded_documents = uploadedDocuments;
 
         const { data: authData, error: signUpError } =
           await supabase.auth.signUp({
@@ -297,6 +402,7 @@ export default function Login() {
           setBusinessType("");
           setLicenseNumber("");
           setYearsOfExperience("");
+          setUploadedDocuments({});
           setPdpaAccepted(false);
           setPassword("");
         }
@@ -791,29 +897,57 @@ export default function Login() {
                           />
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="yearsOfExperience">
-                            {language === "en"
-                              ? "Years of Experience"
-                              : "Tahun Pengalaman"}{" "}
-                            *
-                          </Label>
-                          <Input
-                            id="yearsOfExperience"
-                            type="number"
-                            min="0"
-                            max="50"
-                            value={yearsOfExperience}
-                            onChange={(e) =>
-                              setYearsOfExperience(e.target.value)
-                            }
-                            placeholder={
-                              language === "en" ? "e.g., 5" : "cth: 5"
-                            }
-                            required
-                            className="transition-smooth"
-                          />
-                        </div>
+                        {/* Conditional Years of Experience field */}
+                        {businessType && getCurrentBusinessTypeConfig().requiresExperience && (
+                          <div className="space-y-2">
+                            <Label htmlFor="yearsOfExperience">
+                              {language === "en"
+                                ? "Years of Experience"
+                                : "Tahun Pengalaman"}{" "}
+                              *
+                            </Label>
+                            <Input
+                              id="yearsOfExperience"
+                              type="number"
+                              min="0"
+                              max="50"
+                              value={yearsOfExperience}
+                              onChange={(e) =>
+                                setYearsOfExperience(e.target.value)
+                              }
+                              placeholder={
+                                language === "en" ? "e.g., 5" : "cth: 5"
+                              }
+                              required
+                              className="transition-smooth"
+                            />
+                          </div>
+                        )}
+
+                        {/* Dynamic Document Upload Fields */}
+                        {businessType && getCurrentBusinessTypeConfig().requiredDocuments.map((docType) => (
+                          <div key={docType.type} className="space-y-2">
+                            <Label>
+                              {language === "en" ? docType.name : docType.nameMs}
+                              <span className="text-destructive ml-1">*</span>
+                            </Label>
+                            <DocumentUpload
+                              bucket="service-provider-documents"
+                              documentType={docType.type}
+                              onUploadComplete={(url, path, fileName) => 
+                                handleDocumentUpload(docType.type, url, path, fileName)
+                              }
+                              existingDocuments={uploadedDocuments[docType.type]?.map(doc => ({ 
+                                url: doc.url, 
+                                name: doc.name 
+                              })) || []}
+                              onRemoveDocument={(url) => handleDocumentRemove(docType.type, url)}
+                              maxFiles={3}
+                              required={true}
+                              className="w-full"
+                            />
+                          </div>
+                        ))}
                       </>
                     )}
                   </>
