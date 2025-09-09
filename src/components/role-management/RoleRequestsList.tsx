@@ -325,7 +325,7 @@ export const RoleRequestsList: React.FC = () => {
         <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="my-requests">{t.myRequests}</TabsTrigger>
-            {(hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin') || hasRole('admin')) && (
+            {(hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin') || hasRole('state_admin')) && (
               <TabsTrigger value="pending-approval">{t.pendingApproval}</TabsTrigger>
             )}
           </TabsList>

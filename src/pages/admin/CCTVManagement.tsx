@@ -884,9 +884,9 @@ export default function CCTVManagement() {
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
-        {(hasRole("admin") ||
+        {(hasRole("state_admin") ||
           hasRole("security_officer") ||
-          hasRole("manager") ||
+          hasRole("facility_manager") ||
           hasRole("community_admin") ||
           hasRole("district_coordinator") ||
           hasRole("state_admin") ||
@@ -1135,13 +1135,13 @@ export default function CCTVManagement() {
                       <Badge className={getStatusColor(camera.status)}>
                         {t[camera.status as keyof typeof t] || camera.status}
                       </Badge>
-                      {(hasRole("admin") ||
-                        hasRole("security_officer") ||
-                        hasRole("manager") ||
-                        hasRole("community_admin") ||
-                        hasRole("district_coordinator") ||
-                        hasRole("state_admin") ||
-                        hasRole("facility_manager")) && (
+                       {(hasRole("state_admin") ||
+                         hasRole("security_officer") ||
+                         hasRole("facility_manager") ||
+                         hasRole("community_admin") ||
+                         hasRole("district_coordinator") ||
+                         hasRole("state_admin") ||
+                         hasRole("facility_manager")) && (
                         <Button
                           size="icon"
                           variant="ghost"
@@ -1161,13 +1161,13 @@ export default function CCTVManagement() {
                           <Settings className="h-4 w-4" />
                         </Button>
                       )}
-                      {(hasRole("admin") ||
-                        hasRole("security_officer") ||
-                        hasRole("manager") ||
-                        hasRole("community_admin") ||
-                        hasRole("district_coordinator") ||
-                        hasRole("state_admin") ||
-                        hasRole("facility_manager")) && (
+                       {(hasRole("state_admin") ||
+                         hasRole("security_officer") ||
+                         hasRole("facility_manager") ||
+                         hasRole("community_admin") ||
+                         hasRole("district_coordinator") ||
+                         hasRole("state_admin") ||
+                         hasRole("facility_manager")) && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
@@ -1265,13 +1265,13 @@ export default function CCTVManagement() {
                       <Eye className="h-4 w-4 mr-1" />
                       {t.liveView}
                     </Button>
-                    {(hasRole("admin") ||
-                      hasRole("security_officer") ||
-                      hasRole("manager") ||
-                      hasRole("community_admin") ||
-                      hasRole("district_coordinator") ||
-                      hasRole("state_admin") ||
-                      hasRole("facility_manager")) && (
+                     {(hasRole("state_admin") ||
+                       hasRole("security_officer") ||
+                       hasRole("facility_manager") ||
+                       hasRole("community_admin") ||
+                       hasRole("district_coordinator") ||
+                       hasRole("state_admin") ||
+                       hasRole("facility_manager")) && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -1509,13 +1509,13 @@ export default function CCTVManagement() {
             </div>
 
             {/* Camera Controls - Admin Only */}
-            {(hasRole("admin") ||
-              hasRole("security_officer") ||
-              hasRole("manager") ||
-              hasRole("community_admin") ||
-              hasRole("district_coordinator") ||
-              hasRole("state_admin") ||
-              hasRole("facility_manager")) && (
+             {(hasRole("state_admin") ||
+               hasRole("security_officer") ||
+               hasRole("facility_manager") ||
+               hasRole("community_admin") ||
+               hasRole("district_coordinator") ||
+               hasRole("state_admin") ||
+               hasRole("facility_manager")) && (
               <div className="lg:w-80 space-y-4">
                 {/* RTSP Connection */}
                 {liveViewCamera && (

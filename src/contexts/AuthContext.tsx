@@ -2,18 +2,18 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { supabase } from '@/integrations/supabase/client';
 
 export type UserRole = 
-  | 'admin' 
-  | 'security_officer' 
-  | 'manager' 
   | 'resident'
-  | 'state_admin'
-  | 'district_coordinator'
-  | 'community_admin'
-  | 'community_leader'
-  | 'maintenance_staff'
+  | 'community_leader' 
   | 'service_provider'
+  | 'maintenance_staff'
+  | 'facility_manager'
+  | 'security_officer'
+  | 'community_admin'
+  | 'district_coordinator'
+  | 'state_admin'
   | 'state_service_manager'
-  | 'facility_manager';
+  | 'spouse'
+  | 'tenant';
 
 // ViewRole removed - using role-based navigation instead
 export type Language = 'en' | 'ms';
@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadProfileAndRoles = async (userId: string) => {
     try {
       console.log('loadProfileAndRoles called for userId:', userId);
-      const [{ data: profile }, { data: roleRows }] = await Promise.all([
+      const [{ data: profile }, { data: roleRows }, { data: primaryRoleData }] = await Promise.all([
         supabase
           .from('profiles')
           .select('full_name, email, district_id, language_preference, account_status')
@@ -93,6 +93,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .select('role')
           .eq('user_id', userId)
           .eq('is_active', true),
+        supabase
+          .rpc('get_user_highest_role', { check_user_id: userId })
       ]);
 
       // Check if account is approved
@@ -116,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const roleList: UserRole[] = (roleRows || []).map(r => r.role as UserRole);
-      const primaryRole: UserRole = roleList[0] || 'resident';
+      const primaryRole: UserRole = (primaryRoleData as UserRole) || roleList[0] || 'resident';
       
       console.log('Profile data:', profile);
       console.log('Role rows from database:', roleRows);
