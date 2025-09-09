@@ -120,8 +120,16 @@ export function AppSidebar() {
     // Personal Activities - available to all users
     const personalItems = [
       { title: t("myComplaints"), url: "/my-complaints", icon: FileText },
-      { title: t("panicAlerts"), url: "/panic-alerts", icon: AlertTriangle },
     ];
+
+    // Add panic alerts if security module is enabled
+    if (isModuleEnabled("security")) {
+      personalItems.push({
+        title: t("panicAlerts"),
+        url: "/panic-alerts",
+        icon: AlertTriangle,
+      });
+    }
 
     // Add visitor management if module is enabled
     if (isModuleEnabled("visitor_management")) {

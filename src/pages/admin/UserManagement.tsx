@@ -12,6 +12,7 @@ import { Users, UserPlus, Search, Filter, MoreVertical, Edit, Trash2, Shield, Sh
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { useModuleAccess } from '@/hooks/use-module-access';
 
 interface User {
   id: string;
@@ -29,6 +30,7 @@ export default function UserManagement() {
   const { language, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isModuleEnabled } = useModuleAccess();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -273,8 +275,11 @@ export default function UserManagement() {
   const roles = [
     { value: 'all', label: t.allRoles },
     { value: 'resident', label: t.resident },
-    { value: 'security_officer', label: t.security },
-    { value: 'maintenance_staff', label: t.maintenance }
+    ...(isModuleEnabled('security') ? [{ value: 'security_officer', label: t.security }] : []),
+    ...(isModuleEnabled('facilities') ? [
+      { value: 'facility_manager', label: 'Facility Manager' },
+      { value: 'maintenance_staff', label: t.maintenance }
+    ] : [])
   ];
 
   const statuses = [
@@ -416,6 +421,25 @@ export default function UserManagement() {
   const handleCreateUser = async () => {
     if (!form.name || !form.email || !form.role || !form.status) {
       toast({ title: t.createUser, description: 'Please fill all required fields.' });
+      return;
+    }
+
+    // Check if the selected role is allowed based on enabled modules
+    if (form.role === 'security_officer' && !isModuleEnabled('security')) {
+      toast({ 
+        title: 'Error', 
+        description: 'Security module is disabled. Cannot create Security Officer accounts.',
+        variant: 'destructive' 
+      });
+      return;
+    }
+
+    if ((form.role === 'facility_manager' || form.role === 'maintenance_staff') && !isModuleEnabled('facilities')) {
+      toast({ 
+        title: 'Error', 
+        description: 'Facilities module is disabled. Cannot create Facility Manager or Maintenance Staff accounts.',
+        variant: 'destructive' 
+      });
       return;
     }
 
@@ -662,11 +686,26 @@ export default function UserManagement() {
                       <SelectValue placeholder={t.selectRole} />
                     </SelectTrigger>
                     <SelectContent>
-                      {roles.slice(1).map((role) => (
-                        <SelectItem key={role.value} value={role.value}>
-                          {role.label}
-                        </SelectItem>
-                      ))}
+                      {roles.slice(1).map((role) => {
+                        const isDisabled = 
+                          (role.value === 'security_officer' && !isModuleEnabled('security')) ||
+                          ((role.value === 'facility_manager' || role.value === 'maintenance_staff') && !isModuleEnabled('facilities'));
+                        
+                        return (
+                          <SelectItem 
+                            key={role.value} 
+                            value={role.value}
+                            disabled={isDisabled}
+                          >
+                            {role.label}
+                            {isDisabled && (
+                              <span className="text-xs text-muted-foreground ml-2">
+                                (Module disabled)
+                              </span>
+                            )}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
@@ -817,6 +856,54 @@ export default function UserManagement() {
                       <Input 
                         id="certificationsText" 
                         placeholder={language === 'en' ? 'List certifications' : 'Senaraikan sijil'} 
+                        value={form.certificationsText || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, certificationsText: e.target.value }))} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyContactPhone">{t.emergencyContactPhone}</Label>
+                      <Input 
+                        id="emergencyContactPhone" 
+                        placeholder={language === 'en' ? 'Emergency contact phone' : 'Telefon hubungan kecemasan'} 
+                        value={form.emergencyContactPhone || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, emergencyContactPhone: e.target.value }))} 
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {form.role === 'facility_manager' && (
+                <div className="space-y-4 border-t pt-4">
+                  <h4 className="text-sm font-semibold">{language === 'en' ? 'Facility Manager Details' : 'Butiran Pengurus Kemudahan'}</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="specialization">{t.specialization}</Label>
+                      <Input 
+                        id="specialization" 
+                        placeholder={language === 'en' ? 'e.g. Operations, Maintenance' : 'cth: Operasi, Penyelenggaraan'} 
+                        value={form.specialization || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, specialization: e.target.value }))} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="yearsExperience">{t.yearsExperience}</Label>
+                      <Input 
+                        id="yearsExperience" 
+                        type="number"
+                        min="0"
+                        placeholder={language === 'en' ? 'Years of experience' : 'Tahun pengalaman'} 
+                        value={form.yearsExperience || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, yearsExperience: e.target.value }))} 
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="certificationsText">{t.certificationsText}</Label>
+                      <Input 
+                        id="certificationsText" 
+                        placeholder={language === 'en' ? 'Management certifications' : 'Sijil pengurusan'} 
                         value={form.certificationsText || ''} 
                         onChange={(e) => setForm(prev => ({ ...prev, certificationsText: e.target.value }))} 
                       />

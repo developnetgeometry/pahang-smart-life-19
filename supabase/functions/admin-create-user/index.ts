@@ -61,6 +61,34 @@ serve(async (req) => {
       throw new Error('Insufficient permissions')
     }
 
+    // Get admin's community to check module enablement
+    const { data: adminProfile, error: adminProfileError } = await supabase
+      .from('profiles')
+      .select('community_id')
+      .eq('id', currentUser.id)
+      .single()
+
+    if (adminProfileError || !adminProfile?.community_id) {
+      throw new Error('Admin must be assigned to a community')
+    }
+
+    // Check if required modules are enabled for role creation
+    const checkModuleEnabled = async (moduleName: string) => {
+      const { data, error } = await supabase
+        .from('community_features')
+        .select('is_enabled')
+        .eq('community_id', adminProfile.community_id)
+        .eq('module_name', moduleName)
+        .single()
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = not found
+        console.error('Error checking module:', error)
+        return false
+      }
+      
+      return data?.is_enabled || false
+    }
+
     const {
       email,
       password,
@@ -88,6 +116,21 @@ serve(async (req) => {
       district_id,
       community_id
     })
+
+    // Validate role against enabled modules
+    if (role === 'security_officer') {
+      const securityEnabled = await checkModuleEnabled('security')
+      if (!securityEnabled) {
+        throw new Error('Security module is disabled. Cannot create Security Officer accounts.')
+      }
+    }
+
+    if (role === 'facility_manager' || role === 'maintenance_staff') {
+      const facilitiesEnabled = await checkModuleEnabled('facilities')
+      if (!facilitiesEnabled) {
+        throw new Error('Facilities module is disabled. Cannot create Facility Manager or Maintenance Staff accounts.')
+      }
+    }
 
     // Create auth user
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -130,7 +173,7 @@ serve(async (req) => {
       if (security_license_number) profileData.security_license_number = security_license_number
       if (badge_id) profileData.badge_id = badge_id
       if (shift_type) profileData.shift_type = shift_type
-    } else if (role === 'maintenance_staff') {
+    } else if (role === 'maintenance_staff' || role === 'facility_manager') {
       if (specialization) profileData.specialization = specialization
       if (certifications) profileData.certifications = Array.isArray(certifications) ? certifications : [certifications]
       if (years_experience) profileData.years_experience = parseInt(years_experience)

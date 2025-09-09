@@ -52,38 +52,11 @@ export function useModuleAccess() {
           console.error('Error fetching community modules:', error);
         }
 
-        // Define role-based modules that are NOT controlled by community admin
-        const roleBasedModules: string[] = [];
-        
-        // Facility manager gets these modules regardless of community settings
-        if (hasRole('facility_manager')) {
-          console.log('User has facility_manager role, adding role-based modules');
-          roleBasedModules.push('facilities', 'bookings', 'maintenance', 'assets');
-        } else {
-          console.log('User does not have facility_manager role');
-        }
-        
-        // Security officer gets these modules regardless of community settings
-        if (hasRole('security_officer')) {
-          roleBasedModules.push('cctv', 'visitor_management', 'security');
-        }
-        
-        // Maintenance staff gets these modules regardless of community settings
-        if (hasRole('maintenance_staff')) {
-          roleBasedModules.push('maintenance', 'assets');
-        }
-
-        // Combine community-controlled and role-based modules
-        const allModuleNames = [
-          ...(communityModules?.map(m => m.module_name) || []),
-          ...roleBasedModules
-        ];
-
-        // Remove duplicates
-        const uniqueModuleNames = [...new Set(allModuleNames)];
+        // All modules are now controlled by community admin - no role-based bypasses
+        const allModuleNames = communityModules?.map(m => m.module_name) || [];
 
         // Transform to match the expected interface
-        const modules: EnabledModule[] = uniqueModuleNames.map(moduleName => {
+        const modules: EnabledModule[] = allModuleNames.map(moduleName => {
           const moduleInfo = getModuleInfo(moduleName);
           return {
             module_name: moduleName,

@@ -395,8 +395,8 @@ export function ResidentDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Floating Round Panic Button */}
-      <PanicButton />
+      {/* Floating Round Panic Button - only show if security module is enabled */}
+      {isModuleEnabled('security') && <PanicButton />}
     </div>
   );
 }

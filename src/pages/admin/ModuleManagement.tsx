@@ -32,7 +32,8 @@ const AVAILABLE_MODULES = [
   { module_name: 'announcements', display_name: 'Announcements', category: 'communication', icon: Megaphone, description: 'Community announcements and updates' },
   { module_name: 'directory', display_name: 'Community Directory', category: 'information', icon: Users, description: 'Community contact directory' },
   { module_name: 'complaints', display_name: 'Complaints Management', category: 'services', icon: AlertTriangle, description: 'Submit and manage complaints' },
-  { module_name: 'facilities', display_name: 'Facilities Management', category: 'community', icon: Building, description: 'Manage community facilities and bookings' },
+  { module_name: 'security', display_name: 'Security Management', category: 'security', icon: Shield, description: 'Panic alerts and security operations. Disabling will deactivate all Security Officer accounts in this community.' },
+  { module_name: 'facilities', display_name: 'Facilities Management', category: 'community', icon: Building, description: 'Manage community facilities and bookings. Disabling will deactivate all Facility Manager and Maintenance Staff accounts in this community.' },
   { module_name: 'bookings', display_name: 'Facility Bookings', category: 'community', icon: Calendar, description: 'Book and manage facility reservations' },
   { module_name: 'marketplace', display_name: 'Marketplace', category: 'community', icon: ShoppingCart, description: 'Community marketplace for buying/selling' },
   { module_name: 'discussions', display_name: 'Community Discussions', category: 'communication', icon: MessageSquare, description: 'Community forum and discussions' },
@@ -166,6 +167,30 @@ export default function ModuleManagement() {
   const handleToggleModule = async (moduleFeature: ModuleFeature, enabled: boolean) => {
     if (!userCommunity) return;
     
+    // Show confirmation for critical modules being disabled
+    if (!enabled && ['security', 'facilities'].includes(moduleFeature.module_name)) {
+      const moduleNames = {
+        security: 'Security Management',
+        facilities: 'Facilities Management'
+      };
+      
+      const staffRoles = {
+        security: 'Security Officers',
+        facilities: 'Facility Managers and Maintenance Staff'
+      };
+      
+      const confirmed = window.confirm(
+        `Are you sure you want to disable ${moduleNames[moduleFeature.module_name as keyof typeof moduleNames]}?\n\n` +
+        `This will:\n` +
+        `• Hide related features from residents\n` +
+        `• Deactivate all ${staffRoles[moduleFeature.module_name as keyof typeof staffRoles]} accounts in this community\n` +
+        `• Remove access to panic buttons and security features\n\n` +
+        `You can re-enable this module later, but staff accounts will need to be manually reactivated.`
+      );
+      
+      if (!confirmed) return;
+    }
+    
     try {
       setSaving(true);
       
@@ -194,6 +219,27 @@ export default function ModuleManagement() {
           });
 
         if (error) throw error;
+      }
+
+      // Call sync function to deactivate staff accounts if needed
+      if (['security', 'facilities'].includes(moduleFeature.module_name)) {
+        try {
+          const { error: syncError } = await supabase.functions.invoke('sync-community-roles', {
+            body: {
+              community_id: userCommunity.id,
+              module_name: moduleFeature.module_name,
+              is_enabled: enabled
+            }
+          });
+
+          if (syncError) {
+            console.error('Error syncing roles:', syncError);
+            toast.error('Module updated but failed to sync staff accounts. Please check manually.');
+          }
+        } catch (syncError) {
+          console.error('Error calling sync function:', syncError);
+          toast.error('Module updated but failed to sync staff accounts.');
+        }
       }
 
       // Update local state

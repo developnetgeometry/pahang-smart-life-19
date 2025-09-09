@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useModuleAccess } from '@/hooks/use-module-access';
 import { useNavigate } from 'react-router-dom';
 import { WeatherWidget } from './WeatherWidget';
 import { PrayerTimesWidget } from './PrayerTimesWidget';
@@ -33,6 +34,7 @@ export function MaintenanceStaffDashboard() {
   const { language, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isModuleEnabled } = useModuleAccess();
 
   // State for modals and forms
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -846,8 +848,8 @@ export function MaintenanceStaffDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Floating Panic Button */}
-      <PanicButton />
+      {/* Floating Panic Button - only show if security module is enabled */}
+      {isModuleEnabled('security') && <PanicButton />}
     </div>
   );
 }
