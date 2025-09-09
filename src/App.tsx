@@ -35,6 +35,7 @@ import ComplaintsManagement from "./pages/admin/ComplaintsManagement";
 import ComplaintsAnalytics from "./pages/admin/ComplaintsAnalytics";
 import CCTVManagement from "./pages/admin/CCTVManagement";
 import RequireRoles from "@/components/routing/RequireRoles";
+import RequireNotRoles from "@/components/routing/RequireNotRoles";
 import AnnouncementManagement from "./pages/admin/AnnouncementManagement";
 import FacilitiesManagement from "./pages/admin/FacilitiesManagement";
 import FloorPlanManagement from "./pages/admin/FloorPlanManagement";
@@ -163,9 +164,11 @@ const App = () => (
               path="/my-complaints"
               element={
                 <ProtectedRoute>
-                  <Layout>
-                    <MyComplaints />
-                  </Layout>
+                  <RequireNotRoles roles={["service_provider"]}>
+                    <Layout>
+                      <MyComplaints />
+                    </Layout>
+                  </RequireNotRoles>
                 </ProtectedRoute>
               }
             />
@@ -253,9 +256,11 @@ const App = () => (
               path="/announcements"
               element={
                 <ProtectedRoute>
-                  <Layout>
-                    <Announcements />
-                  </Layout>
+                  <RequireNotRoles roles={["service_provider"]}>
+                    <Layout>
+                      <Announcements />
+                    </Layout>
+                  </RequireNotRoles>
                 </ProtectedRoute>
               }
             />
@@ -273,9 +278,11 @@ const App = () => (
               path="/discussions"
               element={
                 <ProtectedRoute>
-                  <Layout>
-                    <Discussions />
-                  </Layout>
+                  <RequireNotRoles roles={["service_provider"]}>
+                    <Layout>
+                      <Discussions />
+                    </Layout>
+                  </RequireNotRoles>
                 </ProtectedRoute>
               }
             />
@@ -371,9 +378,11 @@ const App = () => (
               path="/communication-hub"
               element={
                 <ProtectedRoute>
-                  <Layout>
-                    <CommunicationHub />
-                  </Layout>
+                  <RequireNotRoles roles={["service_provider"]}>
+                    <Layout>
+                      <CommunicationHub />
+                    </Layout>
+                  </RequireNotRoles>
                 </ProtectedRoute>
               }
             />
@@ -707,9 +716,11 @@ const App = () => (
               path="/cctv-live-feed"
               element={
                 <ProtectedRoute>
-                  <Layout>
-                    <CCTVManagement />
-                  </Layout>
+                  <RequireNotRoles roles={["service_provider"]}>
+                    <Layout>
+                      <CCTVManagement />
+                    </Layout>
+                  </RequireNotRoles>
                 </ProtectedRoute>
               }
             />
@@ -719,9 +730,11 @@ const App = () => (
               path="/panic-alerts"
               element={
                 <ProtectedRoute>
-                  <Layout>
-                    <PanicAlerts />
-                  </Layout>
+                  <RequireNotRoles roles={["service_provider"]}>
+                    <Layout>
+                      <PanicAlerts />
+                    </Layout>
+                  </RequireNotRoles>
                 </ProtectedRoute>
               }
             />
@@ -743,9 +756,11 @@ const App = () => (
               path="/facilities"
               element={
                 <ProtectedRoute>
-                  <Layout>
-                    <Facilities />
-                  </Layout>
+                  <RequireNotRoles roles={["service_provider"]}>
+                    <Layout>
+                      <Facilities />
+                    </Layout>
+                  </RequireNotRoles>
                 </ProtectedRoute>
               }
             />
@@ -753,9 +768,11 @@ const App = () => (
               path="/my-bookings"
               element={
                 <ProtectedRoute>
-                  <Layout>
-                    <MyBookings />
-                  </Layout>
+                  <RequireNotRoles roles={["service_provider"]}>
+                    <Layout>
+                      <MyBookings />
+                    </Layout>
+                  </RequireNotRoles>
                 </ProtectedRoute>
               }
             />

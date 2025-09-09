@@ -65,6 +65,52 @@ export function AppSidebar() {
   const getNavigationForUser = () => {
     const nav: NavigationGroup[] = [];
 
+    // Service providers get minimal navigation (no community features)
+    if (hasRole("service_provider")) {
+      // Dashboard
+      nav.push({
+        label: t("dashboard"),
+        items: [{ title: t("dashboard"), url: "/", icon: LayoutDashboard }],
+      });
+
+      // Service Provider specific items
+      const serviceProviderItems = [];
+      
+      if (isModuleEnabled("marketplace")) {
+        serviceProviderItems.push(
+          {
+            title: t("sellerDashboard"),
+            url: "/seller-dashboard",
+            icon: BarChart3,
+          },
+          {
+            title: t("advertisementManagement"),
+            url: "/advertisements",
+            icon: Megaphone,
+          },
+          {
+            title: t("marketplace"),
+            url: "/marketplace",
+            icon: ShoppingCart,
+          },
+          {
+            title: t("myOrders"),
+            url: "/my-orders",
+            icon: Package,
+          }
+        );
+      }
+
+      if (serviceProviderItems.length > 0) {
+        nav.push({
+          label: t("businessManagement"),
+          items: serviceProviderItems,
+        });
+      }
+
+      return nav;
+    }
+
     // Dashboard - available to all authenticated users
     nav.push({
       label: t("dashboard"),
@@ -124,16 +170,6 @@ export function AppSidebar() {
         title: t("marketplace"),
         url: "/marketplace",
         icon: ShoppingCart,
-      });
-    }
-
-    // Service Provider specific items
-    if (hasRole("service_provider") && isModuleEnabled("marketplace")) {
-      servicesItems.push({
-        title: t("advertisementManagement"),
-        url: "/advertisements",
-        icon: Megaphone,
-        requiredRoles: ["service_provider"],
       });
     }
 

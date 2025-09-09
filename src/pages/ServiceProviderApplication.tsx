@@ -337,7 +337,7 @@ export default function ServiceProviderApplication() {
               <p className="text-xs text-muted-foreground mb-3">
                 Select all categories that apply to your business
               </p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {serviceCategories.map(category => (
                   <div key={category} className="flex items-center space-x-2">
                     <Checkbox
@@ -356,14 +356,15 @@ export default function ServiceProviderApplication() {
               <p className="text-xs text-muted-foreground mb-3">
                 Add specific services you offer within the selected categories
               </p>
-              <div className="flex gap-2 mb-3">
+              <div className="flex flex-col sm:flex-row gap-2 mb-3">
                 <Input
                   value={formData.customService}
                   onChange={(e) => handleInputChange('customService', e.target.value)}
                   placeholder="e.g., Plumbing repair, House cleaning, etc."
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomService())}
+                  className="flex-1"
                 />
-                <Button type="button" onClick={addCustomService} variant="outline">
+                <Button type="button" onClick={addCustomService} variant="outline" className="whitespace-nowrap">
                   Add
                 </Button>
               </div>
@@ -399,18 +400,19 @@ export default function ServiceProviderApplication() {
         </Card>
 
         {/* Submit Button */}
-        <div className="flex justify-end space-x-4">
+        <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
           <Button 
             type="button" 
             variant="outline" 
             onClick={() => navigate('/')}
+            className="w-full sm:w-auto"
           >
             Cancel
           </Button>
           <Button 
             type="submit" 
             disabled={loading}
-            className="min-w-[120px]"
+            className="w-full sm:w-auto min-w-[120px]"
           >
             {loading ? (
               <div className="flex items-center gap-2">
