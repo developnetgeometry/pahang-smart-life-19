@@ -140,17 +140,17 @@ export function DistrictCoordinatorDashboard() {
         </CardHeader>
         <CardContent className="space-y-4">
           {pendingActions.map((action, index) => (
-            <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center gap-3">
+            <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 <Badge variant={action.priority === 'high' ? 'destructive' : 'secondary'}>
                   {action.count}
                 </Badge>
-                <div>
-                  <p className="font-medium text-sm">{action.type}</p>
-                  <p className="text-xs text-muted-foreground">{action.message}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm truncate sm:whitespace-normal">{action.type}</p>
+                  <p className="text-xs text-muted-foreground truncate sm:whitespace-normal">{action.message}</p>
                 </div>
               </div>
-              <Button size="sm" variant="outline">
+              <Button size="sm" variant="outline" className="w-full sm:w-auto shrink-0">
                 {language === 'en' ? 'Handle' : 'Uruskan'}
               </Button>
             </div>
@@ -169,10 +169,10 @@ export function DistrictCoordinatorDashboard() {
         <CardContent>
           <div className="space-y-4">
             {communityPerformance.map((community, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <h4 className="font-medium">{community.name}</h4>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+              <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium truncate sm:whitespace-normal">{community.name}</h4>
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mt-1">
                     <span className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
                       {community.residents}
@@ -191,12 +191,12 @@ export function DistrictCoordinatorDashboard() {
                     </span>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-2">
+                <div className="shrink-0 w-full sm:w-auto flex flex-row sm:flex-col items-stretch sm:items-end gap-2">
                   <div className="flex items-center gap-2">
                     <div className="text-xs text-muted-foreground">Health</div>
-                    <Progress value={community.satisfaction * 20} className="w-16" />
+                    <Progress value={community.satisfaction * 20} className="w-full sm:w-16" />
                   </div>
-                  <Button size="sm" variant="outline">
+                  <Button size="sm" variant="outline" className="w-full sm:w-auto">
                     {language === 'en' ? 'Details' : 'Butiran'}
                   </Button>
                 </div>

@@ -455,16 +455,16 @@ export function MaintenanceStaffDashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             {inventoryAlerts.map((item, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{item.item}</p>
-                  <p className="text-xs text-muted-foreground">{item.message}</p>
+              <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate sm:whitespace-normal">{item.item}</p>
+                  <p className="text-xs text-muted-foreground truncate sm:whitespace-normal">{item.message}</p>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                    <Package className="h-3 w-3" />
+                    <Package className="h-3 w-3 shrink-0" />
                     {item.quantity} {language === 'en' ? 'units' : 'unit'}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-row sm:flex-col items-stretch sm:items-end gap-2 w-full sm:w-auto shrink-0">
                   <Badge className={getStatusColor(item.status)}>
                     {item.status === 'low_stock' ? 'Low' : item.status === 'reorder' ? 'Reorder' : 'OK'}
                   </Badge>
@@ -474,6 +474,7 @@ export function MaintenanceStaffDashboard() {
                       variant="outline"
                       onClick={() => handleSupplyRequest(item)}
                       disabled={isSubmitting}
+                      className="w-full sm:w-auto"
                     >
                       {isSubmitting ? (
                         <Clock className="h-3 w-3 animate-spin mr-1" />

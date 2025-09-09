@@ -224,28 +224,28 @@ export function ServiceProviderDashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             {upcomingAppointments.map((appointment, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+              <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
                     <Badge className={getServiceTypeColor(appointment.type)}>
                       {appointment.type}
                     </Badge>
                     <span className="text-sm font-medium">{appointment.time}</span>
                   </div>
-                  <p className="text-sm font-medium">{appointment.service}</p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                    <span>{appointment.client}</span>
+                  <p className="text-sm font-medium truncate sm:whitespace-normal">{appointment.service}</p>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-1">
+                    <span className="truncate">{appointment.client}</span>
                     <span>•</span>
-                    <Clock className="h-3 w-3" />
+                    <Clock className="h-3 w-3 shrink-0" />
                     <span>{appointment.duration}</span>
                   </div>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Button size="sm" variant="outline">
+                <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-auto shrink-0">
+                  <Button size="sm" variant="outline" className="flex-1 sm:flex-initial">
                     <Phone className="h-3 w-3 mr-1" />
                     {language === 'en' ? 'Call' : 'Panggil'}
                   </Button>
-                  <Button size="sm">
+                  <Button size="sm" className="flex-1 sm:flex-initial">
                     {language === 'en' ? 'Navigate' : 'Arah'}
                   </Button>
                 </div>
@@ -298,9 +298,9 @@ export function ServiceProviderDashboard() {
         <CardContent>
           <div className="space-y-4">
             {serviceRequests.map((request, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+              <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
                     <Badge variant="outline">{request.id}</Badge>
                     <Badge variant={getPriorityColor(request.priority) as any}>
                       {request.priority}
@@ -309,18 +309,18 @@ export function ServiceProviderDashboard() {
                       {request.status}
                     </Badge>
                   </div>
-                  <p className="text-sm font-medium">{request.type}</p>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                    <span>{request.client}</span>
+                  <p className="text-sm font-medium truncate sm:whitespace-normal">{request.type}</p>
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mt-1">
+                    <span className="truncate">{request.client}</span>
                     <span>Scheduled: {request.date}</span>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
+                <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-auto shrink-0">
+                  <Button size="sm" variant="outline" className="flex-1 sm:flex-initial">
                     {language === 'en' ? 'Details' : 'Butiran'}
                   </Button>
                   {request.status === 'confirmed' && (
-                    <Button size="sm">
+                    <Button size="sm" className="flex-1 sm:flex-initial">
                       {language === 'en' ? 'Start Service' : 'Mula Perkhidmatan'}
                     </Button>
                   )}

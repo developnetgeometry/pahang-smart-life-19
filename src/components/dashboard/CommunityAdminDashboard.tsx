@@ -324,16 +324,18 @@ export function CommunityAdminDashboard() {
               </div>
             ) : recentActivities.length > 0 ? (
               recentActivities.map((activity, index) => (
-                <div key={index} className="flex items-start gap-3 p-3 border rounded-lg">
-                  <activity.icon className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="secondary" className="text-xs">
-                        {activity.type}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">{activity.time}</span>
+                <div key={index} className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 p-3 border rounded-lg">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <activity.icon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <Badge variant="secondary" className="text-xs">
+                          {activity.type}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">{activity.time}</span>
+                      </div>
+                      <p className="text-sm truncate sm:whitespace-normal">{activity.message}</p>
                     </div>
-                    <p className="text-sm">{activity.message}</p>
                   </div>
                 </div>
               ))
@@ -369,10 +371,10 @@ export function CommunityAdminDashboard() {
                 </div>
               ) : upcomingEvents.length > 0 ? (
                 upcomingEvents.map((event, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-medium">{event.title}</h4>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                  <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium truncate sm:whitespace-normal">{event.title}</h4>
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mt-1">
                         <span>{event.date}</span>
                         <Badge variant={event.status === 'scheduled' ? 'default' : 'secondary'}>
                           {event.status === 'scheduled' 
@@ -386,6 +388,7 @@ export function CommunityAdminDashboard() {
                       size="sm" 
                       variant="outline"
                       onClick={() => navigate('/events')}
+                      className="w-full sm:w-auto shrink-0"
                     >
                       {language === 'en' ? 'Manage' : 'Urus'}
                     </Button>

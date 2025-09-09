@@ -318,26 +318,26 @@ export function CommunityLeaderDashboard() {
         <CardContent>
           <div className="space-y-4">
             {recentSuggestions.map((suggestion, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+              <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
                     <Badge variant="secondary">{suggestion.category}</Badge>
                     <Badge className={getStatusColor(suggestion.status)}>
                       {suggestion.status.replace('_', ' ')}
                     </Badge>
                   </div>
-                  <p className="text-sm">{suggestion.suggestion}</p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                  <p className="text-sm truncate sm:whitespace-normal">{suggestion.suggestion}</p>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-1">
                     <span>by {suggestion.user}</span>
                     <span>•</span>
                     <span className="flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3" />
+                      <TrendingUp className="h-3 w-3 shrink-0" />
                       {suggestion.upvotes} upvotes
                     </span>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
+                <div className="w-full sm:w-auto shrink-0">
+                  <Button size="sm" variant="outline" className="w-full sm:w-auto">
                     {language === 'en' ? 'Review' : 'Semak'}
                   </Button>
                 </div>
@@ -358,18 +358,18 @@ export function CommunityLeaderDashboard() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {volunteerOpportunities.map((opportunity, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{opportunity.role}</p>
+              <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate sm:whitespace-normal">{opportunity.role}</p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                     <span>{opportunity.volunteers}/{opportunity.needed} volunteers</span>
                     <Progress 
                       value={(opportunity.volunteers / opportunity.needed) * 100} 
-                      className="w-16 h-1" 
+                      className="w-full sm:w-16 h-1" 
                     />
                   </div>
                 </div>
-                <Button size="sm" variant="outline">
+                <Button size="sm" variant="outline" className="w-full sm:w-auto shrink-0">
                   {language === 'en' ? 'Recruit' : 'Merekrut'}
                 </Button>
               </div>

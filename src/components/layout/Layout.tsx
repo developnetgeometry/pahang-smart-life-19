@@ -24,7 +24,7 @@ export function Layout({ children }: LayoutProps) {
             <SidebarTrigger className="mr-4" />
             <Header />
           </header>
-          <main className="flex-1 overflow-y-auto p-6 bg-transparent">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 bg-transparent">
             <div className="animate-fade-in">
               {children}
             </div>

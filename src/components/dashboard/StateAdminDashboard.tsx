@@ -176,14 +176,14 @@ export function StateAdminDashboard() {
         </CardHeader>
         <CardContent className="space-y-4">
           {criticalAlerts.map((alert, index) => (
-            <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center gap-3">
+            <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 <Badge variant={alert.priority === 'high' ? 'destructive' : 'secondary'}>
                   {alert.type}
                 </Badge>
-                <span className="text-sm">{alert.message}</span>
+                <span className="text-sm truncate sm:whitespace-normal">{alert.message}</span>
               </div>
-              <Button size="sm" variant="outline">
+              <Button size="sm" variant="outline" className="w-full sm:w-auto shrink-0">
                 {language === 'en' ? 'Review' : 'Semak'}
               </Button>
             </div>
@@ -202,10 +202,10 @@ export function StateAdminDashboard() {
         <CardContent>
           <div className="space-y-4">
             {districtPerformance.map((district, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <h4 className="font-medium">{district.name}</h4>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+              <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium truncate sm:whitespace-normal">{district.name}</h4>
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mt-1">
                     <span className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
                       {district.residents} residents
@@ -220,11 +220,11 @@ export function StateAdminDashboard() {
                     </span>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <Progress value={district.satisfaction * 20} className="w-20" />
+                <div className="shrink-0 w-full sm:w-auto flex flex-row sm:flex-col items-stretch sm:items-end gap-2">
+                  <Progress value={district.satisfaction * 20} className="w-full sm:w-20" />
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button size="sm" variant="outline" onClick={() => setSelectedDistrict(district)}>
+                      <Button size="sm" variant="outline" onClick={() => setSelectedDistrict(district)} className="w-full sm:w-auto">
                         {language === 'en' ? 'View Details' : 'Lihat Butiran'}
                       </Button>
                     </DialogTrigger>
