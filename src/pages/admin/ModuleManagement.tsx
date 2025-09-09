@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Settings, Shield, Users, Building, MessageSquare, Calendar, ShoppingCart, Camera, UserCheck, Phone, Megaphone, AlertTriangle } from 'lucide-react';
+import SecurityOfficerManagement from '@/components/security/SecurityOfficerManagement';
 
 interface Community {
   id: string;
@@ -403,7 +404,7 @@ export default function ModuleManagement() {
                         </div>
                         
                         {moduleFeature && (
-                          <div className="pl-8">
+                          <div className="pl-8 space-y-4">
                             <Textarea
                               placeholder="Add notes about this module configuration..."
                               value={moduleFeature.notes || ''}
@@ -416,6 +417,10 @@ export default function ModuleManagement() {
                               className="text-sm"
                               rows={2}
                             />
+                            
+                            {module.module_name === 'security' && moduleFeature.is_enabled && (
+                              <SecurityOfficerManagement />
+                            )}
                           </div>
                         )}
                       </div>
