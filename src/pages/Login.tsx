@@ -41,7 +41,7 @@ export default function Login() {
   const [districtId, setDistrictId] = useState("");
   const [communityId, setCommunityId] = useState("");
   const [location, setLocation] = useState("");
-  const [selectedRole, setSelectedRole] = useState("resident");
+  const [selectedRole, setSelectedRole] = useState("service_provider");
   const [businessName, setBusinessName] = useState("");
   const [businessType, setBusinessType] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
@@ -115,6 +115,9 @@ export default function Login() {
     try {
       if (mode === "signIn") {
         await login(email, password);
+        
+        // Check if user has pending approval after login attempt
+        // This will be handled by the AuthContext and app routing
       } else {
         // Validate required fields for registration
         if (!fullName.trim()) {
@@ -142,29 +145,27 @@ export default function Login() {
           );
         }
 
-        // Validate service provider specific fields
-        if (selectedRole === "service_provider") {
-          if (!businessName.trim()) {
-            throw new Error(
-              language === "en"
-                ? "Business name is required"
-                : "Nama perniagaan diperlukan"
-            );
-          }
-          if (!businessType.trim()) {
-            throw new Error(
-              language === "en"
-                ? "Business type is required"
-                : "Jenis perniagaan diperlukan"
-            );
-          }
-          if (!yearsOfExperience.trim()) {
-            throw new Error(
-              language === "en"
-                ? "Years of experience is required"
-                : "Tahun pengalaman diperlukan"
-            );
-          }
+        // Validate service provider specific fields (always required now)
+        if (!businessName.trim()) {
+          throw new Error(
+            language === "en"
+              ? "Business name is required"
+              : "Nama perniagaan diperlukan"
+          );
+        }
+        if (!businessType.trim()) {
+          throw new Error(
+            language === "en"
+              ? "Business type is required"
+              : "Jenis perniagaan diperlukan"
+          );
+        }
+        if (!yearsOfExperience.trim()) {
+          throw new Error(
+            language === "en"
+              ? "Years of experience is required"
+              : "Tahun pengalaman diperlukan"
+          );
         }
 
         // Validate PDPA acceptance
@@ -190,15 +191,12 @@ export default function Login() {
           signup_flow: selectedRole, // This tells the trigger which role to assign
         };
 
-        // Add service provider specific metadata
-        if (selectedRole === "service_provider") {
-          metadata.business_name = businessName.trim();
-          metadata.business_type = businessType.trim();
-          metadata.business_description =
-            "Service provider registered via signup";
-          metadata.experience_years = yearsOfExperience.trim();
-          metadata.contact_phone = phone.trim();
-        }
+        // Add service provider specific metadata (always added now)
+        metadata.business_name = businessName.trim();
+        metadata.business_type = businessType.trim();
+        metadata.business_description = "Service provider registered via signup";
+        metadata.experience_years = yearsOfExperience.trim();
+        metadata.contact_phone = phone.trim();
 
         const { data: authData, error: signUpError } =
           await supabase.auth.signUp({
@@ -232,14 +230,12 @@ export default function Login() {
             is_active: true,
           };
 
-          // Add service provider specific data
-          if (selectedRole === "service_provider") {
-            profileUpdate.business_name = businessName.trim();
-            profileUpdate.business_type = businessType.trim();
-            profileUpdate.license_number = licenseNumber.trim() || null;
-            profileUpdate.years_of_experience =
-              parseInt(yearsOfExperience) || null;
-          }
+          // Add service provider specific data (always added now)
+          profileUpdate.business_name = businessName.trim();
+          profileUpdate.business_type = businessType.trim();
+          profileUpdate.license_number = licenseNumber.trim() || null;
+          profileUpdate.years_of_experience =
+            parseInt(yearsOfExperience) || null;
 
           const { error: profileError } = await supabase
             .from("profiles")
@@ -296,7 +292,7 @@ export default function Login() {
           setDistrictId("");
           setCommunityId("");
           setLocation("");
-          setSelectedRole("resident");
+          setSelectedRole("service_provider");
           setBusinessName("");
           setBusinessType("");
           setLicenseNumber("");
@@ -501,8 +497,8 @@ export default function Login() {
                     ? "Access your smart community platform"
                     : "Akses platform komuniti pintar anda"
                   : language === "en"
-                  ? "Join your smart community platform"
-                  : "Sertai platform komuniti pintar anda"}
+                  ? "Register as a Service Provider"
+                  : "Daftar sebagai Penyedia Perkhidmatan"}
               </CardDescription>
               <div className="mt-2 flex justify-center gap-2">
                 <Button
@@ -519,7 +515,7 @@ export default function Login() {
                   size="sm"
                   onClick={() => setMode("signUp")}
                 >
-                  {language === "en" ? "Sign Up" : "Daftar"}
+                  {language === "en" ? "Service Provider Sign Up" : "Daftar Penyedia Perkhidmatan"}
                 </Button>
               </div>
             </CardHeader>
@@ -533,35 +529,35 @@ export default function Login() {
 
                 {mode === "signUp" && (
                   <>
+                    {/* Notice for residents */}
+                    <Alert className="mb-4">
+                      <Users className="h-4 w-4" />
+                      <AlertDescription>
+                        {language === "en" 
+                          ? "Residents: Please contact your Community Admin to create your account. Only Service Providers can register directly."
+                          : "Penduduk: Sila hubungi Pentadbir Komuniti anda untuk membuat akaun. Hanya Penyedia Perkhidmatan boleh mendaftar secara langsung."
+                        }
+                      </AlertDescription>
+                    </Alert>
+
                     <div className="space-y-2">
                       <Label htmlFor="role">
-                        {language === "en" ? "Select Role" : "Pilih Peranan"} *
+                        {language === "en" ? "Account Type" : "Jenis Akaun"}
                       </Label>
-                      <Select
-                        value={selectedRole}
-                        onValueChange={setSelectedRole}
-                        required
-                      >
-                        <SelectTrigger className="transition-smooth">
-                          <SelectValue
-                            placeholder={
-                              language === "en"
-                                ? "Choose your role"
-                                : "Pilih peranan anda"
-                            }
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="resident">
-                            {language === "en" ? "Resident" : "Penduduk"}
-                          </SelectItem>
-                          <SelectItem value="service_provider">
-                            {language === "en"
-                              ? "Service Provider"
-                              : "Penyedia Perkhidmatan"}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="p-3 bg-muted rounded-lg">
+                        <div className="flex items-center space-x-2">
+                          <Shield className="h-4 w-4 text-primary" />
+                          <span className="font-medium">
+                            {language === "en" ? "Service Provider" : "Penyedia Perkhidmatan"}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {language === "en" 
+                            ? "Register your business to provide services to the community"
+                            : "Daftarkan perniagaan anda untuk menyediakan perkhidmatan kepada komuniti"
+                          }
+                        </p>
+                      </div>
                     </div>
 
                     <div className="space-y-2">
