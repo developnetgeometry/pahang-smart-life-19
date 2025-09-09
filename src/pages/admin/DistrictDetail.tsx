@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MapPin, Users, Building, Calendar, Map as MapIcon, Settings, Plus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import CreateCommunityModal from '@/components/communities/CreateCommunityModal';
 
 interface District {
   id: string;
@@ -46,6 +47,7 @@ export default function DistrictDetail() {
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
   const [communitiesLoading, setCommunitiesLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const text = {
     en: {
@@ -370,7 +372,7 @@ export default function DistrictDetail() {
             </CardDescription>
           </div>
           {canManage && (
-            <Button size="sm">
+            <Button size="sm" onClick={() => setShowCreateModal(true)}>
               <Plus className="h-4 w-4 mr-2" />
               {t.addCommunity}
             </Button>
@@ -435,6 +437,14 @@ export default function DistrictDetail() {
           )}
         </CardContent>
       </Card>
+
+      {/* Create Community Modal */}
+      <CreateCommunityModal
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        districtId={id!}
+        onSuccess={fetchCommunities}
+      />
     </div>
   );
 }
