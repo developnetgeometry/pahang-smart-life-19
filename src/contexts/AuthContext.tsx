@@ -231,7 +231,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await supabase
           .from("profiles")
           .update({ language_preference: lang })
-          .eq("id", user.id);
+          .eq("user_id", user.id);
       } catch (error) {
         console.error("Failed to update language preference:", error);
       }

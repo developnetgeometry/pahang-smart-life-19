@@ -241,7 +241,7 @@ export default function Login() {
           const { error: profileError } = await supabase
             .from("profiles")
             .update(profileUpdate)
-            .eq("id", authData.user.id);
+            .eq("user_id", authData.user.id);
 
           if (profileError) {
             console.error("Profile update error:", profileError);
@@ -271,6 +271,9 @@ export default function Login() {
             throw new Error(`Role assignment failed: ${roleError.message}`);
           }
 
+          // Sign out the user immediately since account is pending approval
+          await supabase.auth.signOut();
+          
           // Show success message
           toast({
             title: language === "en" ? "Account Created!" : "Akaun Dicipta!",

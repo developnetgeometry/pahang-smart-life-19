@@ -286,7 +286,7 @@ export default function UserManagement() {
       const { error } = await supabase
         .from('profiles')
         .update({ account_status: 'approved' })
-        .eq('id', userId);
+        .eq('user_id', userId);
 
       if (error) throw error;
 
