@@ -491,9 +491,23 @@ const App = () => (
               path="/admin/communities"
               element={
                 <ProtectedRoute>
-                  <Layout>
-                    <CommunityManagement />
-                  </Layout>
+                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <CommunityManagement />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/districts"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["state_admin"]}>
+                    <Layout>
+                      <DistrictManagement />
+                    </Layout>
+                  </RequireRoles>
                 </ProtectedRoute>
               }
             />

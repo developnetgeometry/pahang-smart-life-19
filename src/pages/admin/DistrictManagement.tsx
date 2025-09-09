@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRoles } from '@/hooks/use-user-roles';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface District {
   id: string;
   name: string;
-  code: string | null;
+  code?: string | null;
   address: string | null;
   city: string | null;
   state: string | null;
@@ -23,7 +24,7 @@ interface District {
   postal_code: string | null;
   area_km2: number | null;
   population: number | null;
-  communities_count: number | null;
+  communities_count?: number | null;
   coordinator_id: string | null;
   coordinator_name?: string;
   established_date: string | null;
@@ -37,6 +38,7 @@ interface District {
 
 export default function DistrictManagement() {
   const { language } = useAuth();
+  const { hasRole } = useUserRoles();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
@@ -48,37 +50,35 @@ export default function DistrictManagement() {
     code: '',
     area_km2: '',
     population: '',
+    city: '',
+    state: 'Pahang',
+    country: 'Malaysia',
+    address: '',
+    description: '',
     latitude: '',
-    longitude: '',
-    description: ''
+    longitude: ''
   });
 
+  // Internationalization
   const text = {
     en: {
       title: 'District Management',
-      subtitle: 'Manage districts and regional coordination',
+      subtitle: 'Manage districts and administrative regions',
       addDistrict: 'Add District',
       search: 'Search districts...',
-      type: 'Type',
-      allTypes: 'All Types',
-      urban: 'Urban',
-      suburban: 'Suburban',
-      rural: 'Rural',
+      status: 'Status',
+      allStatuses: 'All Statuses',
+      active: 'Active',
+      inactive: 'Inactive',
+      pending: 'Pending',
       name: 'District Name',
       code: 'District Code',
-      area: 'Area',
+      area: 'Area (km²)',
       population: 'Population',
       communities: 'Communities',
       coordinator: 'Coordinator',
-      established: 'Established',
-      status: 'Status',
-      active: 'Active',
-      planning: 'Planning',
-      development: 'Development',
       createDistrict: 'Create New District',
       createSubtitle: 'Add a new district to the system',
-      description: 'Description',
-      selectCoordinator: 'Select Coordinator',
       create: 'Create District',
       cancel: 'Cancel',
       edit: 'Edit',
@@ -87,34 +87,34 @@ export default function DistrictManagement() {
       districtCreated: 'District created successfully!',
       totalArea: 'Total Area',
       totalPopulation: 'Total Population',
-      totalCommunities: 'Total Communities',
-      avgPopulation: 'Avg Population'
+      totalDistricts: 'Total Districts',
+      avgPopulation: 'Average Population',
+      city: 'City',
+      state: 'State',
+      country: 'Country',
+      address: 'Address',
+      description: 'Description',
+      coordinates: 'Coordinates',
+      noAccess: 'You do not have permission to create districts'
     },
     ms: {
       title: 'Pengurusan Daerah',
-      subtitle: 'Urus daerah dan penyelarasan wilayah',
+      subtitle: 'Urus daerah dan wilayah pentadbiran',
       addDistrict: 'Tambah Daerah',
       search: 'Cari daerah...',
-      type: 'Jenis',
-      allTypes: 'Semua Jenis',
-      urban: 'Bandar',
-      suburban: 'Pinggir Bandar',
-      rural: 'Luar Bandar',
+      status: 'Status',
+      allStatuses: 'Semua Status',
+      active: 'Aktif',
+      inactive: 'Tidak Aktif',
+      pending: 'Menunggu',
       name: 'Nama Daerah',
       code: 'Kod Daerah',
-      area: 'Keluasan',
+      area: 'Keluasan (km²)',
       population: 'Penduduk',
       communities: 'Komuniti',
       coordinator: 'Penyelaras',
-      established: 'Ditubuhkan',
-      status: 'Status',
-      active: 'Aktif',
-      planning: 'Perancangan',
-      development: 'Pembangunan',
       createDistrict: 'Cipta Daerah Baru',
       createSubtitle: 'Tambah daerah baru ke sistem',
-      description: 'Penerangan',
-      selectCoordinator: 'Pilih Penyelaras',
       create: 'Cipta Daerah',
       cancel: 'Batal',
       edit: 'Edit',
@@ -123,16 +123,28 @@ export default function DistrictManagement() {
       districtCreated: 'Daerah berjaya dicipta!',
       totalArea: 'Jumlah Keluasan',
       totalPopulation: 'Jumlah Penduduk',
-      totalCommunities: 'Jumlah Komuniti',
-      avgPopulation: 'Purata Penduduk'
+      totalDistricts: 'Jumlah Daerah',
+      avgPopulation: 'Purata Penduduk',
+      city: 'Bandar',
+      state: 'Negeri',
+      country: 'Negara',
+      address: 'Alamat',
+      description: 'Penerangan',
+      coordinates: 'Koordinat',
+      noAccess: 'Anda tidak mempunyai kebenaran untuk mencipta daerah'
     }
   };
 
   const t = text[language];
 
   useEffect(() => {
-    fetchDistricts();
-  }, []);
+    // Only state admins can access district management
+    if (hasRole('state_admin')) {
+      fetchDistricts();
+    } else {
+      setLoading(false);
+    }
+  }, [hasRole]);
 
   const fetchDistricts = async () => {
     try {
@@ -143,29 +155,35 @@ export default function DistrictManagement() {
 
       if (error) throw error;
 
-      // Get coordinator names separately
-      const districtsWithCoordinators = await Promise.all(
+      // Get coordinator names and community counts separately
+      const districtsWithExtra = await Promise.all(
         (data || []).map(async (district) => {
+          // Get coordinator name
+          let coordinator_name = 'Not assigned';
           if (district.coordinator_id) {
-            const { data: coordinatorData } = await supabase
+            const { data: coordData } = await supabase
               .from('profiles')
               .select('full_name')
               .eq('id', district.coordinator_id)
               .single();
-            
-            return {
-              ...district,
-              coordinator_name: coordinatorData?.full_name || 'Not assigned'
-            };
+            coordinator_name = coordData?.full_name || 'Not assigned';
           }
+
+          // Get community count
+          const { count } = await supabase
+            .from('communities')
+            .select('*', { count: 'exact', head: true })
+            .eq('district_id', district.id);
+          
           return {
             ...district,
-            coordinator_name: 'Not assigned'
+            coordinator_name,
+            communities_count: count || 0
           };
         })
       );
 
-      setDistricts(districtsWithCoordinators as District[]);
+      setDistricts(districtsWithExtra);
     } catch (error) {
       console.error('Error fetching districts:', error);
       toast({
@@ -180,44 +198,72 @@ export default function DistrictManagement() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'development': return 'bg-yellow-100 text-yellow-800';
-      case 'planning': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'active': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'inactive': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
       case 'active': return t.active;
-      case 'development': return t.development;
-      case 'planning': return t.planning;
+      case 'inactive': return t.inactive;
+      case 'pending': return t.pending;
       default: return status;
     }
   };
 
   const filteredDistricts = districts.filter(district => {
     const matchesSearch = district.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (district.code && district.code.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesSearch;
+                         district.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         district.city?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = selectedType === 'all' || district.status === selectedType;
+    return matchesSearch && matchesType;
   });
 
   const totalStats = {
     totalArea: districts.reduce((sum, d) => sum + (d.area_km2 || 0), 0),
     totalPopulation: districts.reduce((sum, d) => sum + (d.population || 0), 0),
-    totalCommunities: districts.reduce((sum, d) => sum + (d.communities_count || 0), 0),
-    avgPopulation: districts.length > 0 ? districts.reduce((sum, d) => sum + (d.population || 0), 0) / districts.length : 0
+    totalDistricts: districts.length,
+    avgPopulation: districts.length > 0 
+      ? Math.round(districts.reduce((sum, d) => sum + (d.population || 0), 0) / districts.length)
+      : 0
   };
 
   const handleCreateDistrict = async () => {
+    if (!newDistrict.name) {
+      toast({
+        title: 'Error',
+        description: 'Please fill in required fields',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Check permissions
+    if (!hasRole('state_admin')) {
+      toast({
+        title: 'Error',
+        description: t.noAccess,
+        variant: 'destructive'
+      });
+      return;
+    }
+
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('districts')
         .insert([{
           name: newDistrict.name,
-          code: newDistrict.code,
+          code: newDistrict.code || null,
           area_km2: newDistrict.area_km2 ? parseFloat(newDistrict.area_km2) : null,
           population: newDistrict.population ? parseInt(newDistrict.population) : null,
+          city: newDistrict.city || null,
+          state: newDistrict.state || null,
+          country: newDistrict.country || null,
+          address: newDistrict.address || null,
+          description: newDistrict.description || null,
           latitude: newDistrict.latitude ? parseFloat(newDistrict.latitude) : null,
           longitude: newDistrict.longitude ? parseFloat(newDistrict.longitude) : null,
           status: 'active'
@@ -234,9 +280,13 @@ export default function DistrictManagement() {
         code: '',
         area_km2: '',
         population: '',
+        city: '',
+        state: 'Pahang',
+        country: 'Malaysia',
+        address: '',
+        description: '',
         latitude: '',
-        longitude: '',
-        description: ''
+        longitude: ''
       });
       fetchDistricts();
     } catch (error) {
@@ -249,9 +299,22 @@ export default function DistrictManagement() {
     }
   };
 
+  // Check if user has access
+  if (!hasRole('state_admin')) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-muted-foreground mb-2">Access Restricted</h2>
+          <p className="text-muted-foreground">Only State Administrators can access District Management.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
@@ -259,11 +322,11 @@ export default function DistrictManagement() {
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               {t.addDistrict}
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[525px]">
+          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t.createDistrict}</DialogTitle>
               <DialogDescription>{t.createSubtitle}</DialogDescription>
@@ -271,10 +334,10 @@ export default function DistrictManagement() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">{t.name}</Label>
+                  <Label htmlFor="name">{t.name} *</Label>
                   <Input 
                     id="name" 
-                    placeholder={t.name}
+                    placeholder="Enter district name"
                     value={newDistrict.name}
                     onChange={(e) => setNewDistrict({...newDistrict, name: e.target.value})}
                   />
@@ -283,19 +346,59 @@ export default function DistrictManagement() {
                   <Label htmlFor="code">{t.code}</Label>
                   <Input 
                     id="code" 
-                    placeholder="e.g., BB001"
+                    placeholder="DIS001"
                     value={newDistrict.code}
                     onChange={(e) => setNewDistrict({...newDistrict, code: e.target.value})}
                   />
                 </div>
               </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="city">{t.city}</Label>
+                  <Input 
+                    id="city" 
+                    placeholder="City"
+                    value={newDistrict.city}
+                    onChange={(e) => setNewDistrict({...newDistrict, city: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="state">{t.state}</Label>
+                  <Input 
+                    id="state" 
+                    value={newDistrict.state}
+                    onChange={(e) => setNewDistrict({...newDistrict, state: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="country">{t.country}</Label>
+                  <Input 
+                    id="country" 
+                    value={newDistrict.country}
+                    onChange={(e) => setNewDistrict({...newDistrict, country: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="address">{t.address}</Label>
+                <Textarea 
+                  id="address" 
+                  placeholder="Enter full address"
+                  value={newDistrict.address}
+                  onChange={(e) => setNewDistrict({...newDistrict, address: e.target.value})}
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="area">{t.area} (km²)</Label>
+                  <Label htmlFor="area">{t.area}</Label>
                   <Input 
                     id="area" 
-                    type="number" 
-                    placeholder="0"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
                     value={newDistrict.area_km2}
                     onChange={(e) => setNewDistrict({...newDistrict, area_km2: e.target.value})}
                   />
@@ -304,47 +407,44 @@ export default function DistrictManagement() {
                   <Label htmlFor="population">{t.population}</Label>
                   <Input 
                     id="population" 
-                    type="number" 
+                    type="number"
                     placeholder="0"
                     value={newDistrict.population}
                     onChange={(e) => setNewDistrict({...newDistrict, population: e.target.value})}
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="latitude">Latitude</Label>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">{t.description}</Label>
+                <Textarea 
+                  id="description" 
+                  placeholder="Enter district description"
+                  value={newDistrict.description}
+                  onChange={(e) => setNewDistrict({...newDistrict, description: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t.coordinates}</Label>
+                <div className="grid grid-cols-2 gap-2">
                   <Input 
-                    id="latitude" 
                     type="number" 
                     step="any"
-                    placeholder="3.1319"
+                    placeholder="Latitude"
                     value={newDistrict.latitude}
                     onChange={(e) => setNewDistrict({...newDistrict, latitude: e.target.value})}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="longitude">Longitude</Label>
                   <Input 
-                    id="longitude" 
                     type="number" 
                     step="any"
-                    placeholder="101.6841"
+                    placeholder="Longitude"
                     value={newDistrict.longitude}
                     onChange={(e) => setNewDistrict({...newDistrict, longitude: e.target.value})}
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">{t.description}</Label>
-                <Textarea 
-                  id="description" 
-                  placeholder={t.description} 
-                  rows={3}
-                  value={newDistrict.description}
-                  onChange={(e) => setNewDistrict({...newDistrict, description: e.target.value})}
-                />
-              </div>
+
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
                   {t.cancel}
@@ -366,7 +466,7 @@ export default function DistrictManagement() {
             <MapIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalStats.totalArea} km²</div>
+            <div className="text-2xl font-bold">{totalStats.totalArea.toFixed(2)} km²</div>
           </CardContent>
         </Card>
 
@@ -382,11 +482,11 @@ export default function DistrictManagement() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.totalCommunities}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.totalDistricts}</CardTitle>
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalStats.totalCommunities}</div>
+            <div className="text-2xl font-bold">{totalStats.totalDistricts}</div>
           </CardContent>
         </Card>
 
@@ -396,104 +496,110 @@ export default function DistrictManagement() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Math.round(totalStats.avgPopulation).toLocaleString()}</div>
+            <div className="text-2xl font-bold">{totalStats.avgPopulation.toLocaleString()}</div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder={t.search}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-8"
           />
         </div>
+        <Select value={selectedType} onValueChange={setSelectedType}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder={t.status} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t.allStatuses}</SelectItem>
+            <SelectItem value="active">{t.active}</SelectItem>
+            <SelectItem value="inactive">{t.inactive}</SelectItem>
+            <SelectItem value="pending">{t.pending}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {loading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[1, 2, 3, 4].map((i) => (
+      {/* Districts Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {loading ? (
+          // Loading skeletons
+          Array.from({ length: 6 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardHeader>
-                <div className="h-4 bg-muted rounded w-3/4"></div>
-                <div className="h-3 bg-muted rounded w-1/2"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <div className="h-3 bg-muted rounded"></div>
-                  <div className="h-3 bg-muted rounded w-2/3"></div>
+                  <div className="h-3 bg-gray-200 rounded"></div>
+                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredDistricts.map((district) => (
-            <Card key={district.id} className="hover:shadow-lg transition-shadow">
+          ))
+        ) : filteredDistricts.length === 0 ? (
+          <div className="col-span-full text-center py-8">
+            <Building className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No districts found</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Get started by creating a new district.
+            </p>
+          </div>
+        ) : (
+          filteredDistricts.map((district) => (
+            <Card key={district.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">{district.name}</CardTitle>
-                    <CardDescription className="flex items-center gap-1 mt-1">
-                      <MapPin className="h-3 w-3" />
-                      {district.code || 'No code'}
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Badge className={getStatusColor(district.status)}>
-                      {getStatusText(district.status)}
-                    </Badge>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">{district.name}</CardTitle>
+                  <Badge className={getStatusColor(district.status)}>
+                    {getStatusText(district.status)}
+                  </Badge>
                 </div>
+                <CardDescription className="flex items-center space-x-2">
+                  {district.code && <span>Code: {district.code}</span>}
+                  {district.city && <span>• {district.city}</span>}
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">{t.area}</p>
-                    <p className="font-medium">{district.area_km2 || 0} km²</p>
+              <CardContent>
+                <div className="space-y-2">
+                  {district.address && (
+                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      <span>{district.address}</span>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <span>{t.area}: {district.area_km2 || 'N/A'} km²</span>
+                    <span>{t.population}: {district.population?.toLocaleString() || 'N/A'}</span>
+                    <span>{t.communities}: {district.communities_count || 0}</span>
+                    <span>{t.coordinator}: {district.coordinator_name}</span>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground">{t.population}</p>
-                    <p className="font-medium">{(district.population || 0).toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">{t.communities}</p>
-                    <p className="font-medium">{district.communities_count || 0}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">{t.coordinator}</p>
-                    <p className="font-medium">{district.coordinator_name}</p>
-                  </div>
+                  {(district.latitude && district.longitude) && (
+                    <div className="text-xs text-muted-foreground">
+                      {district.latitude}, {district.longitude}
+                    </div>
+                  )}
                 </div>
-                
-                {(district.latitude && district.longitude) && (
-                  <div className="text-xs text-muted-foreground">
-                    📍 {district.latitude.toFixed(4)}, {district.longitude.toFixed(4)}
-                  </div>
-                )}
-                
-                <div className="flex justify-between items-center pt-2 border-t">
-                  <p className="text-xs text-muted-foreground">
-                    {t.established}: {district.established_date || 'Not set'}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      {t.view}
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Settings className="h-4 w-4" />
-                    </Button>
-                  </div>
+                <div className="flex justify-end space-x-2 mt-4">
+                  <Button variant="outline" size="sm">
+                    {t.view}
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Settings className="h-4 w-4" />
+                    {t.settings}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 }
