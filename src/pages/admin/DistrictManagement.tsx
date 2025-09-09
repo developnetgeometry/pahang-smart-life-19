@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRoles } from '@/hooks/use-user-roles';
+import { useDistricts } from '@/hooks/use-districts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,28 +10,25 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Map as MapIcon, MapPin, Plus, Search, Building, Users, Calendar, Settings } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-
-interface District {
-  id: string;
-  name: string;
-  code: string;
-  area: number; // in sq km
-  population: number;
-  communities: number;
-  coordinator: string;
-  established: string;
-  status: 'active' | 'planning' | 'development';
-  type: 'urban' | 'suburban' | 'rural';
-}
+import { Map as MapIcon, MapPin, Plus, Search, Building, Users, Calendar, Settings, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function DistrictManagement() {
   const { language } = useAuth();
-  const { toast } = useToast();
+  const { hasRole } = useUserRoles();
+  const { districts, loading, createDistrict } = useDistricts();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    code: '',
+    district_type: 'urban' as 'urban' | 'suburban' | 'rural',
+    area: '',
+    population: '',
+    coordinator_id: '',
+    address: ''
+  });
 
   const text = {
     en: {
@@ -108,44 +107,17 @@ export default function DistrictManagement() {
 
   const t = text[language];
 
-  const mockDistricts: District[] = [
-    {
-      id: '1',
-      name: 'Bukit Bintang',
-      code: 'BB001',
-      area: 15.2,
-      population: 45000,
-      communities: 12,
-      coordinator: 'Ahmad Rahman',
-      established: '2019-03-15',
-      status: 'active',
-      type: 'urban'
-    },
-    {
-      id: '2',
-      name: 'Petaling Jaya',
-      code: 'PJ002',
-      area: 97.2,
-      population: 125000,
-      communities: 28,
-      coordinator: 'Lim Wei Ming',
-      established: '2018-06-20',
-      status: 'active',
-      type: 'suburban'
-    },
-    {
-      id: '3',
-      name: 'Kajang Selatan',
-      code: 'KS003',
-      area: 45.8,
-      population: 35000,
-      communities: 8,
-      coordinator: 'Siti Aminah',
-      established: '2020-12-10',
-      status: 'development',
-      type: 'suburban'
-    }
-  ];
+  // Only show content if user has state_admin role
+  if (!hasRole('state_admin')) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+          <p className="text-muted-foreground">You need State Admin privileges to access this page.</p>
+        </div>
+      </div>
+    );
+  }
 
   const districtTypes = [
     { value: 'all', label: t.allTypes },
@@ -172,43 +144,68 @@ export default function DistrictManagement() {
     }
   };
 
-  const getTypeText = (type: string) => {
+  const getTypeText = (type?: string) => {
     switch (type) {
       case 'urban': return t.urban;
       case 'suburban': return t.suburban;
       case 'rural': return t.rural;
-      default: return type;
+      default: return type || '';
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status?: string) => {
     switch (status) {
       case 'active': return t.active;
       case 'development': return t.development;
       case 'planning': return t.planning;
-      default: return status;
+      default: return status || '';
     }
   };
 
-  const filteredDistricts = mockDistricts.filter(district => {
+  const filteredDistricts = districts.filter(district => {
     const matchesSearch = district.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         district.code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = selectedType === 'all' || district.type === selectedType;
+                         (district.code?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
+    const matchesType = selectedType === 'all' || district.district_type === selectedType;
     return matchesSearch && matchesType;
   });
 
   const totalStats = {
-    totalArea: mockDistricts.reduce((sum, d) => sum + d.area, 0),
-    totalPopulation: mockDistricts.reduce((sum, d) => sum + d.population, 0),
-    totalCommunities: mockDistricts.reduce((sum, d) => sum + d.communities, 0),
-    avgPopulation: mockDistricts.reduce((sum, d) => sum + d.population, 0) / mockDistricts.length
+    totalArea: districts.reduce((sum, d) => sum + (d.area || 0), 0),
+    totalPopulation: districts.reduce((sum, d) => sum + (d.population || 0), 0),
+    totalCommunities: districts.reduce((sum, d) => sum + (d.communities_count || 0), 0),
+    avgPopulation: districts.length > 0 ? districts.reduce((sum, d) => sum + (d.population || 0), 0) / districts.length : 0
   };
 
-  const handleCreateDistrict = () => {
-    toast({
-      title: t.districtCreated,
-    });
-    setIsCreateOpen(false);
+  const handleCreateDistrict = async () => {
+    if (!formData.name) {
+      toast.error('District name is required');
+      return;
+    }
+
+    const districtData = {
+      name: formData.name,
+      code: formData.code || undefined,
+      district_type: formData.district_type,
+      area: formData.area ? parseFloat(formData.area) : undefined,
+      population: formData.population ? parseInt(formData.population) : undefined,
+      coordinator_id: formData.coordinator_id || undefined,
+      address: formData.address || undefined,
+      status: 'active' as const
+    };
+
+    const success = await createDistrict(districtData);
+    if (success) {
+      setIsCreateOpen(false);
+      setFormData({
+        name: '',
+        code: '',
+        district_type: 'urban',
+        area: '',
+        population: '',
+        coordinator_id: '',
+        address: ''
+      });
+    }
   };
 
   return (
@@ -234,16 +231,31 @@ export default function DistrictManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">{t.name}</Label>
-                  <Input id="name" placeholder={t.name} />
+                  <Input 
+                    id="name" 
+                    placeholder={t.name}
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="code">{t.code}</Label>
-                  <Input id="code" placeholder="e.g., BB001" />
+                  <Input 
+                    id="code" 
+                    placeholder="e.g., BB001"
+                    value={formData.code}
+                    onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="type">{t.type}</Label>
-                <Select>
+                <Select 
+                  value={formData.district_type}
+                  onValueChange={(value: 'urban' | 'suburban' | 'rural') => 
+                    setFormData(prev => ({ ...prev, district_type: value }))
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
@@ -259,29 +271,34 @@ export default function DistrictManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="area">{t.area} (km²)</Label>
-                  <Input id="area" type="number" placeholder="0" />
+                  <Input 
+                    id="area" 
+                    type="number" 
+                    placeholder="0"
+                    value={formData.area}
+                    onChange={(e) => setFormData(prev => ({ ...prev, area: e.target.value }))}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="population">{t.population}</Label>
-                  <Input id="population" type="number" placeholder="0" />
+                  <Input 
+                    id="population" 
+                    type="number" 
+                    placeholder="0"
+                    value={formData.population}
+                    onChange={(e) => setFormData(prev => ({ ...prev, population: e.target.value }))}
+                  />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="coordinator">{t.coordinator}</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t.selectCoordinator} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ahmad">Ahmad Rahman</SelectItem>
-                    <SelectItem value="lim">Lim Wei Ming</SelectItem>
-                    <SelectItem value="siti">Siti Aminah</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">{t.description}</Label>
-                <Textarea id="description" placeholder={t.description} rows={3} />
+                <Label htmlFor="address">Address</Label>
+                <Textarea 
+                  id="address" 
+                  placeholder="District address"
+                  rows={3}
+                  value={formData.address}
+                  onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                />
               </div>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
@@ -363,65 +380,76 @@ export default function DistrictManagement() {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredDistricts.map((district) => (
-          <Card key={district.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-lg">{district.name}</CardTitle>
-                  <CardDescription className="flex items-center gap-1 mt-1">
-                    <MapPin className="h-3 w-3" />
-                    {district.code}
-                  </CardDescription>
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[200px]">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {filteredDistricts.map((district) => (
+            <Card key={district.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">{district.name}</CardTitle>
+                    <CardDescription className="flex items-center gap-1 mt-1">
+                      <MapPin className="h-3 w-3" />
+                      {district.code || 'No code'}
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Badge className={getTypeColor(district.district_type || 'urban')}>
+                      {getTypeText(district.district_type)}
+                    </Badge>
+                    <Badge className={getStatusColor(district.status || 'active')}>
+                      {getStatusText(district.status)}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Badge className={getTypeColor(district.type)}>
-                    {getTypeText(district.type)}
-                  </Badge>
-                  <Badge className={getStatusColor(district.status)}>
-                    {getStatusText(district.status)}
-                  </Badge>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">{t.area}</p>
+                    <p className="font-medium">{district.area || 0} km²</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">{t.population}</p>
+                    <p className="font-medium">{(district.population || 0).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">{t.communities}</p>
+                    <p className="font-medium">{district.communities_count || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">{t.coordinator}</p>
+                    <p className="font-medium">Unassigned</p>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">{t.area}</p>
-                  <p className="font-medium">{district.area} km²</p>
+                
+                <div className="flex justify-between items-center pt-2 border-t">
+                  <p className="text-xs text-muted-foreground">
+                    {t.established}: {district.established_date ? new Date(district.established_date).toLocaleDateString() : 'Not set'}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      {t.view}
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">{t.population}</p>
-                  <p className="font-medium">{district.population.toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">{t.communities}</p>
-                  <p className="font-medium">{district.communities}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">{t.coordinator}</p>
-                  <p className="font-medium">{district.coordinator}</p>
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center pt-2 border-t">
-                <p className="text-xs text-muted-foreground">
-                  {t.established}: {district.established}
-                </p>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    {t.view}
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+          {!loading && filteredDistricts.length === 0 && (
+            <div className="col-span-full text-center py-8">
+              <p className="text-muted-foreground">No districts found matching your criteria.</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

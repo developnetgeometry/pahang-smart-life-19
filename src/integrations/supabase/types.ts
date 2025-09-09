@@ -2711,13 +2711,16 @@ export type Database = {
       districts: {
         Row: {
           address: string | null
+          area: number | null
           area_km2: number | null
           city: string | null
+          code: string | null
           communities_count: number | null
           coordinator_id: string | null
           country: string | null
           created_at: string | null
           description: string | null
+          district_type: string | null
           established_date: string | null
           id: string
           latitude: number | null
@@ -2731,13 +2734,16 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          area?: number | null
           area_km2?: number | null
           city?: string | null
+          code?: string | null
           communities_count?: number | null
           coordinator_id?: string | null
           country?: string | null
           created_at?: string | null
           description?: string | null
+          district_type?: string | null
           established_date?: string | null
           id?: string
           latitude?: number | null
@@ -2751,13 +2757,16 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          area?: number | null
           area_km2?: number | null
           city?: string | null
+          code?: string | null
           communities_count?: number | null
           coordinator_id?: string | null
           country?: string | null
           created_at?: string | null
           description?: string | null
+          district_type?: string | null
           established_date?: string | null
           id?: string
           latitude?: number | null
@@ -10150,6 +10159,10 @@ export type Database = {
           role: Database["public"]["Enums"]["enhanced_user_role"]
           user_id: string
         }[]
+      }
+      get_coordinator_name: {
+        Args: { coordinator_id: string }
+        Returns: string
       }
       get_current_user_role_safe: {
         Args: Record<PropertyKey, never>
