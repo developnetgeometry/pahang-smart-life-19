@@ -10,10 +10,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Map as MapIcon, MapPin, Plus, Search, Building, Users, Calendar, Settings, Loader2 } from 'lucide-react';
+import { Map as MapIcon, MapPin, Plus, Search, Building, Users, Calendar, Settings, Loader2, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export default function DistrictManagement() {
+  const navigate = useNavigate();
   const { language } = useAuth();
   const { hasRole } = useUserRoles();
   const { districts, loading, createDistrict } = useDistricts();
@@ -432,7 +434,12 @@ export default function DistrictManagement() {
                     {t.established}: {district.established_date ? new Date(district.established_date).toLocaleDateString() : 'Not set'}
                   </p>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate(`/admin/districts/${district.id}`)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
                       {t.view}
                     </Button>
                     <Button variant="outline" size="sm">
