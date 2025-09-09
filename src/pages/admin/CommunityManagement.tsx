@@ -175,9 +175,9 @@ export default function CommunityManagement() {
       // Role-based filtering
       if (hasRole('district_coordinator')) {
         // District coordinators see only communities in their district
-        const userDistrict = user?.district;
-        if (userDistrict) {
-          query = query.eq('district_id', userDistrict);
+        const userDistrictId = user?.district_id;
+        if (userDistrictId) {
+          query = query.eq('district_id', userDistrictId);
         }
       } else if (hasRole('community_admin')) {
         // Community admins see only their community
