@@ -48,8 +48,10 @@ export default function Login() {
   const [licenseNumber, setLicenseNumber] = useState("");
   const [yearsOfExperience, setYearsOfExperience] = useState("");
   const [uploadedDocuments, setUploadedDocuments] = useState<Record<string, Array<{ url: string; path: string; name: string }>>>({});
+  const [pendingDocuments, setPendingDocuments] = useState<Record<string, File[]>>({});
   const [pdpaAccepted, setPdpaAccepted] = useState(false);
   const [showPdpaDialog, setShowPdpaDialog] = useState(false);
+  const [signupStep, setSignupStep] = useState(1);
   const [districts, setDistricts] = useState<
     Array<{ id: string; name: string }>
   >([]);
@@ -173,8 +175,96 @@ export default function Login() {
   useEffect(() => {
     if (businessType) {
       setUploadedDocuments({});
+      setPendingDocuments({});
     }
   }, [businessType]);
+
+  // Reset to step 1 when mode changes
+  useEffect(() => {
+    if (mode === "signUp") {
+      setSignupStep(1);
+    }
+  }, [mode]);
+
+  const validateStep1 = () => {
+    if (!fullName.trim()) {
+      throw new Error(
+        language === "en"
+          ? "Full name is required"
+          : "Nama penuh diperlukan"
+      );
+    }
+    if (!districtId) {
+      throw new Error(
+        language === "en" ? "Please select a district" : "Sila pilih daerah"
+      );
+    }
+    if (!communityId) {
+      throw new Error(
+        language === "en"
+          ? "Please select a community"
+          : "Sila pilih komuniti"
+      );
+    }
+    if (!location.trim()) {
+      throw new Error(
+        language === "en" ? "Location is required" : "Lokasi diperlukan"
+      );
+    }
+    if (!businessName.trim()) {
+      throw new Error(
+        language === "en"
+          ? "Business name is required"
+          : "Nama perniagaan diperlukan"
+      );
+    }
+    if (!businessType.trim()) {
+      throw new Error(
+        language === "en"
+          ? "Business type is required"
+          : "Jenis perniagaan diperlukan"
+      );
+    }
+    if (!email.trim()) {
+      throw new Error(
+        language === "en" ? "Email is required" : "Emel diperlukan"
+      );
+    }
+    if (!password.trim()) {
+      throw new Error(
+        language === "en" ? "Password is required" : "Kata laluan diperlukan"
+      );
+    }
+  };
+
+  const handleNextStep = () => {
+    try {
+      validateStep1();
+      setSignupStep(2);
+      setError("");
+    } catch (err: any) {
+      setError(err?.message || "Please fill in all required fields");
+    }
+  };
+
+  const handlePreviousStep = () => {
+    setSignupStep(1);
+    setError("");
+  };
+
+  const handlePendingDocumentUpload = (documentType: string, files: File[]) => {
+    setPendingDocuments(prev => ({
+      ...prev,
+      [documentType]: files
+    }));
+  };
+
+  const handlePendingDocumentRemove = (documentType: string, fileName: string) => {
+    setPendingDocuments(prev => ({
+      ...prev,
+      [documentType]: (prev[documentType] || []).filter(file => file.name !== fileName)
+    }));
+  };
 
   const handleDocumentUpload = (documentType: string, url: string, path: string, fileName: string) => {
     setUploadedDocuments(prev => ({
@@ -208,203 +298,199 @@ export default function Login() {
         // Check if user has pending approval after login attempt
         // This will be handled by the AuthContext and app routing
       } else {
-        // Validate required fields for registration
-        if (!fullName.trim()) {
-          throw new Error(
-            language === "en"
-              ? "Full name is required"
-              : "Nama penuh diperlukan"
-          );
-        }
-        if (!districtId) {
-          throw new Error(
-            language === "en" ? "Please select a district" : "Sila pilih daerah"
-          );
-        }
-        if (!communityId) {
-          throw new Error(
-            language === "en"
-              ? "Please select a community"
-              : "Sila pilih komuniti"
-          );
-        }
-        if (!location.trim()) {
-          throw new Error(
-            language === "en" ? "Location is required" : "Lokasi diperlukan"
-          );
-        }
-
-        // Validate service provider specific fields (always required now)
-        if (!businessName.trim()) {
-          throw new Error(
-            language === "en"
-              ? "Business name is required"
-              : "Nama perniagaan diperlukan"
-          );
-        }
-        if (!businessType.trim()) {
-          throw new Error(
-            language === "en"
-              ? "Business type is required"
-              : "Jenis perniagaan diperlukan"
-          );
-        }
-        
-        // Validate years of experience only if required for business type
-        const businessConfig = getCurrentBusinessTypeConfig();
-        if (businessConfig.requiresExperience && !yearsOfExperience.trim()) {
-          throw new Error(
-            language === "en"
-              ? "Years of experience is required for this business type"
-              : "Tahun pengalaman diperlukan untuk jenis perniagaan ini"
-          );
-        }
-
-        // Validate required documents
-        for (const doc of businessConfig.requiredDocuments) {
-          const docsForType = uploadedDocuments[doc.type] || [];
-          if (docsForType.length === 0) {
+        // Step 2 validation for signup
+        if (signupStep === 2) {
+          // Validate years of experience only if required for business type
+          const businessConfig = getCurrentBusinessTypeConfig();
+          if (businessConfig.requiresExperience && !yearsOfExperience.trim()) {
             throw new Error(
               language === "en"
-                ? `${doc.name} is required`
-                : `${doc.nameMs} diperlukan`
+                ? "Years of experience is required for this business type"
+                : "Tahun pengalaman diperlukan untuk jenis perniagaan ini"
             );
           }
-        }
 
-        // Validate PDPA acceptance
-        if (!pdpaAccepted) {
-          throw new Error(
-            language === "en"
-              ? "You must read and accept the PDPA to register"
-              : "Anda mesti membaca dan menerima PDPA untuk mendaftar"
-          );
-        }
+          // Validate required documents from pending documents
+          for (const doc of businessConfig.requiredDocuments) {
+            const docsForType = pendingDocuments[doc.type] || [];
+            if (docsForType.length === 0) {
+              throw new Error(
+                language === "en"
+                  ? `${doc.name} is required`
+                  : `${doc.nameMs} diperlukan`
+              );
+            }
+          }
 
-        const redirectUrl = `${window.location.origin}/`;
+          // Validate PDPA acceptance
+          if (!pdpaAccepted) {
+            throw new Error(
+              language === "en"
+                ? "You must read and accept the PDPA to register"
+                : "Anda mesti membaca dan menerima PDPA untuk mendaftar"
+            );
+          }
 
-        // Pass all signup data as metadata for the trigger to handle
-        const metadata: Record<string, any> = {
-          full_name: fullName.trim(),
-          mobile_no: phone.trim() || null,
-          district_id: districtId,
-          community_id: communityId,
-          address: location.trim(),
-          language: language,
-          pdpa_declare: pdpaAccepted,
-          signup_flow: selectedRole, // This tells the trigger which role to assign
-        };
+          const redirectUrl = `${window.location.origin}/`;
 
-        // Add service provider specific metadata (always added now)
-        metadata.business_name = businessName.trim();
-        metadata.business_type = businessType.trim();
-        metadata.business_description = "Service provider registered via signup";
-        metadata.experience_years = yearsOfExperience.trim();
-        metadata.contact_phone = phone.trim();
-        metadata.uploaded_documents = uploadedDocuments;
-
-        const { data: authData, error: signUpError } =
-          await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              emailRedirectTo: redirectUrl,
-              data: metadata,
-            },
-          });
-
-        if (signUpError) {
-          console.error("Signup error:", signUpError);
-          console.error("Metadata sent:", metadata);
-          throw signUpError;
-        }
-
-        if (authData.user) {
-          // Wait for the trigger to create the basic profile, then update it
-          await new Promise((resolve) => setTimeout(resolve, 1000)); // Brief delay for trigger
-
-          // Update the profile with registration details
-          const profileUpdate: any = {
+          // Pass all signup data as metadata for the trigger to handle
+          const metadata: Record<string, any> = {
+            full_name: fullName.trim(),
             mobile_no: phone.trim() || null,
-            district_id: districtId?.replace("district-", "") || districtId,
-            community_id: communityId?.replace("community-", "") || communityId,
+            district_id: districtId,
+            community_id: communityId,
             address: location.trim(),
             language: language,
             pdpa_declare: pdpaAccepted,
-            account_status: "pending",
-            is_active: true,
+            signup_flow: selectedRole, // This tells the trigger which role to assign
           };
 
-          // Add service provider specific data (always added now)
-          profileUpdate.business_name = businessName.trim();
-          profileUpdate.business_type = businessType.trim();
-          profileUpdate.license_number = licenseNumber.trim() || null;
-          profileUpdate.years_of_experience =
-            parseInt(yearsOfExperience) || null;
+          // Add service provider specific metadata (always added now)
+          metadata.business_name = businessName.trim();
+          metadata.business_type = businessType.trim();
+          metadata.business_description = "Service provider registered via signup";
+          metadata.experience_years = yearsOfExperience.trim();
+          metadata.contact_phone = phone.trim();
 
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .update(profileUpdate)
-            .eq("user_id", authData.user.id);
+          const { data: authData, error: signUpError } =
+            await supabase.auth.signUp({
+              email,
+              password,
+              options: {
+                emailRedirectTo: redirectUrl,
+                data: metadata,
+              },
+            });
 
-          if (profileError) {
-            console.error("Profile update error:", profileError);
-            throw new Error(`Profile update failed: ${profileError.message}`);
+          if (signUpError) {
+            console.error("Signup error:", signUpError);
+            console.error("Metadata sent:", metadata);
+            throw signUpError;
           }
 
-          console.log(
-            "Profile updated successfully for user:",
-            authData.user.id
-          );
+          if (authData.user) {
+            // Now upload pending documents to storage
+            const uploadedDocumentsMap: Record<string, Array<{ url: string; path: string; name: string }>> = {};
+            
+            for (const [docType, files] of Object.entries(pendingDocuments)) {
+              uploadedDocumentsMap[docType] = [];
+              
+              for (const file of files) {
+                const timestamp = Date.now();
+                const filePath = `${authData.user.id}/${docType}/${timestamp}-${file.name}`;
+                
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                  .from('service-provider-documents')
+                  .upload(filePath, file);
 
-          // Assign selected role using enhanced_user_roles table
-          const roleData = {
-            user_id: authData.user.id,
-            role: selectedRole as any,
-            district_id: districtId?.replace("district-", "") || districtId,
-            assigned_by: authData.user.id, // Self-assigned during registration
-            is_active: true,
-          };
+                if (uploadError) {
+                  console.error(`Error uploading ${docType} document:`, uploadError);
+                  throw new Error(`Failed to upload ${docType} document`);
+                }
 
-          const { error: roleError } = await supabase
-            .from("enhanced_user_roles")
-            .insert(roleData);
+                if (uploadData) {
+                  const { data: publicUrlData } = supabase.storage
+                    .from('service-provider-documents')
+                    .getPublicUrl(uploadData.path);
 
-          if (roleError) {
-            console.error("Role assignment error:", roleError);
-            throw new Error(`Role assignment failed: ${roleError.message}`);
+                  uploadedDocumentsMap[docType].push({
+                    url: publicUrlData.publicUrl,
+                    path: uploadData.path,
+                    name: file.name
+                  });
+                }
+              }
+            }
+
+            // Wait for the trigger to create the basic profile, then update it
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Brief delay for trigger
+
+            // Update the profile with registration details
+            const profileUpdate: any = {
+              mobile_no: phone.trim() || null,
+              district_id: districtId?.replace("district-", "") || districtId,
+              community_id: communityId?.replace("community-", "") || communityId,
+              address: location.trim(),
+              language: language,
+              pdpa_declare: pdpaAccepted,
+              account_status: "pending",
+              is_active: true,
+            };
+
+            // Add service provider specific data (always added now)
+            profileUpdate.business_name = businessName.trim();
+            profileUpdate.business_type = businessType.trim();
+            profileUpdate.license_number = licenseNumber.trim() || null;
+            profileUpdate.years_of_experience =
+              parseInt(yearsOfExperience) || null;
+            profileUpdate.uploaded_documents = uploadedDocumentsMap;
+
+            const { error: profileError } = await supabase
+              .from("profiles")
+              .update(profileUpdate)
+              .eq("user_id", authData.user.id);
+
+            if (profileError) {
+              console.error("Profile update error:", profileError);
+              throw new Error(`Profile update failed: ${profileError.message}`);
+            }
+
+            console.log(
+              "Profile updated successfully for user:",
+              authData.user.id
+            );
+
+            // Assign selected role using enhanced_user_roles table
+            const roleData = {
+              user_id: authData.user.id,
+              role: selectedRole as any,
+              district_id: districtId?.replace("district-", "") || districtId,
+              assigned_by: authData.user.id, // Self-assigned during registration
+              is_active: true,
+            };
+
+            const { error: roleError } = await supabase
+              .from("enhanced_user_roles")
+              .insert(roleData);
+
+            if (roleError) {
+              console.error("Role assignment error:", roleError);
+              throw new Error(`Role assignment failed: ${roleError.message}`);
+            }
+
+            // Sign out the user immediately since account is pending approval
+            await supabase.auth.signOut();
+            
+            // Show success message
+            toast({
+              title: language === "en" ? "Account Created!" : "Akaun Dicipta!",
+              description:
+                language === "en"
+                  ? "Your account has been created and is pending approval. You will be able to sign in once approved by the community admin."
+                  : "Akaun anda telah dicipta dan sedang menunggu kelulusan. Anda boleh log masuk setelah diluluskan oleh pentadbir komuniti.",
+            });
+
+            // Navigate to pending approval page
+            window.location.href = '/pending-approval';
+
+            // Reset form
+            setMode("signIn");
+            setSignupStep(1);
+            setFullName("");
+            setPhone("");
+            setDistrictId("");
+            setCommunityId("");
+            setLocation("");
+            setSelectedRole("service_provider");
+            setBusinessName("");
+            setBusinessType("");
+            setLicenseNumber("");
+            setYearsOfExperience("");
+            setUploadedDocuments({});
+            setPendingDocuments({});
+            setPdpaAccepted(false);
+            setPassword("");
           }
-
-          // Sign out the user immediately since account is pending approval
-          await supabase.auth.signOut();
-          
-          // Show success message
-          toast({
-            title: language === "en" ? "Account Created!" : "Akaun Dicipta!",
-            description:
-              language === "en"
-                ? "Your account has been created and is pending approval. You will be able to sign in once approved by the community admin."
-                : "Akaun anda telah dicipta dan sedang menunggu kelulusan. Anda boleh log masuk setelah diluluskan oleh pentadbir komuniti.",
-          });
-
-          // Navigate to pending approval page
-          window.location.href = '/pending-approval';
-
-          // Switch to sign in mode
-          setMode("signIn");
-          setFullName("");
-          setPhone("");
-          setDistrictId("");
-          setCommunityId("");
-          setLocation("");
-          setSelectedRole("service_provider");
-          setBusinessName("");
-          setBusinessType("");
-          setLicenseNumber("");
-          setYearsOfExperience("");
-          setUploadedDocuments({});
-          setPdpaAccepted(false);
-          setPassword("");
         }
       }
     } catch (err: any) {
@@ -633,7 +719,113 @@ export default function Login() {
                   </Alert>
                 )}
 
-                {mode === "signUp" && (
+                {mode === "signIn" ? (
+                  // Sign In Form
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">{t("email")} *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder={t("emailPlaceholder")}
+                        required
+                        className="transition-smooth"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password">{t("password")} *</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder={t("passwordPlaceholder")}
+                        required
+                        className="transition-smooth"
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full gradient-primary"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {language === "en" ? "Signing In..." : "Log Masuk..."}
+                        </>
+                      ) : (
+                        t("signIn")
+                      )}
+                    </Button>
+
+                    <div className="text-center">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowForgotPassword(true)}
+                        className="text-primary hover:text-primary/80"
+                      >
+                        {language === "en"
+                          ? "Forgot Password?"
+                          : "Lupa Kata Laluan?"}
+                      </Button>
+                    </div>
+
+                    {/* Forgot Password Dialog */}
+                    <Dialog
+                      open={showForgotPassword}
+                      onOpenChange={setShowForgotPassword}
+                    >
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>
+                            {language === "en"
+                              ? "Reset Password"
+                              : "Tetapan Semula Kata Laluan"}
+                          </DialogTitle>
+                          <DialogDescription>
+                            {language === "en"
+                              ? "Enter your email address and we'll send you instructions to reset your password."
+                              : "Masukkan alamat emel anda dan kami akan menghantar arahan untuk menetapkan semula kata laluan anda."}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="resetEmail">
+                              {language === "en" ? "Email Address" : "Alamat Emel"}
+                            </Label>
+                            <Input
+                              id="resetEmail"
+                              type="email"
+                              value={resetEmail}
+                              onChange={(e) => setResetEmail(e.target.value)}
+                              placeholder={t("emailPlaceholder")}
+                            />
+                          </div>
+                          <Button
+                            onClick={handleForgotPassword}
+                            className="w-full"
+                            disabled={isResettingPassword}
+                          >
+                            {isResettingPassword ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {language === "en" ? "Sending..." : "Menghantar..."}
+                              </>
+                            ) : (
+                              language === "en" ? "Send Reset Instructions" : "Hantar Arahan Tetapan Semula"
+                            )}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </>
+                ) : (
+                  // Sign Up Form with 2-Step Wizard
                   <>
                     {/* Notice for residents */}
                     <Alert className="mb-4">
@@ -646,160 +838,177 @@ export default function Login() {
                       </AlertDescription>
                     </Alert>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="role">
-                        {language === "en" ? "Account Type" : "Jenis Akaun"}
-                      </Label>
-                      <div className="p-3 bg-muted rounded-lg">
-                        <div className="flex items-center space-x-2">
-                          <Shield className="h-4 w-4 text-primary" />
-                          <span className="font-medium">
-                            {language === "en" ? "Service Provider" : "Penyedia Perkhidmatan"}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {language === "en" 
-                            ? "Register your business to provide services to the community"
-                            : "Daftarkan perniagaan anda untuk menyediakan perkhidmatan kepada komuniti"
-                          }
-                        </p>
+                    {/* Step Progress Indicator */}
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">
+                          {language === "en" ? `Step ${signupStep} of 2` : `Langkah ${signupStep} dari 2`}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {signupStep === 1 ? (
+                            language === "en" ? "Basic Information" : "Maklumat Asas"
+                          ) : (
+                            language === "en" ? "Business Details" : "Maklumat Perniagaan"
+                          )}
+                        </span>
+                      </div>
+                      <div className="w-full bg-secondary rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full transition-all duration-300" 
+                          style={{ width: `${(signupStep / 2) * 100}%` }}
+                        />
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">
-                        {language === "en" ? "Full Name" : "Nama Penuh"} *
-                      </Label>
-                      <Input
-                        id="fullName"
-                        type="text"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder={
-                          language === "en"
-                            ? "Ahmad Razak bin Abdullah"
-                            : "Ahmad Razak bin Abdullah"
-                        }
-                        required
-                        className="transition-smooth"
-                      />
-                    </div>
+                    {signupStep === 1 ? (
+                      // Step 1: Basic Information + Email/Password
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="role">
+                            {language === "en" ? "Account Type" : "Jenis Akaun"}
+                          </Label>
+                          <div className="p-3 bg-muted rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <Shield className="h-4 w-4 text-primary" />
+                              <span className="font-medium">
+                                {language === "en" ? "Service Provider" : "Penyedia Perkhidmatan"}
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {language === "en" 
+                                ? "Register your business to provide services to the community"
+                                : "Daftarkan perniagaan anda untuk menyediakan perkhidmatan kepada komuniti"
+                              }
+                            </p>
+                          </div>
+                        </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">
-                        {language === "en"
-                          ? "Phone Number (Optional)"
-                          : "Nombor Telefon (Pilihan)"}
-                      </Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+60123456789"
-                        className="transition-smooth"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="district">
-                        {language === "en" ? "Select District" : "Pilih Daerah"}{" "}
-                        *
-                      </Label>
-                      <Select
-                        value={districtId}
-                        onValueChange={(value) => {
-                          console.log("District selected:", value);
-                          setDistrictId(value);
-                        }}
-                        required
-                      >
-                        <SelectTrigger className="transition-smooth bg-background border-2">
-                          <SelectValue
+                        <div className="space-y-2">
+                          <Label htmlFor="fullName">
+                            {language === "en" ? "Full Name" : "Nama Penuh"} *
+                          </Label>
+                          <Input
+                            id="fullName"
+                            type="text"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
                             placeholder={
                               language === "en"
-                                ? "Choose your district"
-                                : "Pilih daerah anda"
+                                ? "Ahmad Razak bin Abdullah"
+                                : "Ahmad Razak bin Abdullah"
                             }
+                            required
+                            className="transition-smooth"
                           />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {districts.map((district) => (
-                            <SelectItem key={district.id} value={district.id}>
-                              {district.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                        </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="community">
-                        {language === "en"
-                          ? "Select Community"
-                          : "Pilih Komuniti"}{" "}
-                        *
-                      </Label>
-                      <Select
-                        value={communityId}
-                        onValueChange={setCommunityId}
-                        required
-                        disabled={!districtId}
-                      >
-                        <SelectTrigger className="transition-smooth">
-                          <SelectValue
+                        <div className="space-y-2">
+                          <Label htmlFor="phone">
+                            {language === "en"
+                              ? "Phone Number (Optional)"
+                              : "Nombor Telefon (Pilihan)"}
+                          </Label>
+                          <Input
+                            id="phone"
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="+60123456789"
+                            className="transition-smooth"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="district">
+                            {language === "en" ? "Select District" : "Pilih Daerah"} *
+                          </Label>
+                          <Select
+                            value={districtId}
+                            onValueChange={(value) => {
+                              setDistrictId(value);
+                            }}
+                            required
+                          >
+                            <SelectTrigger className="transition-smooth bg-background border-2">
+                              <SelectValue
+                                placeholder={
+                                  language === "en"
+                                    ? "Choose your district"
+                                    : "Pilih daerah anda"
+                                }
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {districts.map((district) => (
+                                <SelectItem key={district.id} value={district.id}>
+                                  {district.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="community">
+                            {language === "en"
+                              ? "Select Community"
+                              : "Pilih Komuniti"} *
+                          </Label>
+                          <Select
+                            value={communityId}
+                            onValueChange={setCommunityId}
+                            required
+                            disabled={!districtId}
+                          >
+                            <SelectTrigger className="transition-smooth">
+                              <SelectValue
+                                placeholder={
+                                  !districtId
+                                    ? language === "en"
+                                      ? "Please select district first"
+                                      : "Sila pilih daerah dahulu"
+                                    : language === "en"
+                                    ? "Choose your community"
+                                    : "Pilih komuniti anda"
+                                }
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {communities.map((community) => (
+                                <SelectItem key={community.id} value={community.id}>
+                                  {community.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="location">
+                            {language === "en"
+                              ? "Specific Location/Address"
+                              : "Lokasi/Alamat Khusus"} *
+                          </Label>
+                          <Input
+                            id="location"
+                            type="text"
+                            value={location}
+                            onChange={(e) => setLocation(e.target.value)}
                             placeholder={
-                              !districtId
-                                ? language === "en"
-                                  ? "Please select district first"
-                                  : "Sila pilih daerah dahulu"
-                                : language === "en"
-                                ? "Choose your community"
-                                : "Pilih komuniti anda"
+                              language === "en"
+                                ? "e.g., Taman Sejahtera, Block A"
+                                : "cth: Taman Sejahtera, Blok A"
                             }
+                            required
+                            className="transition-smooth"
                           />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {communities.map((community) => (
-                            <SelectItem key={community.id} value={community.id}>
-                              {community.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                        </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="location">
-                        {language === "en"
-                          ? "Specific Location/Address"
-                          : "Lokasi/Alamat Khusus"}{" "}
-                        *
-                      </Label>
-                      <Input
-                        id="location"
-                        type="text"
-                        value={location}
-                        onChange={(e) => setLocation(e.target.value)}
-                        placeholder={
-                          language === "en"
-                            ? "e.g., Taman Sejahtera, Block A"
-                            : "cth: Taman Sejahtera, Blok A"
-                        }
-                        required
-                        className="transition-smooth"
-                      />
-                    </div>
-
-                    {/* Service Provider specific fields */}
-                    {selectedRole === "service_provider" && (
-                      <>
                         <div className="space-y-2">
                           <Label htmlFor="businessName">
                             {language === "en"
                               ? "Business Name"
-                              : "Nama Perniagaan"}{" "}
-                            *
+                              : "Nama Perniagaan"} *
                           </Label>
                           <Input
                             id="businessName"
@@ -820,8 +1029,7 @@ export default function Login() {
                           <Label htmlFor="businessType">
                             {language === "en"
                               ? "Business Type"
-                              : "Jenis Perniagaan"}{" "}
-                            *
+                              : "Jenis Perniagaan"} *
                           </Label>
                           <Select
                             value={businessType}
@@ -878,6 +1086,44 @@ export default function Login() {
                         </div>
 
                         <div className="space-y-2">
+                          <Label htmlFor="email">{t("email")} *</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder={t("emailPlaceholder")}
+                            required
+                            className="transition-smooth"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="password">{t("password")} *</Label>
+                          <Input
+                            id="password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder={t("passwordPlaceholder")}
+                            required
+                            className="transition-smooth"
+                          />
+                        </div>
+
+                        <Button
+                          type="button"
+                          onClick={handleNextStep}
+                          className="w-full gradient-primary"
+                          disabled={isLoading}
+                        >
+                          {language === "en" ? "Next" : "Seterusnya"}
+                        </Button>
+                      </>
+                    ) : (
+                      // Step 2: Business Specific Details + Documents + PDPA
+                      <>
+                        <div className="space-y-2">
                           <Label htmlFor="licenseNumber">
                             {language === "en"
                               ? "License Number (Optional)"
@@ -903,8 +1149,7 @@ export default function Login() {
                             <Label htmlFor="yearsOfExperience">
                               {language === "en"
                                 ? "Years of Experience"
-                                : "Tahun Pengalaman"}{" "}
-                              *
+                                : "Tahun Pengalaman"} *
                             </Label>
                             <Input
                               id="yearsOfExperience"
@@ -912,11 +1157,11 @@ export default function Login() {
                               min="0"
                               max="50"
                               value={yearsOfExperience}
-                              onChange={(e) =>
-                                setYearsOfExperience(e.target.value)
-                              }
+                              onChange={(e) => setYearsOfExperience(e.target.value)}
                               placeholder={
-                                language === "en" ? "e.g., 5" : "cth: 5"
+                                language === "en"
+                                  ? "e.g., 5"
+                                  : "cth: 5"
                               }
                               required
                               className="transition-smooth"
@@ -924,582 +1169,222 @@ export default function Login() {
                           </div>
                         )}
 
-                        {/* Dynamic Document Upload Fields */}
-                        {businessType && getCurrentBusinessTypeConfig().requiredDocuments.map((docType) => (
-                          <div key={docType.type} className="space-y-2">
-                            <Label>
-                              {language === "en" ? docType.name : docType.nameMs}
-                              <span className="text-destructive ml-1">*</span>
-                            </Label>
-                            <DocumentUpload
-                              bucket="service-provider-documents"
-                              documentType={docType.type}
-                              onUploadComplete={(url, path, fileName) => 
-                                handleDocumentUpload(docType.type, url, path, fileName)
-                              }
-                              existingDocuments={uploadedDocuments[docType.type]?.map(doc => ({ 
-                                url: doc.url, 
-                                name: doc.name 
-                              })) || []}
-                              onRemoveDocument={(url) => handleDocumentRemove(docType.type, url)}
-                              maxFiles={3}
-                              required={true}
-                              className="w-full"
-                            />
+                        {/* Document Upload Section - Simplified for Pending Upload */}
+                        {businessType && (
+                          <div className="space-y-4">
+                            <div>
+                              <Label className="text-base font-medium">
+                                {language === "en" ? "Required Documents" : "Dokumen Diperlukan"}
+                              </Label>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {language === "en" 
+                                  ? "Select files for each required document type. Files will be uploaded after account creation."
+                                  : "Pilih fail untuk setiap jenis dokumen yang diperlukan. Fail akan dimuat naik selepas akaun dicipta."
+                                }
+                              </p>
+                            </div>
+                            
+                            {getCurrentBusinessTypeConfig().requiredDocuments.map((docType) => (
+                              <div key={docType.type} className="space-y-2">
+                                <Label>
+                                  {language === "en" ? docType.name : docType.nameMs}
+                                  <span className="text-destructive ml-1">*</span>
+                                </Label>
+                                <div className="border-2 border-dashed border-border rounded-lg p-4">
+                                  <input
+                                    type="file"
+                                    multiple
+                                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                    onChange={(e) => {
+                                      const files = Array.from(e.target.files || []);
+                                      handlePendingDocumentUpload(docType.type, files);
+                                    }}
+                                    className="hidden"
+                                    id={`file-input-${docType.type}`}
+                                  />
+                                  <label
+                                    htmlFor={`file-input-${docType.type}`}
+                                    className="cursor-pointer flex flex-col items-center justify-center text-center"
+                                  >
+                                    <FileText className="h-8 w-8 text-muted-foreground mb-2" />
+                                    <p className="text-sm text-muted-foreground">
+                                      {language === "en" ? "Click to select files" : "Klik untuk pilih fail"}
+                                    </p>
+                                  </label>
+                                  
+                                  {/* Show selected files */}
+                                  {pendingDocuments[docType.type] && pendingDocuments[docType.type].length > 0 && (
+                                    <div className="mt-3 space-y-1">
+                                      {pendingDocuments[docType.type].map((file, index) => (
+                                        <div key={index} className="flex items-center justify-between text-sm bg-muted/50 p-2 rounded">
+                                          <span className="truncate">{file.name}</span>
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handlePendingDocumentRemove(docType.type, file.name)}
+                                          >
+                                            ×
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
+
+                        {/* PDPA Agreement */}
+                        <div className="space-y-2">
+                          <div className="flex items-start space-x-2">
+                            <Checkbox
+                              id="pdpa"
+                              checked={pdpaAccepted}
+                              onCheckedChange={(checked) => setPdpaAccepted(!!checked)}
+                              required
+                            />
+                            <Label htmlFor="pdpa" className="text-sm leading-relaxed">
+                              {language === "en"
+                                ? "I have read and agree to the "
+                                : "Saya telah membaca dan bersetuju dengan "}
+                              <Dialog
+                                open={showPdpaDialog}
+                                onOpenChange={setShowPdpaDialog}
+                              >
+                                <DialogTrigger asChild>
+                                  <Button
+                                    type="button"
+                                    variant="link"
+                                    className="p-0 h-auto text-primary underline"
+                                  >
+                                    {language === "en"
+                                      ? "Personal Data Protection Act (PDPA)"
+                                      : "Akta Perlindungan Data Peribadi (PDPA)"}
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-2xl">
+                                  <DialogHeader>
+                                    <DialogTitle>
+                                      {language === "en"
+                                        ? "Personal Data Protection Act (PDPA)"
+                                        : "Akta Perlindungan Data Peribadi (PDPA)"}
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                      {language === "en"
+                                        ? "Please read and understand our data protection policy"
+                                        : "Sila baca dan fahami dasar perlindungan data kami"}
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <ScrollArea className="h-96 w-full">
+                                    <div className="text-sm space-y-3 pr-4">
+                                      {language === "en" ? (
+                                        <>
+                                          <h3 className="font-semibold">1. Data Collection</h3>
+                                          <p>We collect personal data that you provide to us during registration and use of our services, including but not limited to your name, email, phone number, address, and business information.</p>
+                                          
+                                          <h3 className="font-semibold">2. Purpose of Data Collection</h3>
+                                          <p>Your personal data is collected for the purpose of providing community management services, facilitating communication between residents and service providers, and improving our platform.</p>
+                                          
+                                          <h3 className="font-semibold">3. Data Security</h3>
+                                          <p>We implement appropriate security measures to protect your personal data against unauthorized access, alteration, disclosure, or destruction.</p>
+                                          
+                                          <h3 className="font-semibold">4. Data Sharing</h3>
+                                          <p>Your personal data may be shared with community administrators and relevant service providers within the platform for service delivery purposes.</p>
+                                          
+                                          <h3 className="font-semibold">5. Your Rights</h3>
+                                          <p>You have the right to access, correct, or delete your personal data. You may contact us to exercise these rights.</p>
+                                          
+                                          <h3 className="font-semibold">6. Contact Information</h3>
+                                          <p>If you have any questions about this policy or our data practices, please contact our Data Protection Officer.</p>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <h3 className="font-semibold">1. Pengumpulan Data</h3>
+                                          <p>Kami mengumpul data peribadi yang anda berikan kepada kami semasa pendaftaran dan penggunaan perkhidmatan kami, termasuk tetapi tidak terhad kepada nama, emel, nombor telefon, alamat, dan maklumat perniagaan anda.</p>
+                                          
+                                          <h3 className="font-semibold">2. Tujuan Pengumpulan Data</h3>
+                                          <p>Data peribadi anda dikumpul untuk tujuan menyediakan perkhidmatan pengurusan komuniti, memudahkan komunikasi antara penduduk dan penyedia perkhidmatan, dan menambah baik platform kami.</p>
+                                          
+                                          <h3 className="font-semibold">3. Keselamatan Data</h3>
+                                          <p>Kami melaksanakan langkah keselamatan yang sesuai untuk melindungi data peribadi anda daripada akses tanpa kebenaran, pengubahan, pendedahan, atau pemusnahan.</p>
+                                          
+                                          <h3 className="font-semibold">4. Perkongsian Data</h3>
+                                          <p>Data peribadi anda mungkin dikongsi dengan pentadbir komuniti dan penyedia perkhidmatan yang berkaitan dalam platform untuk tujuan penyampaian perkhidmatan.</p>
+                                          
+                                          <h3 className="font-semibold">5. Hak Anda</h3>
+                                          <p>Anda mempunyai hak untuk mengakses, membetulkan, atau memadamkan data peribadi anda. Anda boleh menghubungi kami untuk melaksanakan hak-hak ini.</p>
+                                          
+                                          <h3 className="font-semibold">6. Maklumat Hubungan</h3>
+                                          <p>Jika anda mempunyai sebarang soalan tentang dasar ini atau amalan data kami, sila hubungi Pegawai Perlindungan Data kami.</p>
+                                        </>
+                                      )}
+                                    </div>
+                                  </ScrollArea>
+                                </DialogContent>
+                              </Dialog>
+                              {" *"}
+                            </Label>
+                          </div>
+                        </div>
+
+                        {/* Step 2 Buttons */}
+                        <div className="flex gap-3">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handlePreviousStep}
+                            className="flex-1"
+                          >
+                            {language === "en" ? "Back" : "Kembali"}
+                          </Button>
+                          <Button
+                            type="submit"
+                            className="flex-1 gradient-primary"
+                            disabled={isLoading}
+                          >
+                            {isLoading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {language === "en" ? "Creating Account..." : "Mencipta Akaun..."}
+                              </>
+                            ) : (
+                              language === "en" ? "Create Account" : "Buat Akaun"
+                            )}
+                          </Button>
+                        </div>
                       </>
                     )}
                   </>
                 )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">{t("email")}</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="ahmad.razak@example.com"
-                    required
-                    className="transition-smooth"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password">{t("password")}</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="transition-smooth"
-                  />
-                </div>
-
-                {mode === "signUp" && (
-                  <div className="flex items-start space-x-2 p-3 border rounded-lg">
-                    <Checkbox
-                      id="pdpa"
-                      checked={pdpaAccepted}
-                      onCheckedChange={(checked) =>
-                        setPdpaAccepted(checked === true)
-                      }
-                      required
-                    />
-                    <div className="grid gap-1.5 leading-none">
-                      <Label
-                        htmlFor="pdpa"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {language === "en"
-                          ? "I have read and agree to the Personal Data Protection Act (PDPA)"
-                          : "Saya telah membaca dan bersetuju dengan Akta Perlindungan Data Peribadi (PDPA)"}
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        {language === "en"
-                          ? "By checking this box, you consent to the collection and processing of your personal data in accordance with PDPA guidelines. "
-                          : "Dengan menandai kotak ini, anda memberikan persetujuan untuk pengumpulan dan pemprosesan data peribadi anda mengikut garis panduan PDPA. "}
-                        <Dialog
-                          open={showPdpaDialog}
-                          onOpenChange={setShowPdpaDialog}
-                        >
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="link"
-                              className="h-auto p-0 text-xs text-primary underline"
-                            >
-                              {language === "en"
-                                ? "Read full PDPA"
-                                : "Baca PDPA penuh"}
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl max-h-[80vh]">
-                            <DialogHeader>
-                              <DialogTitle className="flex items-center gap-2">
-                                <FileText className="w-5 h-5" />
-                                {language === "en"
-                                  ? "Personal Data Protection Act (PDPA)"
-                                  : "Akta Perlindungan Data Peribadi (PDPA)"}
-                              </DialogTitle>
-                              <DialogDescription>
-                                {language === "en"
-                                  ? "Smart Community Management System - Data Protection Notice"
-                                  : "Sistem Pengurusan Komuniti Pintar - Notis Perlindungan Data"}
-                              </DialogDescription>
-                            </DialogHeader>
-                            <ScrollArea className="h-[60vh] w-full rounded-md border p-4">
-                              <div className="space-y-4 text-sm">
-                                {language === "en" ? (
-                                  <>
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        1. Introduction
-                                      </h3>
-                                      <p>
-                                        This Personal Data Protection Notice
-                                        explains how we collect, use, disclose,
-                                        and protect your personal data in
-                                        compliance with Malaysia's Personal Data
-                                        Protection Act 2010 (PDPA).
-                                      </p>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        2. Data Controller
-                                      </h3>
-                                      <p>
-                                        Pahang State Smart Community Management
-                                        System is the data controller
-                                        responsible for your personal data.
-                                      </p>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        3. Personal Data We Collect
-                                      </h3>
-                                      <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>
-                                          Identity information (full name,
-                                          email, phone number)
-                                        </li>
-                                        <li>
-                                          Location data (district, address,
-                                          specific location)
-                                        </li>
-                                        <li>
-                                          Role and professional information (for
-                                          service providers)
-                                        </li>
-                                        <li>
-                                          Communication records and messages
-                                        </li>
-                                        <li>
-                                          System usage data and access logs
-                                        </li>
-                                        <li>
-                                          CCTV footage and security-related data
-                                        </li>
-                                      </ul>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        4. Purpose of Data Collection
-                                      </h3>
-                                      <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>
-                                          User registration and account
-                                          management
-                                        </li>
-                                        <li>
-                                          Community services and facility
-                                          management
-                                        </li>
-                                        <li>
-                                          Security monitoring and emergency
-                                          response
-                                        </li>
-                                        <li>
-                                          Communication between residents and
-                                          service providers
-                                        </li>
-                                        <li>
-                                          Maintenance scheduling and complaint
-                                          handling
-                                        </li>
-                                        <li>
-                                          System administration and improvement
-                                        </li>
-                                      </ul>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        5. Data Sharing and Disclosure
-                                      </h3>
-                                      <p>
-                                        We may share your personal data with:
-                                      </p>
-                                      <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>
-                                          Authorized community administrators
-                                          and security personnel
-                                        </li>
-                                        <li>
-                                          Service providers within your
-                                          community
-                                        </li>
-                                        <li>
-                                          Government agencies when legally
-                                          required
-                                        </li>
-                                        <li>
-                                          Emergency services during critical
-                                          situations
-                                        </li>
-                                      </ul>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        6. Data Security
-                                      </h3>
-                                      <p>
-                                        We implement appropriate technical and
-                                        organizational measures to protect your
-                                        personal data against unauthorized
-                                        access, alteration, disclosure, or
-                                        destruction.
-                                      </p>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        7. Your Rights
-                                      </h3>
-                                      <p>Under PDPA, you have the right to:</p>
-                                      <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>Access your personal data</li>
-                                        <li>
-                                          Correct inaccurate personal data
-                                        </li>
-                                        <li>
-                                          Withdraw consent (where applicable)
-                                        </li>
-                                        <li>
-                                          Request deletion of personal data
-                                        </li>
-                                        <li>
-                                          Lodge complaints with the Personal
-                                          Data Protection Department
-                                        </li>
-                                      </ul>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        8. Data Retention
-                                      </h3>
-                                      <p>
-                                        We retain your personal data only for as
-                                        long as necessary to fulfill the
-                                        purposes outlined in this notice or as
-                                        required by law.
-                                      </p>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        9. Contact Information
-                                      </h3>
-                                      <p>
-                                        For any questions regarding this notice
-                                        or your personal data, please contact
-                                        our Data Protection Officer through the
-                                        system's support channels.
-                                      </p>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        10. Updates to This Notice
-                                      </h3>
-                                      <p>
-                                        We may update this notice from time to
-                                        time. Users will be notified of
-                                        significant changes through the system.
-                                      </p>
-                                    </section>
-                                  </>
-                                ) : (
-                                  <>
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        1. Pengenalan
-                                      </h3>
-                                      <p>
-                                        Notis Perlindungan Data Peribadi ini
-                                        menerangkan bagaimana kami mengumpul,
-                                        menggunakan, mendedahkan, dan melindungi
-                                        data peribadi anda selaras dengan Akta
-                                        Perlindungan Data Peribadi Malaysia 2010
-                                        (PDPA).
-                                      </p>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        2. Pengawal Data
-                                      </h3>
-                                      <p>
-                                        Sistem Pengurusan Komuniti Pintar Negeri
-                                        Pahang adalah pengawal data yang
-                                        bertanggungjawab ke atas data peribadi
-                                        anda.
-                                      </p>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        3. Data Peribadi Yang Kami Kumpul
-                                      </h3>
-                                      <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>
-                                          Maklumat identiti (nama penuh, emel,
-                                          nombor telefon)
-                                        </li>
-                                        <li>
-                                          Data lokasi (daerah, alamat, lokasi
-                                          khusus)
-                                        </li>
-                                        <li>
-                                          Maklumat peranan dan profesional
-                                          (untuk penyedia perkhidmatan)
-                                        </li>
-                                        <li>Rekod komunikasi dan mesej</li>
-                                        <li>
-                                          Data penggunaan sistem dan log akses
-                                        </li>
-                                        <li>
-                                          Rakaman CCTV dan data berkaitan
-                                          keselamatan
-                                        </li>
-                                      </ul>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        4. Tujuan Pengumpulan Data
-                                      </h3>
-                                      <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>
-                                          Pendaftaran pengguna dan pengurusan
-                                          akaun
-                                        </li>
-                                        <li>
-                                          Perkhidmatan komuniti dan pengurusan
-                                          kemudahan
-                                        </li>
-                                        <li>
-                                          Pemantauan keselamatan dan tindak
-                                          balas kecemasan
-                                        </li>
-                                        <li>
-                                          Komunikasi antara penduduk dan
-                                          penyedia perkhidmatan
-                                        </li>
-                                        <li>
-                                          Penjadualan penyelenggaraan dan
-                                          pengendalian aduan
-                                        </li>
-                                        <li>
-                                          Pentadbiran dan penambahbaikan sistem
-                                        </li>
-                                      </ul>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        5. Perkongsian dan Pendedahan Data
-                                      </h3>
-                                      <p>
-                                        Kami mungkin berkongsi data peribadi
-                                        anda dengan:
-                                      </p>
-                                      <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>
-                                          Pentadbir komuniti dan kakitangan
-                                          keselamatan yang dibenarkan
-                                        </li>
-                                        <li>
-                                          Penyedia perkhidmatan dalam komuniti
-                                          anda
-                                        </li>
-                                        <li>
-                                          Agensi kerajaan apabila diperlukan
-                                          secara undang-undang
-                                        </li>
-                                        <li>
-                                          Perkhidmatan kecemasan semasa situasi
-                                          kritikal
-                                        </li>
-                                      </ul>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        6. Keselamatan Data
-                                      </h3>
-                                      <p>
-                                        Kami melaksanakan langkah teknikal dan
-                                        organisasi yang sesuai untuk melindungi
-                                        data peribadi anda daripada akses,
-                                        pengubahan, pendedahan, atau pemusnahan
-                                        tanpa kebenaran.
-                                      </p>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        7. Hak Anda
-                                      </h3>
-                                      <p>
-                                        Di bawah PDPA, anda mempunyai hak untuk:
-                                      </p>
-                                      <ul className="list-disc list-inside space-y-1 ml-4">
-                                        <li>Mengakses data peribadi anda</li>
-                                        <li>
-                                          Membetulkan data peribadi yang tidak
-                                          tepat
-                                        </li>
-                                        <li>
-                                          Menarik balik persetujuan (jika
-                                          berkenaan)
-                                        </li>
-                                        <li>Meminta pemadaman data peribadi</li>
-                                        <li>
-                                          Membuat aduan kepada Jabatan
-                                          Perlindungan Data Peribadi
-                                        </li>
-                                      </ul>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        8. Pengekalan Data
-                                      </h3>
-                                      <p>
-                                        Kami menyimpan data peribadi anda hanya
-                                        selama yang diperlukan untuk memenuhi
-                                        tujuan yang digariskan dalam notis ini
-                                        atau seperti yang dikehendaki
-                                        undang-undang.
-                                      </p>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        9. Maklumat Hubungan
-                                      </h3>
-                                      <p>
-                                        Untuk sebarang pertanyaan mengenai notis
-                                        ini atau data peribadi anda, sila
-                                        hubungi Pegawai Perlindungan Data kami
-                                        melalui saluran sokongan sistem.
-                                      </p>
-                                    </section>
-
-                                    <section>
-                                      <h3 className="font-semibold text-base mb-2">
-                                        10. Kemas Kini Kepada Notis Ini
-                                      </h3>
-                                      <p>
-                                        Kami mungkin mengemaskini notis ini dari
-                                        semasa ke semasa. Pengguna akan
-                                        dimaklumkan tentang perubahan penting
-                                        melalui sistem.
-                                      </p>
-                                    </section>
-                                  </>
-                                )}
-
-                                <div className="border-t pt-4 mt-6">
-                                  <p className="text-xs text-muted-foreground">
-                                    {language === "en"
-                                      ? "Last updated: January 2024. This notice is effective immediately upon registration."
-                                      : "Kemaskini terakhir: Januari 2024. Notis ini berkuat kuasa serta-merta selepas pendaftaran."}
-                                  </p>
-                                </div>
-                              </div>
-                            </ScrollArea>
-                            <div className="flex justify-end pt-4">
-                              <Button onClick={() => setShowPdpaDialog(false)}>
-                                {language === "en" ? "Close" : "Tutup"}
-                              </Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <Button
-                  type="submit"
-                  className="w-full bg-gradient-primary hover:shadow-glow transition-spring"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t("loading")}
-                    </>
-                  ) : mode === "signIn" ? (
-                    t("signIn")
-                  ) : language === "en" ? (
-                    "Create account"
-                  ) : (
-                    "Cipta akaun"
-                  )}
-                </Button>
-
-                <div className="text-center">
-                  <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
-                    <DialogTrigger asChild>
-                      <Button variant="link" className="text-muted-foreground">
-                        {t("forgotPassword")}
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>
-                          {language === "en" ? "Reset Password" : "Tetapan Semula Kata Laluan"}
-                        </DialogTitle>
-                        <DialogDescription>
+                {mode === "signIn" && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleCreateTestUsers}
+                      disabled={isCreatingUsers}
+                    >
+                      {isCreatingUsers ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           {language === "en"
-                            ? "Enter your email address and we'll send you instructions to reset your password."
-                            : "Masukkan alamat emel anda dan kami akan menghantar arahan untuk menetapkan semula kata laluan anda."}
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="reset-email">
-                            {language === "en" ? "Email" : "Emel"}
-                          </Label>
-                          <Input
-                            id="reset-email"
-                            type="email"
-                            value={resetEmail}
-                            onChange={(e) => setResetEmail(e.target.value)}
-                            placeholder={
-                              language === "en"
-                                ? "Enter your email address"
-                                : "Masukkan alamat emel anda"
-                            }
-                          />
-                        </div>
-                        <Button
-                          onClick={handleForgotPassword}
-                          disabled={isResettingPassword}
-                          className="w-full"
-                        >
-                          {isResettingPassword ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              {language === "en" ? "Sending..." : "Menghantar..."}
-                            </>
-                          ) : (
-                            language === "en" ? "Send Reset Instructions" : "Hantar Arahan Tetapan Semula"
-                          )}
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
+                            ? "Creating Test Users..."
+                            : "Mencipta Pengguna Ujian..."}
+                        </>
+                      ) : (
+                        <>
+                          {language === "en"
+                            ? "Create All Test Users"
+                            : "Cipta Semua Pengguna Ujian"}
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
               </form>
 
               {/* Test Users Section */}
