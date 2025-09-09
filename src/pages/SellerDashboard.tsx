@@ -12,6 +12,7 @@ import {
   Edit, 
   Trash2, 
   Eye,
+  EyeOff,
   TrendingUp,
   DollarSign,
   Package,
@@ -709,8 +710,8 @@ export default function SellerDashboard() {
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm flex-1">
                             <div>
                               <span className="text-muted-foreground">{t.price}:</span>
                               <p className="font-semibold text-primary">RM{item.price.toFixed(2)}</p>
@@ -729,28 +730,35 @@ export default function SellerDashboard() {
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => navigate(`/marketplace/item/${item.id}`)}
+                              className="flex-shrink-0"
                             >
                               <Eye className="h-4 w-4" />
+                              <span className="hidden sm:inline-block ml-1">{t.view}</span>
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => toggleItemStatus(item.id, item.is_active)}
+                              className="flex-shrink-0"
                             >
-                              {item.is_active ? t.deactivate : t.activate}
+                              {item.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              <span className="hidden sm:inline-block ml-1">
+                                {item.is_active ? t.deactivate : t.activate}
+                              </span>
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => deleteItem(item.id)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
                             >
                               <Trash2 className="h-4 w-4" />
+                              <span className="hidden sm:inline-block ml-1">{t.delete}</span>
                             </Button>
                           </div>
                         </div>

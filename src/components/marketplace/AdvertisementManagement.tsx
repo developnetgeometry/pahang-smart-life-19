@@ -331,8 +331,8 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex-1">
           <h1 className="text-2xl font-bold">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
@@ -357,7 +357,7 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
           }
         }}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               {t.newAd}
             </Button>
@@ -541,18 +541,18 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
           advertisements.map((ad) => (
             <Card key={ad.id}>
               <CardContent className="p-4">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex items-start space-x-4 flex-1">
                     {ad.image_url && (
                       <img
                         src={ad.image_url}
                         alt={ad.title}
-                        className="w-16 h-16 object-cover rounded"
+                        className="w-16 h-16 object-cover rounded flex-shrink-0"
                       />
                     )}
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold">{ad.title}</h3>
+                        <h3 className="font-semibold truncate">{ad.title}</h3>
                         {ad.is_featured && <Badge variant="secondary">{t.featured}</Badge>}
                         {ad.is_active ? (
                           <Badge variant="default">{t.active}</Badge>
@@ -562,7 +562,7 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
                       </div>
                       <p className="text-sm text-muted-foreground mb-1">{ad.business_name}</p>
                       {ad.description && (
-                        <p className="text-sm mb-2">{ad.description}</p>
+                        <p className="text-sm mb-2 line-clamp-2">{ad.description}</p>
                       )}
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span>{t.clicks}: {ad.click_count}</span>
@@ -570,27 +570,35 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0 justify-end sm:justify-start">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => toggleStatus(ad.id, ad.is_active)}
+                      className="flex-shrink-0"
                     >
                       {ad.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      <span className="hidden xs:inline-block ml-1">
+                        {ad.is_active ? 'Hide' : 'Show'}
+                      </span>
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleEdit(ad)}
+                      className="flex-shrink-0"
                     >
                       <Edit className="h-4 w-4" />
+                      <span className="hidden xs:inline-block ml-1">{t.edit}</span>
                     </Button>
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={() => handleDelete(ad.id)}
+                      className="flex-shrink-0"
                     >
                       <Trash2 className="h-4 w-4" />
+                      <span className="hidden xs:inline-block ml-1">{t.delete}</span>
                     </Button>
                   </div>
                 </div>
