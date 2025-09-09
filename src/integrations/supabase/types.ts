@@ -1587,32 +1587,56 @@ export type Database = {
       communities: {
         Row: {
           address: string | null
+          admin_id: string | null
+          community_type: string | null
           created_at: string | null
           description: string | null
           district_id: string | null
+          established_date: string | null
           id: string
+          latitude: number | null
+          longitude: number | null
           name: string
+          occupied_units: number | null
           postal_code: string | null
+          status: string | null
+          total_units: number | null
           updated_at: string | null
         }
         Insert: {
           address?: string | null
+          admin_id?: string | null
+          community_type?: string | null
           created_at?: string | null
           description?: string | null
           district_id?: string | null
+          established_date?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           name: string
+          occupied_units?: number | null
           postal_code?: string | null
+          status?: string | null
+          total_units?: number | null
           updated_at?: string | null
         }
         Update: {
           address?: string | null
+          admin_id?: string | null
+          community_type?: string | null
           created_at?: string | null
           description?: string | null
           district_id?: string | null
+          established_date?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           name?: string
+          occupied_units?: number | null
           postal_code?: string | null
+          status?: string | null
+          total_units?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -2627,38 +2651,62 @@ export type Database = {
       districts: {
         Row: {
           address: string | null
+          area_km2: number | null
           city: string | null
+          communities_count: number | null
+          coordinator_id: string | null
           country: string | null
           created_at: string | null
           description: string | null
+          established_date: string | null
           id: string
+          latitude: number | null
+          longitude: number | null
           name: string
+          population: number | null
           postal_code: string | null
           state: string | null
+          status: string | null
           updated_at: string | null
         }
         Insert: {
           address?: string | null
+          area_km2?: number | null
           city?: string | null
+          communities_count?: number | null
+          coordinator_id?: string | null
           country?: string | null
           created_at?: string | null
           description?: string | null
+          established_date?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           name: string
+          population?: number | null
           postal_code?: string | null
           state?: string | null
+          status?: string | null
           updated_at?: string | null
         }
         Update: {
           address?: string | null
+          area_km2?: number | null
           city?: string | null
+          communities_count?: number | null
+          coordinator_id?: string | null
           country?: string | null
           created_at?: string | null
           description?: string | null
+          established_date?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           name?: string
+          population?: number | null
           postal_code?: string | null
           state?: string | null
+          status?: string | null
           updated_at?: string | null
         }
         Relationships: []
