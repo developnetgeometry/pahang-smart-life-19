@@ -166,7 +166,7 @@ export default {
 		function({ addUtilities }: any) {
 			addUtilities({
 				'.hover-scale': {
-					'@apply transition-transform duration-200 hover:scale-105': {},
+					'@apply transition-transform duration-200 [@media(hover:hover)]:hover:scale-105': {},
 				},
 				'.story-link': {
 					'@apply relative inline-block after:content-[\"\"] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left': {},

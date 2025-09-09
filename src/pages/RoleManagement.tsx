@@ -14,7 +14,7 @@ export default function RoleManagement() {
 
   if (!user) return null;
 
-  const canManageRoles = hasRole('admin') || hasRole('manager') || hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin');
+  const canManageRoles = hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin');
 
   return (
     <div className="space-y-6">

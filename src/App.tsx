@@ -29,6 +29,7 @@ import PermissionsManagement from "./pages/admin/PermissionsManagement";
 import SecurityDashboard from "./pages/admin/SecurityDashboard";
 import CommunityManagement from "./pages/admin/CommunityManagement";
 import DistrictManagement from "./pages/admin/DistrictManagement";
+import DistrictDetail from "./pages/admin/DistrictDetail";
 import MaintenanceManagement from "./pages/admin/MaintenanceManagement";
 import ComplaintsManagement from "./pages/admin/ComplaintsManagement";
 import ComplaintsAnalytics from "./pages/admin/ComplaintsAnalytics";
@@ -515,6 +516,16 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <DistrictManagement />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/districts/:id"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <DistrictDetail />
                   </Layout>
                 </ProtectedRoute>
               }
