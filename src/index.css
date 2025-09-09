@@ -56,10 +56,10 @@
     --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
 
     /* Enhanced Shadows with Glow Effects */
-    --shadow-elegant: 0 10px 30px -10px rgba(37, 99, 235, 0.3);
-    --shadow-community: 0 4px 20px -5px rgba(37, 99, 235, 0.2);
-    --shadow-glow: 0 0 40px rgba(59, 130, 246, 0.4);
-    --shadow-glass: 0 8px 32px rgba(31, 38, 135, 0.37);
+    --shadow-elegant: 0 4px 20px -5px rgba(37, 99, 235, 0.15);
+    --shadow-community: 0 2px 15px -3px rgba(37, 99, 235, 0.1);
+    --shadow-glow: 0 0 30px rgba(59, 130, 246, 0.2);
+    --shadow-glass: 0 4px 20px rgba(31, 38, 135, 0.2);
 
     /* Smooth Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
