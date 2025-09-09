@@ -526,9 +526,6 @@ export function AppSidebar() {
                           >
                             <item.icon className="h-5 w-5 transition-transform group-hover:scale-110" />
                             <span className="font-medium">{item.title}</span>
-                            {isCurrentActive && (
-                              <div className="absolute inset-0 bg-gradient-primary opacity-20 animate-pulse rounded-xl" />
-                            )}
                           </NavLink>
                         )}
                       </SidebarMenuButton>
