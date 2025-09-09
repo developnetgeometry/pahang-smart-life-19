@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useModuleAccess } from "@/hooks/use-module-access";
 import {
   Card,
   CardContent,
@@ -107,6 +108,7 @@ type CctvRow = Database["public"]["Tables"]["cctv_cameras"]["Row"];
 
 export default function CCTVManagement() {
   const { language, hasRole } = useAuth();
+  const { isModuleEnabled } = useModuleAccess();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [newCam, setNewCam] = useState<{
@@ -309,6 +311,35 @@ export default function CCTVManagement() {
   };
 
   const t = text[language];
+
+  // Check if CCTV module is enabled
+  if (!isModuleEnabled('cctv')) {
+    return (
+      <div className="container mx-auto py-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Camera className="h-5 w-5" />
+              {t.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-12">
+              <Camera className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">
+                {language === 'en' ? 'CCTV Module Disabled' : 'Modul CCTV Dimatikan'}
+              </h3>
+              <p className="text-muted-foreground">
+                {language === 'en' 
+                  ? 'The CCTV management module has been disabled by your community administrator.'
+                  : 'Modul pengurusan CCTV telah dimatikan oleh pentadbir komuniti anda.'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   // Quick demo camera insertion with a public HLS sample stream
   const addDemoCamera = async () => {
     const demoUrl = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";

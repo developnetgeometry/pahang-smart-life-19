@@ -371,6 +371,16 @@ export function AppSidebar() {
         }
       );
 
+      // CCTV Management - conditional on cctv module being enabled
+      if (isModuleEnabled("cctv")) {
+        securityItems.push({
+          title: "CCTV Management",
+          url: "/admin/cctv-management",
+          icon: Camera,
+          requiredRoles: ["security_officer", "state_admin", "community_admin"],
+        });
+      }
+
       // Visitor Management modules (require visitor_management module to be enabled)
       if (isModuleEnabled("visitor_management")) {
         securityItems.push(
