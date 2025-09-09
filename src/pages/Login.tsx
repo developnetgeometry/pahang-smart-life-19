@@ -1372,32 +1372,6 @@ export default function Login() {
                   </>
                 )}
 
-                {mode === "signIn" && showTestTools && (
-                  <>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={handleCreateTestUsers}
-                      disabled={isCreatingUsers}
-                    >
-                      {isCreatingUsers ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          {language === "en"
-                            ? "Creating Test Users..."
-                            : "Mencipta Pengguna Ujian..."}
-                        </>
-                      ) : (
-                        <>
-                          {language === "en"
-                            ? "Create All Test Users"
-                            : "Cipta Semua Pengguna Ujian"}
-                        </>
-                      )}
-                    </Button>
-                  </>
-                )}
               </form>
 
               {/* Test Users Section - Only shown in development */}
