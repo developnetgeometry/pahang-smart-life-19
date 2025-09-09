@@ -40,6 +40,8 @@ export default function UserManagement() {
     unit: string; 
     role: string; 
     status: User['status'] | '';
+    password: string;
+    confirmPassword: string;
     // Role-specific fields
     businessLicense?: string;
     serviceAreas?: string[];
@@ -57,6 +59,8 @@ export default function UserManagement() {
     unit: '', 
     role: '', 
     status: '',
+    password: '',
+    confirmPassword: '',
     businessLicense: '',
     serviceAreas: [],
     specialization: '',
@@ -70,6 +74,7 @@ export default function UserManagement() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
 
   const text = {
     en: {
@@ -108,6 +113,10 @@ export default function UserManagement() {
       approve: 'Approve',
       reject: 'Reject',
       permissions: 'Permissions',
+      password: 'Password',
+      confirmPassword: 'Confirm Password',
+      passwordMismatch: 'Passwords do not match',
+      passwordRequired: 'Password is required for new users',
       userCreated: 'User created successfully!',
       userUpdated: 'User updated successfully!',
       userDeleted: 'User deleted successfully!',
@@ -150,6 +159,10 @@ export default function UserManagement() {
       approve: 'Luluskan',
       reject: 'Tolak',
       permissions: 'Kebenaran',
+      password: 'Kata Laluan',
+      confirmPassword: 'Sahkan Kata Laluan',
+      passwordMismatch: 'Kata laluan tidak sepadan',
+      passwordRequired: 'Kata laluan diperlukan untuk pengguna baru',
       userCreated: 'Pengguna berjaya dicipta!',
       userUpdated: 'Pengguna berjaya dikemaskini!',
       userDeleted: 'Pengguna berjaya dipadam!',
@@ -319,7 +332,7 @@ export default function UserManagement() {
       const { error } = await supabase
         .from('profiles')
         .update({ account_status: 'approved' })
-        .eq('user_id', userId);
+        .eq('id', userId);
 
       if (error) throw error;
 
@@ -370,7 +383,25 @@ export default function UserManagement() {
       return;
     }
 
+    // Password validation for new users
+    if (!editingId) {
+      if (!form.password) {
+        toast({ title: 'Error', description: t.passwordRequired, variant: 'destructive' });
+        return;
+      }
+      if (form.password !== form.confirmPassword) {
+        toast({ title: 'Error', description: t.passwordMismatch, variant: 'destructive' });
+        return;
+      }
+      if (form.password.length < 6) {
+        toast({ title: 'Error', description: 'Password must be at least 6 characters long', variant: 'destructive' });
+        return;
+      }
+    }
+
     try {
+      setCreating(true);
+      
       if (editingId) {
         // Update existing user
         const { error: profileError } = await supabase
@@ -402,48 +433,77 @@ export default function UserManagement() {
 
         toast({ title: t.userUpdated });
       } else {
-        // For new users, they would need to be created through auth signup
-        toast({ 
-          title: 'Info', 
-          description: 'User creation requires authentication setup. Please use the proper registration flow.',
-          variant: 'default'
+        // Create new user using edge function
+        const { data, error } = await supabase.functions.invoke('admin-create-user', {
+          body: {
+            email: form.email,
+            password: form.password,
+            userData: {
+              full_name: form.name,
+              phone: form.phone,
+              unit_number: form.unit,
+              account_status: form.status,
+              // Role-specific data
+              business_license: form.businessLicense,
+              service_areas: form.serviceAreas,
+              specialization: form.specialization,
+              certifications: form.certifications,
+              license_number: form.licenseNumber,
+              emergency_contact: form.emergencyContact,
+              experience: form.experience,
+              family_size: form.familySize,
+              vehicle_number: form.vehicleNumber
+            },
+            role: form.role
+          }
         });
-        return;
+
+        if (error) throw error;
+
+        toast({ title: t.userCreated });
       }
 
       setIsCreateOpen(false);
       setEditingId(null);
-      setForm({ name: '', email: '', phone: '', unit: '', role: '', status: '' });
+      setForm({ 
+        name: '', email: '', phone: '', unit: '', role: '', status: '', password: '', confirmPassword: '',
+        businessLicense: '', serviceAreas: [], specialization: '', certifications: [], 
+        licenseNumber: '', emergencyContact: '', experience: '', familySize: 1, vehicleNumber: ''
+      });
       fetchUsers(); // Refresh the user list
     } catch (error) {
       console.error('Error saving user:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save user changes',
+        description: error.message || 'Failed to save user changes',
         variant: 'destructive'
       });
+    } finally {
+      setCreating(false);
     }
   };
 
   const handleEdit = (user: User) => {
     setEditingId(user.id);
-    setForm({ 
-      name: user.name, 
-      email: user.email, 
-      phone: user.phone, 
-      unit: user.unit, 
-      role: user.role, 
-      status: user.status,
-      businessLicense: '',
-      serviceAreas: [],
-      specialization: '',
-      certifications: [],
-      licenseNumber: '',
-      emergencyContact: '',
-      experience: '',
-      familySize: 1,
-      vehicleNumber: ''
-    });
+      setForm({ 
+        name: user.name, 
+        email: user.email, 
+        phone: user.phone, 
+        unit: user.unit, 
+        role: user.role, 
+        status: user.status,
+        password: '',
+        confirmPassword: '',
+        businessLicense: '',
+        serviceAreas: [],
+        specialization: '',
+        certifications: [],
+        licenseNumber: '',
+        emergencyContact: '',
+        experience: '',
+        familySize: 1,
+        vehicleNumber: ''
+      });
     setIsCreateOpen(true);
   };
 
@@ -491,11 +551,11 @@ export default function UserManagement() {
           if (!open) { 
             setEditingId(null); 
             setForm({ 
-              name: '', email: '', phone: '', unit: '', role: '', status: '',
+              name: '', email: '', phone: '', unit: '', role: '', status: '', password: '', confirmPassword: '',
               businessLicense: '', serviceAreas: [], specialization: '', 
               certifications: [], licenseNumber: '', emergencyContact: '', 
               experience: '', familySize: 1, vehicleNumber: ''
-            }); 
+            });
           } 
         }}>
           <DialogTrigger asChild>
@@ -518,9 +578,35 @@ export default function UserManagement() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">{t.email}</Label>
-                  <Input id="email" type="email" placeholder={t.email} value={form.email} onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))} />
+                  <Input id="email" type="email" placeholder={t.email} value={form.email} onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))} disabled={!!editingId} />
                 </div>
               </div>
+
+              {/* Password fields for new users */}
+              {!editingId && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password">{t.password}</Label>
+                    <Input 
+                      id="password" 
+                      type="password" 
+                      placeholder={t.password} 
+                      value={form.password} 
+                      onChange={(e) => setForm(prev => ({ ...prev, password: e.target.value }))} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">{t.confirmPassword}</Label>
+                    <Input 
+                      id="confirmPassword" 
+                      type="password" 
+                      placeholder={t.confirmPassword} 
+                      value={form.confirmPassword} 
+                      onChange={(e) => setForm(prev => ({ ...prev, confirmPassword: e.target.value }))} 
+                    />
+                  </div>
+                </div>
+              )}
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -690,10 +776,11 @@ export default function UserManagement() {
               )}
 
               <div className="flex justify-end space-x-2 pt-4 border-t">
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+                <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={creating}>
                   {t.cancel}
                 </Button>
-                <Button onClick={handleCreateUser}>
+                <Button onClick={handleCreateUser} disabled={creating}>
+                  {creating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   {editingId ? t.edit : t.create}
                 </Button>
               </div>
