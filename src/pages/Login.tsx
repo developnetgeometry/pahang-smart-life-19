@@ -17,6 +17,7 @@ import { createTestUsers } from '@/utils/createTestUsers';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [districtId, setDistrictId] = useState('');
@@ -117,6 +118,11 @@ export default function Login() {
           }
         }
 
+        // Validate password confirmation
+        if (password !== confirmPassword) {
+          throw new Error(language === 'en' ? 'Passwords do not match' : 'Kata laluan tidak sepadan');
+        }
+
         // Validate PDPA acceptance
         if (!pdpaAccepted) {
           throw new Error(language === 'en' ? 'You must read and accept the PDPA to register' : 'Anda mesti membaca dan menerima PDPA untuk mendaftar');
@@ -181,6 +187,7 @@ export default function Login() {
           setYearsOfExperience('');
           setPdpaAccepted(false);
           setPassword('');
+          setConfirmPassword('');
         }
       }
     } catch (err: any) {
@@ -561,6 +568,31 @@ export default function Login() {
                     className="transition-smooth"
                   />
                 </div>
+
+                {mode === 'signUp' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">
+                      {language === 'en' ? 'Confirm Password' : 'Sahkan Kata Laluan'}
+                    </Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      className={`transition-smooth ${
+                        confirmPassword && password !== confirmPassword 
+                          ? 'border-red-500 focus:border-red-500' 
+                          : ''
+                      }`}
+                    />
+                    {confirmPassword && password !== confirmPassword && (
+                      <p className="text-sm text-red-500">
+                        {language === 'en' ? 'Passwords do not match' : 'Kata laluan tidak sepadan'}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {mode === 'signUp' && (
                   <div className="flex items-start space-x-2 p-3 border rounded-lg">
