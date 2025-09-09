@@ -107,6 +107,11 @@ export function AppSidebar() {
         { title: t("announcements"), url: "/announcements", icon: Megaphone },
       ];
       
+      // Add CCTV monitoring if module is enabled
+      if (isModuleEnabled('cctv')) {
+        communityItems.push({ title: "CCTV Monitoring", url: "/cctv-live-feed", icon: Camera });
+      }
+      
       // Add discussions if module is enabled
       if (isModuleEnabled('discussions')) {
         communityItems.push({ title: t("discussions"), url: "/discussions", icon: MessageSquare });
