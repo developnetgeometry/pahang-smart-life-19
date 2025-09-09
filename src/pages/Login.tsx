@@ -58,6 +58,9 @@ export default function Login() {
   const [error, setError] = useState("");
   const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [isCreatingUsers, setIsCreatingUsers] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const { login, language, switchLanguage } = useAuth();
   const { t } = useTranslation(language || "ms"); // Ensure we always have a language
   const { toast } = useToast();
@@ -363,6 +366,48 @@ export default function Login() {
     } finally {
       console.log("🏁 User creation process completed");
       setIsCreatingUsers(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!resetEmail) {
+      setError(
+        language === "en"
+          ? "Please enter your email address"
+          : "Sila masukkan alamat emel anda"
+      );
+      return;
+    }
+
+    setIsResettingPassword(true);
+    setError("");
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: language === "en" ? "Success" : "Berjaya",
+        description:
+          language === "en"
+            ? "Password reset instructions sent to your email"
+            : "Arahan tetapan semula kata laluan telah dihantar ke emel anda",
+      });
+      
+      setShowForgotPassword(false);
+      setResetEmail("");
+    } catch (error: any) {
+      console.error("Password reset error:", error);
+      setError(
+        language === "en"
+          ? "Failed to send reset email. Please try again."
+          : "Gagal menghantar emel tetapan semula. Sila cuba lagi."
+      );
+    } finally {
+      setIsResettingPassword(false);
     }
   };
 
@@ -1273,9 +1318,57 @@ export default function Login() {
                 </Button>
 
                 <div className="text-center">
-                  <Button variant="link" className="text-muted-foreground">
-                    {t("forgotPassword")}
-                  </Button>
+                  <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+                    <DialogTrigger asChild>
+                      <Button variant="link" className="text-muted-foreground">
+                        {t("forgotPassword")}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>
+                          {language === "en" ? "Reset Password" : "Tetapan Semula Kata Laluan"}
+                        </DialogTitle>
+                        <DialogDescription>
+                          {language === "en"
+                            ? "Enter your email address and we'll send you instructions to reset your password."
+                            : "Masukkan alamat emel anda dan kami akan menghantar arahan untuk menetapkan semula kata laluan anda."}
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="reset-email">
+                            {language === "en" ? "Email" : "Emel"}
+                          </Label>
+                          <Input
+                            id="reset-email"
+                            type="email"
+                            value={resetEmail}
+                            onChange={(e) => setResetEmail(e.target.value)}
+                            placeholder={
+                              language === "en"
+                                ? "Enter your email address"
+                                : "Masukkan alamat emel anda"
+                            }
+                          />
+                        </div>
+                        <Button
+                          onClick={handleForgotPassword}
+                          disabled={isResettingPassword}
+                          className="w-full"
+                        >
+                          {isResettingPassword ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              {language === "en" ? "Sending..." : "Menghantar..."}
+                            </>
+                          ) : (
+                            language === "en" ? "Send Reset Instructions" : "Hantar Arahan Tetapan Semula"
+                          )}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </form>
 
