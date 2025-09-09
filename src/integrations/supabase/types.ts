@@ -6504,6 +6504,8 @@ export type Database = {
           age: number | null
           agree_declare: boolean | null
           avatar_url: string | null
+          badge_id: string | null
+          certifications: string[] | null
           community_id: string | null
           community_status: boolean | null
           created_at: string | null
@@ -6515,6 +6517,7 @@ export type Database = {
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
           ethnic_id: string | null
+          family_size: number | null
           full_name: string | null
           gender: string | null
           id: string
@@ -6540,8 +6543,11 @@ export type Database = {
           race_id: string | null
           register_method: string | null
           registration_status: boolean | null
+          security_license_number: string | null
+          shift_type: string | null
           skills: string[] | null
           socio_id: string | null
+          specialization: string | null
           spouse_dob: string | null
           spouse_full_name: string | null
           spouse_gender: string | null
@@ -6561,6 +6567,7 @@ export type Database = {
           updated_by: string | null
           user_id: string
           vehicle_plate_number: string | null
+          years_experience: number | null
         }
         Insert: {
           account_status?: string | null
@@ -6568,6 +6575,8 @@ export type Database = {
           age?: number | null
           agree_declare?: boolean | null
           avatar_url?: string | null
+          badge_id?: string | null
+          certifications?: string[] | null
           community_id?: string | null
           community_status?: boolean | null
           created_at?: string | null
@@ -6579,6 +6588,7 @@ export type Database = {
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           ethnic_id?: string | null
+          family_size?: number | null
           full_name?: string | null
           gender?: string | null
           id?: string
@@ -6604,8 +6614,11 @@ export type Database = {
           race_id?: string | null
           register_method?: string | null
           registration_status?: boolean | null
+          security_license_number?: string | null
+          shift_type?: string | null
           skills?: string[] | null
           socio_id?: string | null
+          specialization?: string | null
           spouse_dob?: string | null
           spouse_full_name?: string | null
           spouse_gender?: string | null
@@ -6625,6 +6638,7 @@ export type Database = {
           updated_by?: string | null
           user_id: string
           vehicle_plate_number?: string | null
+          years_experience?: number | null
         }
         Update: {
           account_status?: string | null
@@ -6632,6 +6646,8 @@ export type Database = {
           age?: number | null
           agree_declare?: boolean | null
           avatar_url?: string | null
+          badge_id?: string | null
+          certifications?: string[] | null
           community_id?: string | null
           community_status?: boolean | null
           created_at?: string | null
@@ -6643,6 +6659,7 @@ export type Database = {
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           ethnic_id?: string | null
+          family_size?: number | null
           full_name?: string | null
           gender?: string | null
           id?: string
@@ -6668,8 +6685,11 @@ export type Database = {
           race_id?: string | null
           register_method?: string | null
           registration_status?: boolean | null
+          security_license_number?: string | null
+          shift_type?: string | null
           skills?: string[] | null
           socio_id?: string | null
+          specialization?: string | null
           spouse_dob?: string | null
           spouse_full_name?: string | null
           spouse_gender?: string | null
@@ -6689,6 +6709,7 @@ export type Database = {
           updated_by?: string | null
           user_id?: string
           vehicle_plate_number?: string | null
+          years_experience?: number | null
         }
         Relationships: [
           {

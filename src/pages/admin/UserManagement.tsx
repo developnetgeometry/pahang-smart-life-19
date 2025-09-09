@@ -43,15 +43,15 @@ export default function UserManagement() {
     password: string;
     confirmPassword: string;
     // Role-specific fields
-    businessLicense?: string;
-    serviceAreas?: string[];
-    specialization?: string;
-    certifications?: string[];
-    licenseNumber?: string;
-    emergencyContact?: string;
-    experience?: string;
-    familySize?: number;
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
+    shiftType?: string;
+    badgeId?: string;
+    yearsExperience?: string;
+    certificationsText?: string;
     vehicleNumber?: string;
+    familySize?: number;
+    specialization?: string;
   }>({ 
     name: '', 
     email: '', 
@@ -61,15 +61,15 @@ export default function UserManagement() {
     status: '',
     password: '',
     confirmPassword: '',
-    businessLicense: '',
-    serviceAreas: [],
-    specialization: '',
-    certifications: [],
-    licenseNumber: '',
-    emergencyContact: '',
-    experience: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+    shiftType: '',
+    badgeId: '',
+    yearsExperience: '',
+    certificationsText: '',
+    vehicleNumber: '',
     familySize: 1,
-    vehicleNumber: ''
+    specialization: ''
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -121,7 +121,18 @@ export default function UserManagement() {
       userUpdated: 'User updated successfully!',
       userDeleted: 'User deleted successfully!',
       userApproved: 'User approved successfully!',
-      userRejected: 'User rejected successfully!'
+      userRejected: 'User rejected successfully!',
+      // Role-specific fields
+      familySize: 'Family Size',
+      vehicleNumber: 'Vehicle Number',
+      emergencyContactName: 'Emergency Contact Name',
+      emergencyContactPhone: 'Emergency Contact Phone',
+      securityLicenseNumber: 'Security License Number',
+      badgeId: 'Badge ID',
+      shiftType: 'Shift Type',
+      specialization: 'Specialization',
+      yearsExperience: 'Years of Experience',
+      certificationsText: 'Certifications'
     },
     ms: {
       title: 'Pengurusan Pengguna',
@@ -167,7 +178,18 @@ export default function UserManagement() {
       userUpdated: 'Pengguna berjaya dikemaskini!',
       userDeleted: 'Pengguna berjaya dipadam!',
       userApproved: 'Pengguna berjaya diluluskan!',
-      userRejected: 'Pengguna berjaya ditolak!'
+      userRejected: 'Pengguna berjaya ditolak!',
+      // Role-specific fields
+      familySize: 'Saiz Keluarga',
+      vehicleNumber: 'Nombor Kenderaan',
+      emergencyContactName: 'Nama Hubungan Kecemasan',
+      emergencyContactPhone: 'Telefon Hubungan Kecemasan',
+      securityLicenseNumber: 'Nombor Lesen Keselamatan',
+      badgeId: 'ID Lencana',
+      shiftType: 'Jenis Syif',
+      specialization: 'Kepakaran',
+      yearsExperience: 'Tahun Pengalaman',
+      certificationsText: 'Sijil-sijil'
     }
   };
 
@@ -251,13 +273,8 @@ export default function UserManagement() {
   const roles = [
     { value: 'all', label: t.allRoles },
     { value: 'resident', label: t.resident },
-    { value: 'state_admin', label: t.admin },
-    { value: 'community_admin', label: 'Community Admin' },
-    { value: 'district_coordinator', label: 'District Coordinator' },
     { value: 'security_officer', label: t.security },
-    { value: 'maintenance_staff', label: t.maintenance },
-    { value: 'service_provider', label: 'Service Provider' },
-    { value: 'community_leader', label: 'Community Leader' }
+    { value: 'maintenance_staff', label: t.maintenance }
   ];
 
   const statuses = [
@@ -377,6 +394,25 @@ export default function UserManagement() {
     }
   };
 
+  // Reset role-specific fields when role changes
+  const handleRoleChange = (newRole: string) => {
+    setForm(prev => ({
+      ...prev,
+      role: newRole,
+      unit: newRole === 'resident' ? prev.unit : '',
+      // Reset all role-specific fields
+      emergencyContactName: '',
+      emergencyContactPhone: '',
+      shiftType: '',
+      badgeId: '',
+      yearsExperience: '',
+      certificationsText: '',
+      vehicleNumber: '',
+      familySize: 1,
+      specialization: ''
+    }));
+  };
+
   const handleCreateUser = async () => {
     if (!form.name || !form.email || !form.role || !form.status) {
       toast({ title: t.createUser, description: 'Please fill all required fields.' });
@@ -438,23 +474,21 @@ export default function UserManagement() {
           body: {
             email: form.email,
             password: form.password,
-            userData: {
-              full_name: form.name,
-              phone: form.phone,
-              unit_number: form.unit,
-              account_status: form.status,
-              // Role-specific data
-              business_license: form.businessLicense,
-              service_areas: form.serviceAreas,
-              specialization: form.specialization,
-              certifications: form.certifications,
-              license_number: form.licenseNumber,
-              emergency_contact: form.emergencyContact,
-              experience: form.experience,
-              family_size: form.familySize,
-              vehicle_number: form.vehicleNumber
-            },
-            role: form.role
+            full_name: form.name,
+            phone: form.phone,
+            role: form.role,
+            district_id: null,
+            community_id: null,
+            // Role-specific data
+            family_size: form.familySize,
+            emergency_contact_name: form.emergencyContactName,
+            emergency_contact_phone: form.emergencyContactPhone,
+            security_license_number: form.badgeId,
+            badge_id: form.badgeId,
+            shift_type: form.shiftType,
+            specialization: form.specialization,
+            certifications: form.certificationsText ? [form.certificationsText] : undefined,
+            years_experience: form.yearsExperience ? parseInt(form.yearsExperience) : undefined
           }
         });
 
@@ -467,8 +501,8 @@ export default function UserManagement() {
       setEditingId(null);
       setForm({ 
         name: '', email: '', phone: '', unit: '', role: '', status: '', password: '', confirmPassword: '',
-        businessLicense: '', serviceAreas: [], specialization: '', certifications: [], 
-        licenseNumber: '', emergencyContact: '', experience: '', familySize: 1, vehicleNumber: ''
+        emergencyContactName: '', emergencyContactPhone: '', shiftType: '', badgeId: '', 
+        yearsExperience: '', certificationsText: '', vehicleNumber: '', familySize: 1, specialization: ''
       });
       fetchUsers(); // Refresh the user list
     } catch (error) {
@@ -494,15 +528,15 @@ export default function UserManagement() {
         status: user.status,
         password: '',
         confirmPassword: '',
-        businessLicense: '',
-        serviceAreas: [],
-        specialization: '',
-        certifications: [],
-        licenseNumber: '',
-        emergencyContact: '',
-        experience: '',
+        emergencyContactName: '',
+        emergencyContactPhone: '',
+        shiftType: '',
+        badgeId: '',
+        yearsExperience: '',
+        certificationsText: '',
+        vehicleNumber: '',
         familySize: 1,
-        vehicleNumber: ''
+        specialization: ''
       });
     setIsCreateOpen(true);
   };
@@ -552,9 +586,8 @@ export default function UserManagement() {
             setEditingId(null); 
             setForm({ 
               name: '', email: '', phone: '', unit: '', role: '', status: '', password: '', confirmPassword: '',
-              businessLicense: '', serviceAreas: [], specialization: '', 
-              certifications: [], licenseNumber: '', emergencyContact: '', 
-              experience: '', familySize: 1, vehicleNumber: ''
+              emergencyContactName: '', emergencyContactPhone: '', shiftType: '', badgeId: '', 
+              yearsExperience: '', certificationsText: '', vehicleNumber: '', familySize: 1, specialization: ''
             });
           } 
         }}>
@@ -624,7 +657,7 @@ export default function UserManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">{t.role}</Label>
-                  <Select value={form.role} onValueChange={(v) => setForm(prev => ({ ...prev, role: v, unit: v === 'resident' ? prev.unit : '' }))}>
+                  <Select value={form.role} onValueChange={handleRoleChange}>
                     <SelectTrigger>
                       <SelectValue placeholder={t.selectRole} />
                     </SelectTrigger>
@@ -655,26 +688,47 @@ export default function UserManagement() {
               </div>
 
               {/* Role-specific fields */}
-              {form.role === 'service_provider' && (
+              {form.role === 'resident' && (
                 <div className="space-y-4 border-t pt-4">
-                  <h4 className="text-sm font-semibold">{language === 'en' ? 'Service Provider Details' : 'Butiran Penyedia Perkhidmatan'}</h4>
+                  <h4 className="text-sm font-semibold">{language === 'en' ? 'Resident Details' : 'Butiran Penduduk'}</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="businessLicense">{language === 'en' ? 'Business License' : 'Lesen Perniagaan'}</Label>
+                      <Label htmlFor="familySize">{t.familySize}</Label>
                       <Input 
-                        id="businessLicense" 
-                        placeholder={language === 'en' ? 'Enter license number' : 'Masukkan nombor lesen'} 
-                        value={form.businessLicense || ''} 
-                        onChange={(e) => setForm(prev => ({ ...prev, businessLicense: e.target.value }))} 
+                        id="familySize" 
+                        type="number" 
+                        min="1" 
+                        value={form.familySize || 1} 
+                        onChange={(e) => setForm(prev => ({ ...prev, familySize: parseInt(e.target.value) || 1 }))} 
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="experience">{language === 'en' ? 'Years of Experience' : 'Tahun Pengalaman'}</Label>
+                      <Label htmlFor="vehicleNumber">{t.vehicleNumber}</Label>
                       <Input 
-                        id="experience" 
-                        placeholder={language === 'en' ? 'e.g. 5 years' : 'cth: 5 tahun'} 
-                        value={form.experience || ''} 
-                        onChange={(e) => setForm(prev => ({ ...prev, experience: e.target.value }))} 
+                        id="vehicleNumber" 
+                        placeholder={language === 'en' ? 'e.g. ABC 1234' : 'cth: ABC 1234'} 
+                        value={form.vehicleNumber || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, vehicleNumber: e.target.value }))} 
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyContactName">{t.emergencyContactName}</Label>
+                      <Input 
+                        id="emergencyContactName" 
+                        placeholder={language === 'en' ? 'Emergency contact name' : 'Nama hubungan kecemasan'} 
+                        value={form.emergencyContactName || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, emergencyContactName: e.target.value }))} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyContactPhone">{t.emergencyContactPhone}</Label>
+                      <Input 
+                        id="emergencyContactPhone" 
+                        placeholder={language === 'en' ? 'Emergency contact phone' : 'Telefon hubungan kecemasan'} 
+                        value={form.emergencyContactPhone || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, emergencyContactPhone: e.target.value }))} 
                       />
                     </div>
                   </div>
@@ -686,21 +740,46 @@ export default function UserManagement() {
                   <h4 className="text-sm font-semibold">{language === 'en' ? 'Security Officer Details' : 'Butiran Pegawai Keselamatan'}</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="licenseNumber">{language === 'en' ? 'Security License' : 'Lesen Keselamatan'}</Label>
+                      <Label htmlFor="badgeId">{t.badgeId}</Label>
                       <Input 
-                        id="licenseNumber" 
-                        placeholder={language === 'en' ? 'Enter license number' : 'Masukkan nombor lesen'} 
-                        value={form.licenseNumber || ''} 
-                        onChange={(e) => setForm(prev => ({ ...prev, licenseNumber: e.target.value }))} 
+                        id="badgeId" 
+                        placeholder={language === 'en' ? 'Enter badge ID' : 'Masukkan ID lencana'} 
+                        value={form.badgeId || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, badgeId: e.target.value }))} 
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="emergencyContact">{language === 'en' ? 'Emergency Contact' : 'Hubungan Kecemasan'}</Label>
+                      <Label htmlFor="shiftType">{t.shiftType}</Label>
+                      <Select value={form.shiftType} onValueChange={(v) => setForm(prev => ({ ...prev, shiftType: v }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={language === 'en' ? 'Select shift type' : 'Pilih jenis syif'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="morning">Morning</SelectItem>
+                          <SelectItem value="afternoon">Afternoon</SelectItem>
+                          <SelectItem value="night">Night</SelectItem>
+                          <SelectItem value="rotating">Rotating</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyContactName">{t.emergencyContactName}</Label>
                       <Input 
-                        id="emergencyContact" 
-                        placeholder={language === 'en' ? 'Emergency contact number' : 'Nombor hubungan kecemasan'} 
-                        value={form.emergencyContact || ''} 
-                        onChange={(e) => setForm(prev => ({ ...prev, emergencyContact: e.target.value }))} 
+                        id="emergencyContactName" 
+                        placeholder={language === 'en' ? 'Emergency contact name' : 'Nama hubungan kecemasan'} 
+                        value={form.emergencyContactName || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, emergencyContactName: e.target.value }))} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyContactPhone">{t.emergencyContactPhone}</Label>
+                      <Input 
+                        id="emergencyContactPhone" 
+                        placeholder={language === 'en' ? 'Emergency contact phone' : 'Telefon hubungan kecemasan'} 
+                        value={form.emergencyContactPhone || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, emergencyContactPhone: e.target.value }))} 
                       />
                     </div>
                   </div>
@@ -712,7 +791,7 @@ export default function UserManagement() {
                   <h4 className="text-sm font-semibold">{language === 'en' ? 'Maintenance Staff Details' : 'Butiran Kakitangan Penyelenggaraan'}</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="specialization">{language === 'en' ? 'Specialization' : 'Kepakaran'}</Label>
+                      <Label htmlFor="specialization">{t.specialization}</Label>
                       <Input 
                         id="specialization" 
                         placeholder={language === 'en' ? 'e.g. Electrical, Plumbing' : 'cth: Elektrik, Paip'} 
@@ -721,56 +800,36 @@ export default function UserManagement() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="emergencyContact">{language === 'en' ? 'Emergency Contact' : 'Hubungan Kecemasan'}</Label>
+                      <Label htmlFor="yearsExperience">{t.yearsExperience}</Label>
                       <Input 
-                        id="emergencyContact" 
-                        placeholder={language === 'en' ? 'Emergency contact number' : 'Nombor hubungan kecemasan'} 
-                        value={form.emergencyContact || ''} 
-                        onChange={(e) => setForm(prev => ({ ...prev, emergencyContact: e.target.value }))} 
+                        id="yearsExperience" 
+                        type="number"
+                        min="0"
+                        placeholder={language === 'en' ? 'Years of experience' : 'Tahun pengalaman'} 
+                        value={form.yearsExperience || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, yearsExperience: e.target.value }))} 
                       />
                     </div>
                   </div>
-                </div>
-              )}
-
-              {form.role === 'resident' && (
-                <div className="space-y-4 border-t pt-4">
-                  <h4 className="text-sm font-semibold">{language === 'en' ? 'Resident Details' : 'Butiran Penduduk'}</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="familySize">{language === 'en' ? 'Family Size' : 'Saiz Keluarga'}</Label>
+                      <Label htmlFor="certificationsText">{t.certificationsText}</Label>
                       <Input 
-                        id="familySize" 
-                        type="number" 
-                        min="1" 
-                        value={form.familySize || 1} 
-                        onChange={(e) => setForm(prev => ({ ...prev, familySize: parseInt(e.target.value) || 1 }))} 
+                        id="certificationsText" 
+                        placeholder={language === 'en' ? 'List certifications' : 'Senaraikan sijil'} 
+                        value={form.certificationsText || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, certificationsText: e.target.value }))} 
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="vehicleNumber">{language === 'en' ? 'Vehicle Number' : 'Nombor Kenderaan'}</Label>
+                      <Label htmlFor="emergencyContactPhone">{t.emergencyContactPhone}</Label>
                       <Input 
-                        id="vehicleNumber" 
-                        placeholder={language === 'en' ? 'e.g. ABC 1234' : 'cth: ABC 1234'} 
-                        value={form.vehicleNumber || ''} 
-                        onChange={(e) => setForm(prev => ({ ...prev, vehicleNumber: e.target.value }))} 
+                        id="emergencyContactPhone" 
+                        placeholder={language === 'en' ? 'Emergency contact phone' : 'Telefon hubungan kecemasan'} 
+                        value={form.emergencyContactPhone || ''} 
+                        onChange={(e) => setForm(prev => ({ ...prev, emergencyContactPhone: e.target.value }))} 
                       />
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {(form.role === 'community_admin' || form.role === 'district_coordinator' || form.role === 'state_admin') && (
-                <div className="space-y-4 border-t pt-4">
-                  <h4 className="text-sm font-semibold">{language === 'en' ? 'Administrative Details' : 'Butiran Pentadbiran'}</h4>
-                  <div className="space-y-2">
-                    <Label htmlFor="experience">{language === 'en' ? 'Management Experience' : 'Pengalaman Pengurusan'}</Label>
-                    <Input 
-                      id="experience" 
-                      placeholder={language === 'en' ? 'Describe management experience' : 'Terangkan pengalaman pengurusan'} 
-                      value={form.experience || ''} 
-                      onChange={(e) => setForm(prev => ({ ...prev, experience: e.target.value }))} 
-                    />
                   </div>
                 </div>
               )}
@@ -894,13 +953,21 @@ export default function UserManagement() {
                             </Button>
                           </>
                         )}
-                        <Button variant="outline" size="sm" onClick={() => handleEdit(user)}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleEdit(user)}
+                          title={t.edit}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => navigate(`/admin/permissions/${user.id}`)}>
-                          <Shield className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleDelete(user.id)}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleDelete(user.id)}
+                          className="text-red-600 hover:text-red-700"
+                          title={t.delete}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
