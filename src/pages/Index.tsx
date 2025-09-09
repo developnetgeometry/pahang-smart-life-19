@@ -11,7 +11,16 @@ import { StateServiceManagerDashboard } from '@/components/dashboard/StateServic
 import { ResidentDashboard } from '@/components/dashboard/ResidentDashboard';
 
 const Index = () => {
-  const { hasRole } = useAuth();
+  const { hasRole, roles, initializing } = useAuth();
+
+  // Show loading while initializing or roles aren't ready
+  if (initializing || roles.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   // Determine which dashboard to show based on user's highest role
   if (hasRole('state_admin')) return <StateAdminDashboard />;
@@ -25,7 +34,17 @@ const Index = () => {
   if (hasRole('community_leader')) return <CommunityLeaderDashboard />;
   if (hasRole('state_service_manager')) return <StateServiceManagerDashboard />;
   
-  // Default to resident dashboard
-  return <ResidentDashboard />;
+  // Only show resident dashboard if user actually has resident role
+  if (hasRole('resident')) return <ResidentDashboard />;
+  
+  // If no roles match, show a neutral state
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center space-y-4">
+        <p className="text-muted-foreground">No assigned roles found.</p>
+        <p className="text-sm text-muted-foreground">Please contact your administrator.</p>
+      </div>
+    </div>
+  );
 };
 export default Index;

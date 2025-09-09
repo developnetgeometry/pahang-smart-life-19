@@ -283,6 +283,9 @@ export default function Login() {
                 : "Akaun anda telah dicipta dan sedang menunggu kelulusan. Anda boleh log masuk setelah diluluskan oleh pentadbir komuniti.",
           });
 
+          // Navigate to pending approval page
+          window.location.href = '/pending-approval';
+
           // Switch to sign in mode
           setMode("signIn");
           setFullName("");

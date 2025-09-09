@@ -75,6 +75,7 @@ import PrecisionMapping from "./pages/PrecisionMapping";
 import MaintenanceComplaintCenterPage from "./pages/MaintenanceComplaintCenter";
 import PatrolInterfacePage from "./pages/PatrolInterface";
 import FacilityComplaintCenterPage from "./pages/FacilityComplaintCenter";
+import PendingApproval from "./pages/PendingApproval";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -86,13 +87,43 @@ const queryClient = new QueryClient({
 });
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+  const { isAuthenticated, initializing, isApproved } = useAuth();
+  
+  if (initializing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (isAuthenticated && !isApproved) {
+    return <Navigate to="/pending-approval" replace />;
+  }
+  
+  return <>{children}</>;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <Navigate to="/" replace /> : <>{children}</>;
+  const { isAuthenticated, initializing, isApproved } = useAuth();
+  
+  if (initializing) {
+    return <>{children}</>;
+  }
+  
+  if (isAuthenticated && isApproved) {
+    return <Navigate to="/" replace />;
+  }
+  
+  if (isAuthenticated && !isApproved) {
+    return <Navigate to="/pending-approval" replace />;
+  }
+  
+  return <>{children}</>;
 }
 
 const App = () => (
@@ -111,6 +142,10 @@ const App = () => (
                   <Login />
                 </PublicRoute>
               }
+            />
+            <Route
+              path="/pending-approval"
+              element={<PendingApproval />}
             />
             <Route
               path="/"

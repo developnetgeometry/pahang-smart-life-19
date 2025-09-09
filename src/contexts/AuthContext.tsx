@@ -49,6 +49,9 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  initializing: boolean;
+  accountStatus: string | null;
+  isApproved: boolean;
   language: Language;
   theme: Theme;
   roles: UserRole[];
@@ -64,12 +67,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [initializing, setInitializing] = useState(true);
+  const [accountStatus, setAccountStatus] = useState<string | null>(null);
   const [language, setLanguage] = useState<Language>(() => {
     const saved = localStorage.getItem("language_preference");
     return (saved as Language) || "ms";
   });
   const [theme, setTheme] = useState<Theme>("light");
   const [roles, setRoles] = useState<UserRole[]>([]);
+
+  const isApproved = accountStatus === "approved";
 
   // Apply theme
   useEffect(() => {
@@ -107,14 +114,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           supabase.rpc("get_user_highest_role", { check_user_id: userId }),
         ]);
 
+      // Set account status regardless of approval state
+      setAccountStatus(profile?.account_status || "pending");
+
       // Check if account is approved (account_status should be 'approved' for approved accounts)
       if (profile?.account_status !== "approved") {
         console.log(
           "User account not approved, account_status:",
           profile?.account_status
         );
-        // Sign out user if account is not approved
-        await supabase.auth.signOut();
+        // Don't sign out, just set user to null and clear roles
         setUser(null);
         setRoles([]);
         return;
@@ -176,6 +185,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Failed to load profile/roles", e);
       setUser(null);
       setRoles([]);
+      setAccountStatus(null);
+    } finally {
+      setInitializing(false);
     }
   };
 
@@ -191,12 +203,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setUser(null);
         setRoles([]);
+        setAccountStatus(null);
+        setInitializing(false);
       }
     });
 
     supabase.auth.getSession().then(({ data }) => {
       const uid = data.session?.user?.id;
-      if (uid) setTimeout(() => loadProfileAndRoles(uid), 0);
+      if (uid) {
+        setTimeout(() => loadProfileAndRoles(uid), 0);
+      } else {
+        setInitializing(false);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -250,6 +268,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
+    initializing,
+    accountStatus,
+    isApproved,
     language,
     theme,
     roles,
