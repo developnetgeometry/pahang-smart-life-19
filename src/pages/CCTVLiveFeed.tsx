@@ -102,6 +102,8 @@ export default function CCTVLiveFeed() {
   >([]);
   const [selectedRecording, setSelectedRecording] =
     useState<CCTVRecording | null>(null);
+  const [rtspConnected, setRtspConnected] = useState(false);
+  const [ptzPosition, setPtzPosition] = useState({ pan: 0, tilt: 0, zoom: 1 });
 
   const text = {
     en: {
@@ -239,9 +241,6 @@ export default function CCTVLiveFeed() {
       </Card>
     );
   }
-
-  const [rtspConnected, setRtspConnected] = useState(false);
-  const [ptzPosition, setPtzPosition] = useState({ pan: 0, tilt: 0, zoom: 1 });
 
   const mockCameras: CCTVCamera[] = [
     {
