@@ -68,9 +68,9 @@ import MyBookings from "./pages/MyBookings";
 import MyVisitors from "./pages/MyVisitors";
 import VisitorApprovals from "./pages/VisitorApprovals";
 import VisitorDashboard from "./pages/VisitorDashboard";
-import ResidentDirectory from './pages/ResidentDirectory';
-import EnhancedEvents from './pages/EnhancedEvents';
-import ModerationPanel from './components/discussions/ModerationPanel';
+import ResidentDirectory from "./pages/ResidentDirectory";
+import EnhancedEvents from "./pages/EnhancedEvents";
+import ModerationPanel from "./components/discussions/ModerationPanel";
 import PrecisionMapping from "./pages/PrecisionMapping";
 import MaintenanceComplaintCenterPage from "./pages/MaintenanceComplaintCenter";
 import PatrolInterfacePage from "./pages/PatrolInterface";
@@ -366,7 +366,14 @@ const App = () => (
               path="/visitor-management"
               element={
                 <ProtectedRoute>
-                  <RequireRoles roles={["security_officer", "community_admin", "district_coordinator", "state_admin"]}>
+                  <RequireRoles
+                    roles={[
+                      "security_officer",
+                      "community_admin",
+                      "district_coordinator",
+                      "state_admin",
+                    ]}
+                  >
                     <Layout>
                       <VisitorApprovals />
                     </Layout>
@@ -378,7 +385,14 @@ const App = () => (
               path="/visitor-dashboard"
               element={
                 <ProtectedRoute>
-                  <RequireRoles roles={["security_officer", "community_admin", "district_coordinator", "state_admin"]}>
+                  <RequireRoles
+                    roles={[
+                      "security_officer",
+                      "community_admin",
+                      "district_coordinator",
+                      "state_admin",
+                    ]}
+                  >
                     <Layout>
                       <VisitorDashboard />
                     </Layout>
@@ -426,7 +440,13 @@ const App = () => (
               path="/admin/permissions/:userId"
               element={
                 <ProtectedRoute>
-                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
+                  <RequireRoles
+                    roles={[
+                      "community_admin",
+                      "district_coordinator",
+                      "state_admin",
+                    ]}
+                  >
                     <Layout>
                       <PermissionsManagement />
                     </Layout>
@@ -438,7 +458,13 @@ const App = () => (
               path="/admin/service-providers"
               element={
                 <ProtectedRoute>
-                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
+                  <RequireRoles
+                    roles={[
+                      "community_admin",
+                      "district_coordinator",
+                      "state_admin",
+                    ]}
+                  >
                     <Layout>
                       <ServiceProviderManagement />
                     </Layout>
@@ -450,7 +476,13 @@ const App = () => (
               path="/admin/service-providers/review/:id"
               element={
                 <ProtectedRoute>
-                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
+                  <RequireRoles
+                    roles={[
+                      "community_admin",
+                      "district_coordinator",
+                      "state_admin",
+                    ]}
+                  >
                     <Layout>
                       <ServiceProviderReview />
                     </Layout>
@@ -512,7 +544,13 @@ const App = () => (
               path="/admin/floor-plans"
               element={
                 <ProtectedRoute>
-                  <RequireRoles roles={["facility_manager", "community_admin", "state_admin"]}>
+                  <RequireRoles
+                    roles={[
+                      "facility_manager",
+                      "community_admin",
+                      "state_admin",
+                    ]}
+                  >
                     <Layout>
                       <FloorPlanManagement />
                     </Layout>
@@ -554,7 +592,13 @@ const App = () => (
               path="/admin/complaints-analytics"
               element={
                 <ProtectedRoute>
-                  <RequireRoles roles={['community_admin', 'district_coordinator', 'state_admin']}>
+                  <RequireRoles
+                    roles={[
+                      "community_admin",
+                      "district_coordinator",
+                      "state_admin",
+                    ]}
+                  >
                     <Layout>
                       <ComplaintsAnalytics />
                     </Layout>
@@ -567,7 +611,11 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <RequireRoles
-                    roles={["security_officer", "state_admin", "community_admin"]}
+                    roles={[
+                      "security_officer",
+                      "state_admin",
+                      "community_admin",
+                    ]}
                   >
                     <Layout>
                       <CCTVManagement />
@@ -610,7 +658,7 @@ const App = () => (
               path="/admin/modules"
               element={
                 <ProtectedRoute>
-                   <RequireRoles roles={["community_admin"]}>
+                  <RequireRoles roles={["community_admin"]}>
                     <Layout>
                       <ModuleManagement />
                     </Layout>
@@ -690,7 +738,14 @@ const App = () => (
               path="/asset-management"
               element={
                 <ProtectedRoute>
-                  <RequireRoles roles={["facility_manager", "community_admin", "district_coordinator", "state_admin"]}>
+                  <RequireRoles
+                    roles={[
+                      "facility_manager",
+                      "community_admin",
+                      "district_coordinator",
+                      "state_admin",
+                    ]}
+                  >
                     <Layout>
                       <AssetManagement />
                     </Layout>
@@ -702,7 +757,13 @@ const App = () => (
               path="/financial-management"
               element={
                 <ProtectedRoute>
-                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
+                  <RequireRoles
+                    roles={[
+                      "community_admin",
+                      "district_coordinator",
+                      "state_admin",
+                    ]}
+                  >
                     <Layout>
                       <FinancialManagement />
                     </Layout>
@@ -714,7 +775,15 @@ const App = () => (
               path="/inventory-management"
               element={
                 <ProtectedRoute>
-                  <RequireRoles roles={["facility_manager", "maintenance_staff", "community_admin", "district_coordinator", "state_admin"]}>
+                  <RequireRoles
+                    roles={[
+                      "facility_manager",
+                      "maintenance_staff",
+                      "community_admin",
+                      "district_coordinator",
+                      "state_admin",
+                    ]}
+                  >
                     <Layout>
                       <InventoryManagement />
                     </Layout>
