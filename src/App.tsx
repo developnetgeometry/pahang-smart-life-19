@@ -632,6 +632,20 @@ const App = () => (
               }
             />
 
+            {/* CCTV Management for admins and security officers */}
+            <Route
+              path="/admin/cctv-management"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["security_officer", "community_admin", "state_admin"]}>
+                    <Layout>
+                      <CCTVManagement />
+                    </Layout>
+                  </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+
             {/* CCTV Live Feed for residents */}
             <Route
               path="/cctv-live-feed"
