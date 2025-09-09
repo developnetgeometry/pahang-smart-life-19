@@ -119,6 +119,10 @@ export default function CCTVManagement() {
   }>({ name: "", location: "", type: "", streamUrl: "" });
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
+  const [selectedDistrict, setSelectedDistrict] = useState("all");
+  const [selectedCommunity, setSelectedCommunity] = useState("all");
+  const [districts, setDistricts] = useState<{id: string, name: string}[]>([]);
+  const [communities, setCommunities] = useState<{id: string, name: string}[]>([]);
   const [isAddCameraOpen, setIsAddCameraOpen] = useState(false);
   const [isEditCameraOpen, setIsEditCameraOpen] = useState(false);
   const [selectedCamera, setSelectedCamera] = useState("all");
@@ -226,6 +230,10 @@ export default function CCTVManagement() {
       recentEvents: "Recent Events",
       noMotionEvents: "No motion events detected",
       selectCamera: "Select Camera",
+      district: "District",
+      community: "Community",
+      allDistricts: "All Districts",
+      allCommunities: "All Communities",
     },
     ms: {
       title: "Pengurusan CCTV",
@@ -307,6 +315,10 @@ export default function CCTVManagement() {
       recentEvents: "Acara Terkini",
       noMotionEvents: "Tiada acara pergerakan dikesan",
       selectCamera: "Pilih Kamera",
+      district: "Daerah",
+      community: "Komuniti",
+      allDistricts: "Semua Daerah",
+      allCommunities: "Semua Komuniti",
     },
   };
 
@@ -752,6 +764,35 @@ export default function CCTVManagement() {
 
   const rolePermissions = getRolePermissions();
 
+  // Load districts and communities for filters
+  useEffect(() => {
+    const loadFiltersData = async () => {
+      // Load districts
+      const { data: districtsData } = await supabase
+        .from('districts')
+        .select('id, name')
+        .order('name');
+      
+      if (districtsData) {
+        setDistricts(districtsData);
+      }
+
+      // Load communities
+      const { data: communitiesData } = await supabase
+        .from('communities')
+        .select('id, name')
+        .order('name');
+      
+      if (communitiesData) {
+        setCommunities(communitiesData);
+      }
+    };
+
+    if (rolePermissions.canViewFilters) {
+      loadFiltersData();
+    }
+  }, [rolePermissions.canViewFilters]);
+
   // Role-based camera filtering with search and status filters
   const searchFilteredCameras = cameras.filter((camera) => {
     // Basic search and filter matching
@@ -768,7 +809,14 @@ export default function CCTVManagement() {
     const matchesCameraSelection = !rolePermissions.canViewFilters ||
       selectedCamera === "all" || camera.id === selectedCamera;
 
-    return matchesSearch && matchesStatus && matchesLocation && matchesCameraSelection;
+    // District and community filtering based on camera data
+    const matchesDistrict = !rolePermissions.canViewFilters ||
+      selectedDistrict === "all" || selectedDistrict === (camera as any).district_id;
+    
+    const matchesCommunity = !rolePermissions.canViewFilters ||
+      selectedCommunity === "all" || selectedCommunity === (camera as any).community_id;
+
+    return matchesSearch && matchesStatus && matchesLocation && matchesCameraSelection && matchesDistrict && matchesCommunity;
   });
 
   const handleAddCamera = async () => {
@@ -1166,6 +1214,32 @@ export default function CCTVManagement() {
                 {cameras.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder={t.district} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t.allDistricts}</SelectItem>
+                {districts.map((district) => (
+                  <SelectItem key={district.id} value={district.id}>
+                    {district.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedCommunity} onValueChange={setSelectedCommunity}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder={t.community} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t.allCommunities}</SelectItem>
+                {communities.map((community) => (
+                  <SelectItem key={community.id} value={community.id}>
+                    {community.name}
                   </SelectItem>
                 ))}
               </SelectContent>
