@@ -91,6 +91,12 @@ verify_jwt = true
 [functions.assign-community-admin]
 verify_jwt = true
 
+[functions.get-mapbox-token]
+verify_jwt = false
+
+[functions.geocode-address]
+verify_jwt = false
+
 [edge_runtime]
 policy = "per_worker"
 inspector_port = 8083

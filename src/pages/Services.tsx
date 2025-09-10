@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useModuleAccess } from '@/hooks/use-module-access';
 import { useUserRoles } from '@/hooks/use-user-roles';
@@ -45,12 +45,18 @@ export default function Services() {
   const { hasRole } = useUserRoles();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [services, setServices] = useState<ServiceAdvertisement[]>([]);
   const [loading, setLoading] = useState(true);
   const [dbCategories, setDbCategories] = useState<{name: string}[]>([]);
+  const [activeTab, setActiveTab] = useState(() => {
+    const view = searchParams.get('view');
+    return view === 'map' ? 'map' : 'list';
+  });
+  const [creatingDemo, setCreatingDemo] = useState(false);
 
   const isServiceProvider = hasRole('service_provider');
 
@@ -234,6 +240,66 @@ export default function Services() {
     navigate(`/seller/${service.advertiser_id}`);
   };
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (value === 'map') {
+      newSearchParams.set('view', 'map');
+    } else {
+      newSearchParams.delete('view');
+    }
+    setSearchParams(newSearchParams);
+  };
+
+  const createDemoProvider = async () => {
+    setCreatingDemo(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: language === 'en' ? 'Error' : 'Ralat',
+          description: language === 'en' ? 'Please login to create demo data' : 'Sila log masuk untuk mencipta data demo',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Create a demo advertisement directly
+      await supabase
+        .from('advertisements')
+        .insert({
+          advertiser_id: user.id,
+          title: 'Professional Plumbing Services',
+          description: 'Expert plumbing services for residential and commercial properties. Quick response time and affordable rates.',
+          business_name: 'Demo Service Provider',
+          category: 'plumbing',
+          price: 150.00,
+          service_areas: ['Kuala Lumpur', 'Selangor'],
+          contact_phone: '+60123456789',
+          contact_email: 'demo@example.com',
+          is_active: true,
+          is_featured: true
+        });
+
+      toast({
+        title: language === 'en' ? 'Demo Created!' : 'Demo Dicipta!',
+        description: language === 'en' ? 'Demo service advertisement created successfully.' : 'Iklan perkhidmatan demo berjaya dicipta.'
+      });
+
+      // Refresh services
+      window.location.reload();
+    } catch (error) {
+      console.error('Error creating demo provider:', error);
+      toast({
+        title: language === 'en' ? 'Error' : 'Ralat',
+        description: language === 'en' ? 'Failed to create demo advertisement' : 'Gagal mencipta iklan demo',
+        variant: 'destructive'
+      });
+    } finally {
+      setCreatingDemo(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto p-6 space-y-6">
@@ -304,8 +370,30 @@ export default function Services() {
         </select>
       </div>
 
+      {/* Demo Provider Button (only show if no services) */}
+      {services.length === 0 && !loading && (
+        <Card>
+          <CardContent className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No Service Providers Yet</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Create a demo service provider to test the map functionality
+              </p>
+              <Button 
+                onClick={createDemoProvider}
+                disabled={creatingDemo}
+                className="w-auto"
+              >
+                {creatingDemo ? 'Creating...' : 'Create Demo Provider Near Me'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* View Toggle and Content */}
-      <Tabs defaultValue="list" className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="list" className="flex items-center gap-2">
             <List className="w-4 h-4" />
