@@ -18,6 +18,7 @@ interface Advertisement {
   website_url: string;
   category: string;
   tags: string[];
+  service_areas: string[];
   is_featured: boolean;
   click_count: number;
   price: number;
@@ -110,21 +111,15 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
 
   const handleAdClick = async (adId: string) => {
     try {
-      // Get current click count and increment it
-      const { data: currentAd } = await supabase
-        .from('advertisements')
-        .select('click_count')
-        .eq('id', adId)
-        .single();
-      
-      if (currentAd) {
-        await supabase
-          .from('advertisements')
-          .update({ click_count: (currentAd.click_count || 0) + 1 })
-          .eq('id', adId);
+      const { error } = await supabase.functions.invoke('track-ad-click', {
+        body: { adId }
+      });
+
+      if (error) {
+        console.error('Error tracking ad click:', error);
       }
     } catch (error) {
-      console.error('Error updating click count:', error);
+      console.error('Error tracking ad click:', error);
     }
   };
 
@@ -220,7 +215,17 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
             <div className="h-4 bg-muted rounded w-48 mt-2 animate-pulse" />
           </div>
         </div>
-        <div className="h-48 bg-muted rounded-lg animate-pulse" />
+        <Card className="overflow-hidden">
+          <CardContent className="p-0">
+            <div className="h-48 bg-muted animate-pulse" />
+            <div className="p-6">
+              <div className="h-4 bg-muted rounded mb-4 animate-pulse" />
+              <div className="h-4 bg-muted rounded w-3/4 mb-2 animate-pulse" />
+              <div className="h-6 bg-muted rounded w-1/2 mb-4 animate-pulse" />
+              <div className="h-10 bg-muted rounded animate-pulse" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -233,8 +238,13 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
           <p className="text-sm text-muted-foreground">{t.subtitle}</p>
         </div>
         <Card>
-          <CardContent className="flex items-center justify-center h-32">
-            <p className="text-muted-foreground">{t.noAds}</p>
+          <CardContent className="flex flex-col items-center justify-center h-32 text-center">
+            <div className="w-12 h-12 mx-auto mb-3 bg-muted rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <p className="text-muted-foreground text-sm">{t.noAds}</p>
           </CardContent>
         </Card>
       </div>
@@ -332,14 +342,40 @@ export default function AdvertisementCarousel({ language }: AdvertisementCarouse
                        </Badge>
                      )}
                    </div>
+
+                   {/* Service Areas */}
+                   {currentAd.service_areas && currentAd.service_areas.length > 0 && (
+                     <div className="mb-3">
+                       <p className="text-xs text-muted-foreground mb-1">
+                         {language === 'en' ? 'Service Areas:' : 'Kawasan Perkhidmatan:'}
+                       </p>
+                       <div className="flex flex-wrap gap-1">
+                         {currentAd.service_areas.slice(0, 3).map((area, index) => (
+                           <Badge key={index} variant="secondary" className="text-xs">
+                             {area}
+                           </Badge>
+                         ))}
+                         {currentAd.service_areas.length > 3 && (
+                           <Badge variant="outline" className="text-xs">
+                             +{currentAd.service_areas.length - 3} more
+                           </Badge>
+                         )}
+                       </div>
+                     </div>
+                   )}
                    
                    {currentAd.tags && currentAd.tags.length > 0 && (
                      <div className="flex flex-wrap gap-1 mb-4">
-                       {currentAd.tags.map((tag, index) => (
+                       {currentAd.tags.slice(0, 4).map((tag, index) => (
                          <Badge key={index} variant="outline" className="text-xs">
                            {tag}
                          </Badge>
                        ))}
+                       {currentAd.tags.length > 4 && (
+                         <Badge variant="outline" className="text-xs text-muted-foreground">
+                           +{currentAd.tags.length - 4}
+                         </Badge>
+                       )}
                      </div>
                    )}
                 </div>
