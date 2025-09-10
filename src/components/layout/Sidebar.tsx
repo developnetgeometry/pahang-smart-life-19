@@ -178,11 +178,14 @@ export function AppSidebar() {
         url: "/marketplace",
         icon: ShoppingCart,
       });
-      servicesItems.push({
-        title: t("services"),
-        url: "/services",
-        icon: Building,
-      });
+      // Hide services from residents
+      if (!hasRole("resident")) {
+        servicesItems.push({
+          title: t("services"),
+          url: "/services",
+          icon: Building,
+        });
+      }
       servicesItems.push({
         title: t("myListings"),
         url: "/my-listings",
