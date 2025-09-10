@@ -10,7 +10,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Map as MapIcon, MapPin, Plus, Search, Building, Users, Calendar, Settings, Loader2, Eye } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { Map as MapIcon, MapPin, Plus, Search, Building, Users, Calendar as CalendarIcon, Settings, Loader2, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -26,10 +30,17 @@ export default function DistrictManagement() {
     name: '',
     code: '',
     district_type: 'urban' as 'urban' | 'suburban' | 'rural',
-    area: '',
+    area_km2: '',
     population: '',
     coordinator_id: '',
-    address: ''
+    address: '',
+    description: '',
+    city: '',
+    country: 'Malaysia',
+    latitude: '',
+    longitude: '',
+    established_date: null as Date | null,
+    status: 'active' as 'active' | 'planning' | 'development'
   });
 
   const text = {
@@ -67,7 +78,14 @@ export default function DistrictManagement() {
       totalArea: 'Total Area',
       totalPopulation: 'Total Population',
       totalCommunities: 'Total Communities',
-      avgPopulation: 'Avg Population'
+      avgPopulation: 'Avg Population',
+      city: 'City',
+      country: 'Country',
+      latitude: 'Latitude',
+      longitude: 'Longitude',
+      establishedDate: 'Established Date',
+      selectDate: 'Select date',
+      address: 'Address'
     },
     ms: {
       title: 'Pengurusan Daerah',
@@ -103,7 +121,14 @@ export default function DistrictManagement() {
       totalArea: 'Jumlah Keluasan',
       totalPopulation: 'Jumlah Penduduk',
       totalCommunities: 'Jumlah Komuniti',
-      avgPopulation: 'Purata Penduduk'
+      avgPopulation: 'Purata Penduduk',
+      city: 'Bandar',
+      country: 'Negara',
+      latitude: 'Latitud',
+      longitude: 'Longitud',
+      establishedDate: 'Tarikh Ditubuhkan',
+      selectDate: 'Pilih tarikh',
+      address: 'Alamat'
     }
   };
 
@@ -172,7 +197,7 @@ export default function DistrictManagement() {
   });
 
   const totalStats = {
-    totalArea: districts.reduce((sum, d) => sum + (d.area || 0), 0),
+    totalArea: districts.reduce((sum, d) => sum + (d.area_km2 || d.area || 0), 0),
     totalPopulation: districts.reduce((sum, d) => sum + (d.population || 0), 0),
     totalCommunities: districts.reduce((sum, d) => sum + (d.communities_count || 0), 0),
     avgPopulation: districts.length > 0 ? districts.reduce((sum, d) => sum + (d.population || 0), 0) / districts.length : 0
@@ -188,11 +213,17 @@ export default function DistrictManagement() {
       name: formData.name,
       code: formData.code || undefined,
       district_type: formData.district_type,
-      area: formData.area ? parseFloat(formData.area) : undefined,
+      area_km2: formData.area_km2 ? parseFloat(formData.area_km2) : undefined,
       population: formData.population ? parseInt(formData.population) : undefined,
       coordinator_id: formData.coordinator_id || undefined,
       address: formData.address || undefined,
-      status: 'active' as const
+      description: formData.description || undefined,
+      city: formData.city || undefined,
+      country: formData.country || undefined,
+      latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
+      longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
+      established_date: formData.established_date ? formData.established_date.toISOString().split('T')[0] : undefined,
+      status: formData.status
     };
 
     const success = await createDistrict(districtData);
@@ -202,10 +233,17 @@ export default function DistrictManagement() {
         name: '',
         code: '',
         district_type: 'urban',
-        area: '',
+        area_km2: '',
         population: '',
         coordinator_id: '',
-        address: ''
+        address: '',
+        description: '',
+        city: '',
+        country: 'Malaysia',
+        latitude: '',
+        longitude: '',
+        established_date: null,
+        status: 'active'
       });
     }
   };
@@ -229,10 +267,10 @@ export default function DistrictManagement() {
               <DialogTitle>{t.createDistrict}</DialogTitle>
               <DialogDescription>{t.createSubtitle}</DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">{t.name}</Label>
+                  <Label htmlFor="name">{t.name} *</Label>
                   <Input 
                     id="name" 
                     placeholder={t.name}
@@ -250,26 +288,48 @@ export default function DistrictManagement() {
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="type">{t.type}</Label>
-                <Select 
-                  value={formData.district_type}
-                  onValueChange={(value: 'urban' | 'suburban' | 'rural') => 
-                    setFormData(prev => ({ ...prev, district_type: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {districtTypes.slice(1).map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="type">{t.type}</Label>
+                  <Select 
+                    value={formData.district_type}
+                    onValueChange={(value: 'urban' | 'suburban' | 'rural') => 
+                      setFormData(prev => ({ ...prev, district_type: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {districtTypes.slice(1).map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="status">{t.status}</Label>
+                  <Select 
+                    value={formData.status}
+                    onValueChange={(value: 'active' | 'planning' | 'development') => 
+                      setFormData(prev => ({ ...prev, status: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">{t.active}</SelectItem>
+                      <SelectItem value="planning">{t.planning}</SelectItem>
+                      <SelectItem value="development">{t.development}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="area">{t.area} (km²)</Label>
@@ -277,8 +337,9 @@ export default function DistrictManagement() {
                     id="area" 
                     type="number" 
                     placeholder="0"
-                    value={formData.area}
-                    onChange={(e) => setFormData(prev => ({ ...prev, area: e.target.value }))}
+                    step="0.01"
+                    value={formData.area_km2}
+                    onChange={(e) => setFormData(prev => ({ ...prev, area_km2: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
@@ -292,17 +353,103 @@ export default function DistrictManagement() {
                   />
                 </div>
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="city">{t.city}</Label>
+                  <Input 
+                    id="city" 
+                    placeholder="Enter city"
+                    value={formData.city}
+                    onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="country">{t.country}</Label>
+                  <Input 
+                    id="country" 
+                    placeholder="Enter country"
+                    value={formData.country}
+                    onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="latitude">{t.latitude}</Label>
+                  <Input 
+                    id="latitude" 
+                    type="number" 
+                    placeholder="0.000000"
+                    step="any"
+                    value={formData.latitude}
+                    onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="longitude">{t.longitude}</Label>
+                  <Input 
+                    id="longitude" 
+                    type="number" 
+                    placeholder="0.000000"
+                    step="any"
+                    value={formData.longitude}
+                    onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value }))}
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
+                <Label>{t.establishedDate}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.established_date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.established_date ? format(formData.established_date, "PPP") : t.selectDate}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.established_date}
+                      onSelect={(date) => setFormData(prev => ({ ...prev, established_date: date }))}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="address">{t.address}</Label>
                 <Textarea 
                   id="address" 
                   placeholder="District address"
-                  rows={3}
+                  rows={2}
                   value={formData.address}
                   onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                 />
               </div>
-              <div className="flex justify-end space-x-2">
+
+              <div className="space-y-2">
+                <Label htmlFor="description">{t.description}</Label>
+                <Textarea 
+                  id="description" 
+                  placeholder="District description"
+                  rows={2}
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-2 pt-4 border-t">
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
                   {t.cancel}
                 </Button>
@@ -350,7 +497,7 @@ export default function DistrictManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t.avgPopulation}</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{Math.round(totalStats.avgPopulation).toLocaleString()}</div>
@@ -413,7 +560,7 @@ export default function DistrictManagement() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">{t.area}</p>
-                    <p className="font-medium">{district.area || 0} km²</p>
+                    <p className="font-medium">{district.area_km2 || district.area || 0} km²</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">{t.population}</p>

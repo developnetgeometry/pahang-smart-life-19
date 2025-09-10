@@ -61,15 +61,19 @@ serve(async (req) => {
       throw new Error('Insufficient permissions')
     }
 
-    // Get admin's community to check module enablement
+    // Get admin's community to check module enablement (relaxed for state_admin)
     const { data: adminProfile, error: adminProfileError } = await supabase
       .from('profiles')
       .select('community_id')
       .eq('id', currentUser.id)
       .single()
 
-    if (adminProfileError || !adminProfile?.community_id) {
-      throw new Error('Admin must be assigned to a community')
+    const isStateAdmin = userRoles?.some(r => r.role === 'state_admin')
+
+    if (adminProfileError || (!adminProfile?.community_id && !isStateAdmin)) {
+      if (!isStateAdmin) {
+        throw new Error('Admin must be assigned to a community')
+      }
     }
 
     // Check if required modules are enabled for role creation

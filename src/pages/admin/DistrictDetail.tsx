@@ -9,6 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MapPin, Users, Building, Calendar, Map as MapIcon, Settings, Plus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import CreateCommunityModal from '@/components/communities/CreateCommunityModal';
+import EditDistrictModal from '@/components/districts/EditDistrictModal';
+import AssignCommunityAdminModal from '@/components/districts/AssignCommunityAdminModal';
+import { useDistricts } from '@/hooks/use-districts';
 
 interface District {
   id: string;
@@ -47,7 +50,11 @@ export default function DistrictDetail() {
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
   const [communitiesLoading, setCommunitiesLoading] = useState(true);
+  const { updateDistrict } = useDistricts();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
 
   const text = {
     en: {
@@ -283,7 +290,7 @@ export default function DistrictDetail() {
         </div>
         {canManage && (
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => setShowEditModal(true)}>
               <Settings className="h-4 w-4 mr-2" />
               {t.editDistrict}
             </Button>
@@ -401,30 +408,44 @@ export default function DistrictDetail() {
                     </div>
                   </CardHeader>
                   <CardContent className="pt-2">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">{t.totalUnits}:</span>
-                        <span className="font-medium">{community.total_units || 0}</span>
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-2 text-sm flex-1">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">{t.totalUnits}:</span>
+                            <span className="font-medium">{community.total_units || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">{t.occupancy}:</span>
+                            <span className="font-medium">
+                              {community.total_units 
+                                ? `${Math.round(((community.occupied_units || 0) / community.total_units) * 100)}%`
+                                : '0%'
+                              }
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">{t.established}:</span>
+                            <span className="font-medium">
+                              {community.established_date 
+                                ? new Date(community.established_date).getFullYear()
+                                : 'Not set'
+                              }
+                            </span>
+                          </div>
+                        </div>
+                        {canManage && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedCommunity(community);
+                              setShowAssignModal(true);
+                            }}
+                          >
+                            Assign Admin
+                          </Button>
+                        )}
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">{t.occupancy}:</span>
-                        <span className="font-medium">
-                          {community.total_units 
-                            ? `${Math.round(((community.occupied_units || 0) / community.total_units) * 100)}%`
-                            : '0%'
-                          }
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">{t.established}:</span>
-                        <span className="font-medium">
-                          {community.established_date 
-                            ? new Date(community.established_date).getFullYear()
-                            : 'Not set'
-                          }
-                        </span>
-                      </div>
-                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -438,12 +459,31 @@ export default function DistrictDetail() {
         </CardContent>
       </Card>
 
-      {/* Create Community Modal */}
+      {/* Modals */}
       <CreateCommunityModal
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
         districtId={id!}
         onSuccess={fetchCommunities}
+      />
+      
+      <EditDistrictModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        district={district}
+        onSuccess={fetchDistrictDetails}
+        onUpdate={updateDistrict}
+      />
+      
+      <AssignCommunityAdminModal
+        open={showAssignModal}
+        onOpenChange={setShowAssignModal}
+        community={selectedCommunity}
+        districtId={id!}
+        onSuccess={() => {
+          // Refresh any community admin data if needed
+          fetchCommunities();
+        }}
       />
     </div>
   );
