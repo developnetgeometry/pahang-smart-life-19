@@ -6502,6 +6502,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          access_expires_at: string | null
+          access_level: string | null
           account_status: string | null
           address: string | null
           age: number | null
@@ -6523,6 +6525,7 @@ export type Database = {
           family_size: number | null
           full_name: string | null
           gender: string | null
+          guest_notes: string | null
           id: string
           identity_no: string | null
           identity_no_type: string | null
@@ -6546,11 +6549,13 @@ export type Database = {
           race_id: string | null
           register_method: string | null
           registration_status: boolean | null
+          restricted_areas: string[] | null
           security_license_number: string | null
           shift_type: string | null
           skills: string[] | null
           socio_id: string | null
           specialization: string | null
+          sponsor_id: string | null
           spouse_dob: string | null
           spouse_full_name: string | null
           spouse_gender: string | null
@@ -6562,6 +6567,7 @@ export type Database = {
           status_entrepreneur: boolean | null
           status_membership: string | null
           supervision: string | null
+          telegram_chat_id: string | null
           theme: string | null
           theme_preference: string | null
           type_sector: string | null
@@ -6573,6 +6579,8 @@ export type Database = {
           years_experience: number | null
         }
         Insert: {
+          access_expires_at?: string | null
+          access_level?: string | null
           account_status?: string | null
           address?: string | null
           age?: number | null
@@ -6594,6 +6602,7 @@ export type Database = {
           family_size?: number | null
           full_name?: string | null
           gender?: string | null
+          guest_notes?: string | null
           id?: string
           identity_no?: string | null
           identity_no_type?: string | null
@@ -6617,11 +6626,13 @@ export type Database = {
           race_id?: string | null
           register_method?: string | null
           registration_status?: boolean | null
+          restricted_areas?: string[] | null
           security_license_number?: string | null
           shift_type?: string | null
           skills?: string[] | null
           socio_id?: string | null
           specialization?: string | null
+          sponsor_id?: string | null
           spouse_dob?: string | null
           spouse_full_name?: string | null
           spouse_gender?: string | null
@@ -6633,6 +6644,7 @@ export type Database = {
           status_entrepreneur?: boolean | null
           status_membership?: string | null
           supervision?: string | null
+          telegram_chat_id?: string | null
           theme?: string | null
           theme_preference?: string | null
           type_sector?: string | null
@@ -6644,6 +6656,8 @@ export type Database = {
           years_experience?: number | null
         }
         Update: {
+          access_expires_at?: string | null
+          access_level?: string | null
           account_status?: string | null
           address?: string | null
           age?: number | null
@@ -6665,6 +6679,7 @@ export type Database = {
           family_size?: number | null
           full_name?: string | null
           gender?: string | null
+          guest_notes?: string | null
           id?: string
           identity_no?: string | null
           identity_no_type?: string | null
@@ -6688,11 +6703,13 @@ export type Database = {
           race_id?: string | null
           register_method?: string | null
           registration_status?: boolean | null
+          restricted_areas?: string[] | null
           security_license_number?: string | null
           shift_type?: string | null
           skills?: string[] | null
           socio_id?: string | null
           specialization?: string | null
+          sponsor_id?: string | null
           spouse_dob?: string | null
           spouse_full_name?: string | null
           spouse_gender?: string | null
@@ -6704,6 +6721,7 @@ export type Database = {
           status_entrepreneur?: boolean | null
           status_membership?: string | null
           supervision?: string | null
+          telegram_chat_id?: string | null
           theme?: string | null
           theme_preference?: string | null
           type_sector?: string | null
@@ -6720,6 +6738,13 @@ export type Database = {
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -10467,6 +10492,7 @@ export type Database = {
         | "resident"
         | "spouse"
         | "tenant"
+        | "guest"
       marketplace_condition: "new" | "excellent" | "good" | "fair" | "poor"
       permission_level: "full_access" | "standard_access" | "limited_access"
       role_request_status:
@@ -10679,6 +10705,7 @@ export const Constants = {
         "resident",
         "spouse",
         "tenant",
+        "guest",
       ],
       marketplace_condition: ["new", "excellent", "good", "fair", "poor"],
       permission_level: ["full_access", "standard_access", "limited_access"],
