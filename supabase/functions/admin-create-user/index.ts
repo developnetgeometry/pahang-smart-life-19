@@ -154,7 +154,8 @@ serve(async (req) => {
     
     // For residents, use invite flow instead of direct creation
     if (role === 'resident') {
-      const redirectUrl = `${Deno.env.get('SUPABASE_URL')?.replace('/v1', '')}/complete-account`;
+      const frontendUrl = Deno.env.get('FRONTEND_URL') || req.headers.get('origin') || 'http://localhost:3000';
+      const redirectUrl = `${frontendUrl}/complete-account`;
       
       const inviteResult = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
         redirectTo: redirectUrl,
@@ -210,6 +211,7 @@ serve(async (req) => {
     // Set account status based on role and creation method
     if (role === 'resident') {
       profileData.account_status = 'pending_completion'
+      if (unit_number) profileData.unit_number = unit_number
       if (family_size) profileData.family_size = parseInt(family_size)
       if (emergency_contact_name) profileData.emergency_contact_name = emergency_contact_name
       if (emergency_contact_phone) profileData.emergency_contact_phone = emergency_contact_phone

@@ -616,7 +616,7 @@ export default function UserManagement() {
           if (!open) { 
             setEditingId(null); 
             setForm({ 
-              name: '', email: '', phone: '', unit: '', role: '', status: '', password: '', confirmPassword: '',
+              name: '', email: '', phone: '', unit: '', role: 'resident', status: 'pending', password: '', confirmPassword: '',
               emergencyContactName: '', emergencyContactPhone: '', shiftType: '', badgeId: '', 
               yearsExperience: '', certificationsText: '', vehicleNumber: '', familySize: 1, specialization: ''
             });
@@ -634,104 +634,174 @@ export default function UserManagement() {
               <DialogDescription>{t.createSubtitle}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              {/* Basic Information */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">{t.fullName}</Label>
-                  <Input id="name" placeholder={t.fullName} value={form.name} onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">{t.email}</Label>
-                  <Input id="email" type="email" placeholder={t.email} value={form.email} onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))} disabled={!!editingId} />
-                </div>
-              </div>
+              {/* Simplified form for residents, full form for other roles */}
+              {form.role === 'resident' || !form.role ? (
+                <>
+                  {/* Basic Information for Residents */}
+                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <UserPlus className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">
+                        {language === 'en' ? 'Creating New Resident' : 'Mencipta Penduduk Baru'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {language === 'en' 
+                        ? 'Residents will receive an email invitation to complete their account setup.'
+                        : 'Penduduk akan menerima jemputan emel untuk melengkapkan persediaan akaun mereka.'
+                      }
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">{t.fullName} *</Label>
+                      <Input 
+                        id="name" 
+                        placeholder={t.fullName} 
+                        value={form.name} 
+                        onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">{t.email} *</Label>
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        placeholder={t.email} 
+                        value={form.email} 
+                        onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))} 
+                        disabled={!!editingId} 
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="unit">{t.unit} *</Label>
+                      <Input 
+                        id="unit" 
+                        placeholder={language === 'en' ? 'e.g. A-15-03' : 'cth: A-15-03'} 
+                        value={form.unit} 
+                        onChange={(e) => setForm(prev => ({ ...prev, unit: e.target.value }))} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">{t.phone}</Label>
+                      <Input 
+                        id="phone" 
+                        placeholder={language === 'en' ? 'e.g. +60123456789' : 'cth: +60123456789'} 
+                        value={form.phone} 
+                        onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))} 
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Hidden role field defaulted to resident */}
+                  <input type="hidden" value="resident" />
+                </>
+              ) : (
+                <>
+                  {/* Full form for other roles */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">{t.fullName}</Label>
+                      <Input id="name" placeholder={t.fullName} value={form.name} onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">{t.email}</Label>
+                      <Input id="email" type="email" placeholder={t.email} value={form.email} onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))} disabled={!!editingId} />
+                    </div>
+                  </div>
 
-              {/* Password fields for new users */}
-              {!editingId && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="password">{t.password}</Label>
-                    <Input 
-                      id="password" 
-                      type="password" 
-                      placeholder={t.password} 
-                      value={form.password} 
-                      onChange={(e) => setForm(prev => ({ ...prev, password: e.target.value }))} 
-                    />
+                  {/* Password fields for non-resident new users */}
+                  {!editingId && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="password">{t.password}</Label>
+                        <Input 
+                          id="password" 
+                          type="password" 
+                          placeholder={t.password} 
+                          value={form.password} 
+                          onChange={(e) => setForm(prev => ({ ...prev, password: e.target.value }))} 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">{t.confirmPassword}</Label>
+                        <Input 
+                          id="confirmPassword" 
+                          type="password" 
+                          placeholder={t.confirmPassword} 
+                          value={form.confirmPassword} 
+                          onChange={(e) => setForm(prev => ({ ...prev, confirmPassword: e.target.value }))} 
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">{t.phone}</Label>
+                      <Input id="phone" placeholder={t.phone} value={form.phone} onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))} />
+                    </div>
+                    {form.role === 'resident' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="unit">{t.unit}</Label>
+                        <Input id="unit" placeholder={t.unit} value={form.unit} onChange={(e) => setForm(prev => ({ ...prev, unit: e.target.value }))} />
+                      </div>
+                    )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">{t.confirmPassword}</Label>
-                    <Input 
-                      id="confirmPassword" 
-                      type="password" 
-                      placeholder={t.confirmPassword} 
-                      value={form.confirmPassword} 
-                      onChange={(e) => setForm(prev => ({ ...prev, confirmPassword: e.target.value }))} 
-                    />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="role">{t.role}</Label>
+                      <Select value={form.role} onValueChange={handleRoleChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t.selectRole} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {roles.slice(1).map((role) => {
+                            const isDisabled = 
+                              (role.value === 'security_officer' && !isModuleEnabled('security')) ||
+                              ((role.value === 'facility_manager' || role.value === 'maintenance_staff') && !isModuleEnabled('facilities'));
+                            
+                            return (
+                              <SelectItem 
+                                key={role.value} 
+                                value={role.value}
+                                disabled={isDisabled}
+                              >
+                                {role.label}
+                                {isDisabled && (
+                                  <span className="text-xs text-muted-foreground ml-2">
+                                    (Module disabled)
+                                  </span>
+                                )}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="status">{t.status}</Label>
+                      <Select value={form.status} onValueChange={(v) => setForm(prev => ({ ...prev, status: v as User['status'] }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t.selectStatus} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statuses.slice(1).map((status) => (
+                            <SelectItem key={status.value} value={status.value}>
+                              {status.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                </div>
+                </>
               )}
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">{t.phone}</Label>
-                  <Input id="phone" placeholder={t.phone} value={form.phone} onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))} />
-                </div>
-                {form.role === 'resident' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="unit">{t.unit}</Label>
-                    <Input id="unit" placeholder={t.unit} value={form.unit} onChange={(e) => setForm(prev => ({ ...prev, unit: e.target.value }))} />
-                  </div>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="role">{t.role}</Label>
-                  <Select value={form.role} onValueChange={handleRoleChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t.selectRole} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roles.slice(1).map((role) => {
-                        const isDisabled = 
-                          (role.value === 'security_officer' && !isModuleEnabled('security')) ||
-                          ((role.value === 'facility_manager' || role.value === 'maintenance_staff') && !isModuleEnabled('facilities'));
-                        
-                        return (
-                          <SelectItem 
-                            key={role.value} 
-                            value={role.value}
-                            disabled={isDisabled}
-                          >
-                            {role.label}
-                            {isDisabled && (
-                              <span className="text-xs text-muted-foreground ml-2">
-                                (Module disabled)
-                              </span>
-                            )}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="status">{t.status}</Label>
-                  <Select value={form.status} onValueChange={(v) => setForm(prev => ({ ...prev, status: v as User['status'] }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t.selectStatus} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statuses.slice(1).map((status) => (
-                        <SelectItem key={status.value} value={status.value}>
-                          {status.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
 
               {/* Role-specific fields */}
               {form.role === 'resident' && (
