@@ -12,7 +12,7 @@ import { WeatherWidget } from './WeatherWidget';
 import { CommunityDirectoryWidget } from './CommunityDirectoryWidget';
 import { PrayerTimesWidget } from './PrayerTimesWidget';
 import InteractiveUnitEditor from '@/components/location/InteractiveUnitEditor';
-import { CombinedSlideshow } from './CombinedSlideshow';
+
 import PanicButton from '@/components/emergency/PanicButton';
 
 import { useModuleAccess } from '@/hooks/use-module-access';
@@ -196,8 +196,6 @@ export function ResidentDashboard() {
         </p>
       </div>
 
-      {/* Combined Activities and Announcements Slideshow */}
-      <CombinedSlideshow />
 
       {/* Quick Actions and Weather */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">

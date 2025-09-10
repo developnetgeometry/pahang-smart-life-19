@@ -9,6 +9,7 @@ import ServiceProviderEnhancedDashboard from '@/components/dashboard/ServiceProv
 import { CommunityLeaderDashboard } from '@/components/dashboard/CommunityLeaderDashboard';
 import { StateServiceManagerDashboard } from '@/components/dashboard/StateServiceManagerDashboard';
 import { ResidentDashboard } from '@/components/dashboard/ResidentDashboard';
+import { AnnouncementSlideshow } from '@/components/dashboard/AnnouncementSlideshow';
 
 const Index = () => {
   const { hasRole, roles, initializing } = useAuth();
@@ -23,19 +24,64 @@ const Index = () => {
   }
 
   // Determine which dashboard to show based on user's highest role
-  if (hasRole('state_admin')) return <StateAdminDashboard />;
-  if (hasRole('district_coordinator')) return <DistrictCoordinatorDashboard />;
-  if (hasRole('community_admin')) return <CommunityAdminDashboard />;
-  if (hasRole('facility_manager')) return <FacilityManagerDashboard />;
+  if (hasRole('state_admin')) return (
+    <>
+      <AnnouncementSlideshow />
+      <StateAdminDashboard />
+    </>
+  );
+  if (hasRole('district_coordinator')) return (
+    <>
+      <AnnouncementSlideshow />
+      <DistrictCoordinatorDashboard />
+    </>
+  );
+  if (hasRole('community_admin')) return (
+    <>
+      <AnnouncementSlideshow />
+      <CommunityAdminDashboard />
+    </>
+  );
+  if (hasRole('facility_manager')) return (
+    <>
+      <AnnouncementSlideshow />
+      <FacilityManagerDashboard />
+    </>
+  );
   
-  if (hasRole('security_officer')) return <SecurityOfficerDashboard />;
-  if (hasRole('maintenance_staff')) return <MaintenanceStaffDashboard />;
+  if (hasRole('security_officer')) return (
+    <>
+      <AnnouncementSlideshow />
+      <SecurityOfficerDashboard />
+    </>
+  );
+  if (hasRole('maintenance_staff')) return (
+    <>
+      <AnnouncementSlideshow />
+      <MaintenanceStaffDashboard />
+    </>
+  );
   if (hasRole('service_provider')) return <ServiceProviderEnhancedDashboard />;
-  if (hasRole('community_leader')) return <CommunityLeaderDashboard />;
-  if (hasRole('state_service_manager')) return <StateServiceManagerDashboard />;
+  if (hasRole('community_leader')) return (
+    <>
+      <AnnouncementSlideshow />
+      <CommunityLeaderDashboard />
+    </>
+  );
+  if (hasRole('state_service_manager')) return (
+    <>
+      <AnnouncementSlideshow />
+      <StateServiceManagerDashboard />
+    </>
+  );
   
   // Only show resident dashboard if user actually has resident role
-  if (hasRole('resident')) return <ResidentDashboard />;
+  if (hasRole('resident')) return (
+    <>
+      <AnnouncementSlideshow />
+      <ResidentDashboard />
+    </>
+  );
   
   // If no roles match, show a neutral state
   return (
