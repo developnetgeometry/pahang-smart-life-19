@@ -47,29 +47,36 @@ export const useDistricts = () => {
         return;
       }
 
-      // Fetch community counts for each district
+      // Fetch community data including population metrics for each district
       const { data: communitiesData, error: communitiesError } = await supabase
         .from('communities')
-        .select('district_id');
+        .select('district_id, occupied_units, total_units');
 
       if (communitiesError) {
         console.error('Error fetching communities:', communitiesError);
       }
 
-      // Count communities per district
-      const communityCounts: Record<string, number> = {};
+      // Calculate community counts and population totals per district
+      const districtStats: Record<string, { count: number; population: number }> = {};
       if (communitiesData) {
         communitiesData.forEach(community => {
           if (community.district_id) {
-            communityCounts[community.district_id] = (communityCounts[community.district_id] || 0) + 1;
+            if (!districtStats[community.district_id]) {
+              districtStats[community.district_id] = { count: 0, population: 0 };
+            }
+            districtStats[community.district_id].count += 1;
+            // Use occupied_units as population proxy (assuming average 4 people per unit)
+            const estimatedPopulation = (community.occupied_units || 0) * 4;
+            districtStats[community.district_id].population += estimatedPopulation;
           }
         });
       }
 
-      // Merge district data with community counts
+      // Merge district data with community counts and calculated population
       const districtsWithCounts = (districtsData || []).map(district => ({
         ...district,
-        communities_count: communityCounts[district.id] || 0
+        communities_count: districtStats[district.id]?.count || 0,
+        population: districtStats[district.id]?.population || district.population || 0
       }));
 
       setDistricts(districtsWithCounts);
