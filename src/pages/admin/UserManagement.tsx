@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Users, UserPlus, Search, Filter, MoreVertical, Edit, Trash2, Shield, ShieldCheck, Loader2, UserCheck, UserX, Home } from 'lucide-react';
+import { Users, UserPlus, Search, Filter, MoreVertical, Edit, Trash2, Shield, ShieldCheck, Loader2, Home } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -441,55 +441,6 @@ export default function UserManagement() {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const handleApproveUser = async (userId: string) => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ account_status: 'approved' })
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      toast({
-        title: t.userApproved,
-        description: language === 'en' ? 'User can now login to the system' : 'Pengguna kini boleh log masuk ke sistem',
-      });
-
-      await fetchUsers(); // Refresh the user list
-    } catch (error) {
-      console.error('Error approving user:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to approve user',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const handleRejectUser = async (userId: string) => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ account_status: 'rejected' })
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      toast({
-        title: t.userRejected,
-        description: language === 'en' ? 'User registration has been rejected' : 'Pendaftaran pengguna telah ditolak',
-      });
-
-      fetchUsers(); // Refresh the user list
-    } catch (error) {
-      console.error('Error rejecting user:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to reject user',
-        variant: 'destructive'
-      });
-    }
-  };
 
   // Reset role-specific fields when role changes
   const handleRoleChange = (newRole: string) => {
@@ -1300,28 +1251,6 @@ export default function UserManagement() {
                         {getStatusText(user.status)}
                       </Badge>
                       <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                        {user.status === 'pending' && (
-                          <>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => handleApproveUser(user.id)}
-                              className="text-green-600"
-                              title={t.approve}
-                            >
-                              <UserCheck className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => handleRejectUser(user.id)}
-                              className="text-red-600"
-                              title={t.reject}
-                            >
-                              <UserX className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
                         <Button 
                           variant="outline" 
                           size="sm" 
