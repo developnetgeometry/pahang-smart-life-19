@@ -49,7 +49,7 @@ export const useChatRooms = () => {
         .select(`
           *,
           members:chat_room_members!chat_room_members_room_id_fkey!inner(user_id),
-          chat_messages(
+          messages:chat_messages!chat_messages_room_id_fkey(
             message_text,
             created_at,
             sender_id,
@@ -76,7 +76,7 @@ export const useChatRooms = () => {
 
       const processedRooms = roomsData?.map(room => {
         // Sort messages by created_at to get the latest one
-        const sortedMessages = room.chat_messages?.sort((a: any, b: any) => 
+        const sortedMessages = room.messages?.sort((a: any, b: any) => 
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
         
@@ -137,7 +137,7 @@ export const useChatRooms = () => {
         .from('chat_rooms')
         .select(`
           *,
-          chat_messages(
+          messages:chat_messages!chat_messages_room_id_fkey(
             message_text,
             created_at,
             sender_id,
@@ -158,7 +158,7 @@ export const useChatRooms = () => {
             .select('user_id')
             .eq('room_id', room.id);
 
-          const sortedMessages = room.chat_messages?.sort((a: any, b: any) => 
+          const sortedMessages = room.messages?.sort((a: any, b: any) => 
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           );
 
