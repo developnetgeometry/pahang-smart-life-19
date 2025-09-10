@@ -47,17 +47,29 @@ export const useDistricts = () => {
         return;
       }
 
-      // Fetch community data including population metrics for each district
+      // Fetch community counts per district
       const { data: communitiesData, error: communitiesError } = await supabase
         .from('communities')
-        .select('district_id, occupied_units, total_units');
+        .select('district_id');
 
       if (communitiesError) {
         console.error('Error fetching communities:', communitiesError);
       }
 
-      // Calculate community counts and population totals per district
+      // Fetch actual user population per district
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('district_id')
+        .eq('account_status', 'approved');
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      }
+
+      // Calculate community counts and actual population per district
       const districtStats: Record<string, { count: number; population: number }> = {};
+      
+      // Count communities per district
       if (communitiesData) {
         communitiesData.forEach(community => {
           if (community.district_id) {
@@ -65,9 +77,18 @@ export const useDistricts = () => {
               districtStats[community.district_id] = { count: 0, population: 0 };
             }
             districtStats[community.district_id].count += 1;
-            // Use occupied_units as population proxy (assuming average 4 people per unit)
-            const estimatedPopulation = (community.occupied_units || 0) * 4;
-            districtStats[community.district_id].population += estimatedPopulation;
+          }
+        });
+      }
+
+      // Count actual residents per district
+      if (profilesData) {
+        profilesData.forEach(profile => {
+          if (profile.district_id) {
+            if (!districtStats[profile.district_id]) {
+              districtStats[profile.district_id] = { count: 0, population: 0 };
+            }
+            districtStats[profile.district_id].population += 1;
           }
         });
       }

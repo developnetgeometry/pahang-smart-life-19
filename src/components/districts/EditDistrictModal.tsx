@@ -135,7 +135,6 @@ export default function EditDistrictModal({
         code: formData.code || undefined,
         district_type: formData.district_type,
         area_km2: formData.area_km2 ? parseFloat(formData.area_km2) : undefined,
-        population: formData.population ? parseInt(formData.population) : undefined,
         address: formData.address || undefined,
         description: formData.description || undefined,
         city: formData.city || undefined,
@@ -240,7 +239,9 @@ export default function EditDistrictModal({
                 id="edit-population" 
                 type="number" 
                 value={formData.population}
-                onChange={(e) => setFormData(prev => ({ ...prev, population: e.target.value }))}
+                readOnly
+                className="bg-muted"
+                placeholder="Auto-calculated from residents"
               />
             </div>
           </div>
