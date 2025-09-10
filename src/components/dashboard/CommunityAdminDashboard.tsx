@@ -1,19 +1,25 @@
-import React from 'react';
-import { useFloorPlans } from '@/hooks/use-floor-plans';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { WeatherWidget } from './WeatherWidget';
-import { PrayerTimesWidget } from './PrayerTimesWidget';
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { 
-  Users, 
-  DollarSign, 
-  AlertTriangle, 
+import React from "react";
+import { useFloorPlans } from "@/hooks/use-floor-plans";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { WeatherWidget } from "./WeatherWidget";
+import { PrayerTimesWidget } from "./PrayerTimesWidget";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Users,
+  DollarSign,
+  AlertTriangle,
   Star,
   Building,
   Activity,
@@ -25,9 +31,10 @@ import {
   CheckCircle,
   XCircle,
   MapPin,
-  Monitor
-} from 'lucide-react';
-import InteractiveUnitEditor from '@/components/location/InteractiveUnitEditor';
+  Monitor,
+} from "lucide-react";
+import InteractiveUnitEditor from "@/components/location/InteractiveUnitEditor";
+import { AnnouncementSlideshow } from "./AnnouncementSlideshow";
 
 export function CommunityAdminDashboard() {
   const { language, user } = useAuth();
@@ -40,7 +47,7 @@ export function CommunityAdminDashboard() {
     activeComplaints: 0,
     completedComplaints: 0,
     upcomingEvents: 0,
-    recentAnnouncements: 0
+    recentAnnouncements: 0,
   });
   const [pendingRoleRequests, setPendingRoleRequests] = useState<any[]>([]);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
@@ -51,9 +58,9 @@ export function CommunityAdminDashboard() {
       try {
         // Get user's district for filtering
         const { data: profileData } = await supabase
-          .from('profiles')
-          .select('district_id')
-          .eq('id', user?.id)
+          .from("profiles")
+          .select("district_id")
+          .eq("id", user?.id)
           .single();
 
         const districtId = profileData?.district_id;
@@ -65,17 +72,43 @@ export function CommunityAdminDashboard() {
           { data: completedComplaints, count: completedComplaintsCount },
           { data: events, count: eventsCount },
           { data: announcements, count: announcementsCount },
-          { data: roleRequests, count: roleRequestsCount }
+          { data: roleRequests, count: roleRequestsCount },
         ] = await Promise.all([
-          supabase.from('profiles').select('*', { count: 'exact' }).eq('district_id', districtId),
-          supabase.from('complaints').select('*', { count: 'exact' }).in('status', ['pending', 'in_progress']).eq('district_id', districtId),
-          supabase.from('complaints').select('*', { count: 'exact' }).eq('status', 'resolved').eq('district_id', districtId),
-          supabase.from('events').select('*', { count: 'exact' }).eq('district_id', districtId).gte('start_date', new Date().toISOString().split('T')[0]),
-          supabase.from('announcements').select('*', { count: 'exact' }).eq('district_id', districtId).eq('is_published', true),
-          supabase.from('role_change_requests').select(`
+          supabase
+            .from("profiles")
+            .select("*", { count: "exact" })
+            .eq("district_id", districtId),
+          supabase
+            .from("complaints")
+            .select("*", { count: "exact" })
+            .in("status", ["pending", "in_progress"])
+            .eq("district_id", districtId),
+          supabase
+            .from("complaints")
+            .select("*", { count: "exact" })
+            .eq("status", "resolved")
+            .eq("district_id", districtId),
+          supabase
+            .from("events")
+            .select("*", { count: "exact" })
+            .eq("district_id", districtId)
+            .gte("start_date", new Date().toISOString().split("T")[0]),
+          supabase
+            .from("announcements")
+            .select("*", { count: "exact" })
+            .eq("district_id", districtId)
+            .eq("is_published", true),
+          supabase
+            .from("role_change_requests")
+            .select(
+              `
             *,
             profiles!role_change_requests_requester_id_fkey(full_name, email)
-          `, { count: 'exact' }).eq('status', 'pending').eq('district_id', districtId)
+          `,
+              { count: "exact" }
+            )
+            .eq("status", "pending")
+            .eq("district_id", districtId),
         ]);
 
         setDashboardData({
@@ -84,7 +117,7 @@ export function CommunityAdminDashboard() {
           activeComplaints: activeComplaintsCount || 0,
           completedComplaints: completedComplaintsCount || 0,
           upcomingEvents: eventsCount || 0,
-          recentAnnouncements: announcementsCount || 0
+          recentAnnouncements: announcementsCount || 0,
         });
 
         setPendingRoleRequests(roleRequests || []);
@@ -92,10 +125,10 @@ export function CommunityAdminDashboard() {
         // Fetch additional dashboard sections
         await Promise.all([
           fetchRecentActivities(districtId),
-          fetchUpcomingEvents(districtId)
+          fetchUpcomingEvents(districtId),
         ]);
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        console.error("Error fetching dashboard data:", error);
       } finally {
         setLoading(false);
       }
@@ -108,48 +141,60 @@ export function CommunityAdminDashboard() {
 
   const communityMetrics = [
     {
-      title: language === 'en' ? 'Total Residents' : 'Jumlah Penduduk',
-      value: loading ? '...' : dashboardData.totalResidents.toString(),
+      title: language === "en" ? "Total Residents" : "Jumlah Penduduk",
+      value: loading ? "..." : dashboardData.totalResidents.toString(),
       icon: Users,
-      trend: loading ? '...' : `${dashboardData.pendingRegistrations} ${language === 'en' ? 'pending approvals' : 'menunggu kelulusan'}`
+      trend: loading
+        ? "..."
+        : `${dashboardData.pendingRegistrations} ${
+            language === "en" ? "pending approvals" : "menunggu kelulusan"
+          }`,
     },
     {
-      title: language === 'en' ? 'Active Issues' : 'Isu Aktif',
-      value: loading ? '...' : dashboardData.activeComplaints.toString(),
+      title: language === "en" ? "Active Issues" : "Isu Aktif",
+      value: loading ? "..." : dashboardData.activeComplaints.toString(),
       icon: AlertTriangle,
-      trend: loading ? '...' : `${dashboardData.completedComplaints} ${language === 'en' ? 'resolved' : 'diselesaikan'}`
+      trend: loading
+        ? "..."
+        : `${dashboardData.completedComplaints} ${
+            language === "en" ? "resolved" : "diselesaikan"
+          }`,
     },
     {
-      title: language === 'en' ? 'Events' : 'Acara',
-      value: loading ? '...' : dashboardData.upcomingEvents.toString(),
+      title: language === "en" ? "Events" : "Acara",
+      value: loading ? "..." : dashboardData.upcomingEvents.toString(),
       icon: Calendar,
-      trend: loading ? '...' : `${language === 'en' ? 'upcoming events' : 'acara akan datang'}`
-    }
+      trend: loading
+        ? "..."
+        : `${language === "en" ? "upcoming events" : "acara akan datang"}`,
+    },
   ];
 
-  const handleRoleRequestAction = async (requestId: string, action: 'approved' | 'rejected') => {
+  const handleRoleRequestAction = async (
+    requestId: string,
+    action: "approved" | "rejected"
+  ) => {
     try {
       await supabase
-        .from('role_change_requests')
-        .update({ 
+        .from("role_change_requests")
+        .update({
           status: action,
           approved_by: user?.id,
-          approved_at: new Date().toISOString()
+          approved_at: new Date().toISOString(),
         })
-        .eq('id', requestId);
+        .eq("id", requestId);
 
       // Refresh the data
-      setPendingRoleRequests(prev => 
-        prev.filter(req => req.id !== requestId)
+      setPendingRoleRequests((prev) =>
+        prev.filter((req) => req.id !== requestId)
       );
-      
-      setDashboardData(prev => ({
-        ...prev,
-        pendingRegistrations: prev.pendingRegistrations - 1
-      }));
 
+      setDashboardData((prev) => ({
+        ...prev,
+        pendingRegistrations: prev.pendingRegistrations - 1,
+      }));
     } catch (error) {
-      console.error('Error updating role request:', error);
+      console.error("Error updating role request:", error);
     }
   };
 
@@ -157,41 +202,60 @@ export function CommunityAdminDashboard() {
     try {
       // Fetch recent complaints and announcements
       const [complaintsData, announcementsData] = await Promise.all([
-        supabase.from('complaints').select('*').eq('district_id', districtId).order('created_at', { ascending: false }).limit(2),
-        supabase.from('announcements').select('*').eq('district_id', districtId).eq('is_published', true).order('created_at', { ascending: false }).limit(2)
+        supabase
+          .from("complaints")
+          .select("*")
+          .eq("district_id", districtId)
+          .order("created_at", { ascending: false })
+          .limit(2),
+        supabase
+          .from("announcements")
+          .select("*")
+          .eq("district_id", districtId)
+          .eq("is_published", true)
+          .order("created_at", { ascending: false })
+          .limit(2),
       ]);
 
       const activities = [];
 
       // Add complaints as activities
       if (complaintsData.data) {
-        complaintsData.data.forEach(complaint => {
+        complaintsData.data.forEach((complaint) => {
           activities.push({
-            type: 'Complaint',
-            message: language === 'en' ? `New complaint: ${complaint.title}` : `Aduan baru: ${complaint.title}`,
+            type: "Complaint",
+            message:
+              language === "en"
+                ? `New complaint: ${complaint.title}`
+                : `Aduan baru: ${complaint.title}`,
             time: new Date(complaint.created_at).toLocaleString(),
-            icon: AlertTriangle
+            icon: AlertTriangle,
           });
         });
       }
 
       // Add announcements as activities
       if (announcementsData.data) {
-        announcementsData.data.forEach(announcement => {
+        announcementsData.data.forEach((announcement) => {
           activities.push({
-            type: 'Announcement',
-            message: language === 'en' ? `New announcement: ${announcement.title}` : `Pengumuman baru: ${announcement.title}`,
+            type: "Announcement",
+            message:
+              language === "en"
+                ? `New announcement: ${announcement.title}`
+                : `Pengumuman baru: ${announcement.title}`,
             time: new Date(announcement.created_at).toLocaleString(),
-            icon: Megaphone
+            icon: Megaphone,
           });
         });
       }
 
       // Sort by time and take the most recent
-      activities.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+      activities.sort(
+        (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
+      );
       setRecentActivities(activities.slice(0, 4));
     } catch (error) {
-      console.error('Error fetching activities:', error);
+      console.error("Error fetching activities:", error);
     }
   };
 
@@ -202,48 +266,55 @@ export function CommunityAdminDashboard() {
   const fetchUpcomingEvents = async (districtId: string) => {
     try {
       const { data: events } = await supabase
-        .from('events')
-        .select('*')
-        .eq('district_id', districtId)
-        .gte('start_date', new Date().toISOString().split('T')[0])
-        .eq('status', 'scheduled')
-        .order('start_date', { ascending: true })
+        .from("events")
+        .select("*")
+        .eq("district_id", districtId)
+        .gte("start_date", new Date().toISOString().split("T")[0])
+        .eq("status", "scheduled")
+        .order("start_date", { ascending: true })
         .limit(3);
 
       if (events) {
-        const formattedEvents = events.map(event => ({
+        const formattedEvents = events.map((event) => ({
           id: event.id,
           title: event.title,
           date: new Date(event.start_date).toLocaleDateString(),
           attendees: 0, // Could be enhanced with registration count
-          status: event.status
+          status: event.status,
         }));
 
         setUpcomingEvents(formattedEvents);
       }
     } catch (error) {
-      console.error('Error fetching upcoming events:', error);
+      console.error("Error fetching upcoming events:", error);
     }
   };
-
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground">
-          {language === 'en' ? 'Community Admin Dashboard' : 'Papan Pemuka Admin Komuniti'}
+          {language === "en"
+            ? "Community Admin Dashboard"
+            : "Papan Pemuka Admin Komuniti"}
         </h1>
         <p className="text-muted-foreground">
-          {language === 'en' ? 'Community management and resident services' : 'Pengurusan komuniti dan perkhidmatan penduduk'}
+          {language === "en"
+            ? "Community management and resident services"
+            : "Pengurusan komuniti dan perkhidmatan penduduk"}
         </p>
       </div>
+
+      <AnnouncementSlideshow />
 
       {/* Community Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {communityMetrics.map((metric, index) => (
           <Card key={index} className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {metric.title}
+              </CardTitle>
               <metric.icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -266,32 +337,50 @@ export function CommunityAdminDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Activity className="h-5 w-5" />
-                {language === 'en' ? 'Today\'s Summary' : 'Ringkasan Hari Ini'}
+                {language === "en" ? "Today's Summary" : "Ringkasan Hari Ini"}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">
-                    {language === 'en' ? 'System Status' : 'Status Sistem'}
+                    {language === "en" ? "System Status" : "Status Sistem"}
                   </span>
                   <Badge variant="default" className="bg-green-500">
-                    {language === 'en' ? 'Operational' : 'Beroperasi'}
+                    {language === "en" ? "Operational" : "Beroperasi"}
                   </Badge>
                 </div>
-                
+
                 <div className="text-sm text-muted-foreground space-y-1">
                   <div className="flex justify-between">
-                    <span>{language === 'en' ? 'Pending Registrations:' : 'Pendaftaran Menunggu:'}</span>
-                    <span className="font-medium">{loading ? '...' : dashboardData.pendingRegistrations}</span>
+                    <span>
+                      {language === "en"
+                        ? "Pending Registrations:"
+                        : "Pendaftaran Menunggu:"}
+                    </span>
+                    <span className="font-medium">
+                      {loading ? "..." : dashboardData.pendingRegistrations}
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span>{language === 'en' ? 'Active Complaints:' : 'Aduan Aktif:'}</span>
-                    <span className="font-medium">{loading ? '...' : dashboardData.activeComplaints}</span>
+                    <span>
+                      {language === "en"
+                        ? "Active Complaints:"
+                        : "Aduan Aktif:"}
+                    </span>
+                    <span className="font-medium">
+                      {loading ? "..." : dashboardData.activeComplaints}
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span>{language === 'en' ? 'Published Announcements:' : 'Pengumuman Diterbitkan:'}</span>
-                    <span className="font-medium">{loading ? '...' : dashboardData.recentAnnouncements}</span>
+                    <span>
+                      {language === "en"
+                        ? "Published Announcements:"
+                        : "Pengumuman Diterbitkan:"}
+                    </span>
+                    <span className="font-medium">
+                      {loading ? "..." : dashboardData.recentAnnouncements}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -306,14 +395,17 @@ export function CommunityAdminDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5" />
-              {language === 'en' ? 'Recent Activities' : 'Aktiviti Terkini'}
+              {language === "en" ? "Recent Activities" : "Aktiviti Terkini"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {loading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 border rounded-lg animate-pulse">
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 p-3 border rounded-lg animate-pulse"
+                  >
                     <div className="w-4 h-4 bg-muted rounded mt-0.5" />
                     <div className="flex-1">
                       <div className="h-4 bg-muted rounded mb-1 w-3/4" />
@@ -324,7 +416,10 @@ export function CommunityAdminDashboard() {
               </div>
             ) : recentActivities.length > 0 ? (
               recentActivities.map((activity, index) => (
-                <div key={index} className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 p-3 border rounded-lg">
+                <div
+                  key={index}
+                  className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 p-3 border rounded-lg"
+                >
                   <div className="flex items-start gap-3 min-w-0 flex-1">
                     <activity.icon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                     <div className="flex-1 min-w-0">
@@ -332,16 +427,22 @@ export function CommunityAdminDashboard() {
                         <Badge variant="secondary" className="text-xs">
                           {activity.type}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">{activity.time}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {activity.time}
+                        </span>
                       </div>
-                      <p className="text-sm truncate sm:whitespace-normal">{activity.message}</p>
+                      <p className="text-sm truncate sm:whitespace-normal">
+                        {activity.message}
+                      </p>
                     </div>
                   </div>
                 </div>
               ))
             ) : (
               <div className="text-center py-4 text-muted-foreground">
-                {language === 'en' ? 'No recent activities' : 'Tiada aktiviti terkini'}
+                {language === "en"
+                  ? "No recent activities"
+                  : "Tiada aktiviti terkini"}
               </div>
             )}
           </CardContent>
@@ -352,7 +453,9 @@ export function CommunityAdminDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              {language === 'en' ? 'Upcoming Community Events' : 'Acara Komuniti Akan Datang'}
+              {language === "en"
+                ? "Upcoming Community Events"
+                : "Acara Komuniti Akan Datang"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -360,7 +463,10 @@ export function CommunityAdminDashboard() {
               {loading ? (
                 <div className="space-y-4">
                   {[1, 2].map((i) => (
-                    <div key={i} className="flex items-center justify-between p-4 border rounded-lg animate-pulse">
+                    <div
+                      key={i}
+                      className="flex items-center justify-between p-4 border rounded-lg animate-pulse"
+                    >
                       <div className="flex-1">
                         <div className="h-4 bg-muted rounded mb-2 w-3/4" />
                         <div className="h-3 bg-muted rounded w-1/2" />
@@ -371,40 +477,56 @@ export function CommunityAdminDashboard() {
                 </div>
               ) : upcomingEvents.length > 0 ? (
                 upcomingEvents.map((event, index) => (
-                  <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                  <div
+                    key={index}
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg"
+                  >
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium truncate sm:whitespace-normal">{event.title}</h4>
+                      <h4 className="font-medium truncate sm:whitespace-normal">
+                        {event.title}
+                      </h4>
                       <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mt-1">
                         <span>{event.date}</span>
-                        <Badge variant={event.status === 'scheduled' ? 'default' : 'secondary'}>
-                          {event.status === 'scheduled' 
-                            ? (language === 'en' ? 'Scheduled' : 'Dijadualkan')
-                            : event.status
+                        <Badge
+                          variant={
+                            event.status === "scheduled"
+                              ? "default"
+                              : "secondary"
                           }
+                        >
+                          {event.status === "scheduled"
+                            ? language === "en"
+                              ? "Scheduled"
+                              : "Dijadualkan"
+                            : event.status}
                         </Badge>
                       </div>
                     </div>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
-                      onClick={() => navigate('/events')}
+                      onClick={() => navigate("/events")}
                       className="w-full sm:w-auto shrink-0"
                     >
-                      {language === 'en' ? 'Manage' : 'Urus'}
+                      {language === "en" ? "Manage" : "Urus"}
                     </Button>
                   </div>
                 ))
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>{language === 'en' ? 'No upcoming events' : 'Tiada acara akan datang'}</p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <p>
+                    {language === "en"
+                      ? "No upcoming events"
+                      : "Tiada acara akan datang"}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="mt-4"
-                    onClick={() => navigate('/events')}
+                    onClick={() => navigate("/events")}
                   >
-                    {language === 'en' ? 'Create Event' : 'Cipta Acara'}
+                    {language === "en" ? "Create Event" : "Cipta Acara"}
                   </Button>
                 </div>
               )}
@@ -419,19 +541,23 @@ export function CommunityAdminDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5" />
-              {language === 'en' ? 'Pending Role Requests' : 'Permohonan Peranan Menunggu'}
+              {language === "en"
+                ? "Pending Role Requests"
+                : "Permohonan Peranan Menunggu"}
             </CardTitle>
             <CardDescription>
-              {language === 'en' 
-                ? 'Review and approve role change requests from residents'
-                : 'Semak dan luluskan permohonan tukar peranan daripada penduduk'
-              }
+              {language === "en"
+                ? "Review and approve role change requests from residents"
+                : "Semak dan luluskan permohonan tukar peranan daripada penduduk"}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {pendingRoleRequests.slice(0, 3).map((request) => (
-                <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div
+                  key={request.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h4 className="font-medium">
@@ -446,36 +572,43 @@ export function CommunityAdminDashboard() {
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {language === 'en' ? 'Reason:' : 'Sebab:'} {request.justification || 'No reason provided'}
+                      {language === "en" ? "Reason:" : "Sebab:"}{" "}
+                      {request.justification || "No reason provided"}
                     </p>
                   </div>
                   <div className="flex gap-2 ml-4">
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
-                      onClick={() => handleRoleRequestAction(request.id, 'approved')}
+                      onClick={() =>
+                        handleRoleRequestAction(request.id, "approved")
+                      }
                       className="text-green-600 border-green-600 hover:bg-green-50"
                     >
                       <CheckCircle className="w-4 h-4 mr-1" />
-                      {language === 'en' ? 'Approve' : 'Lulus'}
+                      {language === "en" ? "Approve" : "Lulus"}
                     </Button>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
-                      onClick={() => handleRoleRequestAction(request.id, 'rejected')}
+                      onClick={() =>
+                        handleRoleRequestAction(request.id, "rejected")
+                      }
                       className="text-red-600 border-red-600 hover:bg-red-50"
                     >
                       <XCircle className="w-4 h-4 mr-1" />
-                      {language === 'en' ? 'Reject' : 'Tolak'}
+                      {language === "en" ? "Reject" : "Tolak"}
                     </Button>
                   </div>
                 </div>
               ))}
-              
+
               {pendingRoleRequests.length > 3 && (
                 <div className="text-center pt-2">
                   <Button variant="outline" size="sm">
-                    {language === 'en' ? `View all ${pendingRoleRequests.length} requests` : `Lihat semua ${pendingRoleRequests.length} permohonan`}
+                    {language === "en"
+                      ? `View all ${pendingRoleRequests.length} requests`
+                      : `Lihat semua ${pendingRoleRequests.length} permohonan`}
                   </Button>
                 </div>
               )}
@@ -489,23 +622,27 @@ export function CommunityAdminDashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />
-            {language === 'en' ? 'Unit Management' : 'Pengurusan Unit'}
+            {language === "en" ? "Unit Management" : "Pengurusan Unit"}
           </CardTitle>
           <CardDescription>
-            {language === 'en' 
-              ? 'Manage community units and resident information on the interactive map'
-              : 'Urus unit komuniti dan maklumat penduduk di peta interaktif'
-            }
+            {language === "en"
+              ? "Manage community units and resident information on the interactive map"
+              : "Urus unit komuniti dan maklumat penduduk di peta interaktif"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <InteractiveUnitEditor 
-            imageUrl={floorPlans?.[0]?.image_url || "/lovable-uploads/0709b4db-2289-4ac3-a185-7de4c3dce5b0.png"}
+          <InteractiveUnitEditor
+            imageUrl={
+              floorPlans?.[0]?.image_url ||
+              "/lovable-uploads/0709b4db-2289-4ac3-a185-7de4c3dce5b0.png"
+            }
             floorPlanId={floorPlans?.[0]?.id}
             title="Interactive Unit Management"
             showSearch={true}
             isAdminMode={true}
-            onFloorPlanChange={(floorPlanId) => console.log('Floor plan changed:', floorPlanId)}
+            onFloorPlanChange={(floorPlanId) =>
+              console.log("Floor plan changed:", floorPlanId)
+            }
           />
         </CardContent>
       </Card>
@@ -513,40 +650,44 @@ export function CommunityAdminDashboard() {
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>{language === 'en' ? 'Quick Actions' : 'Tindakan Pantas'}</CardTitle>
+          <CardTitle>
+            {language === "en" ? "Quick Actions" : "Tindakan Pantas"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button 
+            <Button
               className="flex items-center gap-2 h-12"
-              onClick={() => navigate('/admin/announcement-management')}
+              onClick={() => navigate("/admin/announcement-management")}
             >
               <Megaphone className="h-4 w-4" />
-              {language === 'en' ? 'Create Announcement' : 'Cipta Pengumuman'}
+              {language === "en" ? "Create Announcement" : "Cipta Pengumuman"}
             </Button>
-            <Button 
-              className="flex items-center gap-2 h-12" 
+            <Button
+              className="flex items-center gap-2 h-12"
               variant="outline"
-              onClick={() => navigate('/admin/complaints-management')}
+              onClick={() => navigate("/admin/complaints-management")}
             >
               <AlertTriangle className="h-4 w-4" />
-              {language === 'en' ? 'Manage Complaints' : 'Urus Aduan'}
+              {language === "en" ? "Manage Complaints" : "Urus Aduan"}
             </Button>
-            <Button 
-              className="flex items-center gap-2 h-12" 
+            <Button
+              className="flex items-center gap-2 h-12"
               variant="outline"
-              onClick={() => navigate('/admin/floor-plans')}
+              onClick={() => navigate("/admin/floor-plans")}
             >
               <Monitor className="h-4 w-4" />
-              {language === 'en' ? 'Floor Plan Management' : 'Pengurusan Pelan Lantai'}
+              {language === "en"
+                ? "Floor Plan Management"
+                : "Pengurusan Pelan Lantai"}
             </Button>
-            <Button 
-              className="flex items-center gap-2 h-12" 
+            <Button
+              className="flex items-center gap-2 h-12"
               variant="outline"
-              onClick={() => navigate('/admin/complaints-analytics')}
+              onClick={() => navigate("/admin/complaints-analytics")}
             >
               <MessageSquare className="h-4 w-4" />
-              {language === 'en' ? 'View Reports' : 'Lihat Laporan'}
+              {language === "en" ? "View Reports" : "Lihat Laporan"}
             </Button>
           </div>
         </CardContent>

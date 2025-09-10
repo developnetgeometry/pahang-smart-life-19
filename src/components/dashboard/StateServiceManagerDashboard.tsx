@@ -1,14 +1,20 @@
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { WeatherWidget } from './WeatherWidget';
-import { PrayerTimesWidget } from './PrayerTimesWidget';
-import { 
-  MapPin, 
-  Users, 
-  TrendingUp, 
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { WeatherWidget } from "./WeatherWidget";
+import { PrayerTimesWidget } from "./PrayerTimesWidget";
+import {
+  MapPin,
+  Users,
+  TrendingUp,
   Clock,
   CheckCircle,
   DollarSign,
@@ -17,176 +23,208 @@ import {
   Star,
   Activity,
   Settings,
-  BarChart3
-} from 'lucide-react';
+  BarChart3,
+} from "lucide-react";
+import { AnnouncementSlideshow } from "./AnnouncementSlideshow";
 
 export function StateServiceManagerDashboard() {
   const { language } = useAuth();
 
   const serviceMetrics = [
     {
-      title: language === 'en' ? 'Service Regions' : 'Wilayah Perkhidmatan',
-      value: '4',
+      title: language === "en" ? "Service Regions" : "Wilayah Perkhidmatan",
+      value: "4",
       icon: MapPin,
-      trend: 'All regions active'
+      trend: "All regions active",
     },
     {
-      title: language === 'en' ? 'Active Providers' : 'Penyedia Aktif',
-      value: '67',
+      title: language === "en" ? "Active Providers" : "Penyedia Aktif",
+      value: "67",
       icon: Users,
-      trend: '+3 new this month'
+      trend: "+3 new this month",
     },
     {
-      title: language === 'en' ? 'Service Quality' : 'Kualiti Perkhidmatan',
-      value: '4.2/5',
+      title: language === "en" ? "Service Quality" : "Kualiti Perkhidmatan",
+      value: "4.2/5",
       icon: Star,
-      trend: 'Average rating',
-      status: 84
+      trend: "Average rating",
+      status: 84,
     },
     {
-      title: language === 'en' ? 'Monthly Volume' : 'Volum Bulanan',
-      value: '1,245',
+      title: language === "en" ? "Monthly Volume" : "Volum Bulanan",
+      value: "1,245",
       icon: Activity,
-      trend: 'Service requests'
-    }
+      trend: "Service requests",
+    },
   ];
 
   const regionPerformance = [
     {
-      region: 'Pahang Prima North',
+      region: "Pahang Prima North",
       providers: 18,
       requests: 320,
-      avgResolution: '1.5 days',
+      avgResolution: "1.5 days",
       satisfaction: 4.3,
-      efficiency: 92
+      efficiency: 92,
     },
     {
-      region: 'Pahang Prima South',
+      region: "Pahang Prima South",
       providers: 15,
       requests: 285,
-      avgResolution: '2.1 days',
+      avgResolution: "2.1 days",
       satisfaction: 4.1,
-      efficiency: 88
+      efficiency: 88,
     },
     {
-      region: 'Pahang Prima East',
+      region: "Pahang Prima East",
       providers: 16,
       requests: 305,
-      avgResolution: '1.8 days',
+      avgResolution: "1.8 days",
       satisfaction: 4.2,
-      efficiency: 90
+      efficiency: 90,
     },
     {
-      region: 'Pahang Prima West',
+      region: "Pahang Prima West",
       providers: 18,
       requests: 335,
-      avgResolution: '1.6 days',
+      avgResolution: "1.6 days",
       satisfaction: 4.4,
-      efficiency: 94
-    }
+      efficiency: 94,
+    },
   ];
 
   const serviceTypes = [
     {
-      type: 'Cleaning Services',
+      type: "Cleaning Services",
       providers: 25,
       monthlyRequests: 450,
       avgRating: 4.3,
-      trend: '+8%'
+      trend: "+8%",
     },
     {
-      type: 'Maintenance Services',
+      type: "Maintenance Services",
       providers: 18,
       monthlyRequests: 320,
       avgRating: 4.1,
-      trend: '+12%'
+      trend: "+12%",
     },
     {
-      type: 'Delivery Services',
+      type: "Delivery Services",
       providers: 12,
       monthlyRequests: 280,
       avgRating: 4.0,
-      trend: '+5%'
+      trend: "+5%",
     },
     {
-      type: 'Installation Services',
+      type: "Installation Services",
       providers: 12,
       monthlyRequests: 195,
       avgRating: 4.2,
-      trend: '+15%'
-    }
+      trend: "+15%",
+    },
   ];
 
   const performanceIssues = [
     {
-      issue: language === 'en' ? 'Response time exceeding target in South region' : 'Masa tindak balas melebihi sasaran di rantau Selatan',
-      severity: 'medium',
+      issue:
+        language === "en"
+          ? "Response time exceeding target in South region"
+          : "Masa tindak balas melebihi sasaran di rantau Selatan",
+      severity: "medium",
       affectedProviders: 3,
-      impact: 'Service quality',
-      action: 'Performance review scheduled'
+      impact: "Service quality",
+      action: "Performance review scheduled",
     },
     {
-      issue: language === 'en' ? 'Provider availability low during peak hours' : 'Ketersediaan penyedia rendah semasa waktu puncak',
-      severity: 'high',
+      issue:
+        language === "en"
+          ? "Provider availability low during peak hours"
+          : "Ketersediaan penyedia rendah semasa waktu puncak",
+      severity: "high",
       affectedProviders: 8,
-      impact: 'Customer satisfaction',
-      action: 'Staffing optimization needed'
+      impact: "Customer satisfaction",
+      action: "Staffing optimization needed",
     },
     {
-      issue: language === 'en' ? 'Contract renewal pending for cleaning services' : 'Pembaharuan kontrak menunggu untuk perkhidmatan pembersihan',
-      severity: 'low',
+      issue:
+        language === "en"
+          ? "Contract renewal pending for cleaning services"
+          : "Pembaharuan kontrak menunggu untuk perkhidmatan pembersihan",
+      severity: "low",
       affectedProviders: 5,
-      impact: 'Service continuity',
-      action: 'Contract review in progress'
-    }
+      impact: "Service continuity",
+      action: "Contract review in progress",
+    },
   ];
 
   const actionItems = [
     {
-      task: language === 'en' ? 'Q1 Service provider performance reviews' : 'Ulasan prestasi penyedia perkhidmatan Q1',
-      dueDate: '2024-03-15',
-      priority: 'high',
-      status: 'in_progress'
+      task:
+        language === "en"
+          ? "Q1 Service provider performance reviews"
+          : "Ulasan prestasi penyedia perkhidmatan Q1",
+      dueDate: "2024-03-15",
+      priority: "high",
+      status: "in_progress",
     },
     {
-      task: language === 'en' ? 'Update service standards documentation' : 'Kemaskini dokumentasi standard perkhidmatan',
-      dueDate: '2024-02-28',
-      priority: 'medium',
-      status: 'pending'
-    },  
+      task:
+        language === "en"
+          ? "Update service standards documentation"
+          : "Kemaskini dokumentasi standard perkhidmatan",
+      dueDate: "2024-02-28",
+      priority: "medium",
+      status: "pending",
+    },
     {
-      task: language === 'en' ? 'Schedule regional coordination meetings' : 'Jadualkan mesyuarat koordinasi serantau',
-      dueDate: '2024-02-25',
-      priority: 'medium',
-      status: 'scheduled'
-    }
+      task:
+        language === "en"
+          ? "Schedule regional coordination meetings"
+          : "Jadualkan mesyuarat koordinasi serantau",
+      dueDate: "2024-02-25",
+      priority: "medium",
+      status: "scheduled",
+    },
   ];
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'high': return 'destructive';
-      case 'medium': return 'default';
-      case 'low': return 'secondary';
-      default: return 'secondary';
+      case "high":
+        return "destructive";
+      case "medium":
+        return "default";
+      case "low":
+        return "secondary";
+      default:
+        return "secondary";
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'in_progress': return 'bg-blue-100 text-blue-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'scheduled': return 'bg-purple-100 text-purple-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "in_progress":
+        return "bg-blue-100 text-blue-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "scheduled":
+        return "bg-purple-100 text-purple-800";
+      case "completed":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'destructive';
-      case 'medium': return 'default';
-      case 'low': return 'secondary';
-      default: return 'secondary';
+      case "high":
+        return "destructive";
+      case "medium":
+        return "default";
+      case "low":
+        return "secondary";
+      default:
+        return "secondary";
     }
   };
 
@@ -194,19 +232,27 @@ export function StateServiceManagerDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground">
-          {language === 'en' ? 'State Service Manager Dashboard' : 'Papan Pemuka Pengurus Perkhidmatan Negeri'}
+          {language === "en"
+            ? "State Service Manager Dashboard"
+            : "Papan Pemuka Pengurus Perkhidmatan Negeri"}
         </h1>
         <p className="text-muted-foreground">
-          {language === 'en' ? 'State-wide service delivery oversight and optimization' : 'Pengawasan dan pengoptimuman penyampaian perkhidmatan seluruh negeri'}
+          {language === "en"
+            ? "State-wide service delivery oversight and optimization"
+            : "Pengawasan dan pengoptimuman penyampaian perkhidmatan seluruh negeri"}
         </p>
       </div>
+
+      <AnnouncementSlideshow />
 
       {/* Service Delivery Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {serviceMetrics.map((metric, index) => (
           <Card key={index} className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {metric.title}
+              </CardTitle>
               <metric.icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -232,14 +278,16 @@ export function StateServiceManagerDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Activity className="h-5 w-5" />
-                {language === 'en' ? 'Service Operations Status' : 'Status Operasi Perkhidmatan'}
+                {language === "en"
+                  ? "Service Operations Status"
+                  : "Status Operasi Perkhidmatan"}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-sm text-muted-foreground">
-                {language === 'en' 
-                  ? 'All service regions operational. 67 active providers across 4 regions.' 
-                  : 'Semua wilayah perkhidmatan beroperasi. 67 penyedia aktif merentasi 4 wilayah.'}
+                {language === "en"
+                  ? "All service regions operational. 67 active providers across 4 regions."
+                  : "Semua wilayah perkhidmatan beroperasi. 67 penyedia aktif merentasi 4 wilayah."}
               </div>
             </CardContent>
           </Card>
@@ -251,12 +299,17 @@ export function StateServiceManagerDashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-warning" />
-            {language === 'en' ? 'Performance Issues & Alerts' : 'Isu Prestasi & Amaran'}
+            {language === "en"
+              ? "Performance Issues & Alerts"
+              : "Isu Prestasi & Amaran"}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {performanceIssues.map((issue, index) => (
-            <div key={index} className="flex items-start justify-between p-4 border rounded-lg">
+            <div
+              key={index}
+              className="flex items-start justify-between p-4 border rounded-lg"
+            >
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <Badge variant={getSeverityColor(issue.severity) as any}>
@@ -271,7 +324,7 @@ export function StateServiceManagerDashboard() {
                 </div>
               </div>
               <Button size="sm" variant="outline">
-                {language === 'en' ? 'Address' : 'Tangani'}
+                {language === "en" ? "Address" : "Tangani"}
               </Button>
             </div>
           ))}
@@ -284,7 +337,7 @@ export function StateServiceManagerDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              {language === 'en' ? 'Regional Performance' : 'Prestasi Serantau'}
+              {language === "en" ? "Regional Performance" : "Prestasi Serantau"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -316,13 +369,18 @@ export function StateServiceManagerDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              {language === 'en' ? 'Service Type Performance' : 'Prestasi Jenis Perkhidmatan'}
+              {language === "en"
+                ? "Service Type Performance"
+                : "Prestasi Jenis Perkhidmatan"}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {serviceTypes.map((service, index) => (
-                <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg space-y-2 sm:space-y-0">
+                <div
+                  key={index}
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg space-y-2 sm:space-y-0"
+                >
                   <div className="flex-1">
                     <p className="text-sm font-medium">{service.type}</p>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
@@ -350,20 +408,23 @@ export function StateServiceManagerDashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5" />
-            {language === 'en' ? 'Action Items' : 'Item Tindakan'}
+            {language === "en" ? "Action Items" : "Item Tindakan"}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {actionItems.map((item, index) => (
-              <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg space-y-2 sm:space-y-0">
+              <div
+                key={index}
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg space-y-2 sm:space-y-0"
+              >
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <Badge variant={getPriorityColor(item.priority) as any}>
                       {item.priority}
                     </Badge>
                     <Badge className={getStatusColor(item.status)}>
-                      {item.status.replace('_', ' ')}
+                      {item.status.replace("_", " ")}
                     </Badge>
                   </div>
                   <p className="text-sm font-medium">{item.task}</p>
@@ -373,7 +434,7 @@ export function StateServiceManagerDashboard() {
                   </div>
                 </div>
                 <Button size="sm" variant="outline">
-                  {language === 'en' ? 'Update' : 'Kemaskini'}
+                  {language === "en" ? "Update" : "Kemaskini"}
                 </Button>
               </div>
             ))}
@@ -384,25 +445,31 @@ export function StateServiceManagerDashboard() {
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>{language === 'en' ? 'Quick Actions' : 'Tindakan Pantas'}</CardTitle>
+          <CardTitle>
+            {language === "en" ? "Quick Actions" : "Tindakan Pantas"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Button className="flex items-center gap-2 h-12">
               <FileText className="h-4 w-4" />
-              {language === 'en' ? 'Generate Report' : 'Jana Laporan'}
+              {language === "en" ? "Generate Report" : "Jana Laporan"}
             </Button>
             <Button className="flex items-center gap-2 h-12" variant="outline">
               <Users className="h-4 w-4" />
-              {language === 'en' ? 'Provider Review' : 'Ulasan Penyedia'}
+              {language === "en" ? "Provider Review" : "Ulasan Penyedia"}
             </Button>
             <Button className="flex items-center gap-2 h-12" variant="outline">
               <Settings className="h-4 w-4" />
-              {language === 'en' ? 'Service Standards' : 'Standard Perkhidmatan'}
+              {language === "en"
+                ? "Service Standards"
+                : "Standard Perkhidmatan"}
             </Button>
             <Button className="flex items-center gap-2 h-12" variant="outline">
               <Activity className="h-4 w-4" />
-              {language === 'en' ? 'Performance Analytics' : 'Analitik Prestasi'}
+              {language === "en"
+                ? "Performance Analytics"
+                : "Analitik Prestasi"}
             </Button>
           </div>
         </CardContent>
