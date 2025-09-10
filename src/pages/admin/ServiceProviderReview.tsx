@@ -198,6 +198,17 @@ export default function ServiceProviderReview() {
   const updateApplicationStatus = async (newStatus: string) => {
     if (!application || !user) return;
     
+    // Validate required fields
+    if (newStatus === 'rejected' && !rejectionReason.trim()) {
+      toast.error('Please provide a rejection reason');
+      return;
+    }
+    
+    if (newStatus === 'additional_info_required' && !reviewNotes.trim()) {
+      toast.error('Please provide details about what additional information is required');
+      return;
+    }
+    
     setActionLoading(true);
     try {
       const updateData: any = {
@@ -211,21 +222,33 @@ export default function ServiceProviderReview() {
         updateData.rejection_reason = rejectionReason;
       }
 
-      const { error } = await supabase
+      // Update the application status first
+      const { error: updateError } = await supabase
         .from('service_provider_applications')
         .update(updateData)
         .eq('id', application.id);
 
-      if (error) throw error;
+      if (updateError) {
+        console.error('Error updating application status:', updateError);
+        throw new Error(`Failed to update application status: ${updateError.message}`);
+      }
 
-      // If approved, create service provider profile
+      // If approved, try to create service provider profile
+      let profileCreationFailed = false;
       if (newStatus === 'approved') {
-        await createServiceProviderProfile();
+        try {
+          await createServiceProviderProfile();
+        } catch (profileError) {
+          console.error('Profile creation failed:', profileError);
+          profileCreationFailed = true;
+          // Don't fail the entire operation, just warn the user
+        }
       }
 
       // Send email notification
+      let emailSent = false;
       try {
-        await supabase.functions.invoke('send-application-status-email', {
+        const emailResponse = await supabase.functions.invoke('send-application-status-email', {
           body: {
             applicationId: application.id,
             applicantEmail: application.applicant.email,
@@ -236,11 +259,15 @@ export default function ServiceProviderReview() {
             rejectionReason: newStatus === 'rejected' ? rejectionReason : undefined
           }
         });
+        
+        if (emailResponse.error) {
+          throw emailResponse.error;
+        }
+        
+        emailSent = true;
         console.log('Email notification sent successfully');
       } catch (emailError) {
         console.error('Failed to send email notification:', emailError);
-        // Don't throw error here as the main action was successful
-        toast.error('Status updated but email notification failed to send');
       }
 
       const statusLabels = {
@@ -249,11 +276,23 @@ export default function ServiceProviderReview() {
         additional_info_required: 'marked as requiring additional information'
       };
 
-      toast.success(`Application ${statusLabels[newStatus as keyof typeof statusLabels] || newStatus} successfully. Email notification sent to applicant.`);
+      // Show appropriate success/warning messages
+      const baseMessage = `Application ${statusLabels[newStatus as keyof typeof statusLabels] || newStatus} successfully`;
+      
+      if (profileCreationFailed && emailSent) {
+        toast.success(`${baseMessage}. Email sent. Warning: Service provider profile creation failed - please create manually.`);
+      } else if (profileCreationFailed && !emailSent) {
+        toast.success(`${baseMessage}. Warning: Email notification and profile creation failed.`);
+      } else if (!emailSent) {
+        toast.success(`${baseMessage}. Warning: Email notification failed to send.`);
+      } else {
+        toast.success(`${baseMessage}. Email notification sent to applicant.`);
+      }
+      
       fetchApplicationDetails();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating application:', error);
-      toast.error('Failed to update application status');
+      toast.error(error.message || 'Failed to update application status');
     } finally {
       setActionLoading(false);
     }
@@ -263,10 +302,22 @@ export default function ServiceProviderReview() {
     if (!application) return;
 
     try {
+      // Get the applicant's district_id from their profile
+      const { data: applicantProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('district_id')
+        .eq('id', application.applicant_id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching applicant profile:', profileError);
+        throw new Error('Failed to get applicant district information');
+      }
+
       const profileData = {
         user_id: application.applicant_id,
         application_id: application.id,
-        district_id: user?.active_community_id,
+        district_id: applicantProfile.district_id,
         business_name: application.business_name,
         business_type: application.business_type,
         business_description: application.business_description,
