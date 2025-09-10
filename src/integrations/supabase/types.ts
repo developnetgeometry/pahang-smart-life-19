@@ -9033,6 +9033,7 @@ export type Database = {
           created_at: string | null
           district_id: string | null
           id: string
+          is_active: boolean
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string | null
           user_id: string
@@ -9042,6 +9043,7 @@ export type Database = {
           created_at?: string | null
           district_id?: string | null
           id?: string
+          is_active?: boolean
           role: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
           user_id: string
@@ -9051,6 +9053,7 @@ export type Database = {
           created_at?: string | null
           district_id?: string | null
           id?: string
+          is_active?: boolean
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
           user_id?: string
