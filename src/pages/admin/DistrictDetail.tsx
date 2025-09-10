@@ -19,6 +19,7 @@ interface District {
   name: string;
   code?: string;
   area?: number;
+  area_km2?: number;
   population?: number;
   communities_count?: number;
   coordinator_id?: string;
@@ -339,7 +340,7 @@ export default function DistrictDetail() {
               <MapIcon className="h-8 w-8 text-muted-foreground" />
               <div>
                 <p className="text-sm text-muted-foreground">{t.area}</p>
-                <p className="text-xl font-semibold">{district.area || 0} km²</p>
+                <p className="text-xl font-semibold">{district.area_km2 || 0} km²</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -353,7 +354,7 @@ export default function DistrictDetail() {
               <Building className="h-8 w-8 text-muted-foreground" />
               <div>
                 <p className="text-sm text-muted-foreground">{t.totalCommunities}</p>
-                <p className="text-xl font-semibold">{district.communities_count || 0}</p>
+                <p className="text-xl font-semibold">{communities.length}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">

@@ -35,18 +35,44 @@ export const useDistricts = () => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
+      // Fetch districts with community count
+      const { data: districtsData, error: districtsError } = await supabase
         .from('districts')
         .select('*')
         .order('name');
 
-      if (error) {
-        console.error('Error fetching districts:', error);
+      if (districtsError) {
+        console.error('Error fetching districts:', districtsError);
         toast.error('Failed to fetch districts');
         return;
       }
 
-      setDistricts(data || []);
+      // Fetch community counts for each district
+      const { data: communitiesData, error: communitiesError } = await supabase
+        .from('communities')
+        .select('district_id');
+
+      if (communitiesError) {
+        console.error('Error fetching communities:', communitiesError);
+      }
+
+      // Count communities per district
+      const communityCounts: Record<string, number> = {};
+      if (communitiesData) {
+        communitiesData.forEach(community => {
+          if (community.district_id) {
+            communityCounts[community.district_id] = (communityCounts[community.district_id] || 0) + 1;
+          }
+        });
+      }
+
+      // Merge district data with community counts
+      const districtsWithCounts = (districtsData || []).map(district => ({
+        ...district,
+        communities_count: communityCounts[district.id] || 0
+      }));
+
+      setDistricts(districtsWithCounts);
     } catch (error) {
       console.error('Error fetching districts:', error);
       toast.error('Failed to fetch districts');
