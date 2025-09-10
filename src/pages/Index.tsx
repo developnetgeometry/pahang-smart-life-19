@@ -10,7 +10,6 @@ import { CommunityLeaderDashboard } from '@/components/dashboard/CommunityLeader
 import { StateServiceManagerDashboard } from '@/components/dashboard/StateServiceManagerDashboard';
 import { ResidentDashboard } from '@/components/dashboard/ResidentDashboard';
 import { AnnouncementSlideshow } from '@/components/dashboard/AnnouncementSlideshow';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 
 const Index = () => {
   const { hasRole, roles, initializing } = useAuth();
@@ -27,28 +26,24 @@ const Index = () => {
   // Determine which dashboard to show based on user's highest role
   if (hasRole('state_admin')) return (
     <>
-      <DashboardHeader />
       <AnnouncementSlideshow />
       <StateAdminDashboard />
     </>
   );
   if (hasRole('district_coordinator')) return (
     <>
-      <DashboardHeader />
       <AnnouncementSlideshow />
       <DistrictCoordinatorDashboard />
     </>
   );
   if (hasRole('community_admin')) return (
     <>
-      <DashboardHeader />
       <AnnouncementSlideshow />
       <CommunityAdminDashboard />
     </>
   );
   if (hasRole('facility_manager')) return (
     <>
-      <DashboardHeader />
       <AnnouncementSlideshow />
       <FacilityManagerDashboard />
     </>
@@ -56,14 +51,12 @@ const Index = () => {
   
   if (hasRole('security_officer')) return (
     <>
-      <DashboardHeader />
       <AnnouncementSlideshow />
       <SecurityOfficerDashboard />
     </>
   );
   if (hasRole('maintenance_staff')) return (
     <>
-      <DashboardHeader />
       <AnnouncementSlideshow />
       <MaintenanceStaffDashboard />
     </>
@@ -71,14 +64,12 @@ const Index = () => {
   if (hasRole('service_provider')) return <ServiceProviderEnhancedDashboard />;
   if (hasRole('community_leader')) return (
     <>
-      <DashboardHeader />
       <AnnouncementSlideshow />
       <CommunityLeaderDashboard />
     </>
   );
   if (hasRole('state_service_manager')) return (
     <>
-      <DashboardHeader />
       <AnnouncementSlideshow />
       <StateServiceManagerDashboard />
     </>
@@ -87,7 +78,6 @@ const Index = () => {
   // Only show resident dashboard if user actually has resident role
   if (hasRole('resident')) return (
     <>
-      <DashboardHeader />
       <AnnouncementSlideshow />
       <ResidentDashboard />
     </>
