@@ -38,7 +38,11 @@ export default function CreateCommunityModal({
     description: '',
     total_units: '',
     postal_code: '',
-    established_date: new Date()
+    established_date: new Date(),
+    latitude: '',
+    longitude: '',
+    city: '',
+    country: 'Malaysia'
   });
 
   const text = {
@@ -58,6 +62,14 @@ export default function CreateCommunityModal({
       postalCodePlaceholder: 'Enter postal code',
       establishedDate: 'Established Date',
       selectDate: 'Select date',
+      latitude: 'Latitude',
+      latitudePlaceholder: 'Enter latitude',
+      longitude: 'Longitude',
+      longitudePlaceholder: 'Enter longitude',
+      city: 'City',
+      cityPlaceholder: 'Enter city',
+      country: 'Country',
+      countryPlaceholder: 'Enter country',
       residential: 'Residential',
       commercial: 'Commercial',
       mixed: 'Mixed Use',
@@ -87,6 +99,14 @@ export default function CreateCommunityModal({
       postalCodePlaceholder: 'Masukkan poskod',
       establishedDate: 'Tarikh Ditubuhkan',
       selectDate: 'Pilih tarikh',
+      latitude: 'Latitud',
+      latitudePlaceholder: 'Masukkan latitud',
+      longitude: 'Longitud',
+      longitudePlaceholder: 'Masukkan longitud',
+      city: 'Bandar',
+      cityPlaceholder: 'Masukkan bandar',
+      country: 'Negara',
+      countryPlaceholder: 'Masukkan negara',
       residential: 'Kediaman',
       commercial: 'Komersial',
       mixed: 'Penggunaan Campuran',
@@ -125,6 +145,8 @@ export default function CreateCommunityModal({
           total_units: formData.total_units ? parseInt(formData.total_units) : 0,
           postal_code: formData.postal_code.trim() || null,
           established_date: formData.established_date.toISOString().split('T')[0],
+          latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+          longitude: formData.longitude ? parseFloat(formData.longitude) : null,
           district_id: districtId,
           status: 'active'
         });
@@ -143,7 +165,11 @@ export default function CreateCommunityModal({
         description: '',
         total_units: '',
         postal_code: '',
-        established_date: new Date()
+        established_date: new Date(),
+        latitude: '',
+        longitude: '',
+        city: '',
+        country: 'Malaysia'
       });
     } catch (error) {
       console.error('Error creating community:', error);
@@ -291,6 +317,58 @@ export default function CreateCommunityModal({
                       />
                     </PopoverContent>
                   </Popover>
+                </div>
+
+                {/* City */}
+                <div>
+                  <Label htmlFor="city">{t.city}</Label>
+                  <Input
+                    id="city"
+                    value={formData.city}
+                    onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                    placeholder={t.cityPlaceholder}
+                    disabled={loading}
+                  />
+                </div>
+
+                {/* Country */}
+                <div>
+                  <Label htmlFor="country">{t.country}</Label>
+                  <Input
+                    id="country"
+                    value={formData.country}
+                    onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
+                    placeholder={t.countryPlaceholder}
+                    disabled={loading}
+                  />
+                </div>
+
+                {/* Latitude */}
+                <div>
+                  <Label htmlFor="latitude">{t.latitude}</Label>
+                  <Input
+                    id="latitude"
+                    type="number"
+                    step="any"
+                    value={formData.latitude}
+                    onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value }))}
+                    placeholder={t.latitudePlaceholder}
+                    disabled={loading}
+                  />
+                </div>
+
+                {/* Longitude */}
+                <div>
+                  <Label htmlFor="longitude">{t.longitude}</Label>
+                  <Input
+                    id="longitude"
+                    type="number"
+                    step="any"
+                    value={formData.longitude}
+                    onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value }))}
+                    placeholder={t.longitudePlaceholder}
+                    disabled={loading}
+                  />
                 </div>
               </div>
             </CollapsibleContent>
