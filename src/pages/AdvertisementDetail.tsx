@@ -453,15 +453,6 @@ export default function AdvertisementDetail() {
 
               <Separator />
 
-              <Button
-                className="w-full"
-                onClick={handleBookService}
-                disabled={advertisement.product_type === 'product' && !advertisement.is_in_stock}
-              >
-                <ShoppingCart className="h-4 w-4 mr-2" />
-                {advertisement.product_type === 'service' ? 'Book This Service' : 
-                 advertisement.product_type === 'product' ? 'Buy Now' : 'Purchase'}
-              </Button>
             </CardContent>
           </Card>
 
