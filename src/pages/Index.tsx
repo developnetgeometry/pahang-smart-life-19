@@ -17,20 +17,49 @@ const DashboardHeader = ({ title, subtitle }: { title: string; subtitle: string 
   
   return (
     <div className="relative mb-6 overflow-hidden rounded-xl">
-      <div className="h-32 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5" />
+      <div className="relative h-32 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900">
+        {/* Background pattern/texture */}
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 via-amber-600/10 to-yellow-500/20" />
+        <div 
+          className="absolute inset-0 opacity-30"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
+        
         <div className="relative h-full flex flex-col justify-between p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-white/80">
+          {/* Top section with date and time */}
+          <div className="flex items-center gap-4 text-white/90">
+            <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1 backdrop-blur-sm">
               <Calendar className="h-4 w-4" />
-              <span>{currentDate.toLocaleDateString()}</span>
-              <Clock className="h-4 w-4 ml-4" />
-              <span>{currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              <span className="text-sm font-medium">
+                {currentDate.toLocaleDateString('en-US', { 
+                  month: 'numeric', 
+                  day: 'numeric', 
+                  year: 'numeric' 
+                })}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1 backdrop-blur-sm">
+              <Clock className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                {currentDate.toLocaleTimeString([], { 
+                  hour: '2-digit', 
+                  minute: '2-digit',
+                  hour12: true 
+                }).toUpperCase()}
+              </span>
             </div>
           </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">{title}</h1>
-            <p className="text-white/80 mt-1">{subtitle}</p>
+          
+          {/* Bottom section with title and subtitle */}
+          <div className="space-y-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-white">
+              {title}
+            </h1>
+            <p className="text-white/80 text-base">
+              {subtitle}
+            </p>
           </div>
         </div>
       </div>
