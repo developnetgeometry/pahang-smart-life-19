@@ -190,7 +190,7 @@ export function AnnouncementSlideshow() {
   return (
     <>
       <div className="w-full overflow-hidden rounded-xl">
-        <div className="relative h-64 md:h-72">
+        <div className="relative h-80 md:h-96">
           {/* Background Image or Gradient */}
           {currentAnnouncement.image_url && !imageLoadError ? (
             <>
