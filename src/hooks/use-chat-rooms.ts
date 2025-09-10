@@ -48,7 +48,7 @@ export const useChatRooms = () => {
         .from('chat_rooms')
         .select(`
           *,
-          chat_room_members!inner(user_id),
+          members:chat_room_members!chat_room_members_room_id_fkey!inner(user_id),
           chat_messages(
             message_text,
             created_at,
@@ -56,12 +56,19 @@ export const useChatRooms = () => {
             profiles(full_name)
           )
         `)
-        .eq('chat_room_members.user_id', user.id)
+        .eq('members.user_id', user.id)
         .eq('is_active', true)
         .order('updated_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching rooms:', error);
+        
+        // Handle PGRST201 ambiguous relationship error with fallback
+        if (error.code === 'PGRST201') {
+          console.log('Attempting fallback query due to ambiguous relationship');
+          return await fetchRoomsWithFallback();
+        }
+        
         throw error;
       }
 
@@ -75,7 +82,7 @@ export const useChatRooms = () => {
         
         return {
           ...room,
-          member_count: room.chat_room_members?.length || 0,
+          member_count: room.members?.length || 0,
           last_message: sortedMessages?.[0] ? {
             text: sortedMessages[0].message_text,
             sender_name: sortedMessages[0].profiles?.full_name || 'Unknown',
@@ -105,6 +112,72 @@ export const useChatRooms = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRoomsWithFallback = async () => {
+    try {
+      // Two-step fallback: first get user's room memberships, then fetch rooms
+      const { data: memberships, error: memberError } = await supabase
+        .from('chat_room_members')
+        .select('room_id')
+        .eq('user_id', user?.id);
+
+      if (memberError) throw memberError;
+
+      if (!memberships || memberships.length === 0) {
+        console.log('No room memberships found, creating default general room');
+        await createDefaultGeneralRoom();
+        return;
+      }
+
+      const roomIds = memberships.map(m => m.room_id);
+
+      const { data: roomsData, error: roomsError } = await supabase
+        .from('chat_rooms')
+        .select(`
+          *,
+          chat_messages(
+            message_text,
+            created_at,
+            sender_id,
+            profiles(full_name)
+          )
+        `)
+        .in('id', roomIds)
+        .eq('is_active', true)
+        .order('updated_at', { ascending: false });
+
+      if (roomsError) throw roomsError;
+
+      // Get member counts for each room separately
+      const roomsWithMembers = await Promise.all(
+        (roomsData || []).map(async (room) => {
+          const { data: memberData } = await supabase
+            .from('chat_room_members')
+            .select('user_id')
+            .eq('room_id', room.id);
+
+          const sortedMessages = room.chat_messages?.sort((a: any, b: any) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+
+          return {
+            ...room,
+            member_count: memberData?.length || 0,
+            last_message: sortedMessages?.[0] ? {
+              text: sortedMessages[0].message_text,
+              sender_name: sortedMessages[0].profiles?.full_name || 'Unknown',
+              created_at: sortedMessages[0].created_at
+            } : undefined
+          };
+        })
+      );
+
+      setRooms(roomsWithMembers);
+    } catch (error) {
+      console.error('Fallback fetch rooms failed:', error);
+      await createDefaultGeneralRoom();
     }
   };
 
@@ -182,14 +255,14 @@ export const useChatRooms = () => {
       // First check if user has permission to delete this room
       const { data: room, error: roomError } = await supabase
         .from('chat_rooms')
-        .select('*, chat_room_members!inner(user_id, is_admin)')
+        .select('*, members:chat_room_members!chat_room_members_room_id_fkey!inner(user_id, is_admin)')
         .eq('id', roomId)
         .single();
 
       if (roomError) throw roomError;
 
       // Check if user is room admin or it's a direct chat with the user
-      const userMembership = room.chat_room_members.find(member => member.user_id === user.id);
+      const userMembership = room.members.find(member => member.user_id === user.id);
       const canDelete = userMembership?.is_admin || room.room_type === 'direct';
 
       if (!canDelete) {
