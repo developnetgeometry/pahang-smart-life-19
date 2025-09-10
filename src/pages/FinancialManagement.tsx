@@ -1,26 +1,61 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, TrendingUp, TrendingDown, DollarSign, Calendar, Receipt, CreditCard } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Plus,
+  Search,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Calendar,
+  Receipt,
+  CreditCard,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const transactionSchema = z.object({
-  description: z.string().min(1, 'Description is required'),
-  amount: z.string().min(1, 'Amount is required'),
-  transaction_type: z.enum(['debit', 'credit']),
-  account_id: z.string().min(1, 'Account is required'),
+  description: z.string().min(1, "Description is required"),
+  amount: z.string().min(1, "Amount is required"),
+  transaction_type: z.enum(["debit", "credit"]),
+  account_id: z.string().min(1, "Account is required"),
   reference_type: z.string().optional(),
   receipt_number: z.string().optional(),
   payment_method: z.string().optional(),
@@ -28,9 +63,9 @@ const transactionSchema = z.object({
 });
 
 const accountSchema = z.object({
-  account_name: z.string().min(1, 'Account name is required'),
-  account_type: z.enum(['income', 'expense', 'asset', 'liability', 'equity']),
-  account_code: z.string().min(1, 'Account code is required'),
+  account_name: z.string().min(1, "Account name is required"),
+  account_type: z.enum(["income", "expense", "asset", "liability", "equity"]),
+  account_code: z.string().min(1, "Account code is required"),
   description: z.string().optional(),
 });
 
@@ -67,76 +102,86 @@ export default function FinancialManagement() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('transactions');
+  const [activeTab, setActiveTab] = useState("transactions");
 
   const transactionForm = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      description: '',
-      amount: '',
-      transaction_type: 'credit',
-      account_id: '',
-      reference_type: '',
-      receipt_number: '',
-      payment_method: '',
-      notes: '',
+      description: "",
+      amount: "",
+      transaction_type: "credit",
+      account_id: "",
+      reference_type: "",
+      receipt_number: "",
+      payment_method: "",
+      notes: "",
     },
   });
 
   const accountForm = useForm<z.infer<typeof accountSchema>>({
     resolver: zodResolver(accountSchema),
     defaultValues: {
-      account_name: '',
-      account_type: 'expense',
-      account_code: '',
-      description: '',
+      account_name: "",
+      account_type: "expense",
+      account_code: "",
+      description: "",
     },
   });
 
   const paymentMethods = [
-    'cash', 'bank_transfer', 'credit_card', 'cheque', 'online'
+    "cash",
+    "bank_transfer",
+    "credit_card",
+    "cheque",
+    "online",
   ];
 
   const referenceTypes = [
-    'maintenance_fee', 'facility_booking', 'service_payment', 'expense', 'utility_bill', 'insurance', 'other'
+    "maintenance_fee",
+    "facility_booking",
+    "service_payment",
+    "expense",
+    "utility_bill",
+    "insurance",
+    "other",
   ];
 
   const accountTypes = [
-    { value: 'income', label: 'Income', color: 'bg-green-500' },
-    { value: 'expense', label: 'Expense', color: 'bg-red-500' },
-    { value: 'asset', label: 'Asset', color: 'bg-blue-500' },
-    { value: 'liability', label: 'Liability', color: 'bg-orange-500' },
-    { value: 'equity', label: 'Equity', color: 'bg-purple-500' }
+    { value: "income", label: "Income", color: "bg-green-500" },
+    { value: "expense", label: "Expense", color: "bg-red-500" },
+    { value: "asset", label: "Asset", color: "bg-blue-500" },
+    { value: "liability", label: "Liability", color: "bg-orange-500" },
+    { value: "equity", label: "Equity", color: "bg-purple-500" },
   ];
 
   const statusOptions = [
-    { value: 'pending', label: 'Pending', color: 'bg-yellow-500' },
-    { value: 'approved', label: 'Approved', color: 'bg-green-500' },
-    { value: 'rejected', label: 'Rejected', color: 'bg-red-500' },
-    { value: 'cancelled', label: 'Cancelled', color: 'bg-gray-500' }
+    { value: "pending", label: "Pending", color: "bg-yellow-500" },
+    { value: "approved", label: "Approved", color: "bg-green-500" },
+    { value: "rejected", label: "Rejected", color: "bg-red-500" },
+    { value: "cancelled", label: "Cancelled", color: "bg-gray-500" },
   ];
 
   const fetchAccounts = async () => {
     try {
       const { data, error } = await supabase
-        .from('financial_accounts')
-        .select('*')
-        .eq('is_active', true)
-        .order('account_code');
+        .from("financial_accounts")
+        .select("*")
+        .eq("is_active", true)
+        .order("account_code");
 
       if (error) throw error;
       setAccounts(data || []);
     } catch (error) {
-      console.error('Error fetching accounts:', error);
+      console.error("Error fetching accounts:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to load financial accounts',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to load financial accounts",
+        variant: "destructive",
       });
     }
   };
@@ -144,25 +189,27 @@ export default function FinancialManagement() {
   const fetchTransactions = async () => {
     try {
       const { data, error } = await supabase
-        .from('financial_transactions')
-        .select(`
+        .from("financial_transactions")
+        .select(
+          `
           *,
           financial_accounts (
             account_name,
             account_type
           )
-        `)
-        .order('created_at', { ascending: false })
+        `
+        )
+        .order("created_at", { ascending: false })
         .limit(50);
 
       if (error) throw error;
       setTransactions(data || []);
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.error("Error fetching transactions:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to load transactions',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to load transactions",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -178,13 +225,15 @@ export default function FinancialManagement() {
     return `TXN-${Date.now().toString().slice(-8)}`;
   };
 
-  const onSubmitTransaction = async (values: z.infer<typeof transactionSchema>) => {
+  const onSubmitTransaction = async (
+    values: z.infer<typeof transactionSchema>
+  ) => {
     try {
       // Get user's district from profile
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('district_id')
-        .eq('id', user?.id)
+        .from("profiles")
+        .select("district_id")
+        .eq("user_id", user?.id)
         .single();
 
       const transactionData = {
@@ -193,35 +242,35 @@ export default function FinancialManagement() {
         amount: parseFloat(values.amount),
         transaction_type: values.transaction_type,
         transaction_code: generateTransactionCode(),
-        transaction_date: new Date().toISOString().split('T')[0],
+        transaction_date: new Date().toISOString().split("T")[0],
         reference_type: values.reference_type || null,
         receipt_number: values.receipt_number || null,
         payment_method: values.payment_method || null,
         notes: values.notes || null,
-        processed_by: user?.id || '',
+        processed_by: user?.id || "",
         district_id: profile?.district_id || null,
       };
 
       const { error } = await supabase
-        .from('financial_transactions')
+        .from("financial_transactions")
         .insert([transactionData]);
 
       if (error) throw error;
 
       toast({
-        title: 'Success',
-        description: 'Transaction recorded successfully',
+        title: "Success",
+        description: "Transaction recorded successfully",
       });
 
       setTransactionDialogOpen(false);
       transactionForm.reset();
       fetchTransactions();
     } catch (error: any) {
-      console.error('Error creating transaction:', error);
+      console.error("Error creating transaction:", error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to record transaction',
-        variant: 'destructive',
+        title: "Error",
+        description: error.message || "Failed to record transaction",
+        variant: "destructive",
       });
     }
   };
@@ -230,9 +279,9 @@ export default function FinancialManagement() {
     try {
       // Get user's district from profile
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('district_id')
-        .eq('id', user?.id)
+        .from("profiles")
+        .select("district_id")
+        .eq("user_id", user?.id)
         .single();
 
       const accountData = {
@@ -244,85 +293,102 @@ export default function FinancialManagement() {
       };
 
       const { error } = await supabase
-        .from('financial_accounts')
+        .from("financial_accounts")
         .insert([accountData]);
 
       if (error) throw error;
 
       toast({
-        title: 'Success',
-        description: 'Account created successfully',
+        title: "Success",
+        description: "Account created successfully",
       });
 
       setAccountDialogOpen(false);
       accountForm.reset();
       fetchAccounts();
     } catch (error: any) {
-      console.error('Error creating account:', error);
+      console.error("Error creating account:", error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to create account',
-        variant: 'destructive',
+        title: "Error",
+        description: error.message || "Failed to create account",
+        variant: "destructive",
       });
     }
   };
 
-  const updateTransactionStatus = async (transactionId: string, status: string) => {
+  const updateTransactionStatus = async (
+    transactionId: string,
+    status: string
+  ) => {
     try {
       const updateData: any = { status };
-      
-      if (status === 'approved') {
+
+      if (status === "approved") {
         updateData.approved_at = new Date().toISOString();
         updateData.approved_by = user?.id;
       }
 
       const { error } = await supabase
-        .from('financial_transactions')
+        .from("financial_transactions")
         .update(updateData)
-        .eq('id', transactionId);
+        .eq("id", transactionId);
 
       if (error) throw error;
 
       toast({
-        title: 'Success',
-        description: 'Transaction status updated successfully',
+        title: "Success",
+        description: "Transaction status updated successfully",
       });
 
       fetchTransactions();
     } catch (error: any) {
-      console.error('Error updating transaction status:', error);
+      console.error("Error updating transaction status:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to update transaction status',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to update transaction status",
+        variant: "destructive",
       });
     }
   };
 
-  const filteredTransactions = transactions.filter(transaction => {
-    const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         transaction.transaction_code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = !typeFilter || typeFilter === 'all' || transaction.transaction_type === typeFilter;
-    const matchesStatus = !statusFilter || statusFilter === 'all' || transaction.status === statusFilter;
-    
+  const filteredTransactions = transactions.filter((transaction) => {
+    const matchesSearch =
+      transaction.description
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      transaction.transaction_code
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+    const matchesType =
+      !typeFilter ||
+      typeFilter === "all" ||
+      transaction.transaction_type === typeFilter;
+    const matchesStatus =
+      !statusFilter ||
+      statusFilter === "all" ||
+      transaction.status === statusFilter;
+
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  const canManage = hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin');
+  const canManage =
+    hasRole("community_admin") ||
+    hasRole("district_coordinator") ||
+    hasRole("state_admin");
 
   const getAccountTypeBadge = (type: string) => {
-    const typeConfig = accountTypes.find(t => t.value === type);
+    const typeConfig = accountTypes.find((t) => t.value === type);
     return (
-      <Badge className={`${typeConfig?.color || 'bg-gray-500'} text-white`}>
+      <Badge className={`${typeConfig?.color || "bg-gray-500"} text-white`}>
         {typeConfig?.label || type}
       </Badge>
     );
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = statusOptions.find(s => s.value === status);
+    const statusConfig = statusOptions.find((s) => s.value === status);
     return (
-      <Badge className={`${statusConfig?.color || 'bg-gray-500'} text-white`}>
+      <Badge className={`${statusConfig?.color || "bg-gray-500"} text-white`}>
         {statusConfig?.label || status}
       </Badge>
     );
@@ -330,23 +396,23 @@ export default function FinancialManagement() {
 
   const getTotalBalance = () => {
     return transactions
-      .filter(t => t.status === 'approved')
+      .filter((t) => t.status === "approved")
       .reduce((total, transaction) => {
-        return transaction.transaction_type === 'credit' 
-          ? total + transaction.amount 
+        return transaction.transaction_type === "credit"
+          ? total + transaction.amount
           : total - transaction.amount;
       }, 0);
   };
 
   const getTotalIncome = () => {
     return transactions
-      .filter(t => t.status === 'approved' && t.transaction_type === 'credit')
+      .filter((t) => t.status === "approved" && t.transaction_type === "credit")
       .reduce((total, transaction) => total + transaction.amount, 0);
   };
 
   const getTotalExpenses = () => {
     return transactions
-      .filter(t => t.status === 'approved' && t.transaction_type === 'debit')
+      .filter((t) => t.status === "approved" && t.transaction_type === "debit")
       .reduce((total, transaction) => total + transaction.amount, 0);
   };
 
@@ -366,13 +432,12 @@ export default function FinancialManagement() {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
-            {language === 'en' ? 'Financial Management' : 'Pengurusan Kewangan'}
+            {language === "en" ? "Financial Management" : "Pengurusan Kewangan"}
           </h1>
           <p className="text-muted-foreground">
-            {language === 'en' 
-              ? 'Track income, expenses, and manage financial accounts'
-              : 'Jejaki pendapatan, perbelanjaan, dan urus akaun kewangan'
-            }
+            {language === "en"
+              ? "Track income, expenses, and manage financial accounts"
+              : "Jejaki pendapatan, perbelanjaan, dan urus akaun kewangan"}
           </p>
         </div>
       </div>
@@ -386,7 +451,10 @@ export default function FinancialManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              RM {getTotalBalance().toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              RM{" "}
+              {getTotalBalance().toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+              })}
             </div>
           </CardContent>
         </Card>
@@ -398,19 +466,27 @@ export default function FinancialManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              RM {getTotalIncome().toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              RM{" "}
+              {getTotalIncome().toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+              })}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Expenses
+            </CardTitle>
             <TrendingDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              RM {getTotalExpenses().toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              RM{" "}
+              {getTotalExpenses().toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+              })}
             </div>
           </CardContent>
         </Card>
@@ -451,7 +527,7 @@ export default function FinancialManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  {statusOptions.map(status => (
+                  {statusOptions.map((status) => (
                     <SelectItem key={status.value} value={status.value}>
                       {status.label}
                     </SelectItem>
@@ -461,7 +537,10 @@ export default function FinancialManagement() {
             </div>
 
             {canManage && (
-              <Dialog open={transactionDialogOpen} onOpenChange={setTransactionDialogOpen}>
+              <Dialog
+                open={transactionDialogOpen}
+                onOpenChange={setTransactionDialogOpen}
+              >
                 <DialogTrigger asChild>
                   <Button>
                     <Plus className="h-4 w-4 mr-2" />
@@ -477,7 +556,12 @@ export default function FinancialManagement() {
                   </DialogHeader>
 
                   <Form {...transactionForm}>
-                    <form onSubmit={transactionForm.handleSubmit(onSubmitTransaction)} className="space-y-4">
+                    <form
+                      onSubmit={transactionForm.handleSubmit(
+                        onSubmitTransaction
+                      )}
+                      className="space-y-4"
+                    >
                       <FormField
                         control={transactionForm.control}
                         name="description"
@@ -485,7 +569,10 @@ export default function FinancialManagement() {
                           <FormItem>
                             <FormLabel>Description</FormLabel>
                             <FormControl>
-                              <Input placeholder="Transaction description" {...field} />
+                              <Input
+                                placeholder="Transaction description"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -500,7 +587,12 @@ export default function FinancialManagement() {
                             <FormItem>
                               <FormLabel>Amount (RM)</FormLabel>
                               <FormControl>
-                                <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="0.00"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -513,7 +605,10 @@ export default function FinancialManagement() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Type</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select type" />
@@ -536,16 +631,23 @@ export default function FinancialManagement() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Account</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select account" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {accounts.map(account => (
-                                  <SelectItem key={account.id} value={account.id}>
-                                    {account.account_name} ({account.account_code})
+                                {accounts.map((account) => (
+                                  <SelectItem
+                                    key={account.id}
+                                    value={account.id}
+                                  >
+                                    {account.account_name} (
+                                    {account.account_code})
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -562,16 +664,19 @@ export default function FinancialManagement() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Reference Type (Optional)</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select reference type" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {referenceTypes.map(type => (
+                                  {referenceTypes.map((type) => (
                                     <SelectItem key={type} value={type}>
-                                      {type.replace('_', ' ').toUpperCase()}
+                                      {type.replace("_", " ").toUpperCase()}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -587,16 +692,19 @@ export default function FinancialManagement() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Payment Method (Optional)</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select payment method" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {paymentMethods.map(method => (
+                                  {paymentMethods.map((method) => (
                                     <SelectItem key={method} value={method}>
-                                      {method.replace('_', ' ').toUpperCase()}
+                                      {method.replace("_", " ").toUpperCase()}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -614,7 +722,10 @@ export default function FinancialManagement() {
                           <FormItem>
                             <FormLabel>Receipt Number (Optional)</FormLabel>
                             <FormControl>
-                              <Input placeholder="Receipt or reference number" {...field} />
+                              <Input
+                                placeholder="Receipt or reference number"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -628,7 +739,10 @@ export default function FinancialManagement() {
                           <FormItem>
                             <FormLabel>Notes (Optional)</FormLabel>
                             <FormControl>
-                              <Textarea placeholder="Additional notes..." {...field} />
+                              <Textarea
+                                placeholder="Additional notes..."
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -636,12 +750,14 @@ export default function FinancialManagement() {
                       />
 
                       <div className="flex justify-end space-x-2">
-                        <Button type="button" variant="outline" onClick={() => setTransactionDialogOpen(false)}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setTransactionDialogOpen(false)}
+                        >
                           Cancel
                         </Button>
-                        <Button type="submit">
-                          Record Transaction
-                        </Button>
+                        <Button type="submit">Record Transaction</Button>
                       </div>
                     </form>
                   </Form>
@@ -653,12 +769,17 @@ export default function FinancialManagement() {
           {/* Transactions List */}
           <div className="space-y-4">
             {filteredTransactions.map((transaction) => (
-              <Card key={transaction.id} className="hover:shadow-lg transition-shadow">
+              <Card
+                key={transaction.id}
+                className="hover:shadow-lg transition-shadow"
+              >
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
-                        <CardTitle className="text-lg">{transaction.description}</CardTitle>
+                        <CardTitle className="text-lg">
+                          {transaction.description}
+                        </CardTitle>
                         <Badge variant="outline" className="text-xs">
                           {transaction.transaction_code}
                         </Badge>
@@ -668,13 +789,18 @@ export default function FinancialManagement() {
                       </CardDescription>
                     </div>
                     <div className="flex flex-col space-y-2 items-end">
-                      <div className={`text-lg font-bold ${
-                        transaction.transaction_type === 'credit' 
-                          ? 'text-green-600' 
-                          : 'text-red-600'
-                      }`}>
-                        {transaction.transaction_type === 'credit' ? '+' : '-'}
-                        RM {transaction.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      <div
+                        className={`text-lg font-bold ${
+                          transaction.transaction_type === "credit"
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {transaction.transaction_type === "credit" ? "+" : "-"}
+                        RM{" "}
+                        {transaction.amount.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                        })}
                       </div>
                       {getStatusBadge(transaction.status)}
                     </div>
@@ -684,16 +810,24 @@ export default function FinancialManagement() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                     <div className="flex items-center space-x-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>{new Date(transaction.transaction_date).toLocaleDateString()}</span>
+                      <span>
+                        {new Date(
+                          transaction.transaction_date
+                        ).toLocaleDateString()}
+                      </span>
                     </div>
-                    
+
                     {transaction.payment_method && (
                       <div className="flex items-center space-x-2">
                         <CreditCard className="h-4 w-4 text-muted-foreground" />
-                        <span>{transaction.payment_method.replace('_', ' ').toUpperCase()}</span>
+                        <span>
+                          {transaction.payment_method
+                            .replace("_", " ")
+                            .toUpperCase()}
+                        </span>
                       </div>
                     )}
-                    
+
                     {transaction.receipt_number && (
                       <div className="flex items-center space-x-2">
                         <Receipt className="h-4 w-4 text-muted-foreground" />
@@ -702,28 +836,36 @@ export default function FinancialManagement() {
                     )}
 
                     <div className="flex items-center space-x-2">
-                      <Badge className={
-                        transaction.transaction_type === 'credit' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }>
-                        {transaction.transaction_type === 'credit' ? 'Income' : 'Expense'}
+                      <Badge
+                        className={
+                          transaction.transaction_type === "credit"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }
+                      >
+                        {transaction.transaction_type === "credit"
+                          ? "Income"
+                          : "Expense"}
                       </Badge>
                     </div>
                   </div>
 
-                  {canManage && transaction.status === 'pending' && (
+                  {canManage && transaction.status === "pending" && (
                     <div className="flex space-x-2 border-t pt-4">
                       <Button
                         size="sm"
-                        onClick={() => updateTransactionStatus(transaction.id, 'approved')}
+                        onClick={() =>
+                          updateTransactionStatus(transaction.id, "approved")
+                        }
                       >
                         Approve
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => updateTransactionStatus(transaction.id, 'rejected')}
+                        onClick={() =>
+                          updateTransactionStatus(transaction.id, "rejected")
+                        }
                       >
                         Reject
                       </Button>
@@ -738,12 +880,13 @@ export default function FinancialManagement() {
             <Card>
               <CardContent className="text-center py-8">
                 <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">No transactions found</h3>
+                <h3 className="text-lg font-medium mb-2">
+                  No transactions found
+                </h3>
                 <p className="text-muted-foreground">
                   {searchTerm || typeFilter || statusFilter
-                    ? 'Try adjusting your filters'
-                    : 'Get started by recording your first transaction'
-                  }
+                    ? "Try adjusting your filters"
+                    : "Get started by recording your first transaction"}
                 </p>
               </CardContent>
             </Card>
@@ -753,9 +896,12 @@ export default function FinancialManagement() {
         <TabsContent value="accounts" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Chart of Accounts</h2>
-            
+
             {canManage && (
-              <Dialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen}>
+              <Dialog
+                open={accountDialogOpen}
+                onOpenChange={setAccountDialogOpen}
+              >
                 <DialogTrigger asChild>
                   <Button>
                     <Plus className="h-4 w-4 mr-2" />
@@ -771,7 +917,10 @@ export default function FinancialManagement() {
                   </DialogHeader>
 
                   <Form {...accountForm}>
-                    <form onSubmit={accountForm.handleSubmit(onSubmitAccount)} className="space-y-4">
+                    <form
+                      onSubmit={accountForm.handleSubmit(onSubmitAccount)}
+                      className="space-y-4"
+                    >
                       <FormField
                         control={accountForm.control}
                         name="account_name"
@@ -793,15 +942,21 @@ export default function FinancialManagement() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Account Type</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select type" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {accountTypes.map(type => (
-                                    <SelectItem key={type.value} value={type.value}>
+                                  {accountTypes.map((type) => (
+                                    <SelectItem
+                                      key={type.value}
+                                      value={type.value}
+                                    >
                                       {type.label}
                                     </SelectItem>
                                   ))}
@@ -834,7 +989,10 @@ export default function FinancialManagement() {
                           <FormItem>
                             <FormLabel>Description (Optional)</FormLabel>
                             <FormControl>
-                              <Textarea placeholder="Account description..." {...field} />
+                              <Textarea
+                                placeholder="Account description..."
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -842,12 +1000,14 @@ export default function FinancialManagement() {
                       />
 
                       <div className="flex justify-end space-x-2">
-                        <Button type="button" variant="outline" onClick={() => setAccountDialogOpen(false)}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setAccountDialogOpen(false)}
+                        >
                           Cancel
                         </Button>
-                        <Button type="submit">
-                          Create Account
-                        </Button>
+                        <Button type="submit">Create Account</Button>
                       </div>
                     </form>
                   </Form>
@@ -863,7 +1023,9 @@ export default function FinancialManagement() {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-lg">{account.account_name}</CardTitle>
+                      <CardTitle className="text-lg">
+                        {account.account_name}
+                      </CardTitle>
                       <CardDescription>{account.account_code}</CardDescription>
                     </div>
                     {getAccountTypeBadge(account.account_type)}
@@ -871,7 +1033,9 @@ export default function FinancialManagement() {
                 </CardHeader>
                 {account.description && (
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">{account.description}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {account.description}
+                    </p>
                   </CardContent>
                 )}
               </Card>

@@ -90,7 +90,7 @@ export function MaintenanceStaffDashboard() {
       const { data: userProfile } = await supabase
         .from("profiles")
         .select("district_id")
-        .eq("id", user.id)
+        .eq("user_id", user.id)
         .single();
 
       // Create a work order for supply request
@@ -177,7 +177,7 @@ export function MaintenanceStaffDashboard() {
       const { data: userProfile } = await supabase
         .from("profiles")
         .select("district_id")
-        .eq("id", user.id)
+        .eq("user_id", user.id)
         .single();
 
       // Create a work order for the report
@@ -234,7 +234,7 @@ export function MaintenanceStaffDashboard() {
       const { data: userProfile } = await supabase
         .from("profiles")
         .select("district_id")
-        .eq("id", user.id)
+        .eq("user_id", user.id)
         .single();
 
       // Create a work order for parts request
@@ -336,7 +336,7 @@ export function MaintenanceStaffDashboard() {
       const { data: userProfile } = await supabase
         .from("profiles")
         .select("district_id")
-        .eq("id", user?.id)
+        .eq("user_id", user?.id)
         .single();
 
       // Fetch work orders

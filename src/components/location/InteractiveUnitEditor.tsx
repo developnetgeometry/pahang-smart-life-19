@@ -1,20 +1,52 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
-import { ZoomIn, ZoomOut, RotateCcw, Search, Square, Edit, Trash2, Save, Eye, MapPin, Users, Phone, Mail } from 'lucide-react';
-import { useUnits, Unit } from '@/hooks/use-units';
-import { useFloorPlans } from '@/hooks/use-floor-plans';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Search,
+  Square,
+  Edit,
+  Trash2,
+  Save,
+  Eye,
+  MapPin,
+  Users,
+  Phone,
+  Mail,
+} from "lucide-react";
+import { useUnits, Unit } from "@/hooks/use-units";
+import { useFloorPlans } from "@/hooks/use-floor-plans";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface InteractiveUnitEditorProps {
   imageUrl?: string;
@@ -36,7 +68,7 @@ interface DrawingBox {
 interface UnitFormData {
   unit_number: string;
   owner_name: string;
-  unit_type: 'residential' | 'commercial' | 'facility';
+  unit_type: "residential" | "commercial" | "facility";
   address: string;
   phone_number: string;
   email: string;
@@ -51,42 +83,62 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
   title = "Community Map",
   showSearch = true,
   isAdminMode = false,
-  onFloorPlanChange
+  onFloorPlanChange,
 }) => {
-  const { units, loading, createUnit, updateUnit, deleteUnit, fetchUnitsByFloorPlan } = useUnits();
-  const { floorPlans, loading: floorPlansLoading, refetchFloorPlans } = useFloorPlans();
+  const {
+    units,
+    loading,
+    createUnit,
+    updateUnit,
+    deleteUnit,
+    fetchUnitsByFloorPlan,
+  } = useUnits();
+  const {
+    floorPlans,
+    loading: floorPlansLoading,
+    refetchFloorPlans,
+  } = useFloorPlans();
   const { user } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  
+
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
-  const [selectedFloorPlan, setSelectedFloorPlan] = useState<string>(floorPlanId || '');
-  const [currentImageUrl, setCurrentImageUrl] = useState<string>(imageUrl || '');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFloorPlan, setSelectedFloorPlan] = useState<string>(
+    floorPlanId || ""
+  );
+  const [currentImageUrl, setCurrentImageUrl] = useState<string>(
+    imageUrl || ""
+  );
+  const [searchTerm, setSearchTerm] = useState("");
   const [imageLoaded, setImageLoaded] = useState(false);
-  
+
   // Drawing state
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [drawingBox, setDrawingBox] = useState<DrawingBox | null>(null);
   const [isDrawingActive, setIsDrawingActive] = useState(false);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [showUnitForm, setShowUnitForm] = useState(false);
-  const [newBoxCoordinates, setNewBoxCoordinates] = useState<{x: number, y: number, width: number, height: number} | null>(null);
-  
+  const [newBoxCoordinates, setNewBoxCoordinates] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
   const [formData, setFormData] = useState<UnitFormData>({
-    unit_number: '',
-    owner_name: '',
-    unit_type: 'residential',
-    address: '',
-    phone_number: '',
-    email: '',
-    occupancy_status: 'occupied',
-    notes: ''
+    unit_number: "",
+    owner_name: "",
+    unit_type: "residential",
+    address: "",
+    phone_number: "",
+    email: "",
+    occupancy_status: "occupied",
+    notes: "",
   });
 
   // Legend state
@@ -119,7 +171,7 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
   // Update current image URL when floor plan changes
   useEffect(() => {
     if (selectedFloorPlan && floorPlans.length > 0) {
-      const floorPlan = floorPlans.find(fp => fp.id === selectedFloorPlan);
+      const floorPlan = floorPlans.find((fp) => fp.id === selectedFloorPlan);
       if (floorPlan) {
         setCurrentImageUrl(floorPlan.image_url);
       }
@@ -129,13 +181,13 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
   const handleFloorPlanChange = (floorPlanId: string) => {
     setSelectedFloorPlan(floorPlanId);
     onFloorPlanChange?.(floorPlanId);
-    
+
     // Update image URL based on selected floor plan
     if (floorPlanId && floorPlans.length > 0) {
-      const floorPlan = floorPlans.find(fp => fp.id === floorPlanId);
+      const floorPlan = floorPlans.find((fp) => fp.id === floorPlanId);
       if (floorPlan) {
         setCurrentImageUrl(floorPlan.image_url);
-        
+
         // Broadcast change to all residents if admin
         if (isAdminMode) {
           broadcastFloorPlanChange(floorPlanId, floorPlan.image_url);
@@ -145,23 +197,25 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
   };
 
   // Filter units based on search term and selected floor plan
-  const filteredUnits = units.filter(unit => {
+  const filteredUnits = units.filter((unit) => {
     // First filter by floor plan if one is selected
-    const matchesFloorPlan = !selectedFloorPlan || unit.floor_plan_id === selectedFloorPlan;
-    
+    const matchesFloorPlan =
+      !selectedFloorPlan || unit.floor_plan_id === selectedFloorPlan;
+
     // Then filter by search term
-    const matchesSearch = unit.unit_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch =
+      unit.unit_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
       unit.owner_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       unit.address?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     console.log(`Unit ${unit.unit_number} (${unit.owner_name}):`, {
       floor_plan_id: unit.floor_plan_id,
       selectedFloorPlan,
       matchesFloorPlan,
       matchesSearch,
-      finalMatch: matchesFloorPlan && matchesSearch
+      finalMatch: matchesFloorPlan && matchesSearch,
     });
-    
+
     return matchesFloorPlan && matchesSearch;
   });
 
@@ -185,9 +239,9 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
       try {
         // Get user's district from profile
         const { data: profile } = await supabase
-          .from('profiles')
-          .select('district_id, community_id')
-          .eq('id', user.id)
+          .from("profiles")
+          .select("district_id, community_id")
+          .eq("user_id", user.id)
           .single();
 
         if (!profile?.district_id) return;
@@ -197,21 +251,25 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
         const channel = supabase.channel(channelName);
 
         // Listen for floor plan changes
-        channel.on('broadcast', { event: 'floor_plan_changed' }, (payload) => {
-          console.log('Floor plan changed:', payload);
-          const { floorPlanId: newFloorPlanId, imageUrl: newImageUrl, changedBy } = payload.payload;
-          
+        channel.on("broadcast", { event: "floor_plan_changed" }, (payload) => {
+          console.log("Floor plan changed:", payload);
+          const {
+            floorPlanId: newFloorPlanId,
+            imageUrl: newImageUrl,
+            changedBy,
+          } = payload.payload;
+
           // Only update if it's not the current user making the change (to avoid loops)
           if (changedBy !== user.id) {
             // Refresh floor plans data to get latest updates
             refetchFloorPlans();
-            
+
             setSelectedFloorPlan(newFloorPlanId);
             setCurrentImageUrl(newImageUrl);
-            toast.info('Floor plan updated by admin', {
-              description: 'The community map has been updated'
+            toast.info("Floor plan updated by admin", {
+              description: "The community map has been updated",
             });
-            
+
             // Fetch units for the new floor plan
             if (newFloorPlanId) {
               fetchUnitsByFloorPlan(newFloorPlanId);
@@ -220,24 +278,31 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
         });
 
         // Listen for unit changes
-        channel.on('broadcast', { event: 'units_updated' }, (payload) => {
-          console.log('Units updated:', payload);
-          const { changedBy, floorPlanId: updatedFloorPlanId } = payload.payload;
-          
+        channel.on("broadcast", { event: "units_updated" }, (payload) => {
+          console.log("Units updated:", payload);
+          const { changedBy, floorPlanId: updatedFloorPlanId } =
+            payload.payload;
+
           // Only update if it's not the current user making the change
-          if (changedBy !== user.id && updatedFloorPlanId === selectedFloorPlan) {
+          if (
+            changedBy !== user.id &&
+            updatedFloorPlanId === selectedFloorPlan
+          ) {
             // Refresh units data
             fetchUnitsByFloorPlan(selectedFloorPlan);
-            toast.info('Units updated by admin', {
-              description: 'Community unit information has been updated'
+            toast.info("Units updated by admin", {
+              description: "Community unit information has been updated",
             });
           }
         });
 
         // Subscribe to the channel
         channel.subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            console.log('Subscribed to real-time updates for district:', profile.district_id);
+          if (status === "SUBSCRIBED") {
+            console.log(
+              "Subscribed to real-time updates for district:",
+              profile.district_id
+            );
           }
         });
 
@@ -250,9 +315,8 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
           setCurrentImageUrl(firstFloorPlan.image_url);
           fetchUnitsByFloorPlan(firstFloorPlan.id);
         }
-
       } catch (error) {
-        console.error('Error setting up real-time subscription:', error);
+        console.error("Error setting up real-time subscription:", error);
       }
     };
 
@@ -264,130 +328,153 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
         supabase.removeChannel(realtimeChannel);
       }
     };
-  }, [user?.id, selectedFloorPlan, fetchUnitsByFloorPlan, floorPlans, refetchFloorPlans]);
+  }, [
+    user?.id,
+    selectedFloorPlan,
+    fetchUnitsByFloorPlan,
+    floorPlans,
+    refetchFloorPlans,
+  ]);
 
   // Broadcast floor plan changes (admin only)
-  const broadcastFloorPlanChange = useCallback(async (floorPlanId: string, imageUrl: string) => {
-    if (!realtimeChannel || !user?.id || !isAdminMode) return;
+  const broadcastFloorPlanChange = useCallback(
+    async (floorPlanId: string, imageUrl: string) => {
+      if (!realtimeChannel || !user?.id || !isAdminMode) return;
 
-    try {
-      await realtimeChannel.send({
-        type: 'broadcast',
-        event: 'floor_plan_changed',
-        payload: {
-          floorPlanId,
-          imageUrl,
-          changedBy: user.id,
-          timestamp: new Date().toISOString()
-        }
-      });
-      console.log('Broadcasted floor plan change to all residents');
-    } catch (error) {
-      console.error('Error broadcasting floor plan change:', error);
-    }
-  }, [realtimeChannel, user?.id, isAdminMode]);
+      try {
+        await realtimeChannel.send({
+          type: "broadcast",
+          event: "floor_plan_changed",
+          payload: {
+            floorPlanId,
+            imageUrl,
+            changedBy: user.id,
+            timestamp: new Date().toISOString(),
+          },
+        });
+        console.log("Broadcasted floor plan change to all residents");
+      } catch (error) {
+        console.error("Error broadcasting floor plan change:", error);
+      }
+    },
+    [realtimeChannel, user?.id, isAdminMode]
+  );
 
   // Broadcast unit changes (admin only)
-  const broadcastUnitsUpdate = useCallback(async (floorPlanId: string) => {
-    if (!realtimeChannel || !user?.id || !isAdminMode) return;
+  const broadcastUnitsUpdate = useCallback(
+    async (floorPlanId: string) => {
+      if (!realtimeChannel || !user?.id || !isAdminMode) return;
 
-    try {
-      await realtimeChannel.send({
-        type: 'broadcast',
-        event: 'units_updated', 
-        payload: {
-          floorPlanId,
-          changedBy: user.id,
-          timestamp: new Date().toISOString()
-        }
-      });
-      console.log('Broadcasted units update to all residents');
-    } catch (error) {
-      console.error('Error broadcasting units update:', error);
-    }
-  }, [realtimeChannel, user?.id, isAdminMode]);
+      try {
+        await realtimeChannel.send({
+          type: "broadcast",
+          event: "units_updated",
+          payload: {
+            floorPlanId,
+            changedBy: user.id,
+            timestamp: new Date().toISOString(),
+          },
+        });
+        console.log("Broadcasted units update to all residents");
+      } catch (error) {
+        console.error("Error broadcasting units update:", error);
+      }
+    },
+    [realtimeChannel, user?.id, isAdminMode]
+  );
 
   const resetForm = () => {
     setFormData({
-      unit_number: '',
-      owner_name: '',
-      unit_type: 'residential',
-      address: '',
-      phone_number: '',
-      email: '',
-      occupancy_status: 'occupied',
-      notes: ''
+      unit_number: "",
+      owner_name: "",
+      unit_type: "residential",
+      address: "",
+      phone_number: "",
+      email: "",
+      occupancy_status: "occupied",
+      notes: "",
     });
     setEditingUnit(null);
   };
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (!imageRef.current) return;
-    
-    const rect = imageRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!imageRef.current) return;
 
-    if (isDrawingMode && isAdminMode) {
-      // Start drawing a new box
-      setIsDrawingActive(true);
-      setDrawingBox({
-        startX: x,
-        startY: y,
-        endX: x,
-        endY: y,
-        isDrawing: true
-      });
-      e.preventDefault();
-      e.stopPropagation();
-    } else if (!isDrawingMode) {
-      // Start panning
-      setIsDragging(true);
-      setDragStart({
-        x: e.clientX - position.x,
-        y: e.clientY - position.y
-      });
-    }
-  }, [position, isDrawingMode, isAdminMode]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!imageRef.current) return;
-
-    if (isDrawingActive && drawingBox && isDrawingMode) {
       const rect = imageRef.current.getBoundingClientRect();
       const x = ((e.clientX - rect.left) / rect.width) * 100;
       const y = ((e.clientY - rect.top) / rect.height) * 100;
-      
-      setDrawingBox(prev => prev ? {
-        ...prev,
-        endX: x,
-        endY: y
-      } : null);
-      e.preventDefault();
-    } else if (isDragging && !isDrawingMode) {
-      e.preventDefault();
-      setPosition({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y
-      });
-    }
-  }, [isDragging, dragStart, isDrawingActive, drawingBox, isDrawingMode]);
+
+      if (isDrawingMode && isAdminMode) {
+        // Start drawing a new box
+        setIsDrawingActive(true);
+        setDrawingBox({
+          startX: x,
+          startY: y,
+          endX: x,
+          endY: y,
+          isDrawing: true,
+        });
+        e.preventDefault();
+        e.stopPropagation();
+      } else if (!isDrawingMode) {
+        // Start panning
+        setIsDragging(true);
+        setDragStart({
+          x: e.clientX - position.x,
+          y: e.clientY - position.y,
+        });
+      }
+    },
+    [position, isDrawingMode, isAdminMode]
+  );
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!imageRef.current) return;
+
+      if (isDrawingActive && drawingBox && isDrawingMode) {
+        const rect = imageRef.current.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+        setDrawingBox((prev) =>
+          prev
+            ? {
+                ...prev,
+                endX: x,
+                endY: y,
+              }
+            : null
+        );
+        e.preventDefault();
+      } else if (isDragging && !isDrawingMode) {
+        e.preventDefault();
+        setPosition({
+          x: e.clientX - dragStart.x,
+          y: e.clientY - dragStart.y,
+        });
+      }
+    },
+    [isDragging, dragStart, isDrawingActive, drawingBox, isDrawingMode]
+  );
 
   const handleMouseUp = useCallback(() => {
     if (isDrawingActive && drawingBox && isDrawingMode) {
       // Finish drawing - open form for new unit
       const width = Math.abs(drawingBox.endX - drawingBox.startX);
       const height = Math.abs(drawingBox.endY - drawingBox.startY);
-      
-      if (width > 0.5 && height > 0.5) { // Only create if box is meaningful size (0.5% minimum)
+
+      if (width > 0.5 && height > 0.5) {
+        // Only create if box is meaningful size (0.5% minimum)
         const x = Math.min(drawingBox.startX, drawingBox.endX) + width / 2;
         const y = Math.min(drawingBox.startY, drawingBox.endY) + height / 2;
-        
+
         setNewBoxCoordinates({ x, y, width, height });
         setShowUnitForm(true);
         resetForm();
       }
-      
+
       setDrawingBox(null);
       setIsDrawingActive(false);
     } else {
@@ -395,16 +482,19 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
     }
   }, [isDrawingActive, drawingBox, isDrawingMode]);
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newScale = Math.max(0.5, Math.min(5, scale * delta));
-    setScale(newScale);
-  }, [scale]);
+  const handleWheel = useCallback(
+    (e: React.WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      const newScale = Math.max(0.5, Math.min(5, scale * delta));
+      setScale(newScale);
+    },
+    [scale]
+  );
 
-  const zoomIn = () => setScale(prev => Math.min(5, prev * 1.2));
-  const zoomOut = () => setScale(prev => Math.max(0.5, prev / 1.2));
+  const zoomIn = () => setScale((prev) => Math.min(5, prev * 1.2));
+  const zoomOut = () => setScale((prev) => Math.max(0.5, prev / 1.2));
   const resetView = () => {
     setScale(1);
     setPosition({ x: 0, y: 0 });
@@ -419,11 +509,11 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
         unit_number: unit.unit_number,
         owner_name: unit.owner_name,
         unit_type: unit.unit_type,
-        address: unit.address || '',
-        phone_number: unit.phone_number || '',
-        email: unit.email || '',
-        occupancy_status: unit.occupancy_status || 'occupied',
-        notes: unit.notes || ''
+        address: unit.address || "",
+        phone_number: unit.phone_number || "",
+        email: unit.email || "",
+        occupancy_status: unit.occupancy_status || "occupied",
+        notes: unit.notes || "",
       });
       setShowUnitForm(true);
     } else {
@@ -434,14 +524,14 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.unit_number || !formData.owner_name) {
-      toast.error('Please fill in required fields');
+      toast.error("Please fill in required fields");
       return;
     }
 
     let success;
-    
+
     if (editingUnit) {
       // Update existing unit
       success = await updateUnit(editingUnit.id, formData);
@@ -453,11 +543,11 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
         coordinates_y: newBoxCoordinates.y,
         width: newBoxCoordinates.width,
         height: newBoxCoordinates.height,
-        phone_number: formData.phone_number || '',
-        email: formData.email || '',
-        occupancy_status: formData.occupancy_status || 'occupied',
-        notes: formData.notes || '',
-        floor_plan_id: selectedFloorPlan || undefined
+        phone_number: formData.phone_number || "",
+        email: formData.email || "",
+        occupancy_status: formData.occupancy_status || "occupied",
+        notes: formData.notes || "",
+        floor_plan_id: selectedFloorPlan || undefined,
       });
     }
 
@@ -465,7 +555,7 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
       setShowUnitForm(false);
       resetForm();
       setNewBoxCoordinates(null);
-      
+
       // Broadcast unit changes to all residents if admin
       if (isAdminMode && selectedFloorPlan) {
         broadcastUnitsUpdate(selectedFloorPlan);
@@ -474,12 +564,12 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
   };
 
   const handleDeleteUnit = async (unit: Unit) => {
-    if (window.confirm('Are you sure you want to delete this unit?')) {
+    if (window.confirm("Are you sure you want to delete this unit?")) {
       const success = await deleteUnit(unit.id);
       if (success) {
         setShowUnitForm(false);
         resetForm();
-        
+
         // Broadcast unit changes to all residents if admin
         if (isAdminMode && selectedFloorPlan) {
           broadcastUnitsUpdate(selectedFloorPlan);
@@ -488,21 +578,29 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
     }
   };
 
-  const getUnitTypeColor = (type: Unit['unit_type']) => {
+  const getUnitTypeColor = (type: Unit["unit_type"]) => {
     switch (type) {
-      case 'residential': return 'bg-blue-500/20 border-blue-500 hover:bg-blue-500/30';
-      case 'commercial': return 'bg-green-500/20 border-green-500 hover:bg-green-500/30';
-      case 'facility': return 'bg-purple-500/20 border-purple-500 hover:bg-purple-500/30';
-      default: return 'bg-gray-500/20 border-gray-500 hover:bg-gray-500/30';
+      case "residential":
+        return "bg-blue-500/20 border-blue-500 hover:bg-blue-500/30";
+      case "commercial":
+        return "bg-green-500/20 border-green-500 hover:bg-green-500/30";
+      case "facility":
+        return "bg-purple-500/20 border-purple-500 hover:bg-purple-500/30";
+      default:
+        return "bg-gray-500/20 border-gray-500 hover:bg-gray-500/30";
     }
   };
 
-  const getUnitTypeBadge = (type: Unit['unit_type']) => {
+  const getUnitTypeBadge = (type: Unit["unit_type"]) => {
     switch (type) {
-      case 'residential': return 'bg-blue-500';
-      case 'commercial': return 'bg-green-500';
-      case 'facility': return 'bg-purple-500';
-      default: return 'bg-gray-500';
+      case "residential":
+        return "bg-blue-500";
+      case "commercial":
+        return "bg-green-500";
+      case "facility":
+        return "bg-purple-500";
+      default:
+        return "bg-gray-500";
     }
   };
 
@@ -514,11 +612,14 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
             <div>
               <CardTitle className="text-lg font-semibold">{title}</CardTitle>
               <Badge variant="secondary" className="mt-1">
-                {loading ? 'Loading...' : `${filteredUnits.length} Units`}
+                {loading ? "Loading..." : `${filteredUnits.length} Units`}
               </Badge>
             </div>
             {floorPlans.length > 0 && isAdminMode && (
-              <Select value={selectedFloorPlan} onValueChange={handleFloorPlanChange}>
+              <Select
+                value={selectedFloorPlan}
+                onValueChange={handleFloorPlanChange}
+              >
                 <SelectTrigger className="w-64">
                   <SelectValue placeholder="Select floor plan" />
                 </SelectTrigger>
@@ -543,7 +644,7 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                 }}
               >
                 <Square className="h-4 w-4 mr-2" />
-                {isDrawingMode ? 'Exit Drawing' : 'Draw Box'}
+                {isDrawingMode ? "Exit Drawing" : "Draw Box"}
               </Button>
             )}
             {showSearch && (
@@ -570,17 +671,18 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
             </div>
           </div>
         </div>
-        
+
         {isDrawingMode && isAdminMode && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
             <p className="text-sm text-blue-700">
               <Square className="h-4 w-4 inline mr-1" />
-              Drawing mode active. Click and drag on the map to create a new unit box.
+              Drawing mode active. Click and drag on the map to create a new
+              unit box.
             </p>
           </div>
         )}
       </CardHeader>
-      
+
       <CardContent className="p-4 h-full">
         <Tabs defaultValue="map" className="w-full h-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -593,25 +695,29 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
               Community Owners
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="map" className="mt-4 h-full">
             <div className="h-full">
-              <div 
+              <div
                 ref={containerRef}
                 className={`relative w-full h-full overflow-hidden select-none ${
-                  isDrawingMode ? 'cursor-crosshair' : isDragging ? 'cursor-grabbing' : 'cursor-grab'
+                  isDrawingMode
+                    ? "cursor-crosshair"
+                    : isDragging
+                    ? "cursor-grabbing"
+                    : "cursor-grab"
                 }`}
                 onWheel={handleWheel}
                 onScroll={(e) => e.preventDefault()}
                 onTouchMove={(e) => e.preventDefault()}
-                style={{ touchAction: 'none', overscrollBehavior: 'contain' }}
+                style={{ touchAction: "none", overscrollBehavior: "contain" }}
               >
-                <div 
+                <div
                   className="relative"
                   style={{
                     transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-                    transformOrigin: 'center center',
-                    transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+                    transformOrigin: "center center",
+                    transition: isDragging ? "none" : "transform 0.1s ease-out",
                   }}
                 >
                   <img
@@ -622,7 +728,7 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                     draggable={false}
                     onLoad={() => setImageLoaded(true)}
                     onError={() => {
-                      console.error('Failed to load image:', imageUrl);
+                      console.error("Failed to load image:", imageUrl);
                       setImageLoaded(false);
                     }}
                     onMouseDown={handleMouseDown}
@@ -630,75 +736,92 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseUp}
                   />
-                  
+
                   {/* Drawing overlay for current box being drawn */}
                   {drawingBox && isDrawingActive && (
                     <div
                       className="absolute border-2 border-dashed border-blue-500 bg-blue-500/10"
                       style={{
-                        left: `${Math.min(drawingBox.startX, drawingBox.endX)}%`,
+                        left: `${Math.min(
+                          drawingBox.startX,
+                          drawingBox.endX
+                        )}%`,
                         top: `${Math.min(drawingBox.startY, drawingBox.endY)}%`,
-                        width: `${Math.abs(drawingBox.endX - drawingBox.startX)}%`,
-                        height: `${Math.abs(drawingBox.endY - drawingBox.startY)}%`,
-                        pointerEvents: 'none'
+                        width: `${Math.abs(
+                          drawingBox.endX - drawingBox.startX
+                        )}%`,
+                        height: `${Math.abs(
+                          drawingBox.endY - drawingBox.startY
+                        )}%`,
+                        pointerEvents: "none",
                       }}
                     />
                   )}
-                  
+
                   {/* Unit markers */}
-                  {imageLoaded && !loading && filteredUnits.map((unit) => {
-                    // Ensure reasonable sizing with minimums and maximums to prevent overlaps
-                    const unitWidth = Math.min(Math.max(unit.width || 3, 2), 8); // Min 2%, Max 8%
-                    const unitHeight = Math.min(Math.max(unit.height || 2, 1.5), 6); // Min 1.5%, Max 6%
-                    
-                    return (
-                      <div
-                        key={unit.id}
-                        className={`absolute cursor-pointer transition-all duration-200 ${
-                          isAdminMode 
-                            ? `border-2 ${getUnitTypeColor(unit.unit_type)} hover:border-4`
-                            : 'hover:bg-blue-500/20 rounded-full' // For residents: invisible clickable area with hover effect
-                        }`}
-                        style={{
-                          left: `${unit.coordinates_x}%`,
-                          top: `${unit.coordinates_y}%`,
-                          width: isAdminMode ? `${unitWidth}%` : '20px', // Small clickable area for residents
-                          height: isAdminMode ? `${unitHeight}%` : '20px', // Small clickable area for residents
-                          transform: 'translate(-50%, -50%)',
-                          margin: isAdminMode ? '1px' : '0'
-                        }}
-                        onClick={(e) => handleUnitClick(e, unit)}
-                        title={`${unit.unit_number} - ${unit.owner_name}`}
-                      >
-                        {isAdminMode && (
-                          <>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <span className="text-[10px] font-medium text-white bg-black/70 px-0.5 py-0 rounded-sm whitespace-nowrap overflow-hidden">
-                                {unit.unit_number}
-                              </span>
-                            </div>
-                            <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="w-6 h-6 p-0 bg-white"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // Show unit information instead of deleting
-                                  setSelectedUnit(unit);
-                                }}
-                              >
-                                <Eye className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </>
-                        )}
-                        {!isAdminMode && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full opacity-60 hover:opacity-100 transition-opacity" />
-                        )}
-                      </div>
-                    );
-                  })}
+                  {imageLoaded &&
+                    !loading &&
+                    filteredUnits.map((unit) => {
+                      // Ensure reasonable sizing with minimums and maximums to prevent overlaps
+                      const unitWidth = Math.min(
+                        Math.max(unit.width || 3, 2),
+                        8
+                      ); // Min 2%, Max 8%
+                      const unitHeight = Math.min(
+                        Math.max(unit.height || 2, 1.5),
+                        6
+                      ); // Min 1.5%, Max 6%
+
+                      return (
+                        <div
+                          key={unit.id}
+                          className={`absolute cursor-pointer transition-all duration-200 ${
+                            isAdminMode
+                              ? `border-2 ${getUnitTypeColor(
+                                  unit.unit_type
+                                )} hover:border-4`
+                              : "hover:bg-blue-500/20 rounded-full" // For residents: invisible clickable area with hover effect
+                          }`}
+                          style={{
+                            left: `${unit.coordinates_x}%`,
+                            top: `${unit.coordinates_y}%`,
+                            width: isAdminMode ? `${unitWidth}%` : "20px", // Small clickable area for residents
+                            height: isAdminMode ? `${unitHeight}%` : "20px", // Small clickable area for residents
+                            transform: "translate(-50%, -50%)",
+                            margin: isAdminMode ? "1px" : "0",
+                          }}
+                          onClick={(e) => handleUnitClick(e, unit)}
+                          title={`${unit.unit_number} - ${unit.owner_name}`}
+                        >
+                          {isAdminMode && (
+                            <>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-[10px] font-medium text-white bg-black/70 px-0.5 py-0 rounded-sm whitespace-nowrap overflow-hidden">
+                                  {unit.unit_number}
+                                </span>
+                              </div>
+                              <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-6 h-6 p-0 bg-white"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // Show unit information instead of deleting
+                                    setSelectedUnit(unit);
+                                  }}
+                                >
+                                  <Eye className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </>
+                          )}
+                          {!isAdminMode && (
+                            <div className="w-2 h-2 bg-blue-500 rounded-full opacity-60 hover:opacity-100 transition-opacity" />
+                          )}
+                        </div>
+                      );
+                    })}
                 </div>
 
                 {/* Loading indicator */}
@@ -707,40 +830,68 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                       <p className="text-sm text-gray-500">
-                        {loading ? 'Loading units...' : 'Loading community map...'}
+                        {loading
+                          ? "Loading units..."
+                          : "Loading community map..."}
                       </p>
                     </div>
                   </div>
                 )}
 
                 {/* Legend */}
-                <div 
+                <div
                   className={`absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-200 cursor-pointer transition-all duration-300 hover:shadow-2xl ${
-                    isLegendExpanded ? 'p-3' : 'p-2'
+                    isLegendExpanded ? "p-3" : "p-2"
                   }`}
                   onClick={() => setIsLegendExpanded(!isLegendExpanded)}
                 >
                   <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-sm text-gray-800">Legend</h4>
-                    <div className={`transition-transform duration-300 text-gray-600 ${isLegendExpanded ? 'rotate-180' : ''}`}>
+                    <h4 className="font-semibold text-sm text-gray-800">
+                      Legend
+                    </h4>
+                    <div
+                      className={`transition-transform duration-300 text-gray-600 ${
+                        isLegendExpanded ? "rotate-180" : ""
+                      }`}
+                    >
                       ↑
                     </div>
                   </div>
-                  
-                  <div className={`transition-all duration-300 overflow-hidden ${
-                    isLegendExpanded ? 'max-h-32 opacity-100 mt-2' : 'max-h-0 opacity-0'
-                  }`}>
+
+                  <div
+                    className={`transition-all duration-300 overflow-hidden ${
+                      isLegendExpanded
+                        ? "max-h-32 opacity-100 mt-2"
+                        : "max-h-0 opacity-0"
+                    }`}
+                  >
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded ${getUnitTypeBadge('residential')}`}></div>
-                        <span className="text-sm text-gray-700">Residential</span>
+                        <div
+                          className={`w-4 h-4 rounded ${getUnitTypeBadge(
+                            "residential"
+                          )}`}
+                        ></div>
+                        <span className="text-sm text-gray-700">
+                          Residential
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded ${getUnitTypeBadge('commercial')}`}></div>
-                        <span className="text-sm text-gray-700">Commercial</span>
+                        <div
+                          className={`w-4 h-4 rounded ${getUnitTypeBadge(
+                            "commercial"
+                          )}`}
+                        ></div>
+                        <span className="text-sm text-gray-700">
+                          Commercial
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded ${getUnitTypeBadge('facility')}`}></div>
+                        <div
+                          className={`w-4 h-4 rounded ${getUnitTypeBadge(
+                            "facility"
+                          )}`}
+                        ></div>
                         <span className="text-sm text-gray-700">Facility</span>
                       </div>
                     </div>
@@ -749,7 +900,9 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
 
                 {/* Zoom indicator */}
                 <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg">
-                  <span className="text-xs font-mono">{Math.round(scale * 100)}%</span>
+                  <span className="text-xs font-mono">
+                    {Math.round(scale * 100)}%
+                  </span>
                 </div>
 
                 {/* Real-time connection status */}
@@ -764,7 +917,7 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
               </div>
             </div>
           </TabsContent>
-          
+
           <TabsContent value="owners" className="mt-4 h-full">
             <div className="h-full overflow-auto">
               <div className="mb-4">
@@ -778,7 +931,7 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                   />
                 </div>
               </div>
-              
+
               {loading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="text-center">
@@ -790,40 +943,54 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                 <div>
                   <div className="grid gap-4">
                     {paginatedUnits.map((unit) => (
-                      <Card key={unit.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedUnit(unit)}>
+                      <Card
+                        key={unit.id}
+                        className="hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => setSelectedUnit(unit)}
+                      >
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
-                                <h3 className="font-semibold text-lg">{unit.owner_name}</h3>
-                                <Badge className={getUnitTypeBadge(unit.unit_type)}>
+                                <h3 className="font-semibold text-lg">
+                                  {unit.owner_name}
+                                </h3>
+                                <Badge
+                                  className={getUnitTypeBadge(unit.unit_type)}
+                                >
                                   {unit.unit_type}
                                 </Badge>
-                                <Badge variant={unit.occupancy_status === 'occupied' ? 'default' : 'secondary'}>
+                                <Badge
+                                  variant={
+                                    unit.occupancy_status === "occupied"
+                                      ? "default"
+                                      : "secondary"
+                                  }
+                                >
                                   {unit.occupancy_status}
                                 </Badge>
                               </div>
-                              
+
                               <div className="space-y-1 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-2">
                                   <MapPin className="h-4 w-4" />
                                   <span>Unit {unit.unit_number}</span>
                                 </div>
-                                
+
                                 {unit.address && (
                                   <div className="flex items-center gap-2">
                                     <MapPin className="h-4 w-4" />
                                     <span>{unit.address}</span>
                                   </div>
                                 )}
-                                
+
                                 {unit.phone_number && (
                                   <div className="flex items-center gap-2">
                                     <Phone className="h-4 w-4" />
                                     <span>{unit.phone_number}</span>
                                   </div>
                                 )}
-                                
+
                                 {unit.email && (
                                   <div className="flex items-center gap-2">
                                     <Mail className="h-4 w-4" />
@@ -831,7 +998,7 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                                   </div>
                                 )}
                               </div>
-                              
+
                               {unit.notes && (
                                 <div className="mt-2 text-sm text-gray-600">
                                   <strong>Notes:</strong> {unit.notes}
@@ -843,22 +1010,33 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                       </Card>
                     ))}
                   </div>
-                  
+
                   {/* Pagination Controls */}
                   {totalPages > 1 && (
                     <div className="mt-6 flex items-center justify-between">
                       <div className="text-sm text-muted-foreground">
-                        Showing {startIndex + 1}-{Math.min(endIndex, filteredUnits.length)} of {filteredUnits.length} owners
+                        Showing {startIndex + 1}-
+                        {Math.min(endIndex, filteredUnits.length)} of{" "}
+                        {filteredUnits.length} owners
                       </div>
                       <Pagination>
                         <PaginationContent>
                           <PaginationItem>
-                            <PaginationPrevious 
-                              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                              className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            <PaginationPrevious
+                              onClick={() =>
+                                setCurrentPage((prev) => Math.max(1, prev - 1))
+                              }
+                              className={
+                                currentPage === 1
+                                  ? "pointer-events-none opacity-50"
+                                  : "cursor-pointer"
+                              }
                             />
                           </PaginationItem>
-                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          {Array.from(
+                            { length: totalPages },
+                            (_, i) => i + 1
+                          ).map((page) => (
                             <PaginationItem key={page}>
                               <PaginationLink
                                 onClick={() => setCurrentPage(page)}
@@ -870,27 +1048,36 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                             </PaginationItem>
                           ))}
                           <PaginationItem>
-                            <PaginationNext 
-                              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                              className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            <PaginationNext
+                              onClick={() =>
+                                setCurrentPage((prev) =>
+                                  Math.min(totalPages, prev + 1)
+                                )
+                              }
+                              className={
+                                currentPage === totalPages
+                                  ? "pointer-events-none opacity-50"
+                                  : "cursor-pointer"
+                              }
                             />
                           </PaginationItem>
                         </PaginationContent>
                       </Pagination>
                     </div>
                   )}
-                  
+
                   {filteredUnits.length === 0 && !loading && (
                     <div className="text-center py-12">
                       <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">No Owners Found</h3>
+                      <h3 className="text-lg font-semibold mb-2">
+                        No Owners Found
+                      </h3>
                       <p className="text-muted-foreground">
-                        {searchTerm 
-                          ? 'No owners match your search criteria.' 
-                          : selectedFloorPlan 
-                            ? 'No owners have been added to this floor plan yet.'
-                            : 'Select a floor plan to view owners or add new units.'
-                        }
+                        {searchTerm
+                          ? "No owners match your search criteria."
+                          : selectedFloorPlan
+                          ? "No owners have been added to this floor plan yet."
+                          : "Select a floor plan to view owners or add new units."}
                       </p>
                     </div>
                   )}
@@ -902,17 +1089,20 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
       </CardContent>
 
       {/* Unit Form Dialog */}
-      <Dialog open={showUnitForm} onOpenChange={(open) => {
-        if (!open) {
-          setShowUnitForm(false);
-          resetForm();
-          setNewBoxCoordinates(null);
-        }
-      }}>
+      <Dialog
+        open={showUnitForm}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowUnitForm(false);
+            resetForm();
+            setNewBoxCoordinates(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingUnit ? 'Edit Unit' : 'Add New Unit'}
+              {editingUnit ? "Edit Unit" : "Add New Unit"}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -922,7 +1112,12 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                 <Input
                   id="unit_number"
                   value={formData.unit_number}
-                  onChange={(e) => setFormData(prev => ({ ...prev, unit_number: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      unit_number: e.target.value,
+                    }))
+                  }
                   placeholder="e.g., A-101"
                   required
                 />
@@ -932,7 +1127,12 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                 <Input
                   id="owner_name"
                   value={formData.owner_name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, owner_name: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      owner_name: e.target.value,
+                    }))
+                  }
                   placeholder="e.g., Ahmad Rahman"
                   required
                 />
@@ -942,7 +1142,15 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="unit_type">Unit Type</Label>
-                <Select value={formData.unit_type} onValueChange={(value) => setFormData(prev => ({ ...prev, unit_type: value as any }))}>
+                <Select
+                  value={formData.unit_type}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      unit_type: value as any,
+                    }))
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -955,14 +1163,24 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
               </div>
               <div>
                 <Label htmlFor="occupancy_status">Occupancy Status</Label>
-                <Select value={formData.occupancy_status} onValueChange={(value) => setFormData(prev => ({ ...prev, occupancy_status: value }))}>
+                <Select
+                  value={formData.occupancy_status}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      occupancy_status: value,
+                    }))
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="occupied">Occupied</SelectItem>
                     <SelectItem value="vacant">Vacant</SelectItem>
-                    <SelectItem value="maintenance">Under Maintenance</SelectItem>
+                    <SelectItem value="maintenance">
+                      Under Maintenance
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -973,7 +1191,9 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
               <Input
                 id="address"
                 value={formData.address}
-                onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, address: e.target.value }))
+                }
                 placeholder="Full address"
               />
             </div>
@@ -984,7 +1204,12 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                 <Input
                   id="phone_number"
                   value={formData.phone_number}
-                  onChange={(e) => setFormData(prev => ({ ...prev, phone_number: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      phone_number: e.target.value,
+                    }))
+                  }
                   placeholder="+60123456789"
                 />
               </div>
@@ -994,7 +1219,9 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, email: e.target.value }))
+                  }
                   placeholder="owner@example.com"
                 />
               </div>
@@ -1005,7 +1232,9 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
               <Textarea
                 id="notes"
                 value={formData.notes}
-                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, notes: e.target.value }))
+                }
                 placeholder="Additional notes about the unit"
                 rows={3}
               />
@@ -1014,9 +1243,9 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
             <div className="flex justify-between">
               <div>
                 {editingUnit && (
-                  <Button 
-                    type="button" 
-                    variant="destructive" 
+                  <Button
+                    type="button"
+                    variant="destructive"
                     onClick={() => handleDeleteUnit(editingUnit)}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
@@ -1025,12 +1254,16 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                 )}
               </div>
               <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={() => setShowUnitForm(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowUnitForm(false)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit">
                   <Save className="h-4 w-4 mr-2" />
-                  {editingUnit ? 'Update Unit' : 'Create Unit'}
+                  {editingUnit ? "Update Unit" : "Create Unit"}
                 </Button>
               </div>
             </div>
@@ -1039,23 +1272,34 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
       </Dialog>
 
       {/* Unit Information Dialog (View Mode) */}
-      <Dialog open={!!selectedUnit && !isAdminMode} onOpenChange={() => setSelectedUnit(null)}>
+      <Dialog
+        open={!!selectedUnit && !isAdminMode}
+        onOpenChange={() => setSelectedUnit(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {selectedUnit?.unit_number}
-              <Badge className={getUnitTypeBadge(selectedUnit?.unit_type || 'residential')}>
+              <Badge
+                className={getUnitTypeBadge(
+                  selectedUnit?.unit_type || "residential"
+                )}
+              >
                 {selectedUnit?.unit_type}
               </Badge>
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <h4 className="font-semibold text-sm text-gray-600 mb-1">Owner</h4>
+              <h4 className="font-semibold text-sm text-gray-600 mb-1">
+                Owner
+              </h4>
               <p className="text-lg">{selectedUnit?.owner_name}</p>
             </div>
             <div>
-              <h4 className="font-semibold text-sm text-gray-600 mb-1">Unit Number</h4>
+              <h4 className="font-semibold text-sm text-gray-600 mb-1">
+                Unit Number
+              </h4>
               <p>{selectedUnit?.unit_number}</p>
             </div>
             <div>
@@ -1064,33 +1308,49 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
             </div>
             {selectedUnit?.address && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-600 mb-1">Address</h4>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">
+                  Address
+                </h4>
                 <p>{selectedUnit.address}</p>
               </div>
             )}
             {selectedUnit?.phone_number && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-600 mb-1">Phone</h4>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">
+                  Phone
+                </h4>
                 <p>{selectedUnit.phone_number}</p>
               </div>
             )}
             {selectedUnit?.email && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-600 mb-1">Email</h4>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">
+                  Email
+                </h4>
                 <p>{selectedUnit.email}</p>
               </div>
             )}
             {selectedUnit?.occupancy_status && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-600 mb-1">Status</h4>
-                <Badge variant={selectedUnit.occupancy_status === 'occupied' ? 'default' : 'secondary'}>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">
+                  Status
+                </h4>
+                <Badge
+                  variant={
+                    selectedUnit.occupancy_status === "occupied"
+                      ? "default"
+                      : "secondary"
+                  }
+                >
                   {selectedUnit.occupancy_status}
                 </Badge>
               </div>
             )}
             {selectedUnit?.notes && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-600 mb-1">Notes</h4>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">
+                  Notes
+                </h4>
                 <p className="text-sm">{selectedUnit.notes}</p>
               </div>
             )}
@@ -1099,13 +1359,20 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
       </Dialog>
 
       {/* Admin Unit Information Dialog with Delete Option */}
-      <Dialog open={!!selectedUnit && isAdminMode} onOpenChange={() => setSelectedUnit(null)}>
+      <Dialog
+        open={!!selectedUnit && isAdminMode}
+        onOpenChange={() => setSelectedUnit(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {selectedUnit?.unit_number}
-                <Badge className={getUnitTypeBadge(selectedUnit?.unit_type || 'residential')}>
+                <Badge
+                  className={getUnitTypeBadge(
+                    selectedUnit?.unit_type || "residential"
+                  )}
+                >
                   {selectedUnit?.unit_type}
                 </Badge>
               </div>
@@ -1119,11 +1386,12 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                       unit_number: selectedUnit.unit_number,
                       owner_name: selectedUnit.owner_name,
                       unit_type: selectedUnit.unit_type,
-                      address: selectedUnit.address || '',
-                      phone_number: selectedUnit.phone_number || '',
-                      email: selectedUnit.email || '',
-                      occupancy_status: selectedUnit.occupancy_status || 'occupied',
-                      notes: selectedUnit.notes || ''
+                      address: selectedUnit.address || "",
+                      phone_number: selectedUnit.phone_number || "",
+                      email: selectedUnit.email || "",
+                      occupancy_status:
+                        selectedUnit.occupancy_status || "occupied",
+                      notes: selectedUnit.notes || "",
                     });
                     setShowUnitForm(true);
                     setSelectedUnit(null);
@@ -1137,11 +1405,15 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <h4 className="font-semibold text-sm text-gray-600 mb-1">Owner</h4>
+              <h4 className="font-semibold text-sm text-gray-600 mb-1">
+                Owner
+              </h4>
               <p className="text-lg">{selectedUnit?.owner_name}</p>
             </div>
             <div>
-              <h4 className="font-semibold text-sm text-gray-600 mb-1">Unit Number</h4>
+              <h4 className="font-semibold text-sm text-gray-600 mb-1">
+                Unit Number
+              </h4>
               <p>{selectedUnit?.unit_number}</p>
             </div>
             <div>
@@ -1150,42 +1422,58 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
             </div>
             {selectedUnit?.address && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-600 mb-1">Address</h4>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">
+                  Address
+                </h4>
                 <p>{selectedUnit.address}</p>
               </div>
             )}
             {selectedUnit?.phone_number && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-600 mb-1">Phone</h4>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">
+                  Phone
+                </h4>
                 <p>{selectedUnit.phone_number}</p>
               </div>
             )}
             {selectedUnit?.email && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-600 mb-1">Email</h4>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">
+                  Email
+                </h4>
                 <p>{selectedUnit.email}</p>
               </div>
             )}
             {selectedUnit?.occupancy_status && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-600 mb-1">Status</h4>
-                <Badge variant={selectedUnit.occupancy_status === 'occupied' ? 'default' : 'secondary'}>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">
+                  Status
+                </h4>
+                <Badge
+                  variant={
+                    selectedUnit.occupancy_status === "occupied"
+                      ? "default"
+                      : "secondary"
+                  }
+                >
                   {selectedUnit.occupancy_status}
                 </Badge>
               </div>
             )}
             {selectedUnit?.notes && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-600 mb-1">Notes</h4>
+                <h4 className="font-semibold text-sm text-gray-600 mb-1">
+                  Notes
+                </h4>
                 <p className="text-sm">{selectedUnit.notes}</p>
               </div>
             )}
-            
+
             <div className="flex justify-end gap-2 pt-4 border-t">
               <Button variant="outline" onClick={() => setSelectedUnit(null)}>
                 Close
               </Button>
-              <Button 
+              <Button
                 variant="destructive"
                 onClick={() => {
                   if (selectedUnit) {

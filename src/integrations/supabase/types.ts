@@ -6510,6 +6510,7 @@ export type Database = {
           agree_declare: boolean | null
           avatar_url: string | null
           badge_id: string | null
+          business_name: string | null
           certifications: string[] | null
           community_id: string | null
           community_status: boolean | null
@@ -6587,6 +6588,7 @@ export type Database = {
           agree_declare?: boolean | null
           avatar_url?: string | null
           badge_id?: string | null
+          business_name?: string | null
           certifications?: string[] | null
           community_id?: string | null
           community_status?: boolean | null
@@ -6664,6 +6666,7 @@ export type Database = {
           agree_declare?: boolean | null
           avatar_url?: string | null
           badge_id?: string | null
+          business_name?: string | null
           certifications?: string[] | null
           community_id?: string | null
           community_status?: boolean | null
@@ -10197,6 +10200,18 @@ export type Database = {
           p_work_order_type?: Database["public"]["Enums"]["work_order_type"]
         }
         Returns: string
+      }
+      debug_user_roles: {
+        Args: { check_user_id?: string }
+        Returns: {
+          district_id: string
+          has_community_admin: boolean
+          has_district_coordinator: boolean
+          has_state_admin: boolean
+          is_active: boolean
+          role: Database["public"]["Enums"]["enhanced_user_role"]
+          user_id: string
+        }[]
       }
       escalate_workflow: {
         Args: {

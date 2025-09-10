@@ -1,18 +1,24 @@
-import React, { useState } from 'react';
-import { useFloorPlans } from '@/hooks/use-floor-plans';
-import { useImageManagement } from '@/hooks/use-image-management';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ImageUpload } from '@/components/ui/image-upload';
-import { FloorPlanMigrationWizard } from './FloorPlanMigrationWizard';
-import { SmartImage } from '@/components/ui/dynamic-image';
-import { Plus, Edit, Eye, AlertTriangle, History } from 'lucide-react';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { useFloorPlans } from "@/hooks/use-floor-plans";
+import { useImageManagement } from "@/hooks/use-image-management";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { FloorPlanMigrationWizard } from "./FloorPlanMigrationWizard";
+import { SmartImage } from "@/components/ui/dynamic-image";
+import { Plus, Edit, Eye, AlertTriangle, History } from "lucide-react";
+import { toast } from "sonner";
 
 interface FloorPlanFormData {
   name: string;
@@ -21,24 +27,30 @@ interface FloorPlanFormData {
 }
 
 export const FloorPlanManagement: React.FC = () => {
-  const { floorPlans, loading, createFloorPlan, updateFloorPlan, deleteFloorPlan } = useFloorPlans();
+  const {
+    floorPlans,
+    loading,
+    createFloorPlan,
+    updateFloorPlan,
+    deleteFloorPlan,
+  } = useFloorPlans();
   const { images, uploadImage, deleteImage } = useImageManagement({
-    assetType: 'floor_plan',
-    bucket: 'floor-plan-images'
+    assetType: "floor_plan",
+    bucket: "floor-plan-images",
   });
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingFloorPlan, setEditingFloorPlan] = useState<any>(null);
   const [showMigrationWizard, setShowMigrationWizard] = useState<any>(null);
   const [formData, setFormData] = useState<FloorPlanFormData>({
-    name: '',
-    image_url: '',
-    version: 1
+    name: "",
+    image_url: "",
+    version: 1,
   });
 
   const handleCreateFloorPlan = async () => {
     if (!formData.name || !formData.image_url) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -46,49 +58,54 @@ export const FloorPlanManagement: React.FC = () => {
       name: formData.name,
       image_url: formData.image_url,
       version: formData.version,
-      is_active: true
+      is_active: true,
     });
 
     if (result) {
       setShowCreateForm(false);
-      setFormData({ name: '', image_url: '', version: 1 });
-      toast.success('Floor plan created successfully');
+      setFormData({ name: "", image_url: "", version: 1 });
+      toast.success("Floor plan created successfully");
     }
   };
 
   const handleUpdateFloorPlan = async () => {
     if (!editingFloorPlan || !formData.name || !formData.image_url) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
     const result = await updateFloorPlan(editingFloorPlan.id, {
       name: formData.name,
       image_url: formData.image_url,
-      version: formData.version
+      version: formData.version,
     });
 
     if (result) {
       // Broadcast the floor plan change to all users
       await broadcastFloorPlanUpdate(editingFloorPlan.id, formData.image_url);
-      
+
       setEditingFloorPlan(null);
-      setFormData({ name: '', image_url: '', version: 1 });
-      toast.success('Floor plan updated and broadcast to all users');
+      setFormData({ name: "", image_url: "", version: 1 });
+      toast.success("Floor plan updated and broadcast to all users");
     }
   };
 
   // Broadcast floor plan updates to all users
-  const broadcastFloorPlanUpdate = async (floorPlanId: string, imageUrl: string) => {
+  const broadcastFloorPlanUpdate = async (
+    floorPlanId: string,
+    imageUrl: string
+  ) => {
     try {
       // Get current user's district to broadcast to the right channel
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('district_id')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("district_id")
+        .eq("user_id", user.id)
         .single();
 
       if (!profile?.district_id) return;
@@ -96,34 +113,34 @@ export const FloorPlanManagement: React.FC = () => {
       // Create channel and broadcast
       const channelName = `community_updates_${profile.district_id}`;
       const channel = supabase.channel(channelName);
-      
+
       await channel.send({
-        type: 'broadcast',
-        event: 'floor_plan_changed',
+        type: "broadcast",
+        event: "floor_plan_changed",
         payload: {
           floorPlanId,
           imageUrl,
           changedBy: user.id,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       });
 
       // Subscribe briefly to ensure the message is sent
       channel.subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
+        if (status === "SUBSCRIBED") {
           setTimeout(() => {
             supabase.removeChannel(channel);
           }, 1000);
         }
       });
     } catch (error) {
-      console.error('Failed to broadcast floor plan update:', error);
+      console.error("Failed to broadcast floor plan update:", error);
     }
   };
 
   const handleImageUpload = async (url: string, path: string) => {
-    setFormData(prev => ({ ...prev, image_url: url }));
-    toast.success('Image uploaded successfully');
+    setFormData((prev) => ({ ...prev, image_url: url }));
+    toast.success("Image uploaded successfully");
   };
 
   const handleEditFloorPlan = (floorPlan: any) => {
@@ -131,7 +148,7 @@ export const FloorPlanManagement: React.FC = () => {
     setFormData({
       name: floorPlan.name,
       image_url: floorPlan.image_url,
-      version: floorPlan.version
+      version: floorPlan.version,
     });
   };
 
@@ -148,15 +165,16 @@ export const FloorPlanManagement: React.FC = () => {
           placeholder="Enter floor plan name (e.g., Building A - Level 1)"
           value={formData.name}
           onChange={(e) => {
-            console.log('Input change:', e.target.value);
-            setFormData(prev => ({ ...prev, name: e.target.value }));
+            console.log("Input change:", e.target.value);
+            setFormData((prev) => ({ ...prev, name: e.target.value }));
           }}
           disabled={loading}
           autoFocus={!isEdit}
         />
         {/* Debug info */}
         <p className="text-xs text-gray-500 mt-1">
-          Current value: "{formData.name}" | Loading: {loading.toString()} | Edit mode: {isEdit.toString()}
+          Current value: "{formData.name}" | Loading: {loading.toString()} |
+          Edit mode: {isEdit.toString()}
         </p>
       </div>
 
@@ -167,7 +185,12 @@ export const FloorPlanManagement: React.FC = () => {
           type="number"
           min="1"
           value={formData.version}
-          onChange={(e) => setFormData(prev => ({ ...prev, version: parseInt(e.target.value) || 1 }))}
+          onChange={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              version: parseInt(e.target.value) || 1,
+            }))
+          }
         />
       </div>
 
@@ -177,7 +200,9 @@ export const FloorPlanManagement: React.FC = () => {
           bucket="floor-plan-images"
           existingImages={formData.image_url ? [formData.image_url] : []}
           onUploadComplete={handleImageUpload}
-          onRemoveImage={() => setFormData(prev => ({ ...prev, image_url: '' }))}
+          onRemoveImage={() =>
+            setFormData((prev) => ({ ...prev, image_url: "" }))
+          }
           maxFiles={1}
           accept="image/jpeg,image/png,image/webp"
           maxSizeMB={10}
@@ -198,18 +223,20 @@ export const FloorPlanManagement: React.FC = () => {
       )}
 
       <div className="flex justify-end space-x-2">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => {
             setShowCreateForm(false);
             setEditingFloorPlan(null);
-            setFormData({ name: '', image_url: '', version: 1 });
+            setFormData({ name: "", image_url: "", version: 1 });
           }}
         >
           Cancel
         </Button>
-        <Button onClick={isEdit ? handleUpdateFloorPlan : handleCreateFloorPlan}>
-          {isEdit ? 'Update' : 'Create'} Floor Plan
+        <Button
+          onClick={isEdit ? handleUpdateFloorPlan : handleCreateFloorPlan}
+        >
+          {isEdit ? "Update" : "Create"} Floor Plan
         </Button>
       </div>
     </div>
@@ -265,20 +292,19 @@ export const FloorPlanManagement: React.FC = () => {
                 className="w-full h-full object-cover"
               />
               <div className="absolute top-2 right-2">
-                <Badge variant="secondary">
-                  v{floorPlan.version}
-                </Badge>
+                <Badge variant="secondary">v{floorPlan.version}</Badge>
               </div>
             </div>
-            
+
             <CardHeader>
               <CardTitle className="text-lg">{floorPlan.name}</CardTitle>
               <div className="flex items-center space-x-2">
-                <Badge variant={floorPlan.is_active ? 'default' : 'secondary'}>
-                  {floorPlan.is_active ? 'Active' : 'Inactive'}
+                <Badge variant={floorPlan.is_active ? "default" : "secondary"}>
+                  {floorPlan.is_active ? "Active" : "Inactive"}
                 </Badge>
                 <span className="text-sm text-muted-foreground">
-                  Created: {new Date(floorPlan.created_at || '').toLocaleDateString()}
+                  Created:{" "}
+                  {new Date(floorPlan.created_at || "").toLocaleDateString()}
                 </span>
               </div>
             </CardHeader>
@@ -321,7 +347,10 @@ export const FloorPlanManagement: React.FC = () => {
       )}
 
       {/* Edit Dialog */}
-      <Dialog open={!!editingFloorPlan} onOpenChange={(open) => !open && setEditingFloorPlan(null)}>
+      <Dialog
+        open={!!editingFloorPlan}
+        onOpenChange={(open) => !open && setEditingFloorPlan(null)}
+      >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Floor Plan</DialogTitle>

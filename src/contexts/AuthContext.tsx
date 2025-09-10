@@ -103,9 +103,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           supabase
             .from("profiles")
             .select(
-              "full_name, email, district_id, language_preference, account_status"
+              "full_name, email, district_id, community_id, language_preference, account_status"
             )
-            .eq("id", userId)
+            .eq("user_id", userId)
             .maybeSingle(),
           supabase
             .from("enhanced_user_roles")
@@ -119,7 +119,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAccountStatus(profile?.account_status || "pending");
 
       // Check if account is approved or pending completion
-      if (profile?.account_status !== "approved" && profile?.account_status !== "pending_completion") {
+      if (
+        profile?.account_status !== "approved" &&
+        profile?.account_status !== "pending_completion"
+      ) {
         console.log(
           "User account not approved, account_status:",
           profile?.account_status
@@ -163,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         display_name: profile?.full_name || profile?.email || "",
         email: profile?.email || "",
         associated_community_ids: [],
-        active_community_id: "",
+        active_community_id: profile?.community_id || "",
         district: districtName,
         user_role: primaryRole,
         available_roles: roleList.length ? roleList : ["resident"],

@@ -1,14 +1,26 @@
-import { useState } from 'react';
-import { useAuth, Language } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
-import { Loader2, UserCheck } from 'lucide-react';
+import { useState } from "react";
+import { useAuth, Language } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { Loader2, UserCheck } from "lucide-react";
 
 export default function CompleteAccount() {
   const { user, language, loadProfileAndRoles } = useAuth();
@@ -16,73 +28,80 @@ export default function CompleteAccount() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    phone: '',
-    unit_number: '',
+    phone: "",
+    unit_number: "",
     family_size: 1,
-    emergency_contact_name: '',
-    emergency_contact_phone: '',
-    vehicle_number: '',
-    language_preference: (language as Language) || 'ms'
+    emergency_contact_name: "",
+    emergency_contact_phone: "",
+    vehicle_number: "",
+    language_preference: (language as Language) || "ms",
   });
 
   const text = {
     en: {
-      title: 'Complete Your Account',
-      subtitle: 'Please provide the following information to complete your account setup',
-      phone: 'Phone Number',
-      unitNumber: 'Unit Number',
-      familySize: 'Family Size',
-      emergencyContactName: 'Emergency Contact Name',
-      emergencyContactPhone: 'Emergency Contact Phone',
-      vehicleNumber: 'Vehicle Number (Optional)',
-      languagePreference: 'Language Preference',
-      english: 'English',
-      malay: 'Bahasa Malaysia',
-      complete: 'Complete Account',
-      completing: 'Completing Account...',
-      success: 'Account completed successfully!',
-      error: 'Failed to complete account',
-      required: 'This field is required'
+      title: "Complete Your Account",
+      subtitle:
+        "Please provide the following information to complete your account setup",
+      phone: "Phone Number",
+      unitNumber: "Unit Number",
+      familySize: "Family Size",
+      emergencyContactName: "Emergency Contact Name",
+      emergencyContactPhone: "Emergency Contact Phone",
+      vehicleNumber: "Vehicle Number (Optional)",
+      languagePreference: "Language Preference",
+      english: "English",
+      malay: "Bahasa Malaysia",
+      complete: "Complete Account",
+      completing: "Completing Account...",
+      success: "Account completed successfully!",
+      error: "Failed to complete account",
+      required: "This field is required",
     },
     ms: {
-      title: 'Lengkapkan Akaun Anda',
-      subtitle: 'Sila berikan maklumat berikut untuk melengkapkan persediaan akaun anda',
-      phone: 'Nombor Telefon',
-      unitNumber: 'Nombor Unit',
-      familySize: 'Saiz Keluarga',
-      emergencyContactName: 'Nama Hubungan Kecemasan',
-      emergencyContactPhone: 'Telefon Hubungan Kecemasan',
-      vehicleNumber: 'Nombor Kenderaan (Pilihan)',
-      languagePreference: 'Pilihan Bahasa',
-      english: 'Bahasa Inggeris',
-      malay: 'Bahasa Malaysia',
-      complete: 'Lengkapkan Akaun',
-      completing: 'Melengkapkan Akaun...',
-      success: 'Akaun berjaya dilengkapkan!',
-      error: 'Gagal melengkapkan akaun',
-      required: 'Medan ini diperlukan'
-    }
+      title: "Lengkapkan Akaun Anda",
+      subtitle:
+        "Sila berikan maklumat berikut untuk melengkapkan persediaan akaun anda",
+      phone: "Nombor Telefon",
+      unitNumber: "Nombor Unit",
+      familySize: "Saiz Keluarga",
+      emergencyContactName: "Nama Hubungan Kecemasan",
+      emergencyContactPhone: "Telefon Hubungan Kecemasan",
+      vehicleNumber: "Nombor Kenderaan (Pilihan)",
+      languagePreference: "Pilihan Bahasa",
+      english: "Bahasa Inggeris",
+      malay: "Bahasa Malaysia",
+      complete: "Lengkapkan Akaun",
+      completing: "Melengkapkan Akaun...",
+      success: "Akaun berjaya dilengkapkan!",
+      error: "Gagal melengkapkan akaun",
+      required: "Medan ini diperlukan",
+    },
   };
 
   const t = text[language];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!form.phone || !form.unit_number || !form.emergency_contact_name || !form.emergency_contact_phone) {
+
+    if (
+      !form.phone ||
+      !form.unit_number ||
+      !form.emergency_contact_name ||
+      !form.emergency_contact_phone
+    ) {
       toast({
-        title: 'Error',
+        title: "Error",
         description: t.required,
-        variant: 'destructive'
+        variant: "destructive",
       });
       return;
     }
 
     setLoading(true);
-    
+
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({
           phone: form.phone,
           unit_number: form.unit_number,
@@ -91,29 +110,28 @@ export default function CompleteAccount() {
           emergency_contact_phone: form.emergency_contact_phone,
           vehicle_number: form.vehicle_number || null,
           language_preference: form.language_preference,
-          account_status: 'approved'
+          account_status: "approved",
         })
-        .eq('id', user?.id);
+        .eq("user_id", user?.id);
 
       if (error) throw error;
 
       toast({
         title: t.success,
-        description: 'Welcome to the community management system!'
+        description: "Welcome to the community management system!",
       });
 
       // Reload profile and roles to update auth context
       await loadProfileAndRoles();
-      
+
       // Navigate to home page
-      navigate('/');
-      
+      navigate("/");
     } catch (error) {
-      console.error('Error completing account:', error);
+      console.error("Error completing account:", error);
       toast({
-        title: 'Error',
+        title: "Error",
         description: t.error,
-        variant: 'destructive'
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -151,7 +169,9 @@ export default function CompleteAccount() {
               <Input
                 id="unit_number"
                 value={form.unit_number}
-                onChange={(e) => setForm({ ...form, unit_number: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, unit_number: e.target.value })
+                }
                 placeholder="A-10-05"
                 required
               />
@@ -165,29 +185,42 @@ export default function CompleteAccount() {
                 min="1"
                 max="20"
                 value={form.family_size}
-                onChange={(e) => setForm({ ...form, family_size: parseInt(e.target.value) || 1 })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    family_size: parseInt(e.target.value) || 1,
+                  })
+                }
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="emergency_contact_name">{t.emergencyContactName} *</Label>
+              <Label htmlFor="emergency_contact_name">
+                {t.emergencyContactName} *
+              </Label>
               <Input
                 id="emergency_contact_name"
                 value={form.emergency_contact_name}
-                onChange={(e) => setForm({ ...form, emergency_contact_name: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, emergency_contact_name: e.target.value })
+                }
                 placeholder="John Doe"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="emergency_contact_phone">{t.emergencyContactPhone} *</Label>
+              <Label htmlFor="emergency_contact_phone">
+                {t.emergencyContactPhone} *
+              </Label>
               <Input
                 id="emergency_contact_phone"
                 type="tel"
                 value={form.emergency_contact_phone}
-                onChange={(e) => setForm({ ...form, emergency_contact_phone: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, emergency_contact_phone: e.target.value })
+                }
                 placeholder="+60123456789"
                 required
               />
@@ -198,16 +231,22 @@ export default function CompleteAccount() {
               <Input
                 id="vehicle_number"
                 value={form.vehicle_number}
-                onChange={(e) => setForm({ ...form, vehicle_number: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, vehicle_number: e.target.value })
+                }
                 placeholder="ABC 1234"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="language_preference">{t.languagePreference} *</Label>
-              <Select 
-                value={form.language_preference} 
-                onValueChange={(value) => setForm({ ...form, language_preference: value as Language })}
+              <Label htmlFor="language_preference">
+                {t.languagePreference} *
+              </Label>
+              <Select
+                value={form.language_preference}
+                onValueChange={(value) =>
+                  setForm({ ...form, language_preference: value as Language })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -219,11 +258,7 @@ export default function CompleteAccount() {
               </Select>
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={loading}
-            >
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

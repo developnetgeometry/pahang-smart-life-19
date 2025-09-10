@@ -1,18 +1,40 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { Search, Users, MessageCircle, Mail, Phone, Shield, Settings, Eye, EyeOff } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Search,
+  Users,
+  MessageCircle,
+  Mail,
+  Phone,
+  Shield,
+  Settings,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface ResidentProfile {
   id: string;
@@ -36,14 +58,14 @@ interface PrivacySettings {
   show_address: boolean;
   allow_messages: boolean;
   allow_event_invites: boolean;
-  profile_visibility: 'public' | 'community' | 'friends' | 'private';
+  profile_visibility: "public" | "community" | "friends" | "private";
 }
 
 export default function ResidentDirectory() {
   const { language, user } = useAuth();
   const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSkill, setSelectedSkill] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSkill, setSelectedSkill] = useState("all");
   const [residents, setResidents] = useState<ResidentProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [privacySettings, setPrivacySettings] = useState<PrivacySettings>({
@@ -53,80 +75,80 @@ export default function ResidentDirectory() {
     show_address: false,
     allow_messages: true,
     allow_event_invites: true,
-    profile_visibility: 'community'
+    profile_visibility: "community",
   });
   const [profileData, setProfileData] = useState({
-    profile_bio: '',
+    profile_bio: "",
     interests: [] as string[],
-    skills: [] as string[]
+    skills: [] as string[],
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const text = {
     en: {
-      title: 'Resident Directory',
-      description: 'Connect with your community members',
-      search: 'Search residents...',
-      filterBySkill: 'Filter by Skill',
-      all: 'All Skills',
-      message: 'Message',
-      contact: 'Contact',
-      skills: 'Skills',
-      interests: 'Interests',
-      bio: 'Bio',
-      privacySettings: 'Privacy Settings',
-      profileSettings: 'Profile Settings',
-      visibility: 'Profile Visibility',
-      showFullName: 'Show Full Name',
-      showPhone: 'Show Phone Number',
-      showEmail: 'Show Email',
-      showAddress: 'Show Address',
-      allowMessages: 'Allow Messages',
-      allowEventInvites: 'Allow Event Invites',
-      public: 'Public',
-      community: 'Community Only',
-      friends: 'Friends Only',
-      private: 'Private',
-      updateProfile: 'Update Profile',
-      addSkill: 'Add Skill',
-      addInterest: 'Add Interest',
-      saveSettings: 'Save Settings',
-      noResidents: 'No residents found',
-      cannotMessage: 'Messages not allowed',
-      cannotInvite: 'Invites not allowed'
+      title: "Resident Directory",
+      description: "Connect with your community members",
+      search: "Search residents...",
+      filterBySkill: "Filter by Skill",
+      all: "All Skills",
+      message: "Message",
+      contact: "Contact",
+      skills: "Skills",
+      interests: "Interests",
+      bio: "Bio",
+      privacySettings: "Privacy Settings",
+      profileSettings: "Profile Settings",
+      visibility: "Profile Visibility",
+      showFullName: "Show Full Name",
+      showPhone: "Show Phone Number",
+      showEmail: "Show Email",
+      showAddress: "Show Address",
+      allowMessages: "Allow Messages",
+      allowEventInvites: "Allow Event Invites",
+      public: "Public",
+      community: "Community Only",
+      friends: "Friends Only",
+      private: "Private",
+      updateProfile: "Update Profile",
+      addSkill: "Add Skill",
+      addInterest: "Add Interest",
+      saveSettings: "Save Settings",
+      noResidents: "No residents found",
+      cannotMessage: "Messages not allowed",
+      cannotInvite: "Invites not allowed",
     },
     ms: {
-      title: 'Direktori Penduduk',
-      description: 'Berhubung dengan ahli komuniti anda',
-      search: 'Cari penduduk...',
-      filterBySkill: 'Tapis mengikut Kemahiran',
-      all: 'Semua Kemahiran',
-      message: 'Mesej',
-      contact: 'Hubungi',
-      skills: 'Kemahiran',
-      interests: 'Minat',
-      bio: 'Biografi',
-      privacySettings: 'Tetapan Privasi',
-      profileSettings: 'Tetapan Profil',
-      visibility: 'Keterlihatan Profil',
-      showFullName: 'Tunjukkan Nama Penuh',
-      showPhone: 'Tunjukkan Nombor Telefon',
-      showEmail: 'Tunjukkan E-mel',
-      showAddress: 'Tunjukkan Alamat',
-      allowMessages: 'Benarkan Mesej',
-      allowEventInvites: 'Benarkan Jemputan Acara',
-      public: 'Awam',
-      community: 'Komuniti Sahaja',
-      friends: 'Rakan Sahaja',
-      private: 'Peribadi',
-      updateProfile: 'Kemaskini Profil',
-      addSkill: 'Tambah Kemahiran',
-      addInterest: 'Tambah Minat',
-      saveSettings: 'Simpan Tetapan',
-      noResidents: 'Tiada penduduk ditemui',
-      cannotMessage: 'Mesej tidak dibenarkan',
-      cannotInvite: 'Jemputan tidak dibenarkan'
-    }
+      title: "Direktori Penduduk",
+      description: "Berhubung dengan ahli komuniti anda",
+      search: "Cari penduduk...",
+      filterBySkill: "Tapis mengikut Kemahiran",
+      all: "Semua Kemahiran",
+      message: "Mesej",
+      contact: "Hubungi",
+      skills: "Kemahiran",
+      interests: "Minat",
+      bio: "Biografi",
+      privacySettings: "Tetapan Privasi",
+      profileSettings: "Tetapan Profil",
+      visibility: "Keterlihatan Profil",
+      showFullName: "Tunjukkan Nama Penuh",
+      showPhone: "Tunjukkan Nombor Telefon",
+      showEmail: "Tunjukkan E-mel",
+      showAddress: "Tunjukkan Alamat",
+      allowMessages: "Benarkan Mesej",
+      allowEventInvites: "Benarkan Jemputan Acara",
+      public: "Awam",
+      community: "Komuniti Sahaja",
+      friends: "Rakan Sahaja",
+      private: "Peribadi",
+      updateProfile: "Kemaskini Profil",
+      addSkill: "Tambah Kemahiran",
+      addInterest: "Tambah Minat",
+      saveSettings: "Simpan Tetapan",
+      noResidents: "Tiada penduduk ditemui",
+      cannotMessage: "Mesej tidak dibenarkan",
+      cannotInvite: "Jemputan tidak dibenarkan",
+    },
   };
 
   const t = text[language as keyof typeof text] || text.en;
@@ -141,26 +163,26 @@ export default function ResidentDirectory() {
     try {
       // For now, let's fetch from profiles directly since the function might not work yet
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('is_searchable', true)
+        .from("profiles")
+        .select("*")
+        .eq("is_searchable", true)
         .limit(50);
-      
+
       if (error) throw error;
-      
-      const mappedData = (data || []).map(profile => ({
+
+      const mappedData = (data || []).map((profile) => ({
         ...profile,
         can_message: true,
-        can_invite: true
+        can_invite: true,
       }));
-      
+
       setResidents(mappedData);
     } catch (error) {
-      console.error('Error fetching residents:', error);
+      console.error("Error fetching residents:", error);
       toast({
         title: "Error",
         description: "Failed to fetch resident directory",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -170,9 +192,9 @@ export default function ResidentDirectory() {
   const fetchUserPrivacySettings = async () => {
     try {
       const { data, error } = await supabase
-        .from('profile_privacy_settings')
-        .select('*')
-        .eq('user_id', user?.id)
+        .from("profile_privacy_settings")
+        .select("*")
+        .eq("user_id", user?.id)
         .single();
 
       if (data) {
@@ -183,55 +205,57 @@ export default function ResidentDirectory() {
           show_address: data.show_address,
           allow_messages: data.allow_messages,
           allow_event_invites: data.allow_event_invites,
-          profile_visibility: data.profile_visibility as 'public' | 'community' | 'friends' | 'private'
+          profile_visibility: data.profile_visibility as
+            | "public"
+            | "community"
+            | "friends"
+            | "private",
         });
       }
     } catch (error) {
-      console.error('Error fetching privacy settings:', error);
+      console.error("Error fetching privacy settings:", error);
     }
   };
 
   const fetchUserProfile = async () => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('profile_bio, interests, skills')
-        .eq('id', user?.id)
+        .from("profiles")
+        .select("profile_bio, interests, skills")
+        .eq("user_id", user?.id)
         .single();
 
       if (data) {
         setProfileData({
-          profile_bio: data.profile_bio || '',
+          profile_bio: data.profile_bio || "",
           interests: data.interests || [],
-          skills: data.skills || []
+          skills: data.skills || [],
         });
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error("Error fetching profile:", error);
     }
   };
 
   const updatePrivacySettings = async () => {
     try {
-      const { error } = await supabase
-        .from('profile_privacy_settings')
-        .upsert({
-          user_id: user?.id,
-          ...privacySettings
-        });
+      const { error } = await supabase.from("profile_privacy_settings").upsert({
+        user_id: user?.id,
+        ...privacySettings,
+      });
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Privacy settings updated successfully"
+        description: "Privacy settings updated successfully",
       });
     } catch (error) {
-      console.error('Error updating privacy settings:', error);
+      console.error("Error updating privacy settings:", error);
       toast({
         title: "Error",
         description: "Failed to update privacy settings",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -239,36 +263,36 @@ export default function ResidentDirectory() {
   const updateProfile = async () => {
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({
           profile_bio: profileData.profile_bio,
           interests: profileData.interests,
-          skills: profileData.skills
+          skills: profileData.skills,
         })
-        .eq('id', user?.id);
+        .eq("user_id", user?.id);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Profile updated successfully"
+        description: "Profile updated successfully",
       });
 
       await updatePrivacySettings();
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error("Error updating profile:", error);
       toast({
         title: "Error",
         description: "Failed to update profile",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
   const initiateChat = async (residentId: string) => {
     try {
-      const { data, error } = await supabase.rpc('create_direct_chat', {
-        other_user_id: residentId
+      const { data, error } = await supabase.rpc("create_direct_chat", {
+        other_user_id: residentId,
       });
 
       if (error) throw error;
@@ -276,56 +300,60 @@ export default function ResidentDirectory() {
       // Navigate to chat room
       window.location.href = `/communication?room=${data}`;
     } catch (error) {
-      console.error('Error creating chat:', error);
+      console.error("Error creating chat:", error);
       toast({
         title: "Error",
         description: "Failed to start conversation",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
-  const filteredResidents = residents.filter(resident => {
-    const matchesSearch = resident.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         resident.profile_bio?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesSkill = selectedSkill === 'all' || 
-                        resident.skills?.some(skill => skill.toLowerCase().includes(selectedSkill.toLowerCase()));
-    
+  const filteredResidents = residents.filter((resident) => {
+    const matchesSearch =
+      resident.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      resident.profile_bio?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesSkill =
+      selectedSkill === "all" ||
+      resident.skills?.some((skill) =>
+        skill.toLowerCase().includes(selectedSkill.toLowerCase())
+      );
+
     return matchesSearch && matchesSkill;
   });
 
-  const allSkills = [...new Set(residents.flatMap(r => r.skills || []))];
+  const allSkills = [...new Set(residents.flatMap((r) => r.skills || []))];
 
   const addSkill = (skill: string) => {
     if (skill && !profileData.skills.includes(skill)) {
-      setProfileData(prev => ({
+      setProfileData((prev) => ({
         ...prev,
-        skills: [...prev.skills, skill]
+        skills: [...prev.skills, skill],
       }));
     }
   };
 
   const addInterest = (interest: string) => {
     if (interest && !profileData.interests.includes(interest)) {
-      setProfileData(prev => ({
+      setProfileData((prev) => ({
         ...prev,
-        interests: [...prev.interests, interest]
+        interests: [...prev.interests, interest],
       }));
     }
   };
 
   const removeSkill = (skill: string) => {
-    setProfileData(prev => ({
+    setProfileData((prev) => ({
       ...prev,
-      skills: prev.skills.filter(s => s !== skill)
+      skills: prev.skills.filter((s) => s !== skill),
     }));
   };
 
   const removeInterest = (interest: string) => {
-    setProfileData(prev => ({
+    setProfileData((prev) => ({
       ...prev,
-      interests: prev.interests.filter(i => i !== interest)
+      interests: prev.interests.filter((i) => i !== interest),
     }));
   };
 
@@ -360,7 +388,7 @@ export default function ResidentDirectory() {
           <h1 className="text-3xl font-bold text-foreground">{t.title}</h1>
           <p className="text-muted-foreground">{t.description}</p>
         </div>
-        
+
         <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
           <DialogTrigger asChild>
             <Button variant="outline">
@@ -372,21 +400,23 @@ export default function ResidentDirectory() {
             <DialogHeader>
               <DialogTitle>{t.profileSettings}</DialogTitle>
             </DialogHeader>
-            
+
             <div className="space-y-6">
               {/* Profile Information */}
               <div className="space-y-4">
                 <h3 className="font-semibold">Profile Information</h3>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="bio">{t.bio}</Label>
                   <Textarea
                     id="bio"
                     value={profileData.profile_bio}
-                    onChange={(e) => setProfileData(prev => ({
-                      ...prev,
-                      profile_bio: e.target.value
-                    }))}
+                    onChange={(e) =>
+                      setProfileData((prev) => ({
+                        ...prev,
+                        profile_bio: e.target.value,
+                      }))
+                    }
                     placeholder="Tell others about yourself..."
                   />
                 </div>
@@ -394,9 +424,9 @@ export default function ResidentDirectory() {
                 <div className="space-y-2">
                   <Label>{t.skills}</Label>
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {profileData.skills.map(skill => (
-                      <Badge 
-                        key={skill} 
+                    {profileData.skills.map((skill) => (
+                      <Badge
+                        key={skill}
                         variant="secondary"
                         className="cursor-pointer"
                         onClick={() => removeSkill(skill)}
@@ -408,9 +438,9 @@ export default function ResidentDirectory() {
                   <Input
                     placeholder={t.addSkill}
                     onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === "Enter") {
                         addSkill(e.currentTarget.value);
-                        e.currentTarget.value = '';
+                        e.currentTarget.value = "";
                       }
                     }}
                   />
@@ -419,9 +449,9 @@ export default function ResidentDirectory() {
                 <div className="space-y-2">
                   <Label>{t.interests}</Label>
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {profileData.interests.map(interest => (
-                      <Badge 
-                        key={interest} 
+                    {profileData.interests.map((interest) => (
+                      <Badge
+                        key={interest}
                         variant="outline"
                         className="cursor-pointer"
                         onClick={() => removeInterest(interest)}
@@ -433,9 +463,9 @@ export default function ResidentDirectory() {
                   <Input
                     placeholder={t.addInterest}
                     onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === "Enter") {
                         addInterest(e.currentTarget.value);
-                        e.currentTarget.value = '';
+                        e.currentTarget.value = "";
                       }
                     }}
                   />
@@ -453,10 +483,12 @@ export default function ResidentDirectory() {
                   <Label>{t.visibility}</Label>
                   <Select
                     value={privacySettings.profile_visibility}
-                    onValueChange={(value: any) => setPrivacySettings(prev => ({
-                      ...prev,
-                      profile_visibility: value
-                    }))}
+                    onValueChange={(value: any) =>
+                      setPrivacySettings((prev) => ({
+                        ...prev,
+                        profile_visibility: value,
+                      }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -475,10 +507,12 @@ export default function ResidentDirectory() {
                     <Label>{t.showFullName}</Label>
                     <Switch
                       checked={privacySettings.show_full_name}
-                      onCheckedChange={(checked) => setPrivacySettings(prev => ({
-                        ...prev,
-                        show_full_name: checked
-                      }))}
+                      onCheckedChange={(checked) =>
+                        setPrivacySettings((prev) => ({
+                          ...prev,
+                          show_full_name: checked,
+                        }))
+                      }
                     />
                   </div>
 
@@ -486,10 +520,12 @@ export default function ResidentDirectory() {
                     <Label>{t.showPhone}</Label>
                     <Switch
                       checked={privacySettings.show_phone}
-                      onCheckedChange={(checked) => setPrivacySettings(prev => ({
-                        ...prev,
-                        show_phone: checked
-                      }))}
+                      onCheckedChange={(checked) =>
+                        setPrivacySettings((prev) => ({
+                          ...prev,
+                          show_phone: checked,
+                        }))
+                      }
                     />
                   </div>
 
@@ -497,10 +533,12 @@ export default function ResidentDirectory() {
                     <Label>{t.showEmail}</Label>
                     <Switch
                       checked={privacySettings.show_email}
-                      onCheckedChange={(checked) => setPrivacySettings(prev => ({
-                        ...prev,
-                        show_email: checked
-                      }))}
+                      onCheckedChange={(checked) =>
+                        setPrivacySettings((prev) => ({
+                          ...prev,
+                          show_email: checked,
+                        }))
+                      }
                     />
                   </div>
 
@@ -508,10 +546,12 @@ export default function ResidentDirectory() {
                     <Label>{t.allowMessages}</Label>
                     <Switch
                       checked={privacySettings.allow_messages}
-                      onCheckedChange={(checked) => setPrivacySettings(prev => ({
-                        ...prev,
-                        allow_messages: checked
-                      }))}
+                      onCheckedChange={(checked) =>
+                        setPrivacySettings((prev) => ({
+                          ...prev,
+                          allow_messages: checked,
+                        }))
+                      }
                     />
                   </div>
 
@@ -519,10 +559,12 @@ export default function ResidentDirectory() {
                     <Label>{t.allowEventInvites}</Label>
                     <Switch
                       checked={privacySettings.allow_event_invites}
-                      onCheckedChange={(checked) => setPrivacySettings(prev => ({
-                        ...prev,
-                        allow_event_invites: checked
-                      }))}
+                      onCheckedChange={(checked) =>
+                        setPrivacySettings((prev) => ({
+                          ...prev,
+                          allow_event_invites: checked,
+                        }))
+                      }
                     />
                   </div>
                 </div>
@@ -553,8 +595,10 @@ export default function ResidentDirectory() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t.all}</SelectItem>
-            {allSkills.map(skill => (
-              <SelectItem key={skill} value={skill}>{skill}</SelectItem>
+            {allSkills.map((skill) => (
+              <SelectItem key={skill} value={skill}>
+                {skill}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -569,11 +613,16 @@ export default function ResidentDirectory() {
                 <Avatar>
                   <AvatarImage src={resident.avatar_url} />
                   <AvatarFallback>
-                    {resident.full_name?.split(' ').map(n => n[0]).join('')}
+                    {resident.full_name
+                      ?.split(" ")
+                      .map((n) => n[0])
+                      .join("")}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <CardTitle className="text-lg">{resident.full_name}</CardTitle>
+                  <CardTitle className="text-lg">
+                    {resident.full_name}
+                  </CardTitle>
                   {resident.unit_number && (
                     <p className="text-sm text-muted-foreground">
                       Unit {resident.unit_number}
@@ -584,15 +633,21 @@ export default function ResidentDirectory() {
             </CardHeader>
             <CardContent className="space-y-4">
               {resident.profile_bio && (
-                <p className="text-sm text-muted-foreground">{resident.profile_bio}</p>
+                <p className="text-sm text-muted-foreground">
+                  {resident.profile_bio}
+                </p>
               )}
 
               {resident.skills && resident.skills.length > 0 && (
                 <div>
                   <p className="text-sm font-medium mb-2">{t.skills}</p>
                   <div className="flex flex-wrap gap-1">
-                    {resident.skills.slice(0, 3).map(skill => (
-                      <Badge key={skill} variant="secondary" className="text-xs">
+                    {resident.skills.slice(0, 3).map((skill) => (
+                      <Badge
+                        key={skill}
+                        variant="secondary"
+                        className="text-xs"
+                      >
                         {skill}
                       </Badge>
                     ))}
@@ -609,8 +664,12 @@ export default function ResidentDirectory() {
                 <div>
                   <p className="text-sm font-medium mb-2">{t.interests}</p>
                   <div className="flex flex-wrap gap-1">
-                    {resident.interests.slice(0, 3).map(interest => (
-                      <Badge key={interest} variant="outline" className="text-xs">
+                    {resident.interests.slice(0, 3).map((interest) => (
+                      <Badge
+                        key={interest}
+                        variant="outline"
+                        className="text-xs"
+                      >
                         {interest}
                       </Badge>
                     ))}

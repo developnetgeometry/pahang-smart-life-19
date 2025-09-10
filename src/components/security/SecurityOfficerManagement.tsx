@@ -1,15 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { UserPlus, Edit2, Trash2, Shield, Phone, Mail, User } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  UserPlus,
+  Edit2,
+  Trash2,
+  Shield,
+  Phone,
+  Mail,
+  User,
+} from "lucide-react";
 
 interface SecurityOfficer {
   id: string;
@@ -35,10 +67,10 @@ export default function SecurityOfficerManagement() {
   const [editing, setEditing] = useState<SecurityOfficer | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [formData, setFormData] = useState<SecurityOfficerForm>({
-    email: '',
-    full_name: '',
-    phone: '',
-    password: ''
+    email: "",
+    full_name: "",
+    phone: "",
+    password: "",
   });
 
   useEffect(() => {
@@ -49,21 +81,21 @@ export default function SecurityOfficerManagement() {
     try {
       // Get user's community first
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('community_id')
-        .eq('id', user?.id)
+        .from("profiles")
+        .select("community_id")
+        .eq("user_id", user?.id)
         .single();
 
       if (!profile?.community_id) {
-        toast.error('Community not found');
+        toast.error("Community not found");
         return;
       }
 
       // Get security officer role assignments
       const { data: roleAssignments, error: roleError } = await supabase
-        .from('enhanced_user_roles')
-        .select('user_id, is_active')
-        .eq('role', 'security_officer');
+        .from("enhanced_user_roles")
+        .select("user_id, is_active")
+        .eq("role", "security_officer");
 
       if (roleError) throw roleError;
 
@@ -73,32 +105,35 @@ export default function SecurityOfficerManagement() {
       }
 
       // Get profiles for these users in the same community
-      const userIds = roleAssignments.map(r => r.user_id);
+      const userIds = roleAssignments.map((r) => r.user_id);
       const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, email, full_name, phone, created_at')
-        .eq('community_id', profile.community_id)
-        .in('id', userIds);
+        .from("profiles")
+        .select("id, email, full_name, phone, created_at")
+        .eq("community_id", profile.community_id)
+        .in("user_id", userIds);
 
       if (profileError) throw profileError;
 
       // Combine the data
-      const officers = profiles?.map(profile => {
-        const roleData = roleAssignments.find(r => r.user_id === profile.id);
-        return {
-          id: profile.id,
-          email: profile.email || '',
-          full_name: profile.full_name || '',
-          phone: profile.phone || '',
-          created_at: profile.created_at || '',
-          is_active: roleData?.is_active || false
-        };
-      }) || [];
+      const officers =
+        profiles?.map((profile) => {
+          const roleData = roleAssignments.find(
+            (r) => r.user_id === profile.id
+          );
+          return {
+            id: profile.id,
+            email: profile.email || "",
+            full_name: profile.full_name || "",
+            phone: profile.phone || "",
+            created_at: profile.created_at || "",
+            is_active: roleData?.is_active || false,
+          };
+        }) || [];
 
       setOfficers(officers);
     } catch (error) {
-      console.error('Error fetching security officers:', error);
-      toast.error('Failed to load security officers');
+      console.error("Error fetching security officers:", error);
+      toast.error("Failed to load security officers");
     } finally {
       setLoading(false);
     }
@@ -106,31 +141,31 @@ export default function SecurityOfficerManagement() {
 
   const handleCreateOfficer = async () => {
     if (!formData.email || !formData.full_name || !formData.password) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
     setCreating(true);
     try {
-      const { error } = await supabase.functions.invoke('admin-create-user', {
+      const { error } = await supabase.functions.invoke("admin-create-user", {
         body: {
           email: formData.email,
           password: formData.password,
           full_name: formData.full_name,
           phone: formData.phone,
-          role: 'security_officer'
-        }
+          role: "security_officer",
+        },
       });
 
       if (error) throw error;
 
-      toast.success('Security officer created successfully');
+      toast.success("Security officer created successfully");
       setShowCreateDialog(false);
-      setFormData({ email: '', full_name: '', phone: '', password: '' });
+      setFormData({ email: "", full_name: "", phone: "", password: "" });
       fetchSecurityOfficers();
     } catch (error) {
-      console.error('Error creating security officer:', error);
-      toast.error('Failed to create security officer');
+      console.error("Error creating security officer:", error);
+      toast.error("Failed to create security officer");
     } finally {
       setCreating(false);
     }
@@ -138,63 +173,63 @@ export default function SecurityOfficerManagement() {
 
   const handleUpdateOfficer = async () => {
     if (!editing || !editing.full_name) {
-      toast.error('Please fill in required fields');
+      toast.error("Please fill in required fields");
       return;
     }
 
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({
           full_name: editing.full_name,
-          phone: editing.phone
+          phone: editing.phone,
         })
-        .eq('id', editing.id);
+        .eq("user_id", editing.id);
 
       if (error) throw error;
 
-      toast.success('Security officer updated successfully');
+      toast.success("Security officer updated successfully");
       setEditing(null);
       fetchSecurityOfficers();
     } catch (error) {
-      console.error('Error updating security officer:', error);
-      toast.error('Failed to update security officer');
+      console.error("Error updating security officer:", error);
+      toast.error("Failed to update security officer");
     }
   };
 
   const handleDeactivateOfficer = async (officerId: string) => {
     try {
       const { error } = await supabase
-        .from('enhanced_user_roles')
+        .from("enhanced_user_roles")
         .update({ is_active: false })
-        .eq('user_id', officerId)
-        .eq('role', 'security_officer');
+        .eq("user_id", officerId)
+        .eq("role", "security_officer");
 
       if (error) throw error;
 
-      toast.success('Security officer deactivated successfully');
+      toast.success("Security officer deactivated successfully");
       fetchSecurityOfficers();
     } catch (error) {
-      console.error('Error deactivating security officer:', error);
-      toast.error('Failed to deactivate security officer');
+      console.error("Error deactivating security officer:", error);
+      toast.error("Failed to deactivate security officer");
     }
   };
 
   const handleReactivateOfficer = async (officerId: string) => {
     try {
       const { error } = await supabase
-        .from('enhanced_user_roles')
+        .from("enhanced_user_roles")
         .update({ is_active: true })
-        .eq('user_id', officerId)
-        .eq('role', 'security_officer');
+        .eq("user_id", officerId)
+        .eq("role", "security_officer");
 
       if (error) throw error;
 
-      toast.success('Security officer reactivated successfully');
+      toast.success("Security officer reactivated successfully");
       fetchSecurityOfficers();
     } catch (error) {
-      console.error('Error reactivating security officer:', error);
-      toast.error('Failed to reactivate security officer');
+      console.error("Error reactivating security officer:", error);
+      toast.error("Failed to reactivate security officer");
     }
   };
 
@@ -232,7 +267,12 @@ export default function SecurityOfficerManagement() {
                     id="email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
                     placeholder="officer@example.com"
                   />
                 </div>
@@ -241,7 +281,12 @@ export default function SecurityOfficerManagement() {
                   <Input
                     id="full_name"
                     value={formData.full_name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        full_name: e.target.value,
+                      }))
+                    }
                     placeholder="Officer Name"
                   />
                 </div>
@@ -250,7 +295,12 @@ export default function SecurityOfficerManagement() {
                   <Input
                     id="phone"
                     value={formData.phone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
                     placeholder="+60123456789"
                   />
                 </div>
@@ -260,17 +310,25 @@ export default function SecurityOfficerManagement() {
                     id="password"
                     type="password"
                     value={formData.password}
-                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        password: e.target.value,
+                      }))
+                    }
                     placeholder="Secure password"
                   />
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCreateDialog(false)}
+                >
                   Cancel
                 </Button>
                 <Button onClick={handleCreateOfficer} disabled={creating}>
-                  {creating ? 'Creating...' : 'Create Officer'}
+                  {creating ? "Creating..." : "Create Officer"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -284,12 +342,17 @@ export default function SecurityOfficerManagement() {
           <div className="text-center py-8 text-muted-foreground">
             <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>No security officers registered yet</p>
-            <p className="text-sm">Click "Add Security Officer" to get started</p>
+            <p className="text-sm">
+              Click "Add Security Officer" to get started
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
             {officers.map((officer) => (
-              <div key={officer.id} className="flex items-center justify-between p-4 border rounded-lg">
+              <div
+                key={officer.id}
+                className="flex items-center justify-between p-4 border rounded-lg"
+              >
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-primary/10 rounded-full">
                     <User className="h-4 w-4 text-primary" />
@@ -297,8 +360,10 @@ export default function SecurityOfficerManagement() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="font-medium">{officer.full_name}</h4>
-                      <Badge variant={officer.is_active ? 'default' : 'secondary'}>
-                        {officer.is_active ? 'Active' : 'Inactive'}
+                      <Badge
+                        variant={officer.is_active ? "default" : "secondary"}
+                      >
+                        {officer.is_active ? "Active" : "Inactive"}
                       </Badge>
                     </div>
                     <div className="text-sm text-muted-foreground space-y-1">
@@ -316,9 +381,16 @@ export default function SecurityOfficerManagement() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Dialog open={editing?.id === officer.id} onOpenChange={(open) => !open && setEditing(null)}>
+                  <Dialog
+                    open={editing?.id === officer.id}
+                    onOpenChange={(open) => !open && setEditing(null)}
+                  >
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" onClick={() => setEditing(officer)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditing(officer)}
+                      >
                         <Edit2 className="h-4 w-4" />
                       </Button>
                     </DialogTrigger>
@@ -334,21 +406,34 @@ export default function SecurityOfficerManagement() {
                           <Label htmlFor="edit_full_name">Full Name *</Label>
                           <Input
                             id="edit_full_name"
-                            value={editing?.full_name || ''}
-                            onChange={(e) => setEditing(prev => prev ? ({ ...prev, full_name: e.target.value }) : null)}
+                            value={editing?.full_name || ""}
+                            onChange={(e) =>
+                              setEditing((prev) =>
+                                prev
+                                  ? { ...prev, full_name: e.target.value }
+                                  : null
+                              )
+                            }
                           />
                         </div>
                         <div className="grid gap-2">
                           <Label htmlFor="edit_phone">Phone</Label>
                           <Input
                             id="edit_phone"
-                            value={editing?.phone || ''}
-                            onChange={(e) => setEditing(prev => prev ? ({ ...prev, phone: e.target.value }) : null)}
+                            value={editing?.phone || ""}
+                            onChange={(e) =>
+                              setEditing((prev) =>
+                                prev ? { ...prev, phone: e.target.value } : null
+                              )
+                            }
                           />
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setEditing(null)}>
+                        <Button
+                          variant="outline"
+                          onClick={() => setEditing(null)}
+                        >
                           Cancel
                         </Button>
                         <Button onClick={handleUpdateOfficer}>
@@ -361,27 +446,41 @@ export default function SecurityOfficerManagement() {
                   {officer.is_active ? (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Deactivate Security Officer</AlertDialogTitle>
+                          <AlertDialogTitle>
+                            Deactivate Security Officer
+                          </AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to deactivate {officer.full_name}? They will lose access to security features but can be reactivated later.
+                            Are you sure you want to deactivate{" "}
+                            {officer.full_name}? They will lose access to
+                            security features but can be reactivated later.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDeactivateOfficer(officer.id)}>
+                          <AlertDialogAction
+                            onClick={() => handleDeactivateOfficer(officer.id)}
+                          >
                             Deactivate
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
                   ) : (
-                    <Button variant="outline" size="sm" onClick={() => handleReactivateOfficer(officer.id)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleReactivateOfficer(officer.id)}
+                    >
                       Reactivate
                     </Button>
                   )}

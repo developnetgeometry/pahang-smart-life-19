@@ -1,40 +1,53 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { toast } from 'sonner';
-import { 
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { toast } from "sonner";
+import {
   ArrowLeft,
-  Building, 
-  User, 
-  Phone, 
-  Mail, 
-  MapPin, 
+  Building,
+  User,
+  Phone,
+  Mail,
+  MapPin,
   Globe,
   Clock,
-  CheckCircle, 
-  XCircle, 
+  CheckCircle,
+  XCircle,
   AlertCircle,
   MessageSquare,
   Send,
   Calendar,
   FileText,
   Download,
-  Eye
-} from 'lucide-react';
+  Eye,
+} from "lucide-react";
 
 interface ApplicationDetails {
   id: string;
   applicant_id: string;
+  district_id: string;
   business_name: string;
   business_type: string;
   business_description: string;
@@ -86,25 +99,27 @@ interface Document {
 }
 
 const STATUS_COLORS = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  under_review: 'bg-blue-100 text-blue-800', 
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  additional_info_required: 'bg-orange-100 text-orange-800'
+  pending: "bg-yellow-100 text-yellow-800",
+  under_review: "bg-blue-100 text-blue-800",
+  approved: "bg-green-100 text-green-800",
+  rejected: "bg-red-100 text-red-800",
+  additional_info_required: "bg-orange-100 text-orange-800",
 };
 
 export default function ServiceProviderReview() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [application, setApplication] = useState<ApplicationDetails | null>(null);
+  const [application, setApplication] = useState<ApplicationDetails | null>(
+    null
+  );
   const [communications, setCommunications] = useState<Communication[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [reviewNotes, setReviewNotes] = useState('');
-  const [rejectionReason, setRejectionReason] = useState('');
-  const [newMessage, setNewMessage] = useState('');
+  const [reviewNotes, setReviewNotes] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [newMessage, setNewMessage] = useState("");
 
   useEffect(() => {
     if (id) {
@@ -116,23 +131,48 @@ export default function ServiceProviderReview() {
 
   const fetchApplicationDetails = async () => {
     try {
+      // Debug: Check current user's role
+      console.log("Current user:", user);
+
+      // Debug: Test role access
+      const { data: roleTest, error: roleError } = await supabase.rpc(
+        "has_enhanced_role",
+        { check_role: "community_admin" }
+      );
+      console.log("Role test result:", roleTest, "Error:", roleError);
+
+      // Debug: Check current user roles
+      const { data: userRoles, error: rolesError } = await supabase
+        .from("enhanced_user_roles")
+        .select("role, is_active, district_id")
+        .eq("user_id", user?.id)
+        .eq("is_active", true);
+      console.log("Current user roles:", userRoles, "Error:", rolesError);
+
       const { data, error } = await supabase
-        .from('service_provider_applications')
-        .select(`
+        .from("service_provider_applications")
+        .select(
+          `
           *,
           applicant:profiles!applicant_id(full_name, email)
-        `)
-        .eq('id', id)
+        `
+        )
+        .eq("id", id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database error details:", error);
+        throw error;
+      }
+
+      console.log("Fetched application data:", data);
       setApplication(data);
-      setReviewNotes(data.review_notes || '');
-      setRejectionReason(data.rejection_reason || '');
+      setReviewNotes(data.review_notes || "");
+      setRejectionReason(data.rejection_reason || "");
     } catch (error) {
-      console.error('Error fetching application:', error);
-      toast.error('Failed to load application details');
-      navigate('/admin/service-providers');
+      console.error("Error fetching application:", error);
+      toast.error("Failed to load application details");
+      navigate("/admin/service-providers");
     } finally {
       setLoading(false);
     }
@@ -141,63 +181,65 @@ export default function ServiceProviderReview() {
   const fetchCommunications = async () => {
     try {
       const { data, error } = await supabase
-        .from('application_communications')
-        .select(`
+        .from("application_communications")
+        .select(
+          `
           id,
           message,
           message_type,
           created_at,
           sender:profiles!sender_id(full_name)
-        `)
-        .eq('application_id', id)
-        .order('created_at', { ascending: true });
+        `
+        )
+        .eq("application_id", id)
+        .order("created_at", { ascending: true });
 
       if (error) throw error;
       setCommunications(data || []);
     } catch (error) {
-      console.error('Error fetching communications:', error);
+      console.error("Error fetching communications:", error);
     }
   };
 
   const fetchDocuments = async () => {
     try {
       const { data, error } = await supabase
-        .from('application_documents')
-        .select('*')
-        .eq('application_id', id)
-        .order('upload_date', { ascending: false });
+        .from("application_documents")
+        .select("*")
+        .eq("application_id", id)
+        .order("upload_date", { ascending: false });
 
       if (error) throw error;
       setDocuments(data || []);
     } catch (error) {
-      console.error('Error fetching documents:', error);
+      console.error("Error fetching documents:", error);
     }
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const getDocumentTypeLabel = (type: string) => {
     const types: Record<string, string> = {
-      'business_registration': 'Business Registration',
-      'insurance_certificate': 'Insurance Certificate',
-      'tax_certificate': 'Tax Certificate',
-      'license': 'Professional License',
-      'id_document': 'ID Document',
-      'bank_statement': 'Bank Statement',
-      'other': 'Other Document'
+      business_registration: "Business Registration",
+      insurance_certificate: "Insurance Certificate",
+      tax_certificate: "Tax Certificate",
+      license: "Professional License",
+      id_document: "ID Document",
+      bank_statement: "Bank Statement",
+      other: "Other Document",
     };
     return types[type] || type;
   };
 
   const updateApplicationStatus = async (newStatus: string) => {
     if (!application || !user) return;
-    
+
     setActionLoading(true);
     try {
       const updateData: any = {
@@ -207,25 +249,32 @@ export default function ServiceProviderReview() {
         review_notes: reviewNotes,
       };
 
-      if (newStatus === 'rejected') {
+      if (newStatus === "rejected") {
         updateData.rejection_reason = rejectionReason;
       }
 
-      const { error } = await supabase
-        .from('service_provider_applications')
-        .update(updateData)
-        .eq('id', application.id);
+      console.log("Attempting to update application with data:", updateData);
+      console.log("Application ID:", application.id);
+      console.log("Current user ID:", user.id);
 
-      if (error) throw error;
+      const { error } = await supabase
+        .from("service_provider_applications")
+        .update(updateData)
+        .eq("id", application.id);
+
+      if (error) {
+        console.error("Update error details:", error);
+        throw error;
+      }
 
       // If approved, create service provider profile
-      if (newStatus === 'approved') {
+      if (newStatus === "approved") {
         await createServiceProviderProfile();
       }
 
       // Send email notification
       try {
-        await supabase.functions.invoke('send-application-status-email', {
+        await supabase.functions.invoke("send-application-status-email", {
           body: {
             applicationId: application.id,
             applicantEmail: application.applicant.email,
@@ -233,27 +282,32 @@ export default function ServiceProviderReview() {
             businessName: application.business_name,
             status: newStatus,
             reviewNotes: reviewNotes,
-            rejectionReason: newStatus === 'rejected' ? rejectionReason : undefined
-          }
+            rejectionReason:
+              newStatus === "rejected" ? rejectionReason : undefined,
+          },
         });
-        console.log('Email notification sent successfully');
+        console.log("Email notification sent successfully");
       } catch (emailError) {
-        console.error('Failed to send email notification:', emailError);
+        console.error("Failed to send email notification:", emailError);
         // Don't throw error here as the main action was successful
-        toast.error('Status updated but email notification failed to send');
+        toast.error("Status updated but email notification failed to send");
       }
 
       const statusLabels = {
-        approved: 'approved',
-        rejected: 'rejected',
-        additional_info_required: 'marked as requiring additional information'
+        approved: "approved",
+        rejected: "rejected",
+        additional_info_required: "marked as requiring additional information",
       };
 
-      toast.success(`Application ${statusLabels[newStatus as keyof typeof statusLabels] || newStatus} successfully. Email notification sent to applicant.`);
+      toast.success(
+        `Application ${
+          statusLabels[newStatus as keyof typeof statusLabels] || newStatus
+        } successfully. Email notification sent to applicant.`
+      );
       fetchApplicationDetails();
     } catch (error) {
-      console.error('Error updating application:', error);
-      toast.error('Failed to update application status');
+      console.error("Error updating application:", error);
+      toast.error("Failed to update application status");
     } finally {
       setActionLoading(false);
     }
@@ -263,10 +317,47 @@ export default function ServiceProviderReview() {
     if (!application) return;
 
     try {
-      const profileData = {
-        user_id: application.applicant_id,
+      // Debug: Log the application data to see what we're working with
+      console.log("Application data for profile creation:", {
+        applicant_id: application.applicant_id,
         application_id: application.id,
-        district_id: user?.active_community_id,
+        district_id: application.district_id,
+      });
+
+      // Validate required UUIDs to prevent empty string errors
+      if (!application.applicant_id || application.applicant_id.trim() === "") {
+        throw new Error("Invalid applicant ID");
+      }
+
+      if (!application.id || application.id.trim() === "") {
+        throw new Error("Invalid application ID");
+      }
+
+      // Validate and clean UUID fields - convert empty strings to null
+      const validateUUID = (value: any): string | null => {
+        if (!value || typeof value !== "string" || value.trim() === "") {
+          return null;
+        }
+        return value.trim();
+      };
+
+      const districtId = validateUUID(application.district_id);
+      const applicantId = validateUUID(application.applicant_id);
+      const applicationId = validateUUID(application.id);
+
+      // Final validation for required fields
+      if (!applicantId) {
+        throw new Error("Valid applicant ID is required");
+      }
+
+      if (!applicationId) {
+        throw new Error("Valid application ID is required");
+      }
+
+      const profileData = {
+        user_id: applicantId,
+        application_id: applicationId,
+        district_id: districtId, // This can be null
         business_name: application.business_name,
         business_type: application.business_type,
         business_description: application.business_description,
@@ -281,13 +372,15 @@ export default function ServiceProviderReview() {
         is_verified: true,
       };
 
+      console.log("Profile data to insert:", profileData);
+
       const { error } = await supabase
-        .from('service_provider_profiles')
+        .from("service_provider_profiles")
         .insert(profileData);
 
       if (error) throw error;
     } catch (error) {
-      console.error('Error creating provider profile:', error);
+      console.error("Error creating provider profile:", error);
       throw error;
     }
   };
@@ -297,23 +390,23 @@ export default function ServiceProviderReview() {
 
     try {
       const { error } = await supabase
-        .from('application_communications')
+        .from("application_communications")
         .insert({
           application_id: application.id,
           sender_id: user.id,
           message: newMessage,
-          message_type: 'note',
+          message_type: "note",
           is_internal: false,
         });
 
       if (error) throw error;
 
-      setNewMessage('');
+      setNewMessage("");
       fetchCommunications();
-      toast.success('Message sent successfully');
+      toast.success("Message sent successfully");
     } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error('Failed to send message');
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message");
     }
   };
 
@@ -342,14 +435,14 @@ export default function ServiceProviderReview() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
         <Button
-          variant="ghost" 
-          onClick={() => navigate('/admin/service-providers')}
+          variant="ghost"
+          onClick={() => navigate("/admin/service-providers")}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Applications
         </Button>
-        
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Avatar className="h-12 w-12">
@@ -358,16 +451,22 @@ export default function ServiceProviderReview() {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-3xl font-bold">{application.business_name}</h1>
+              <h1 className="text-3xl font-bold">
+                {application.business_name}
+              </h1>
               <p className="text-muted-foreground">
                 Application Review • {application.business_type}
               </p>
             </div>
           </div>
-          
+
           <div className="flex gap-2">
-            <Badge className={STATUS_COLORS[application.status as keyof typeof STATUS_COLORS]}>
-              {application.status.replace('_', ' ').toUpperCase()}
+            <Badge
+              className={
+                STATUS_COLORS[application.status as keyof typeof STATUS_COLORS]
+              }
+            >
+              {application.status.replace("_", " ").toUpperCase()}
             </Badge>
           </div>
         </div>
@@ -388,29 +487,37 @@ export default function ServiceProviderReview() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium">Business Name</Label>
-                  <p className="text-sm text-muted-foreground mt-1">{application.business_name}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {application.business_name}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Business Type</Label>
-                  <p className="text-sm text-muted-foreground mt-1">{application.business_type}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {application.business_type}
+                  </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Registration Number</Label>
+                  <Label className="text-sm font-medium">
+                    Registration Number
+                  </Label>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {application.business_registration_number || 'Not provided'}
+                    {application.business_registration_number || "Not provided"}
                   </p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Tax ID</Label>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {application.tax_id || 'Not provided'}
+                    {application.tax_id || "Not provided"}
                   </p>
                 </div>
               </div>
-              
+
               {application.business_description && (
                 <div>
-                  <Label className="text-sm font-medium">Business Description</Label>
+                  <Label className="text-sm font-medium">
+                    Business Description
+                  </Label>
                   <p className="text-sm text-muted-foreground mt-1">
                     {application.business_description}
                   </p>
@@ -432,35 +539,43 @@ export default function ServiceProviderReview() {
                 <div className="flex items-center gap-3">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <Label className="text-sm font-medium">Contact Person</Label>
-                    <p className="text-sm text-muted-foreground">{application.contact_person}</p>
+                    <Label className="text-sm font-medium">
+                      Contact Person
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {application.contact_person}
+                    </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   <Phone className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <Label className="text-sm font-medium">Phone</Label>
-                    <p className="text-sm text-muted-foreground">{application.contact_phone}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {application.contact_phone}
+                    </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <Label className="text-sm font-medium">Email</Label>
-                    <p className="text-sm text-muted-foreground">{application.contact_email}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {application.contact_email}
+                    </p>
                   </div>
                 </div>
-                
+
                 {application.website_url && (
                   <div className="flex items-center gap-3">
                     <Globe className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <Label className="text-sm font-medium">Website</Label>
-                      <a 
-                        href={application.website_url} 
-                        target="_blank" 
+                      <a
+                        href={application.website_url}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-primary hover:underline"
                       >
@@ -470,11 +585,13 @@ export default function ServiceProviderReview() {
                   </div>
                 )}
               </div>
-              
+
               <div className="flex items-start gap-3">
                 <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
                 <div>
-                  <Label className="text-sm font-medium">Business Address</Label>
+                  <Label className="text-sm font-medium">
+                    Business Address
+                  </Label>
                   <p className="text-sm text-muted-foreground mt-1">
                     {application.business_address}
                   </p>
@@ -490,21 +607,25 @@ export default function ServiceProviderReview() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label className="text-sm font-medium">Service Categories</Label>
+                <Label className="text-sm font-medium">
+                  Service Categories
+                </Label>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {application.service_categories.map(category => (
+                  {application.service_categories.map((category) => (
                     <Badge key={category} variant="secondary">
                       {category}
                     </Badge>
                   ))}
                 </div>
               </div>
-              
+
               {application.services_offered.length > 0 && (
                 <div>
-                  <Label className="text-sm font-medium">Specific Services</Label>
+                  <Label className="text-sm font-medium">
+                    Specific Services
+                  </Label>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {application.services_offered.map(service => (
+                    {application.services_offered.map((service) => (
                       <Badge key={service} variant="outline">
                         {service}
                       </Badge>
@@ -512,7 +633,7 @@ export default function ServiceProviderReview() {
                   </div>
                 </div>
               )}
-              
+
               {application.experience_years && (
                 <div>
                   <Label className="text-sm font-medium">Experience</Label>
@@ -539,12 +660,17 @@ export default function ServiceProviderReview() {
               {documents.length === 0 ? (
                 <div className="text-center py-8">
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No documents uploaded yet</p>
+                  <p className="text-muted-foreground">
+                    No documents uploaded yet
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {documents.map((doc) => (
-                    <div key={doc.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div
+                      key={doc.id}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-full bg-primary/10">
                           <FileText className="h-4 w-4 text-primary" />
@@ -552,9 +678,13 @@ export default function ServiceProviderReview() {
                         <div>
                           <p className="font-medium">{doc.document_name}</p>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>{getDocumentTypeLabel(doc.document_type)}</span>
+                            <span>
+                              {getDocumentTypeLabel(doc.document_type)}
+                            </span>
                             <span>{formatFileSize(doc.file_size || 0)}</span>
-                            <span>{new Date(doc.upload_date).toLocaleDateString()}</span>
+                            <span>
+                              {new Date(doc.upload_date).toLocaleDateString()}
+                            </span>
                           </div>
                           {doc.notes && (
                             <p className="text-xs text-muted-foreground mt-1">
@@ -565,7 +695,10 @@ export default function ServiceProviderReview() {
                       </div>
                       <div className="flex items-center gap-2">
                         {doc.is_verified && (
-                          <Badge variant="outline" className="text-green-600 border-green-200">
+                          <Badge
+                            variant="outline"
+                            className="text-green-600 border-green-200"
+                          >
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Verified
                           </Badge>
@@ -573,7 +706,7 @@ export default function ServiceProviderReview() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => window.open(doc.file_url, '_blank')}
+                          onClick={() => window.open(doc.file_url, "_blank")}
                         >
                           <Eye className="h-4 w-4 mr-1" />
                           View
@@ -582,7 +715,7 @@ export default function ServiceProviderReview() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            const link = document.createElement('a');
+                            const link = document.createElement("a");
                             link.href = doc.file_url;
                             link.download = doc.document_name;
                             document.body.appendChild(link);
@@ -616,8 +749,11 @@ export default function ServiceProviderReview() {
                     No communications yet
                   </p>
                 ) : (
-                  communications.map(comm => (
-                    <div key={comm.id} className="flex gap-3 p-3 bg-muted rounded-lg">
+                  communications.map((comm) => (
+                    <div
+                      key={comm.id}
+                      className="flex gap-3 p-3 bg-muted rounded-lg"
+                    >
                       <Avatar className="h-8 w-8">
                         <AvatarFallback>
                           {comm.sender.full_name.slice(0, 2).toUpperCase()}
@@ -625,7 +761,9 @@ export default function ServiceProviderReview() {
                       </Avatar>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="text-sm font-medium">{comm.sender.full_name}</p>
+                          <p className="text-sm font-medium">
+                            {comm.sender.full_name}
+                          </p>
                           <p className="text-xs text-muted-foreground">
                             {new Date(comm.created_at).toLocaleString()}
                           </p>
@@ -636,9 +774,9 @@ export default function ServiceProviderReview() {
                   ))
                 )}
               </div>
-              
+
               <Separator />
-              
+
               <div className="flex gap-2">
                 <Textarea
                   placeholder="Add a note or message..."
@@ -663,22 +801,32 @@ export default function ServiceProviderReview() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-center">
-                <Badge 
-                  className={`${STATUS_COLORS[application.status as keyof typeof STATUS_COLORS]} text-lg px-4 py-2`}
+                <Badge
+                  className={`${
+                    STATUS_COLORS[
+                      application.status as keyof typeof STATUS_COLORS
+                    ]
+                  } text-lg px-4 py-2`}
                 >
-                  {application.status.replace('_', ' ').toUpperCase()}
+                  {application.status.replace("_", " ").toUpperCase()}
                 </Badge>
               </div>
-              
+
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>Applied: {new Date(application.created_at).toLocaleDateString()}</span>
+                  <span>
+                    Applied:{" "}
+                    {new Date(application.created_at).toLocaleDateString()}
+                  </span>
                 </div>
                 {application.updated_at !== application.created_at && (
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>Updated: {new Date(application.updated_at).toLocaleDateString()}</span>
+                    <span>
+                      Updated:{" "}
+                      {new Date(application.updated_at).toLocaleDateString()}
+                    </span>
                   </div>
                 )}
               </div>
@@ -686,67 +834,70 @@ export default function ServiceProviderReview() {
           </Card>
 
           {/* Review Actions */}
-          {application.status !== 'approved' && application.status !== 'rejected' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Review Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="reviewNotes">Review Notes</Label>
-                  <Textarea
-                    id="reviewNotes"
-                    value={reviewNotes}
-                    onChange={(e) => setReviewNotes(e.target.value)}
-                    placeholder="Add internal notes about this application..."
-                    rows={3}
-                  />
-                </div>
+          {application.status !== "approved" &&
+            application.status !== "rejected" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Review Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="reviewNotes">Review Notes</Label>
+                    <Textarea
+                      id="reviewNotes"
+                      value={reviewNotes}
+                      onChange={(e) => setReviewNotes(e.target.value)}
+                      placeholder="Add internal notes about this application..."
+                      rows={3}
+                    />
+                  </div>
 
-                {application.status !== 'rejected' && (
+                  {application.status !== "rejected" && (
+                    <Button
+                      className="w-full bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => updateApplicationStatus("approved")}
+                      disabled={actionLoading}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Approve Application
+                    </Button>
+                  )}
+
+                  <div>
+                    <Label htmlFor="rejectionReason">Rejection Reason</Label>
+                    <Textarea
+                      id="rejectionReason"
+                      value={rejectionReason}
+                      onChange={(e) => setRejectionReason(e.target.value)}
+                      placeholder="Reason for rejection (optional)..."
+                      rows={2}
+                    />
+                  </div>
+
                   <Button
-                    className="w-full bg-green-600 hover:bg-green-700 text-white"
-                    onClick={() => updateApplicationStatus('approved')}
+                    variant="destructive"
+                    className="w-full"
+                    onClick={() => updateApplicationStatus("rejected")}
                     disabled={actionLoading}
                   >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Approve Application
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Reject Application
                   </Button>
-                )}
 
-                <div>
-                  <Label htmlFor="rejectionReason">Rejection Reason</Label>
-                  <Textarea
-                    id="rejectionReason"
-                    value={rejectionReason}
-                    onChange={(e) => setRejectionReason(e.target.value)}
-                    placeholder="Reason for rejection (optional)..."
-                    rows={2}
-                  />
-                </div>
-
-                <Button
-                  variant="destructive"
-                  className="w-full"
-                  onClick={() => updateApplicationStatus('rejected')}
-                  disabled={actionLoading}
-                >
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Reject Application
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => updateApplicationStatus('additional_info_required')}
-                  disabled={actionLoading}
-                >
-                  <AlertCircle className="h-4 w-4 mr-2" />
-                  Request More Info
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() =>
+                      updateApplicationStatus("additional_info_required")
+                    }
+                    disabled={actionLoading}
+                  >
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                    Request More Info
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
         </div>
       </div>
     </div>

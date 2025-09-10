@@ -1,22 +1,51 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { HouseholdAccountManager } from '@/components/household/HouseholdAccountManager';
-import { User, Phone, Mail, MapPin, Car, Shield, Settings, Camera, Edit, Save, Bell, Calendar, Users, FileText, CheckCircle, Heart } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { HouseholdAccountManager } from "@/components/household/HouseholdAccountManager";
+import {
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  Car,
+  Shield,
+  Settings,
+  Camera,
+  Edit,
+  Save,
+  Bell,
+  Calendar,
+  Users,
+  FileText,
+  CheckCircle,
+  Heart,
+} from "lucide-react";
 
 export default function MyProfile() {
   const { user, language, updateProfile } = useAuth();
@@ -25,115 +54,115 @@ export default function MyProfile() {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     // Maklumat Peribadi
-    fullname: user?.display_name || '',
-    identity_no: '',
-    identity_no_type: 'ic',
-    gender: '',
-    dob: '',
-    age: '',
-    mobile_no: user?.phone || '',
-    email: user?.email || '',
-    address: user?.address || '',
-    socio_id: '',
-    race_id: '',
-    ethnic_id: '',
-    nationality_id: '',
+    fullname: user?.display_name || "",
+    identity_no: "",
+    identity_no_type: "ic",
+    gender: "",
+    dob: "",
+    age: "",
+    mobile_no: user?.phone || "",
+    email: user?.email || "",
+    address: user?.address || "",
+    socio_id: "",
+    race_id: "",
+    ethnic_id: "",
+    nationality_id: "",
     oku_status: false,
-    marital_status: '',
-    
+    marital_status: "",
+
     // Maklumat Pasangan (jika ada)
-    spouse_full_name: '',
-    spouse_identity_no: '',
-    spouse_identity_no_type: 'ic',
-    spouse_gender: '',
-    spouse_dob: '',
-    spouse_mobile_no: '',
-    spouse_occupation: '',
-    spouse_workplace: '',
-    
+    spouse_full_name: "",
+    spouse_identity_no: "",
+    spouse_identity_no_type: "ic",
+    spouse_gender: "",
+    spouse_dob: "",
+    spouse_mobile_no: "",
+    spouse_occupation: "",
+    spouse_workplace: "",
+
     // Butiran Tambahan
-    occupation_id: '',
-    type_sector: '',
-    education_level: '',
-    income_range: '',
-    
+    occupation_id: "",
+    type_sector: "",
+    education_level: "",
+    income_range: "",
+
     // Status & Keahlian
     community_status: false,
-    status_membership: '',
+    status_membership: "",
     status_entrepreneur: false,
-    register_method: '',
+    register_method: "",
     registration_status: false,
-    supervision: '',
-    membership_id: '',
-    user_id: user?.id || '',
-    
+    supervision: "",
+    membership_id: "",
+    user_id: user?.id || "",
+
     // Pengisytiharan
     pdpa_declare: false,
-    agree_declare: false
+    agree_declare: false,
   });
 
   // Load profile data from database
   const loadProfile = async () => {
     if (!user?.id) return;
-    
+
     setLoading(true);
     try {
       const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error loading profile:', error);
-        toast.error('Ralat memuat profil');
+      if (error && error.code !== "PGRST116") {
+        console.error("Error loading profile:", error);
+        toast.error("Ralat memuat profil");
         return;
       }
 
       if (profile) {
         setFormData({
-          fullname: profile.full_name || user.display_name || '',
-          identity_no: profile.identity_no || '',
-          identity_no_type: profile.identity_no_type || 'ic',
-          gender: profile.gender || '',
-          dob: profile.dob || '',
-          age: profile.age?.toString() || '',
-          mobile_no: profile.mobile_no || user.phone || '',
-          email: profile.email || user.email || '',
-          address: profile.address || '',
-          socio_id: profile.socio_id || '',
-          race_id: profile.race_id || '',
-          ethnic_id: profile.ethnic_id || '',
-          nationality_id: profile.nationality_id || '',
+          fullname: profile.full_name || user.display_name || "",
+          identity_no: profile.identity_no || "",
+          identity_no_type: profile.identity_no_type || "ic",
+          gender: profile.gender || "",
+          dob: profile.dob || "",
+          age: profile.age?.toString() || "",
+          mobile_no: profile.mobile_no || user.phone || "",
+          email: profile.email || user.email || "",
+          address: profile.address || "",
+          socio_id: profile.socio_id || "",
+          race_id: profile.race_id || "",
+          ethnic_id: profile.ethnic_id || "",
+          nationality_id: profile.nationality_id || "",
           oku_status: profile.oku_status || false,
-          marital_status: profile.marital_status || '',
-          spouse_full_name: profile.spouse_full_name || '',
-          spouse_identity_no: profile.spouse_identity_no || '',
-          spouse_identity_no_type: profile.spouse_identity_no_type || 'ic',
-          spouse_gender: profile.spouse_gender || '',
-          spouse_dob: profile.spouse_dob || '',
-          spouse_mobile_no: profile.spouse_mobile_no || '',
-          spouse_occupation: profile.spouse_occupation || '',
-          spouse_workplace: profile.spouse_workplace || '',
-          occupation_id: profile.occupation_id || '',
-          type_sector: profile.type_sector || '',
-          education_level: profile.education_level || '',
-          income_range: profile.income_range || '',
+          marital_status: profile.marital_status || "",
+          spouse_full_name: profile.spouse_full_name || "",
+          spouse_identity_no: profile.spouse_identity_no || "",
+          spouse_identity_no_type: profile.spouse_identity_no_type || "ic",
+          spouse_gender: profile.spouse_gender || "",
+          spouse_dob: profile.spouse_dob || "",
+          spouse_mobile_no: profile.spouse_mobile_no || "",
+          spouse_occupation: profile.spouse_occupation || "",
+          spouse_workplace: profile.spouse_workplace || "",
+          occupation_id: profile.occupation_id || "",
+          type_sector: profile.type_sector || "",
+          education_level: profile.education_level || "",
+          income_range: profile.income_range || "",
           community_status: profile.community_status || false,
-          status_membership: profile.status_membership || '',
+          status_membership: profile.status_membership || "",
           status_entrepreneur: profile.status_entrepreneur || false,
-          register_method: profile.register_method || '',
+          register_method: profile.register_method || "",
           registration_status: profile.registration_status || false,
-          supervision: profile.supervision || '',
-          membership_id: profile.membership_id || '',
+          supervision: profile.supervision || "",
+          membership_id: profile.membership_id || "",
           user_id: user.id,
           pdpa_declare: profile.pdpa_declare || false,
-          agree_declare: profile.agree_declare || false
+          agree_declare: profile.agree_declare || false,
         });
       }
     } catch (error) {
-      console.error('Error loading profile:', error);
-      toast.error('Ralat memuat profil');
+      console.error("Error loading profile:", error);
+      toast.error("Ralat memuat profil");
     } finally {
       setLoading(false);
     }
@@ -151,12 +180,15 @@ export default function MyProfile() {
       const today = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
-      
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      ) {
         age--;
       }
-      
-      setFormData(prev => ({ ...prev, age: age.toString() }));
+
+      setFormData((prev) => ({ ...prev, age: age.toString() }));
     }
   }, [formData.dob]);
 
@@ -167,7 +199,9 @@ export default function MyProfile() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Maklumat Peribadi</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              Maklumat Peribadi
+            </h1>
             <p className="text-muted-foreground">Memuat maklumat peribadi...</p>
           </div>
         </div>
@@ -201,31 +235,39 @@ export default function MyProfile() {
 
   const handleSave = async () => {
     // Validation for required fields
-    const requiredFields = ['fullname', 'identity_no', 'gender', 'dob', 'mobile_no', 'email', 'nationality_id'];
-    const missingFields = requiredFields.filter(field => !formData[field]);
-    
+    const requiredFields = [
+      "fullname",
+      "identity_no",
+      "gender",
+      "dob",
+      "mobile_no",
+      "email",
+      "nationality_id",
+    ];
+    const missingFields = requiredFields.filter((field) => !formData[field]);
+
     if (missingFields.length > 0) {
-      toast.error(`Sila lengkapkan medan wajib: ${missingFields.join(', ')}`);
+      toast.error(`Sila lengkapkan medan wajib: ${missingFields.join(", ")}`);
       return;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      toast.error('Format emel tidak sah');
+      toast.error("Format emel tidak sah");
       return;
     }
 
     // Phone validation
     const phoneRegex = /^[\d\s\-\+\(\)]{10,}$/;
     if (!phoneRegex.test(formData.mobile_no)) {
-      toast.error('Format nombor telefon tidak sah');
+      toast.error("Format nombor telefon tidak sah");
       return;
     }
 
     // Identity number validation
     if (formData.identity_no.length < 12) {
-      toast.error('Nombor kad pengenalan tidak sah');
+      toast.error("Nombor kad pengenalan tidak sah");
       return;
     }
 
@@ -272,33 +314,35 @@ export default function MyProfile() {
         pdpa_declare: formData.pdpa_declare,
         agree_declare: formData.agree_declare,
         updated_by: user.id,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
-        .from('profiles')
-        .upsert(profileData, {
-          onConflict: 'id'
-        });
+      const { error } = await supabase.from("profiles").upsert(profileData, {
+        onConflict: "user_id",
+      });
 
       if (error) {
-        console.error('Error saving profile:', error);
-        toast.error('Ralat menyimpan profil');
+        console.error("Error saving profile:", error);
+        toast.error("Ralat menyimpan profil");
         return;
       }
 
-      toast.success('Profil berjaya dikemaskini');
+      toast.success("Profil berjaya dikemaskini");
       setIsEditing(false);
     } catch (error) {
-      console.error('Error saving profile:', error);
-      toast.error('Ralat menyimpan profil');
+      console.error("Error saving profile:", error);
+      toast.error("Ralat menyimpan profil");
     } finally {
       setLoading(false);
     }
   };
 
   const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
   };
 
   return (
@@ -306,12 +350,14 @@ export default function MyProfile() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Maklumat Peribadi</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            Maklumat Peribadi
+          </h1>
           <p className="text-muted-foreground">
             Urus maklumat peribadi dan keutamaan anda
           </p>
         </div>
-        <Button 
+        <Button
           onClick={isEditing ? handleSave : () => setIsEditing(true)}
           variant={isEditing ? "default" : "outline"}
           disabled={loading}
@@ -319,7 +365,7 @@ export default function MyProfile() {
           {isEditing ? (
             <>
               <Save className="w-4 h-4 mr-2" />
-              {loading ? 'Menyimpan...' : 'Simpan'}
+              {loading ? "Menyimpan..." : "Simpan"}
             </>
           ) : (
             <>
@@ -342,12 +388,20 @@ export default function MyProfile() {
                     {getInitials(user.display_name)}
                   </AvatarFallback>
                 </Avatar>
-                <Button size="sm" variant="outline" className="absolute bottom-0 right-0 rounded-full w-8 h-8 p-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="absolute bottom-0 right-0 rounded-full w-8 h-8 p-0"
+                >
                   <Camera className="w-4 h-4" />
                 </Button>
               </div>
-               <h3 className="text-xl font-semibold">{formData.fullname || user.display_name}</h3>
-              <p className="text-muted-foreground">{formData.email || user.email}</p>
+              <h3 className="text-xl font-semibold">
+                {formData.fullname || user.display_name}
+              </h3>
+              <p className="text-muted-foreground">
+                {formData.email || user.email}
+              </p>
               <div className="flex justify-center space-x-2 mt-4">
                 <Badge variant="secondary">{user.district}</Badge>
                 <Badge variant="outline">{user.user_role}</Badge>
@@ -360,42 +414,50 @@ export default function MyProfile() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Shield className="w-5 h-5" />
-                <span>{language === 'en' ? 'Role Information' : 'Maklumat Peranan'}</span>
+                <span>
+                  {language === "en" ? "Role Information" : "Maklumat Peranan"}
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <Label className="text-sm font-medium">
-                  {language === 'en' ? 'Current Role' : 'Peranan Semasa'}
+                  {language === "en" ? "Current Role" : "Peranan Semasa"}
                 </Label>
-                <p className="text-sm text-muted-foreground capitalize">{user.user_role.replace('_', ' ')}</p>
+                <p className="text-sm text-muted-foreground capitalize">
+                  {user.user_role.replace("_", " ")}
+                </p>
               </div>
               <div>
                 <Label className="text-sm font-medium">
-                  {language === 'en' ? 'Available Roles' : 'Peranan Tersedia'}
+                  {language === "en" ? "Available Roles" : "Peranan Tersedia"}
                 </Label>
                 <div className="flex flex-wrap gap-1 mt-1">
                   {user.available_roles.map((role) => (
                     <Badge key={role} variant="outline" className="text-xs">
-                      {role.replace('_', ' ')}
+                      {role.replace("_", " ")}
                     </Badge>
                   ))}
                 </div>
               </div>
               <div>
                 <Label className="text-sm font-medium">
-                  {language === 'en' ? 'Primary Role' : 'Peranan Utama'}
+                  {language === "en" ? "Primary Role" : "Peranan Utama"}
                 </Label>
-                <p className="text-sm text-muted-foreground capitalize">{user.user_role.replace('_', ' ')}</p>
+                <p className="text-sm text-muted-foreground capitalize">
+                  {user.user_role.replace("_", " ")}
+                </p>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="w-full"
-                onClick={() => navigate('/role-management')}
+                onClick={() => navigate("/role-management")}
               >
                 <Shield className="w-4 h-4 mr-2" />
-                {language === 'en' ? 'Request Role Change' : 'Mohon Tukar Peranan'}
+                {language === "en"
+                  ? "Request Role Change"
+                  : "Mohon Tukar Peranan"}
               </Button>
             </CardContent>
           </Card>
@@ -405,7 +467,7 @@ export default function MyProfile() {
         <div className="lg:col-span-2 space-y-6">
           {/* Household Account Management */}
           <HouseholdAccountManager />
-          
+
           {/* Maklumat Peribadi */}
           <Card>
             <CardHeader>
@@ -422,25 +484,46 @@ export default function MyProfile() {
                     <Input
                       id="fullname"
                       value={formData.fullname}
-                      onChange={(e) => setFormData({...formData, fullname: e.target.value})}
+                      onChange={(e) =>
+                        setFormData({ ...formData, fullname: e.target.value })
+                      }
                       required
                     />
                   ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.fullname}</p>
+                    <p className="text-sm p-2 bg-muted rounded">
+                      {formData.fullname}
+                    </p>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="identity_no">No. Kad Pengenalan * (Tidak boleh diubah)</Label>
-                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.identity_no || 'Belum diisi'}</p>
+                  <Label htmlFor="identity_no">
+                    No. Kad Pengenalan * (Tidak boleh diubah)
+                  </Label>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">
+                    {formData.identity_no || "Belum diisi"}
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="identity_no_type">Jenis Kad Pengenalan (Tidak boleh diubah)</Label>
-                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.identity_no_type === 'ic' ? 'MyKad' : formData.identity_no_type === 'passport' ? 'Pasport' : 'Lain-lain'}</p>
+                  <Label htmlFor="identity_no_type">
+                    Jenis Kad Pengenalan (Tidak boleh diubah)
+                  </Label>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">
+                    {formData.identity_no_type === "ic"
+                      ? "MyKad"
+                      : formData.identity_no_type === "passport"
+                      ? "Pasport"
+                      : "Lain-lain"}
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="gender">Jantina *</Label>
                   {isEditing ? (
-                    <Select value={formData.gender} onValueChange={(value) => setFormData({...formData, gender: value})}>
+                    <Select
+                      value={formData.gender}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, gender: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -450,19 +533,25 @@ export default function MyProfile() {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.gender}</p>
+                    <p className="text-sm p-2 bg-muted rounded">
+                      {formData.gender}
+                    </p>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dob">Tarikh Lahir * (Tidak boleh diubah)</Label>
+                  <Label htmlFor="dob">
+                    Tarikh Lahir * (Tidak boleh diubah)
+                  </Label>
                   <p className="text-sm p-2 bg-muted rounded flex items-center text-muted-foreground">
                     <Calendar className="w-4 h-4 mr-2" />
-                    {formData.dob || 'Belum diisi'}
+                    {formData.dob || "Belum diisi"}
                   </p>
                 </div>
                 <div className="space-y-2">
                   <Label>Umur</Label>
-                  <p className="text-sm p-2 bg-muted rounded">{formData.age} tahun</p>
+                  <p className="text-sm p-2 bg-muted rounded">
+                    {formData.age} tahun
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="mobile_no">Nombor Telefon *</Label>
@@ -471,7 +560,9 @@ export default function MyProfile() {
                       id="mobile_no"
                       type="tel"
                       value={formData.mobile_no}
-                      onChange={(e) => setFormData({...formData, mobile_no: e.target.value})}
+                      onChange={(e) =>
+                        setFormData({ ...formData, mobile_no: e.target.value })
+                      }
                       required
                     />
                   ) : (
@@ -488,7 +579,9 @@ export default function MyProfile() {
                       id="email"
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
                       required
                     />
                   ) : (
@@ -505,11 +598,15 @@ export default function MyProfile() {
                   <Textarea
                     id="address"
                     value={formData.address}
-                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({ ...formData, address: e.target.value })
+                    }
                     rows={3}
                   />
                 ) : (
-                  <p className="text-sm p-2 bg-muted rounded">{formData.address}</p>
+                  <p className="text-sm p-2 bg-muted rounded">
+                    {formData.address}
+                  </p>
                 )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -522,20 +619,33 @@ export default function MyProfile() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="race_id">Bangsa (Tidak boleh diubah)</Label>
-                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.race_id || 'Belum diisi'}</p>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">
+                    {formData.race_id || "Belum diisi"}
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="ethnic_id">Etnik (Tidak boleh diubah)</Label>
-                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.ethnic_id || 'Belum diisi'}</p>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">
+                    {formData.ethnic_id || "Belum diisi"}
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="nationality_id">Warganegara * (Tidak boleh diubah)</Label>
-                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.nationality_id || 'Belum diisi'}</p>
+                  <Label htmlFor="nationality_id">
+                    Warganegara * (Tidak boleh diubah)
+                  </Label>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">
+                    {formData.nationality_id || "Belum diisi"}
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="marital_status">Status Perkahwinan</Label>
                   {isEditing ? (
-                    <Select value={formData.marital_status} onValueChange={(value) => setFormData({...formData, marital_status: value})}>
+                    <Select
+                      value={formData.marital_status}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, marital_status: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih status perkahwinan" />
                       </SelectTrigger>
@@ -547,7 +657,9 @@ export default function MyProfile() {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.marital_status || 'Belum diisi'}</p>
+                    <p className="text-sm p-2 bg-muted rounded">
+                      {formData.marital_status || "Belum diisi"}
+                    </p>
                   )}
                 </div>
               </div>
@@ -555,7 +667,9 @@ export default function MyProfile() {
                 <Switch
                   id="oku_status"
                   checked={formData.oku_status}
-                  onCheckedChange={(checked) => setFormData({...formData, oku_status: checked})}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, oku_status: checked })
+                  }
                   disabled={!isEditing}
                 />
                 <Label htmlFor="oku_status">Status OKU</Label>
@@ -564,7 +678,7 @@ export default function MyProfile() {
           </Card>
 
           {/* Maklumat Pasangan */}
-          {formData.marital_status === 'berkahwin' && (
+          {formData.marital_status === "berkahwin" && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
@@ -575,33 +689,61 @@ export default function MyProfile() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="spouse_full_name">Nama Penuh Pasangan</Label>
+                    <Label htmlFor="spouse_full_name">
+                      Nama Penuh Pasangan
+                    </Label>
                     {isEditing ? (
                       <Input
                         id="spouse_full_name"
                         value={formData.spouse_full_name}
-                        onChange={(e) => setFormData({...formData, spouse_full_name: e.target.value})}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            spouse_full_name: e.target.value,
+                          })
+                        }
                       />
                     ) : (
-                      <p className="text-sm p-2 bg-muted rounded">{formData.spouse_full_name || 'Belum diisi'}</p>
+                      <p className="text-sm p-2 bg-muted rounded">
+                        {formData.spouse_full_name || "Belum diisi"}
+                      </p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="spouse_identity_no">No. Kad Pengenalan Pasangan</Label>
+                    <Label htmlFor="spouse_identity_no">
+                      No. Kad Pengenalan Pasangan
+                    </Label>
                     {isEditing ? (
                       <Input
                         id="spouse_identity_no"
                         value={formData.spouse_identity_no}
-                        onChange={(e) => setFormData({...formData, spouse_identity_no: e.target.value})}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            spouse_identity_no: e.target.value,
+                          })
+                        }
                       />
                     ) : (
-                      <p className="text-sm p-2 bg-muted rounded">{formData.spouse_identity_no || 'Belum diisi'}</p>
+                      <p className="text-sm p-2 bg-muted rounded">
+                        {formData.spouse_identity_no || "Belum diisi"}
+                      </p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="spouse_identity_no_type">Jenis Kad Pengenalan Pasangan</Label>
+                    <Label htmlFor="spouse_identity_no_type">
+                      Jenis Kad Pengenalan Pasangan
+                    </Label>
                     {isEditing ? (
-                      <Select value={formData.spouse_identity_no_type} onValueChange={(value) => setFormData({...formData, spouse_identity_no_type: value})}>
+                      <Select
+                        value={formData.spouse_identity_no_type}
+                        onValueChange={(value) =>
+                          setFormData({
+                            ...formData,
+                            spouse_identity_no_type: value,
+                          })
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -612,13 +754,24 @@ export default function MyProfile() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <p className="text-sm p-2 bg-muted rounded">{formData.spouse_identity_no_type === 'ic' ? 'MyKad' : formData.spouse_identity_no_type === 'passport' ? 'Pasport' : 'Lain-lain'}</p>
+                      <p className="text-sm p-2 bg-muted rounded">
+                        {formData.spouse_identity_no_type === "ic"
+                          ? "MyKad"
+                          : formData.spouse_identity_no_type === "passport"
+                          ? "Pasport"
+                          : "Lain-lain"}
+                      </p>
                     )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="spouse_gender">Jantina Pasangan</Label>
                     {isEditing ? (
-                      <Select value={formData.spouse_gender} onValueChange={(value) => setFormData({...formData, spouse_gender: value})}>
+                      <Select
+                        value={formData.spouse_gender}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, spouse_gender: value })
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Pilih jantina" />
                         </SelectTrigger>
@@ -628,7 +781,9 @@ export default function MyProfile() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <p className="text-sm p-2 bg-muted rounded">{formData.spouse_gender || 'Belum diisi'}</p>
+                      <p className="text-sm p-2 bg-muted rounded">
+                        {formData.spouse_gender || "Belum diisi"}
+                      </p>
                     )}
                   </div>
                   <div className="space-y-2">
@@ -638,53 +793,83 @@ export default function MyProfile() {
                         id="spouse_dob"
                         type="date"
                         value={formData.spouse_dob}
-                        onChange={(e) => setFormData({...formData, spouse_dob: e.target.value})}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            spouse_dob: e.target.value,
+                          })
+                        }
                       />
                     ) : (
                       <p className="text-sm p-2 bg-muted rounded flex items-center">
                         <Calendar className="w-4 h-4 mr-2" />
-                        {formData.spouse_dob || 'Belum diisi'}
+                        {formData.spouse_dob || "Belum diisi"}
                       </p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="spouse_mobile_no">Nombor Telefon Pasangan</Label>
+                    <Label htmlFor="spouse_mobile_no">
+                      Nombor Telefon Pasangan
+                    </Label>
                     {isEditing ? (
                       <Input
                         id="spouse_mobile_no"
                         type="tel"
                         value={formData.spouse_mobile_no}
-                        onChange={(e) => setFormData({...formData, spouse_mobile_no: e.target.value})}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            spouse_mobile_no: e.target.value,
+                          })
+                        }
                       />
                     ) : (
                       <p className="text-sm p-2 bg-muted rounded flex items-center">
                         <Phone className="w-4 h-4 mr-2" />
-                        {formData.spouse_mobile_no || 'Belum diisi'}
+                        {formData.spouse_mobile_no || "Belum diisi"}
                       </p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="spouse_occupation">Pekerjaan Pasangan</Label>
+                    <Label htmlFor="spouse_occupation">
+                      Pekerjaan Pasangan
+                    </Label>
                     {isEditing ? (
                       <Input
                         id="spouse_occupation"
                         value={formData.spouse_occupation}
-                        onChange={(e) => setFormData({...formData, spouse_occupation: e.target.value})}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            spouse_occupation: e.target.value,
+                          })
+                        }
                       />
                     ) : (
-                      <p className="text-sm p-2 bg-muted rounded">{formData.spouse_occupation || 'Belum diisi'}</p>
+                      <p className="text-sm p-2 bg-muted rounded">
+                        {formData.spouse_occupation || "Belum diisi"}
+                      </p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="spouse_workplace">Tempat Kerja Pasangan</Label>
+                    <Label htmlFor="spouse_workplace">
+                      Tempat Kerja Pasangan
+                    </Label>
                     {isEditing ? (
                       <Input
                         id="spouse_workplace"
                         value={formData.spouse_workplace}
-                        onChange={(e) => setFormData({...formData, spouse_workplace: e.target.value})}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            spouse_workplace: e.target.value,
+                          })
+                        }
                       />
                     ) : (
-                      <p className="text-sm p-2 bg-muted rounded">{formData.spouse_workplace || 'Belum diisi'}</p>
+                      <p className="text-sm p-2 bg-muted rounded">
+                        {formData.spouse_workplace || "Belum diisi"}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -705,26 +890,42 @@ export default function MyProfile() {
                 <div className="space-y-2">
                   <Label htmlFor="occupation_id">Pekerjaan</Label>
                   {isEditing ? (
-                    <Select value={formData.occupation_id} onValueChange={(value) => setFormData({...formData, occupation_id: value})}>
+                    <Select
+                      value={formData.occupation_id}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, occupation_id: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih pekerjaan" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="kerajaan">Sektor Kerajaan</SelectItem>
+                        <SelectItem value="kerajaan">
+                          Sektor Kerajaan
+                        </SelectItem>
                         <SelectItem value="swasta">Sektor Swasta</SelectItem>
                         <SelectItem value="sendiri">Bekerja Sendiri</SelectItem>
                         <SelectItem value="pelajar">Pelajar</SelectItem>
-                        <SelectItem value="tidak_bekerja">Tidak Bekerja</SelectItem>
+                        <SelectItem value="tidak_bekerja">
+                          Tidak Bekerja
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.occupation_id}</p>
+                    <p className="text-sm p-2 bg-muted rounded">
+                      {formData.occupation_id}
+                    </p>
                   )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="type_sector">Sektor Pekerjaan</Label>
                   {isEditing ? (
-                    <Select value={formData.type_sector} onValueChange={(value) => setFormData({...formData, type_sector: value})}>
+                    <Select
+                      value={formData.type_sector}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, type_sector: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih sektor" />
                       </SelectTrigger>
@@ -737,45 +938,75 @@ export default function MyProfile() {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.type_sector}</p>
+                    <p className="text-sm p-2 bg-muted rounded">
+                      {formData.type_sector}
+                    </p>
                   )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="education_level">Tahap Pendidikan</Label>
                   {isEditing ? (
-                    <Select value={formData.education_level} onValueChange={(value) => setFormData({...formData, education_level: value})}>
+                    <Select
+                      value={formData.education_level}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, education_level: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih tahap pendidikan" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="spm">SPM</SelectItem>
                         <SelectItem value="stpm">STPM/Diploma</SelectItem>
-                        <SelectItem value="sarjana_muda">Ijazah Sarjana Muda</SelectItem>
+                        <SelectItem value="sarjana_muda">
+                          Ijazah Sarjana Muda
+                        </SelectItem>
                         <SelectItem value="sarjana">Ijazah Sarjana</SelectItem>
-                        <SelectItem value="phd">Ijazah Doktor Falsafah</SelectItem>
+                        <SelectItem value="phd">
+                          Ijazah Doktor Falsafah
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.education_level}</p>
+                    <p className="text-sm p-2 bg-muted rounded">
+                      {formData.education_level}
+                    </p>
                   )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="income_range">Julat Pendapatan</Label>
                   {isEditing ? (
-                    <Select value={formData.income_range} onValueChange={(value) => setFormData({...formData, income_range: value})}>
+                    <Select
+                      value={formData.income_range}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, income_range: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih julat pendapatan" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="below_2000">Bawah RM2,000</SelectItem>
-                        <SelectItem value="2000_4000">RM2,000 - RM4,000</SelectItem>
-                        <SelectItem value="4000_6000">RM4,000 - RM6,000</SelectItem>
-                        <SelectItem value="6000_8000">RM6,000 - RM8,000</SelectItem>
-                        <SelectItem value="above_8000">Melebihi RM8,000</SelectItem>
+                        <SelectItem value="below_2000">
+                          Bawah RM2,000
+                        </SelectItem>
+                        <SelectItem value="2000_4000">
+                          RM2,000 - RM4,000
+                        </SelectItem>
+                        <SelectItem value="4000_6000">
+                          RM4,000 - RM6,000
+                        </SelectItem>
+                        <SelectItem value="6000_8000">
+                          RM6,000 - RM8,000
+                        </SelectItem>
+                        <SelectItem value="above_8000">
+                          Melebihi RM8,000
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.income_range}</p>
+                    <p className="text-sm p-2 bg-muted rounded">
+                      {formData.income_range}
+                    </p>
                   )}
                 </div>
               </div>
@@ -796,7 +1027,9 @@ export default function MyProfile() {
                   <Switch
                     id="community_status"
                     checked={formData.community_status}
-                    onCheckedChange={(checked) => setFormData({...formData, community_status: checked})}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, community_status: checked })
+                    }
                     disabled={!isEditing}
                   />
                   <Label htmlFor="community_status">Status Komuniti</Label>
@@ -804,7 +1037,12 @@ export default function MyProfile() {
                 <div className="space-y-2">
                   <Label htmlFor="status_membership">Status Keahlian</Label>
                   {isEditing ? (
-                    <Select value={formData.status_membership} onValueChange={(value) => setFormData({...formData, status_membership: value})}>
+                    <Select
+                      value={formData.status_membership}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, status_membership: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih status keahlian" />
                       </SelectTrigger>
@@ -815,39 +1053,59 @@ export default function MyProfile() {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="text-sm p-2 bg-muted rounded">{formData.status_membership}</p>
+                    <p className="text-sm p-2 bg-muted rounded">
+                      {formData.status_membership}
+                    </p>
                   )}
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="status_entrepreneur"
                     checked={formData.status_entrepreneur}
-                    onCheckedChange={(checked) => setFormData({...formData, status_entrepreneur: checked})}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, status_entrepreneur: checked })
+                    }
                     disabled={!isEditing}
                   />
                   <Label htmlFor="status_entrepreneur">Status Usahawan</Label>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="register_method">Kaedah Pendaftaran (Tidak boleh diubah)</Label>
-                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.register_method || 'Belum diisi'}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="registration_status">Status Pendaftaran (Tidak boleh diubah)</Label>
+                  <Label htmlFor="register_method">
+                    Kaedah Pendaftaran (Tidak boleh diubah)
+                  </Label>
                   <p className="text-sm p-2 bg-muted rounded text-muted-foreground">
-                    {formData.registration_status ? 'Aktif' : 'Tidak Aktif'}
+                    {formData.register_method || "Belum diisi"}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="supervision">Penyeliaan (Tidak boleh diubah)</Label>
-                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.supervision || 'Belum diisi'}</p>
+                  <Label htmlFor="registration_status">
+                    Status Pendaftaran (Tidak boleh diubah)
+                  </Label>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">
+                    {formData.registration_status ? "Aktif" : "Tidak Aktif"}
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="membership_id">Membership ID (Tidak boleh diubah)</Label>
-                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">{formData.membership_id || 'Belum diisi'}</p>
+                  <Label htmlFor="supervision">
+                    Penyeliaan (Tidak boleh diubah)
+                  </Label>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">
+                    {formData.supervision || "Belum diisi"}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="membership_id">
+                    Membership ID (Tidak boleh diubah)
+                  </Label>
+                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">
+                    {formData.membership_id || "Belum diisi"}
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label>User ID</Label>
-                  <p className="text-sm p-2 bg-muted rounded">{formData.user_id}</p>
+                  <p className="text-sm p-2 bg-muted rounded">
+                    {formData.user_id}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -866,7 +1124,9 @@ export default function MyProfile() {
                 <Checkbox
                   id="pdpa_declare"
                   checked={formData.pdpa_declare}
-                  onCheckedChange={(checked) => setFormData({...formData, pdpa_declare: !!checked})}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, pdpa_declare: !!checked })
+                  }
                   disabled={!isEditing}
                 />
                 <Label htmlFor="pdpa_declare">Pengisytiharan PDPA</Label>
@@ -875,10 +1135,14 @@ export default function MyProfile() {
                 <Checkbox
                   id="agree_declare"
                   checked={formData.agree_declare}
-                  onCheckedChange={(checked) => setFormData({...formData, agree_declare: !!checked})}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, agree_declare: !!checked })
+                  }
                   disabled={!isEditing}
                 />
-                <Label htmlFor="agree_declare">Persetujuan Syarat & Terma</Label>
+                <Label htmlFor="agree_declare">
+                  Persetujuan Syarat & Terma
+                </Label>
               </div>
             </CardContent>
           </Card>
@@ -907,11 +1171,15 @@ export default function MyProfile() {
                 </div>
                 <div className="space-y-2">
                   <Label>Dikemaskini Oleh</Label>
-                  <p className="text-sm p-2 bg-muted rounded">{user.display_name}</p>
+                  <p className="text-sm p-2 bg-muted rounded">
+                    {user.display_name}
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label>Tarikh Dikemaskini</Label>
-                  <p className="text-sm p-2 bg-muted rounded">{new Date().toLocaleDateString()}</p>
+                  <p className="text-sm p-2 bg-muted rounded">
+                    {new Date().toLocaleDateString()}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -924,9 +1192,7 @@ export default function MyProfile() {
           <Button variant="outline" onClick={() => setIsEditing(false)}>
             Batal
           </Button>
-          <Button onClick={handleSave}>
-            Simpan Perubahan
-          </Button>
+          <Button onClick={handleSave}>Simpan Perubahan</Button>
         </div>
       )}
     </div>

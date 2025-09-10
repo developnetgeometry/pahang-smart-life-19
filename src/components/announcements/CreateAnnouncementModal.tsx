@@ -1,18 +1,48 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { Plus, Trash2, Calendar, Users, BarChart3, PlusCircle, Loader2, ImagePlus, Paperclip, X } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import {
+  Plus,
+  Trash2,
+  Calendar,
+  Users,
+  BarChart3,
+  PlusCircle,
+  Loader2,
+  ImagePlus,
+  Paperclip,
+  X,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface PollOption {
   id?: string;
@@ -36,127 +66,134 @@ interface CreateAnnouncementModalProps {
   onAnnouncementCreated: () => void;
 }
 
-export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnouncementCreated }: CreateAnnouncementModalProps) {
+export default function CreateAnnouncementModal({
+  isOpen,
+  onOpenChange,
+  onAnnouncementCreated,
+}: CreateAnnouncementModalProps) {
   const { language, user } = useAuth();
   const { toast } = useToast();
-  
+
   const [formData, setFormData] = useState({
-    title: '',
-    content: '',
-    scope: 'district',
-    type: 'general',
+    title: "",
+    content: "",
+    scope: "district",
+    type: "general",
     is_urgent: false,
     is_published: true,
     publish_at: new Date().toISOString().slice(0, 16),
-    expire_at: ''
+    expire_at: "",
   });
-  
+
   const [images, setImages] = useState<string[]>([]);
-  const [attachments, setAttachments] = useState<{name: string, url: string, size: number}[]>([]);
+  const [attachments, setAttachments] = useState<
+    { name: string; url: string; size: number }[]
+  >([]);
   const [uploading, setUploading] = useState(false);
-  
+
   const [includePoll, setIncludePoll] = useState(false);
   const [poll, setPoll] = useState<Poll>({
-    title: '',
-    description: '',
-    expires_at: '',
+    title: "",
+    description: "",
+    expires_at: "",
     allow_multiple_votes: false,
     is_anonymous: false,
     options: [
-      { option_text: '', option_order: 0 },
-      { option_text: '', option_order: 1 }
-    ]
+      { option_text: "", option_order: 0 },
+      { option_text: "", option_order: 1 },
+    ],
   });
-  
+
   const [submitting, setSubmitting] = useState(false);
 
   const text = {
     en: {
-      createAnnouncement: 'Create Announcement',
-      createAnnouncementDesc: 'Broadcast important information to your community',
-      announcementTitle: 'Announcement Title',
-      content: 'Content',
-      scope: 'Scope',
-      stateLevel: 'State Level',
-      districtLevel: 'District Level',
-      communityLevel: 'Community Level',
-      category: 'Category',
-      general: 'General',
-      maintenance: 'Maintenance',
-      emergency: 'Emergency',
-      event: 'Event',
-      urgent: 'Mark as Urgent',
-      published: 'Publish Immediately',
-      publishAt: 'Publish At',
-      expireAt: 'Expire At (Optional)',
-      includePoll: 'Include Poll',
-      pollTitle: 'Poll Title',
-      pollDescription: 'Poll Description (Optional)',
-      pollExpires: 'Poll Expires At (Optional)',
-      multipleChoices: 'Allow Multiple Choices',
-      anonymous: 'Anonymous Voting',
-      pollOptions: 'Poll Options',
-      addOption: 'Add Option',
-      removeOption: 'Remove Option',
-      create: 'Create Announcement',
-      cancel: 'Cancel',
-      success: 'Announcement created successfully!',
-      pushNotification: 'Push notification sent to recipients',
-      minOptions: 'Poll must have at least 2 options',
-      fillRequired: 'Please fill in all required fields',
-      images: 'Images',
-      attachments: 'Attachments',
-      addImage: 'Add Image',
-      addAttachment: 'Add Attachment',
-      removeImage: 'Remove Image',
-      removeAttachment: 'Remove Attachment',
-      uploading: 'Uploading...',
-      readingTime: 'Reading Time',
-      minutes: 'minutes'
+      createAnnouncement: "Create Announcement",
+      createAnnouncementDesc:
+        "Broadcast important information to your community",
+      announcementTitle: "Announcement Title",
+      content: "Content",
+      scope: "Scope",
+      stateLevel: "State Level",
+      districtLevel: "District Level",
+      communityLevel: "Community Level",
+      category: "Category",
+      general: "General",
+      maintenance: "Maintenance",
+      emergency: "Emergency",
+      event: "Event",
+      urgent: "Mark as Urgent",
+      published: "Publish Immediately",
+      publishAt: "Publish At",
+      expireAt: "Expire At (Optional)",
+      includePoll: "Include Poll",
+      pollTitle: "Poll Title",
+      pollDescription: "Poll Description (Optional)",
+      pollExpires: "Poll Expires At (Optional)",
+      multipleChoices: "Allow Multiple Choices",
+      anonymous: "Anonymous Voting",
+      pollOptions: "Poll Options",
+      addOption: "Add Option",
+      removeOption: "Remove Option",
+      create: "Create Announcement",
+      cancel: "Cancel",
+      success: "Announcement created successfully!",
+      pushNotification: "Push notification sent to recipients",
+      minOptions: "Poll must have at least 2 options",
+      fillRequired: "Please fill in all required fields",
+      images: "Images",
+      attachments: "Attachments",
+      addImage: "Add Image",
+      addAttachment: "Add Attachment",
+      removeImage: "Remove Image",
+      removeAttachment: "Remove Attachment",
+      uploading: "Uploading...",
+      readingTime: "Reading Time",
+      minutes: "minutes",
     },
     ms: {
-      createAnnouncement: 'Cipta Pengumuman',
-      createAnnouncementDesc: 'Siarkan maklumat penting kepada komuniti anda',
-      announcementTitle: 'Tajuk Pengumuman',
-      content: 'Kandungan',
-      scope: 'Skop',
-      stateLevel: 'Peringkat Negeri',
-      districtLevel: 'Peringkat Daerah',
-      communityLevel: 'Peringkat Komuniti',
-      category: 'Kategori',
-      general: 'Umum',
-      maintenance: 'Penyelenggaraan',
-      emergency: 'Kecemasan',
-      event: 'Acara',
-      urgent: 'Tandakan sebagai Penting',
-      published: 'Terbitkan Serta-merta',
-      publishAt: 'Terbit Pada',
-      expireAt: 'Tamat Pada (Pilihan)',
-      includePoll: 'Sertakan Undian',
-      pollTitle: 'Tajuk Undian',
-      pollDescription: 'Penerangan Undian (Pilihan)',
-      pollExpires: 'Undian Tamat Pada (Pilihan)',
-      multipleChoices: 'Benarkan Pilihan Berganda',
-      anonymous: 'Undian Tanpa Nama',
-      pollOptions: 'Pilihan Undian',
-      addOption: 'Tambah Pilihan',
-      removeOption: 'Buang Pilihan',
-      create: 'Cipta Pengumuman',
-      cancel: 'Batal',
-      success: 'Pengumuman berjaya dicipta!',
-      pushNotification: 'Notifikasi tolak dihantar kepada penerima',
-      minOptions: 'Undian mesti mempunyai sekurang-kurangnya 2 pilihan',
-      fillRequired: 'Sila isi semua medan yang diperlukan',
-      images: 'Gambar',
-      attachments: 'Lampiran',
-      addImage: 'Tambah Gambar',
-      addAttachment: 'Tambah Lampiran',
-      removeImage: 'Buang Gambar',
-      removeAttachment: 'Buang Lampiran',
-      uploading: 'Memuat naik...',
-      readingTime: 'Masa Membaca',
-      minutes: 'minit'
-    }
+      createAnnouncement: "Cipta Pengumuman",
+      createAnnouncementDesc: "Siarkan maklumat penting kepada komuniti anda",
+      announcementTitle: "Tajuk Pengumuman",
+      content: "Kandungan",
+      scope: "Skop",
+      stateLevel: "Peringkat Negeri",
+      districtLevel: "Peringkat Daerah",
+      communityLevel: "Peringkat Komuniti",
+      category: "Kategori",
+      general: "Umum",
+      maintenance: "Penyelenggaraan",
+      emergency: "Kecemasan",
+      event: "Acara",
+      urgent: "Tandakan sebagai Penting",
+      published: "Terbitkan Serta-merta",
+      publishAt: "Terbit Pada",
+      expireAt: "Tamat Pada (Pilihan)",
+      includePoll: "Sertakan Undian",
+      pollTitle: "Tajuk Undian",
+      pollDescription: "Penerangan Undian (Pilihan)",
+      pollExpires: "Undian Tamat Pada (Pilihan)",
+      multipleChoices: "Benarkan Pilihan Berganda",
+      anonymous: "Undian Tanpa Nama",
+      pollOptions: "Pilihan Undian",
+      addOption: "Tambah Pilihan",
+      removeOption: "Buang Pilihan",
+      create: "Cipta Pengumuman",
+      cancel: "Batal",
+      success: "Pengumuman berjaya dicipta!",
+      pushNotification: "Notifikasi tolak dihantar kepada penerima",
+      minOptions: "Undian mesti mempunyai sekurang-kurangnya 2 pilihan",
+      fillRequired: "Sila isi semua medan yang diperlukan",
+      images: "Gambar",
+      attachments: "Lampiran",
+      addImage: "Tambah Gambar",
+      addAttachment: "Tambah Lampiran",
+      removeImage: "Buang Gambar",
+      removeAttachment: "Buang Lampiran",
+      uploading: "Memuat naik...",
+      readingTime: "Masa Membaca",
+      minutes: "minit",
+    },
   };
 
   const t = text[language];
@@ -170,43 +207,46 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
   const handleImageUpload = async (file: File) => {
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const fileName = `${user?.id}/${Date.now()}.${fileExt}`;
       const filePath = `announcements/${fileName}`;
 
-      console.log('Uploading image:', fileName, 'to path:', filePath);
+      console.log("Uploading image:", fileName, "to path:", filePath);
 
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('public')
+        .from("public")
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error('Upload error:', uploadError);
+        console.error("Upload error:", uploadError);
         throw uploadError;
       }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('public')
-        .getPublicUrl(filePath);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("public").getPublicUrl(filePath);
 
-      console.log('Generated public URL:', publicUrl);
+      console.log("Generated public URL:", publicUrl);
 
-      setImages(prev => {
+      setImages((prev) => {
         const updated = [...prev, publicUrl];
-        console.log('Updated images array:', updated);
+        console.log("Updated images array:", updated);
         return updated;
       });
 
       toast({
-        title: language === 'en' ? 'Image uploaded successfully' : 'Gambar berjaya dimuat naik',
-        variant: 'default'
+        title:
+          language === "en"
+            ? "Image uploaded successfully"
+            : "Gambar berjaya dimuat naik",
+        variant: "default",
       });
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error("Error uploading image:", error);
       toast({
-        title: language === 'en' ? 'Upload failed' : 'Muat naik gagal',
+        title: language === "en" ? "Upload failed" : "Muat naik gagal",
         description: error.message,
-        variant: 'destructive'
+        variant: "destructive",
       });
     } finally {
       setUploading(false);
@@ -216,30 +256,33 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
   const handleAttachmentUpload = async (file: File) => {
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}-${file.name}`;
       const filePath = `announcements/attachments/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('public')
+        .from("public")
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('public')
-        .getPublicUrl(filePath);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("public").getPublicUrl(filePath);
 
-      setAttachments(prev => [...prev, {
-        name: file.name,
-        url: publicUrl,
-        size: file.size
-      }]);
+      setAttachments((prev) => [
+        ...prev,
+        {
+          name: file.name,
+          url: publicUrl,
+          size: file.size,
+        },
+      ]);
     } catch (error) {
-      console.error('Error uploading attachment:', error);
+      console.error("Error uploading attachment:", error);
       toast({
-        title: language === 'en' ? 'Upload failed' : 'Muat naik gagal',
-        variant: 'destructive'
+        title: language === "en" ? "Upload failed" : "Muat naik gagal",
+        variant: "destructive",
       });
     } finally {
       setUploading(false);
@@ -247,28 +290,28 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
   };
 
   const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
+    setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const removeAttachment = (index: number) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index));
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async () => {
     if (!formData.title.trim() || !formData.content.trim()) {
       toast({
         title: t.fillRequired,
-        variant: 'destructive'
+        variant: "destructive",
       });
       return;
     }
 
     if (includePoll) {
-      const validOptions = poll.options.filter(opt => opt.option_text.trim());
+      const validOptions = poll.options.filter((opt) => opt.option_text.trim());
       if (validOptions.length < 2) {
         toast({
           title: t.minOptions,
-          variant: 'destructive'
+          variant: "destructive",
         });
         return;
       }
@@ -278,32 +321,38 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
     try {
       // Get user profile for district/community info
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('district_id, community_id')
-        .eq('id', user?.id)
+        .from("profiles")
+        .select("district_id, community_id")
+        .eq("user_id", user?.id)
         .single();
 
       // Create announcement - using only the fields that match the schema
       const announcementData = {
         title: formData.title,
         content: formData.content,
-        type: formData.type as 'general' | 'maintenance' | 'event' | 'emergency' | 'security',
+        type: formData.type as
+          | "general"
+          | "maintenance"
+          | "event"
+          | "emergency"
+          | "security",
         is_urgent: formData.is_urgent,
         is_published: formData.is_published,
         is_pinned: false, // Pin feature moved to details page
         author_id: user?.id,
-        district_id: formData.scope !== 'state' ? profile?.district_id : null,
-        community_id: formData.scope === 'community' ? profile?.community_id : null,
+        district_id: formData.scope !== "state" ? profile?.district_id : null,
+        community_id:
+          formData.scope === "community" ? profile?.community_id : null,
         publish_at: formData.publish_at || new Date().toISOString(),
         expire_at: formData.expire_at || null,
         scope: formData.scope,
         images: images.length > 0 ? images : null,
         attachments: attachments.length > 0 ? attachments : null,
-        reading_time_minutes: calculateReadingTime(formData.content)
+        reading_time_minutes: calculateReadingTime(formData.content),
       };
 
       const { data: announcement, error: announcementError } = await supabase
-        .from('announcements')
+        .from("announcements")
         .insert(announcementData as any)
         .select()
         .single();
@@ -313,7 +362,7 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
       // Create poll if included
       if (includePoll && poll.title.trim() && announcement.id) {
         const { data: pollData, error: pollError } = await supabase
-          .from('announcement_polls')
+          .from("announcement_polls")
           .insert({
             announcement_id: announcement.id,
             title: poll.title,
@@ -321,7 +370,7 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
             expires_at: poll.expires_at || null,
             is_anonymous: poll.is_anonymous,
             allow_multiple_votes: poll.allow_multiple_votes,
-            created_by: user.id
+            created_by: user.id,
           })
           .select()
           .single();
@@ -330,95 +379,115 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
 
         // Insert poll options
         if (pollData) {
-          const validOptions = poll.options.filter(opt => opt.option_text.trim());
+          const validOptions = poll.options.filter((opt) =>
+            opt.option_text.trim()
+          );
           const optionsData = validOptions.map((option, index) => ({
             poll_id: pollData.id,
             option_text: option.option_text,
-            option_order: index
+            option_order: index,
           }));
 
           const { error: optionsError } = await supabase
-            .from('poll_options')
+            .from("poll_options")
             .insert(optionsData);
 
           if (optionsError) throw optionsError;
         }
       } else if (includePoll && poll.title.trim()) {
         toast({
-          title: language === 'en' ? 'Poll feature coming soon' : 'Ciri undian akan datang',
-          description: language === 'en' ? 'Announcement created without poll' : 'Pengumuman dicipta tanpa undian',
-          variant: 'default'
+          title:
+            language === "en"
+              ? "Poll feature coming soon"
+              : "Ciri undian akan datang",
+          description:
+            language === "en"
+              ? "Announcement created without poll"
+              : "Pengumuman dicipta tanpa undian",
+          variant: "default",
         });
       }
 
       // Send push notification
       if (formData.is_published) {
         try {
-          await supabase.functions.invoke('send-push-notification', {
+          await supabase.functions.invoke("send-push-notification", {
             body: {
-              title: formData.is_urgent ? `🔴 URGENT: ${formData.title}` : formData.title,
-              body: formData.content.substring(0, 100) + (formData.content.length > 100 ? '...' : ''),
+              title: formData.is_urgent
+                ? `🔴 URGENT: ${formData.title}`
+                : formData.title,
+              body:
+                formData.content.substring(0, 100) +
+                (formData.content.length > 100 ? "..." : ""),
               scope: formData.scope,
               data: {
-                type: 'announcement',
+                type: "announcement",
                 announcementId: announcement.id,
-                urgent: formData.is_urgent
-              }
-            }
+                urgent: formData.is_urgent,
+              },
+            },
           });
         } catch (pushError) {
-          console.warn('Push notification failed:', pushError);
+          console.warn("Push notification failed:", pushError);
           // Don't fail the announcement creation if push notification fails
         }
       }
 
       toast({
         title: t.success,
-        description: formData.is_published ? t.pushNotification : undefined
+        description: formData.is_published ? t.pushNotification : undefined,
       });
 
       // Reset form
       setFormData({
-        title: '',
-        content: '',
-        scope: 'district',
-        type: 'general',
+        title: "",
+        content: "",
+        scope: "district",
+        type: "general",
         is_urgent: false,
         is_published: true,
         publish_at: new Date().toISOString().slice(0, 16),
-        expire_at: ''
+        expire_at: "",
       });
       setImages([]);
       setAttachments([]);
       setIncludePoll(false);
       setPoll({
-        title: '',
-        description: '',
-        expires_at: '',
+        title: "",
+        description: "",
+        expires_at: "",
         allow_multiple_votes: false,
         is_anonymous: false,
         options: [
-          { option_text: '', option_order: 0 },
-          { option_text: '', option_order: 1 }
-        ]
+          { option_text: "", option_order: 0 },
+          { option_text: "", option_order: 1 },
+        ],
       });
 
       onOpenChange(false);
       onAnnouncementCreated();
     } catch (error: any) {
-      console.error('Error creating announcement:', error);
-      
+      console.error("Error creating announcement:", error);
+
       // Check if it's a permission error
-      const isPermissionError = error?.code === '42501' || error?.message?.includes('policy') || error?.message?.includes('permission');
-      
+      const isPermissionError =
+        error?.code === "42501" ||
+        error?.message?.includes("policy") ||
+        error?.message?.includes("permission");
+
       toast({
-        title: language === 'en' ? 'Error creating announcement' : 'Ralat mencipta pengumuman',
-        description: isPermissionError 
-          ? (language === 'en' 
-              ? 'You do not have permission to create announcements. Only community administrators and management staff can create announcements.' 
-              : 'Anda tidak mempunyai kebenaran untuk mencipta pengumuman. Hanya pentadbir komuniti dan kakitangan pengurusan boleh mencipta pengumuman.')
-          : (language === 'en' ? 'Please try again later' : 'Sila cuba lagi kemudian'),
-        variant: 'destructive'
+        title:
+          language === "en"
+            ? "Error creating announcement"
+            : "Ralat mencipta pengumuman",
+        description: isPermissionError
+          ? language === "en"
+            ? "You do not have permission to create announcements. Only community administrators and management staff can create announcements."
+            : "Anda tidak mempunyai kebenaran untuk mencipta pengumuman. Hanya pentadbir komuniti dan kakitangan pengurusan boleh mencipta pengumuman."
+          : language === "en"
+          ? "Please try again later"
+          : "Sila cuba lagi kemudian",
+        variant: "destructive",
       });
     } finally {
       setSubmitting(false);
@@ -426,25 +495,28 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
   };
 
   const addPollOption = () => {
-    setPoll(prev => ({
+    setPoll((prev) => ({
       ...prev,
-      options: [...prev.options, { option_text: '', option_order: prev.options.length }]
+      options: [
+        ...prev.options,
+        { option_text: "", option_order: prev.options.length },
+      ],
     }));
   };
 
   const removePollOption = (index: number) => {
-    setPoll(prev => ({
+    setPoll((prev) => ({
       ...prev,
-      options: prev.options.filter((_, i) => i !== index)
+      options: prev.options.filter((_, i) => i !== index),
     }));
   };
 
   const updatePollOption = (index: number, text: string) => {
-    setPoll(prev => ({
+    setPoll((prev) => ({
       ...prev,
-      options: prev.options.map((opt, i) => 
+      options: prev.options.map((opt, i) =>
         i === index ? { ...opt, option_text: text } : opt
-      )
+      ),
     }));
   };
 
@@ -467,7 +539,9 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
               <Input
                 id="title"
                 value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, title: e.target.value }))
+                }
                 placeholder={t.announcementTitle}
               />
             </div>
@@ -477,13 +551,16 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
               <Textarea
                 id="content"
                 value={formData.content}
-                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, content: e.target.value }))
+                }
                 placeholder={t.content}
                 rows={4}
               />
               {formData.content.trim() && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  {t.readingTime}: {calculateReadingTime(formData.content)} {t.minutes}
+                  {t.readingTime}: {calculateReadingTime(formData.content)}{" "}
+                  {t.minutes}
                 </p>
               )}
             </div>
@@ -495,14 +572,16 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
                   {images.map((image, index) => (
                     <div key={index} className="relative">
-                      <img 
-                        src={image} 
+                      <img
+                        src={image}
                         alt={`Upload ${index + 1}`}
                         className="w-full h-24 object-cover rounded-md border"
-                        onLoad={() => console.log('Image loaded successfully:', image)}
+                        onLoad={() =>
+                          console.log("Image loaded successfully:", image)
+                        }
                         onError={(e) => {
-                          console.error('Image failed to load:', image);
-                          console.error('Error event:', e);
+                          console.error("Image failed to load:", image);
+                          console.error("Error event:", e);
                         }}
                       />
                       <Button
@@ -528,8 +607,8 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                       type="file"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file && file.type.startsWith('image/')) {
-                          console.log('Selected file:', file.name, file.type);
+                        if (file && file.type.startsWith("image/")) {
+                          console.log("Selected file:", file.name, file.type);
                           handleImageUpload(file);
                         }
                       }}
@@ -538,18 +617,21 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                       disabled={uploading}
                       accept="image/*"
                     />
-                    <label 
-                      htmlFor="image-upload" 
+                    <label
+                      htmlFor="image-upload"
                       className="flex flex-col items-center gap-2 text-muted-foreground cursor-pointer hover:text-foreground disabled:opacity-50"
                     >
                       <ImagePlus className="h-6 w-6" />
-                      <span className="text-xs">{uploading ? t.uploading : t.addImage}</span>
+                      <span className="text-xs">
+                        {uploading ? t.uploading : t.addImage}
+                      </span>
                     </label>
                   </div>
                 </div>
                 {images.length > 0 && (
                   <p className="text-xs text-muted-foreground mt-2">
-                    {images.length} image{images.length !== 1 ? 's' : ''} uploaded
+                    {images.length} image{images.length !== 1 ? "s" : ""}{" "}
+                    uploaded
                   </p>
                 )}
               </div>
@@ -558,7 +640,10 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                 <Label>{t.attachments}</Label>
                 <div className="space-y-2 mt-2">
                   {attachments.map((attachment, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded-md">
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 border rounded-md"
+                    >
                       <div className="flex items-center gap-2">
                         <Paperclip className="h-4 w-4" />
                         <span className="text-sm">{attachment.name}</span>
@@ -587,12 +672,14 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                       disabled={uploading}
                       accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx"
                     />
-                    <label 
-                      htmlFor="attachment-upload" 
+                    <label
+                      htmlFor="attachment-upload"
                       className="flex items-center justify-center gap-2 text-muted-foreground cursor-pointer hover:text-foreground"
                     >
                       <Paperclip className="h-4 w-4" />
-                      <span className="text-sm">{uploading ? t.uploading : t.addAttachment}</span>
+                      <span className="text-sm">
+                        {uploading ? t.uploading : t.addAttachment}
+                      </span>
                     </label>
                   </div>
                 </div>
@@ -604,7 +691,9 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                 <Label htmlFor="scope">{t.scope}</Label>
                 <Select
                   value={formData.scope}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, scope: value }))}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, scope: value }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -612,7 +701,9 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                   <SelectContent>
                     <SelectItem value="state">{t.stateLevel}</SelectItem>
                     <SelectItem value="district">{t.districtLevel}</SelectItem>
-                    <SelectItem value="community">{t.communityLevel}</SelectItem>
+                    <SelectItem value="community">
+                      {t.communityLevel}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -621,7 +712,9 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                 <Label htmlFor="type">{t.category}</Label>
                 <Select
                   value={formData.type}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, type: value }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -639,7 +732,9 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                 <Switch
                   id="urgent"
                   checked={formData.is_urgent}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_urgent: checked }))}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({ ...prev, is_urgent: checked }))
+                  }
                 />
                 <Label htmlFor="urgent">{t.urgent}</Label>
               </div>
@@ -652,7 +747,12 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                   id="publish_at"
                   type="datetime-local"
                   value={formData.publish_at}
-                  onChange={(e) => setFormData(prev => ({ ...prev, publish_at: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      publish_at: e.target.value,
+                    }))
+                  }
                 />
               </div>
 
@@ -662,7 +762,12 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                   id="expire_at"
                   type="datetime-local"
                   value={formData.expire_at}
-                  onChange={(e) => setFormData(prev => ({ ...prev, expire_at: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      expire_at: e.target.value,
+                    }))
+                  }
                 />
               </div>
             </div>
@@ -695,7 +800,9 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                     <Input
                       id="pollTitle"
                       value={poll.title}
-                      onChange={(e) => setPoll(prev => ({ ...prev, title: e.target.value }))}
+                      onChange={(e) =>
+                        setPoll((prev) => ({ ...prev, title: e.target.value }))
+                      }
                       placeholder={t.pollTitle}
                     />
                   </div>
@@ -705,7 +812,12 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                     <Textarea
                       id="pollDescription"
                       value={poll.description}
-                      onChange={(e) => setPoll(prev => ({ ...prev, description: e.target.value }))}
+                      onChange={(e) =>
+                        setPoll((prev) => ({
+                          ...prev,
+                          description: e.target.value,
+                        }))
+                      }
                       placeholder={t.pollDescription}
                       rows={2}
                     />
@@ -717,7 +829,12 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                       id="pollExpires"
                       type="datetime-local"
                       value={poll.expires_at}
-                      onChange={(e) => setPoll(prev => ({ ...prev, expires_at: e.target.value }))}
+                      onChange={(e) =>
+                        setPoll((prev) => ({
+                          ...prev,
+                          expires_at: e.target.value,
+                        }))
+                      }
                     />
                   </div>
 
@@ -726,16 +843,28 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                       <Switch
                         id="multipleChoices"
                         checked={poll.allow_multiple_votes}
-                        onCheckedChange={(checked) => setPoll(prev => ({ ...prev, allow_multiple_votes: checked }))}
+                        onCheckedChange={(checked) =>
+                          setPoll((prev) => ({
+                            ...prev,
+                            allow_multiple_votes: checked,
+                          }))
+                        }
                       />
-                      <Label htmlFor="multipleChoices">{t.multipleChoices}</Label>
+                      <Label htmlFor="multipleChoices">
+                        {t.multipleChoices}
+                      </Label>
                     </div>
 
                     <div className="flex items-center space-x-2">
                       <Switch
                         id="anonymous"
                         checked={poll.is_anonymous}
-                        onCheckedChange={(checked) => setPoll(prev => ({ ...prev, is_anonymous: checked }))}
+                        onCheckedChange={(checked) =>
+                          setPoll((prev) => ({
+                            ...prev,
+                            is_anonymous: checked,
+                          }))
+                        }
                       />
                       <Label htmlFor="anonymous">{t.anonymous}</Label>
                     </div>
@@ -748,7 +877,9 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
                         <div key={index} className="flex items-center gap-2">
                           <Input
                             value={option.option_text}
-                            onChange={(e) => updatePollOption(index, e.target.value)}
+                            onChange={(e) =>
+                              updatePollOption(index, e.target.value)
+                            }
                             placeholder={`Option ${index + 1}`}
                           />
                           {poll.options.length > 2 && (
@@ -785,7 +916,9 @@ export default function CreateAnnouncementModal({ isOpen, onOpenChange, onAnnoun
               {t.cancel}
             </Button>
             <Button onClick={handleSubmit} disabled={submitting || uploading}>
-              {(submitting || uploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {(submitting || uploading) && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               {uploading ? t.uploading : t.create}
             </Button>
           </div>
