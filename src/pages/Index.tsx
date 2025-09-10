@@ -11,41 +11,42 @@ import { StateServiceManagerDashboard } from '@/components/dashboard/StateServic
 import { ResidentDashboard } from '@/components/dashboard/ResidentDashboard';
 import { AnnouncementSlideshow } from '@/components/dashboard/AnnouncementSlideshow';
 import { Calendar, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const DashboardHeader = ({ title, subtitle }: { title: string; subtitle: string }) => {
-  const currentDate = new Date();
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000); // Update every second
+
+    return () => clearInterval(timer);
+  }, []);
   
   return (
     <div className="relative mb-6 overflow-hidden rounded-xl">
-      <div className="relative h-32 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900">
-        {/* Background pattern/texture */}
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 via-amber-600/10 to-yellow-500/20" />
-        <div 
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
-        
-        <div className="relative h-full flex flex-col justify-between p-6 text-white">
+      <div className="relative h-32 bg-background border border-border">
+        <div className="relative h-full flex flex-col justify-between p-6">
           {/* Top section with date and time */}
-          <div className="flex items-center gap-4 text-white/90">
-            <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1 backdrop-blur-sm">
-              <Calendar className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                {currentDate.toLocaleDateString('en-US', { 
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">
+                {currentTime.toLocaleDateString('en-US', { 
                   month: 'numeric', 
                   day: 'numeric', 
                   year: 'numeric' 
                 })}
               </span>
             </div>
-            <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1 backdrop-blur-sm">
-              <Clock className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                {currentDate.toLocaleTimeString([], { 
+            <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">
+                {currentTime.toLocaleTimeString([], { 
                   hour: '2-digit', 
                   minute: '2-digit',
+                  second: '2-digit',
                   hour12: true 
                 }).toUpperCase()}
               </span>
@@ -54,10 +55,10 @@ const DashboardHeader = ({ title, subtitle }: { title: string; subtitle: string 
           
           {/* Bottom section with title and subtitle */}
           <div className="space-y-1">
-            <h1 className="text-2xl md:text-3xl font-bold text-white">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
               {title}
             </h1>
-            <p className="text-white/80 text-base">
+            <p className="text-muted-foreground text-base">
               {subtitle}
             </p>
           </div>
