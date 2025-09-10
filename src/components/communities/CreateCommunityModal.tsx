@@ -9,7 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { CalendarIcon, Loader2, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -29,6 +30,7 @@ export default function CreateCommunityModal({
 }: CreateCommunityModalProps) {
   const { language } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     community_type: 'residential',
@@ -60,6 +62,8 @@ export default function CreateCommunityModal({
       commercial: 'Commercial',
       mixed: 'Mixed Use',
       industrial: 'Industrial',
+      advancedDetails: 'Advanced Details',
+      typeDescription: 'Helps categorize the community for reporting and management',
       cancel: 'Cancel',
       create: 'Create Community',
       creating: 'Creating...',
@@ -87,6 +91,8 @@ export default function CreateCommunityModal({
       commercial: 'Komersial',
       mixed: 'Penggunaan Campuran',
       industrial: 'Perindustrian',
+      advancedDetails: 'Butiran Lanjutan',
+      typeDescription: 'Membantu mengkategorikan komuniti untuk pelaporan dan pengurusan',
       cancel: 'Batal',
       create: 'Cipta Komuniti',
       creating: 'Mencipta...',
@@ -156,9 +162,10 @@ export default function CreateCommunityModal({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Essential Details */}
+          <div className="space-y-4">
             {/* Community Name */}
-            <div className="sm:col-span-2">
+            <div>
               <Label htmlFor="name">{t.name} *</Label>
               <Input
                 id="name"
@@ -170,87 +177,8 @@ export default function CreateCommunityModal({
               />
             </div>
 
-            {/* Community Type */}
-            <div>
-              <Label htmlFor="type">{t.type}</Label>
-              <Select 
-                value={formData.community_type} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, community_type: value }))}
-                disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="residential">{t.residential}</SelectItem>
-                  <SelectItem value="commercial">{t.commercial}</SelectItem>
-                  <SelectItem value="mixed">{t.mixed}</SelectItem>
-                  <SelectItem value="industrial">{t.industrial}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Total Units */}
-            <div>
-              <Label htmlFor="totalUnits">{t.totalUnits}</Label>
-              <Input
-                id="totalUnits"
-                type="number"
-                min="0"
-                value={formData.total_units}
-                onChange={(e) => setFormData(prev => ({ ...prev, total_units: e.target.value }))}
-                placeholder={t.totalUnitsPlaceholder}
-                disabled={loading}
-              />
-            </div>
-
-            {/* Postal Code */}
-            <div>
-              <Label htmlFor="postalCode">{t.postalCode}</Label>
-              <Input
-                id="postalCode"
-                value={formData.postal_code}
-                onChange={(e) => setFormData(prev => ({ ...prev, postal_code: e.target.value }))}
-                placeholder={t.postalCodePlaceholder}
-                disabled={loading}
-              />
-            </div>
-
-            {/* Established Date */}
-            <div>
-              <Label>{t.establishedDate}</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.established_date && "text-muted-foreground"
-                    )}
-                    disabled={loading}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.established_date ? (
-                      format(formData.established_date, "PPP")
-                    ) : (
-                      <span>{t.selectDate}</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={formData.established_date}
-                    onSelect={(date) => date && setFormData(prev => ({ ...prev, established_date: date }))}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
             {/* Address */}
-            <div className="sm:col-span-2">
+            <div>
               <Label htmlFor="address">{t.address}</Label>
               <Input
                 id="address"
@@ -262,7 +190,7 @@ export default function CreateCommunityModal({
             </div>
 
             {/* Description */}
-            <div className="sm:col-span-2">
+            <div>
               <Label htmlFor="description">{t.description}</Label>
               <Textarea
                 id="description"
@@ -274,6 +202,99 @@ export default function CreateCommunityModal({
               />
             </div>
           </div>
+
+          {/* Advanced Details - Collapsible */}
+          <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" type="button" className="flex items-center justify-between w-full p-0 h-auto">
+                <span className="text-sm font-medium">{t.advancedDetails}</span>
+                <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", showAdvanced && "rotate-180")} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Community Type */}
+                <div>
+                  <Label htmlFor="type">{t.type}</Label>
+                  <Select 
+                    value={formData.community_type} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, community_type: value }))}
+                    disabled={loading}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="residential">{t.residential}</SelectItem>
+                      <SelectItem value="commercial">{t.commercial}</SelectItem>
+                      <SelectItem value="mixed">{t.mixed}</SelectItem>
+                      <SelectItem value="industrial">{t.industrial}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">{t.typeDescription}</p>
+                </div>
+
+                {/* Total Units */}
+                <div>
+                  <Label htmlFor="totalUnits">{t.totalUnits}</Label>
+                  <Input
+                    id="totalUnits"
+                    type="number"
+                    min="0"
+                    value={formData.total_units}
+                    onChange={(e) => setFormData(prev => ({ ...prev, total_units: e.target.value }))}
+                    placeholder={t.totalUnitsPlaceholder}
+                    disabled={loading}
+                  />
+                </div>
+
+                {/* Postal Code */}
+                <div>
+                  <Label htmlFor="postalCode">{t.postalCode}</Label>
+                  <Input
+                    id="postalCode"
+                    value={formData.postal_code}
+                    onChange={(e) => setFormData(prev => ({ ...prev, postal_code: e.target.value }))}
+                    placeholder={t.postalCodePlaceholder}
+                    disabled={loading}
+                  />
+                </div>
+
+                {/* Established Date */}
+                <div>
+                  <Label>{t.establishedDate}</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !formData.established_date && "text-muted-foreground"
+                        )}
+                        disabled={loading}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {formData.established_date ? (
+                          format(formData.established_date, "PPP")
+                        ) : (
+                          <span>{t.selectDate}</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={formData.established_date}
+                        onSelect={(date) => date && setFormData(prev => ({ ...prev, established_date: date }))}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           <div className="flex justify-end gap-3">
             <Button 

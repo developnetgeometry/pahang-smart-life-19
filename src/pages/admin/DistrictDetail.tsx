@@ -6,7 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, MapPin, Users, Building, Calendar, Map as MapIcon, Settings, Plus, Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, MapPin, Users, Building, Calendar, Map as MapIcon, Settings, Plus, Loader2, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import CreateCommunityModal from '@/components/communities/CreateCommunityModal';
 import EditDistrictModal from '@/components/districts/EditDistrictModal';
@@ -48,6 +49,8 @@ export default function DistrictDetail() {
   const { hasRole } = useUserRoles();
   const [district, setDistrict] = useState<District | null>(null);
   const [communities, setCommunities] = useState<Community[]>([]);
+  const [filteredCommunities, setFilteredCommunities] = useState<Community[]>([]);
+  const [typeFilter, setTypeFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [communitiesLoading, setCommunitiesLoading] = useState(true);
   const { updateDistrict } = useDistricts();
@@ -83,6 +86,9 @@ export default function DistrictDetail() {
       residential: 'Residential',
       commercial: 'Commercial',
       mixed: 'Mixed',
+      industrial: 'Industrial',
+      filterByType: 'Filter by Type',
+      allTypes: 'All Types',
       totalUnits: 'Total Units',
       occupancy: 'Occupancy',
       districtNotFound: 'District not found',
@@ -116,6 +122,9 @@ export default function DistrictDetail() {
       residential: 'Kediaman',
       commercial: 'Komersial',
       mixed: 'Campuran',
+      industrial: 'Perindustrian',
+      filterByType: 'Tapis mengikut Jenis',
+      allTypes: 'Semua Jenis',
       totalUnits: 'Jumlah Unit',
       occupancy: 'Penghunian',
       districtNotFound: 'Daerah tidak dijumpai',
@@ -186,6 +195,7 @@ export default function DistrictDetail() {
       }
 
       setCommunities(data || []);
+      setFilteredCommunities(data || []);
     } catch (error) {
       console.error('Error fetching communities:', error);
     } finally {
@@ -231,9 +241,19 @@ export default function DistrictDetail() {
       case 'residential': return t.residential;
       case 'commercial': return t.commercial;
       case 'mixed': return t.mixed;
+      case 'industrial': return t.industrial;
       default: return type || '';
     }
   };
+
+  // Filter communities when type filter changes
+  useEffect(() => {
+    if (typeFilter === 'all') {
+      setFilteredCommunities(communities);
+    } else {
+      setFilteredCommunities(communities.filter(community => community.community_type === typeFilter));
+    }
+  }, [communities, typeFilter]);
 
   if (!hasRole('state_admin') && !hasRole('district_coordinator')) {
     return (
@@ -371,28 +391,48 @@ export default function DistrictDetail() {
 
       {/* Communities Section */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>{t.communities}</CardTitle>
-            <CardDescription>
-              {communities.length} communities in this district
-            </CardDescription>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle>{t.communities}</CardTitle>
+              <CardDescription>
+                {filteredCommunities.length} of {communities.length} communities {typeFilter !== 'all' && `(filtered by ${getTypeText(typeFilter)})`}
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Type Filter */}
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder={t.filterByType} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t.allTypes}</SelectItem>
+                    <SelectItem value="residential">{t.residential}</SelectItem>
+                    <SelectItem value="commercial">{t.commercial}</SelectItem>
+                    <SelectItem value="mixed">{t.mixed}</SelectItem>
+                    <SelectItem value="industrial">{t.industrial}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {canManage && (
+                <Button size="sm" onClick={() => setShowCreateModal(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t.addCommunity}
+                </Button>
+              )}
+            </div>
           </div>
-          {canManage && (
-            <Button size="sm" onClick={() => setShowCreateModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t.addCommunity}
-            </Button>
-          )}
         </CardHeader>
         <CardContent>
           {communitiesLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
-          ) : communities.length > 0 ? (
+          ) : filteredCommunities.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {communities.map((community) => (
+              {filteredCommunities.map((community) => (
                 <Card key={community.id} className="hover:shadow-md transition-shadow">
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
