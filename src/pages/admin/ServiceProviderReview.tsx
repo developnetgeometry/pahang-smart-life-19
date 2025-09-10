@@ -379,6 +379,24 @@ export default function ServiceProviderReview() {
         .insert(profileData);
 
       if (error) throw error;
+
+      // Update the user's main profile to set account_status to approved and is_active to true
+      const { error: profileUpdateError } = await supabase
+        .from("profiles")
+        .update({
+          account_status: "approved",
+          is_active: true,
+        })
+        .eq("user_id", applicantId);
+
+      if (profileUpdateError) {
+        console.error("Error updating user profile:", profileUpdateError);
+        throw profileUpdateError;
+      }
+
+      console.log(
+        "User profile updated successfully - account_status: approved, is_active: true"
+      );
     } catch (error) {
       console.error("Error creating provider profile:", error);
       throw error;
