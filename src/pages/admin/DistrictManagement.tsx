@@ -139,15 +139,33 @@ export default function DistrictManagement() {
     }
   };
 
-  // Filter to show only the 15 predefined Pahang districts
+  // Filter to show only the 15 predefined Pahang districts using robust matching
   const pahangDistricts = [
     'Bentong', 'Bera', 'Cameron Highlands', 'Jerantut', 'Kuantan',
     'Kuala Lipis', 'Maran', 'Pekan', 'Raub', 'Rompin', 'Temerloh',
     'Genting', 'Gebeng', 'Jelai', 'Muadzam Shah'
   ];
 
+  // Helper function to normalize district names for matching
+  const normalizeDistrictName = (name: string) => {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, ' ')
+      .replace(/\s+(district|daerah)$/i, ''); // Remove district/daerah suffix
+  };
+
   const filteredDistricts = districts
-    .filter(district => pahangDistricts.includes(district.name))
+    .filter(district => {
+      const normalizedDistrictName = normalizeDistrictName(district.name);
+      return pahangDistricts.some(pahangDistrict => {
+        const normalizedPahangName = normalizeDistrictName(pahangDistrict);
+        // Check for exact match, partial match, or if one contains the other
+        return normalizedDistrictName === normalizedPahangName ||
+               normalizedDistrictName.includes(normalizedPahangName) ||
+               normalizedPahangName.includes(normalizedDistrictName);
+      });
+    })
     .filter(district => {
       const matchesSearch = district.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            (district.code?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
