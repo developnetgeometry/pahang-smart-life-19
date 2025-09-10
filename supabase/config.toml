@@ -97,6 +97,9 @@ verify_jwt = false
 [functions.geocode-address]
 verify_jwt = false
 
+[functions.admin-household]
+verify_jwt = true
+
 [edge_runtime]
 policy = "per_worker"
 inspector_port = 8083

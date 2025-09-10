@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, UserPlus, Search, Filter, MoreVertical, Edit, Trash2, Shield, ShieldCheck, Loader2, UserCheck, UserX } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Users, UserPlus, Search, Filter, MoreVertical, Edit, Trash2, Shield, ShieldCheck, Loader2, UserCheck, UserX, Home } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +26,40 @@ interface User {
   status: 'active' | 'inactive' | 'pending' | 'approved' | 'rejected';
   joinDate: string;
   district_id: string;
+}
+
+interface HouseholdAccount {
+  id: string;
+  linked_user_id: string;
+  relationship_type: string;
+  permissions: {
+    marketplace: boolean;
+    bookings: boolean;
+    announcements: boolean;
+    complaints: boolean;
+    discussions: boolean;
+  };
+  is_active: boolean;
+  created_at: string;
+  profiles: {
+    id: string;
+    full_name: string;
+    email: string;
+    phone: string;
+  };
+}
+
+interface TenantFormData {
+  tenant_name: string;
+  tenant_email: string;
+  tenant_phone: string;
+  permissions: {
+    marketplace: boolean;
+    bookings: boolean;
+    announcements: boolean;
+    complaints: boolean;
+    discussions: boolean;
+  };
 }
 
 export default function UserManagement() {
@@ -78,6 +114,28 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
 
+  // User details sheet states
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isUserDetailsOpen, setIsUserDetailsOpen] = useState(false);
+  const [householdAccounts, setHouseholdAccounts] = useState<HouseholdAccount[]>([]);
+  const [isLoadingHousehold, setIsLoadingHousehold] = useState(false);
+
+  // Add tenant states
+  const [isAddTenantOpen, setIsAddTenantOpen] = useState(false);
+  const [isCreatingTenant, setIsCreatingTenant] = useState(false);
+  const [tenantForm, setTenantForm] = useState<TenantFormData>({
+    tenant_name: '',
+    tenant_email: '',
+    tenant_phone: '',
+    permissions: {
+      marketplace: true,
+      bookings: true,
+      announcements: true,
+      complaints: true,
+      discussions: true,
+    },
+  });
+
   const text = {
     en: {
       title: 'User Management',
@@ -124,6 +182,22 @@ export default function UserManagement() {
       userDeleted: 'User deleted successfully!',
       userApproved: 'User approved successfully!',
       userRejected: 'User rejected successfully!',
+      // User details and tenant management
+      userDetails: 'User Details',
+      householdMembers: 'Household Members',
+      addTenant: 'Add Tenant',
+      tenantName: 'Tenant Name',
+      tenantEmail: 'Tenant Email',
+      tenantPhone: 'Tenant Phone',
+      tenantPermissions: 'Tenant Permissions',
+      marketplace: 'Marketplace',
+      bookings: 'Bookings',
+      announcements: 'Announcements',
+      complaints: 'Complaints',
+      discussions: 'Discussions',
+      createTenant: 'Create Tenant',
+      tenantCreated: 'Tenant account created successfully!',
+      noHouseholdMembers: 'No household members found.',
       // Role-specific fields
       familySize: 'Family Size',
       vehicleNumber: 'Vehicle Number',
@@ -181,6 +255,22 @@ export default function UserManagement() {
       userDeleted: 'Pengguna berjaya dipadam!',
       userApproved: 'Pengguna berjaya diluluskan!',
       userRejected: 'Pengguna berjaya ditolak!',
+      // User details and tenant management
+      userDetails: 'Butiran Pengguna',
+      householdMembers: 'Ahli Rumah',
+      addTenant: 'Tambah Penyewa',
+      tenantName: 'Nama Penyewa',
+      tenantEmail: 'E-mel Penyewa',
+      tenantPhone: 'Telefon Penyewa',
+      tenantPermissions: 'Kebenaran Penyewa',
+      marketplace: 'Pasar',
+      bookings: 'Tempahan',
+      announcements: 'Pengumuman',
+      complaints: 'Aduan',
+      discussions: 'Perbincangan',
+      createTenant: 'Cipta Penyewa',
+      tenantCreated: 'Akaun penyewa berjaya dicipta!',
+      noHouseholdMembers: 'Tiada ahli rumah dijumpai.',
       // Role-specific fields
       familySize: 'Saiz Keluarga',
       vehicleNumber: 'Nombor Kenderaan',
@@ -601,6 +691,114 @@ export default function UserManagement() {
           variant: 'destructive'
         });
       }
+    }
+  };
+
+  // Fetch household accounts for a user
+  const fetchHouseholdAccounts = async (userId: string) => {
+    try {
+      setIsLoadingHousehold(true);
+      
+      // Get the auth header
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      const response = await fetch(
+        `https://hjhalygcsdolryngmlry.supabase.co/functions/v1/admin-household?host_user_id=${userId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqaGFseWdjc2RvbHJ5bmdtbHJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0ODYwNDYsImV4cCI6MjA3MTA2MjA0Nn0.xfJ_IHy-Pw1iiKFbKxHxGe93wgKu26PtW8QCtzj34cI',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setHouseholdAccounts(result?.data || []);
+    } catch (error) {
+      console.error('Error fetching household accounts:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch household accounts',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoadingHousehold(false);
+    }
+  };
+
+  // Handle user row click
+  const handleUserClick = (user: User) => {
+    setSelectedUser(user);
+    setIsUserDetailsOpen(true);
+    fetchHouseholdAccounts(user.id);
+  };
+
+  // Handle create tenant
+  const handleCreateTenant = async () => {
+    if (!selectedUser || !tenantForm.tenant_name || !tenantForm.tenant_email) {
+      toast({
+        title: 'Error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      setIsCreatingTenant(true);
+
+      const { data, error } = await supabase.functions.invoke('admin-household', {
+        body: {
+          host_user_id: selectedUser.id,
+          tenant_name: tenantForm.tenant_name,
+          tenant_email: tenantForm.tenant_email,
+          tenant_phone: tenantForm.tenant_phone,
+          permissions: tenantForm.permissions,
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: t.tenantCreated,
+        description: language === 'en' ? 'Tenant invitation email has been sent.' : 'E-mel jemputan penyewa telah dihantar.'
+      });
+
+      // Reset form and close modal
+      setTenantForm({
+        tenant_name: '',
+        tenant_email: '',
+        tenant_phone: '',
+        permissions: {
+          marketplace: true,
+          bookings: true,
+          announcements: true,
+          complaints: true,
+          discussions: true,
+        },
+      });
+      setIsAddTenantOpen(false);
+
+      // Refresh household accounts
+      if (selectedUser) {
+        fetchHouseholdAccounts(selectedUser.id);
+      }
+    } catch (error) {
+      console.error('Error creating tenant:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create tenant account',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsCreatingTenant(false);
     }
   };
 
@@ -1069,7 +1267,11 @@ export default function UserManagement() {
                 </div>
               ) : (
                 filteredUsers.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div 
+                    key={user.id} 
+                    className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-muted/30 transition-colors"
+                    onClick={() => handleUserClick(user)}
+                  >
                     <div className="flex items-center gap-4">
                       <Avatar>
                         <AvatarImage src="" />
@@ -1094,7 +1296,7 @@ export default function UserManagement() {
                       <Badge className={getStatusColor(user.status)}>
                         {getStatusText(user.status)}
                       </Badge>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                         {user.status === 'pending' && (
                           <>
                             <Button 
@@ -1143,6 +1345,183 @@ export default function UserManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* User Details Sheet */}
+      <Sheet open={isUserDetailsOpen} onOpenChange={setIsUserDetailsOpen}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Home className="h-5 w-5" />
+              {t.userDetails}
+            </SheetTitle>
+            <SheetDescription>
+              {language === 'en' 
+                ? 'View user information and manage household members' 
+                : 'Lihat maklumat pengguna dan urus ahli rumah'
+              }
+            </SheetDescription>
+          </SheetHeader>
+
+          {selectedUser && (
+            <div className="mt-6 space-y-6">
+              {/* User Profile Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 p-4 border rounded-lg">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src="" />
+                    <AvatarFallback className="text-lg">
+                      {selectedUser.name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg">{selectedUser.name}</h3>
+                    <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                    <p className="text-sm text-muted-foreground">{selectedUser.phone}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge className={getRoleColor(selectedUser.role)}>
+                        {getRoleText(selectedUser.role)}
+                      </Badge>
+                      <Badge className={getStatusColor(selectedUser.status)}>
+                        {getStatusText(selectedUser.status)}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Household Members Section */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-lg font-semibold">{t.householdMembers}</h4>
+                  <Dialog open={isAddTenantOpen} onOpenChange={setIsAddTenantOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm">
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        {t.addTenant}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>{t.addTenant}</DialogTitle>
+                        <DialogDescription>
+                          {language === 'en' 
+                            ? 'Add a new tenant to this household. They will receive an invitation email.'
+                            : 'Tambah penyewa baru ke rumah ini. Mereka akan menerima e-mel jemputan.'
+                          }
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="tenantName">{t.tenantName} *</Label>
+                          <Input
+                            id="tenantName"
+                            value={tenantForm.tenant_name}
+                            onChange={(e) => setTenantForm(prev => ({ ...prev, tenant_name: e.target.value }))}
+                            placeholder={language === 'en' ? 'Enter tenant name' : 'Masukkan nama penyewa'}
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="tenantEmail">{t.tenantEmail} *</Label>
+                          <Input
+                            id="tenantEmail"
+                            type="email"
+                            value={tenantForm.tenant_email}
+                            onChange={(e) => setTenantForm(prev => ({ ...prev, tenant_email: e.target.value }))}
+                            placeholder={language === 'en' ? 'Enter tenant email' : 'Masukkan e-mel penyewa'}
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="tenantPhone">{t.tenantPhone}</Label>
+                          <Input
+                            id="tenantPhone"
+                            value={tenantForm.tenant_phone}
+                            onChange={(e) => setTenantForm(prev => ({ ...prev, tenant_phone: e.target.value }))}
+                            placeholder={language === 'en' ? 'Enter tenant phone (optional)' : 'Masukkan telefon penyewa (pilihan)'}
+                          />
+                        </div>
+
+                        {/* Permissions */}
+                        <div className="space-y-3">
+                          <Label>{t.tenantPermissions}</Label>
+                          <div className="space-y-3">
+                            {[
+                              { key: 'marketplace', label: t.marketplace },
+                              { key: 'bookings', label: t.bookings },
+                              { key: 'announcements', label: t.announcements },
+                              { key: 'complaints', label: t.complaints },
+                              { key: 'discussions', label: t.discussions },
+                            ].map(({ key, label }) => (
+                              <div key={key} className="flex items-center justify-between">
+                                <Label htmlFor={`perm-${key}`} className="text-sm">
+                                  {label}
+                                </Label>
+                                <Switch
+                                  id={`perm-${key}`}
+                                  checked={tenantForm.permissions[key as keyof typeof tenantForm.permissions]}
+                                  onCheckedChange={(checked) =>
+                                    setTenantForm(prev => ({
+                                      ...prev,
+                                      permissions: { ...prev.permissions, [key]: checked }
+                                    }))
+                                  }
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end space-x-2">
+                          <Button variant="outline" onClick={() => setIsAddTenantOpen(false)}>
+                            {t.cancel}
+                          </Button>
+                          <Button onClick={handleCreateTenant} disabled={isCreatingTenant}>
+                            {isCreatingTenant && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                            {t.createTenant}
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                {isLoadingHousehold ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : householdAccounts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    {t.noHouseholdMembers}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {householdAccounts.map((account) => (
+                      <div key={account.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs">
+                            {account.profiles.full_name?.split(' ').map(n => n[0]).join('') || 'T'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{account.profiles.full_name}</p>
+                          <p className="text-xs text-muted-foreground">{account.profiles.email}</p>
+                          <p className="text-xs text-muted-foreground capitalize">
+                            {account.relationship_type}
+                          </p>
+                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          {language === 'en' ? 'Tenant' : 'Penyewa'}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
