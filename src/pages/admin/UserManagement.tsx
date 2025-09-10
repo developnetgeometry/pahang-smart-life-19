@@ -59,6 +59,7 @@ interface TenantFormData {
     announcements: boolean;
     complaints: boolean;
     discussions: boolean;
+    panic_button: boolean;
   };
 }
 
@@ -133,6 +134,7 @@ export default function UserManagement() {
       announcements: true,
       complaints: true,
       discussions: true,
+      panic_button: true,
     },
   });
 
@@ -782,6 +784,7 @@ export default function UserManagement() {
           announcements: true,
           complaints: true,
           discussions: true,
+          panic_button: true,
         },
       });
       setIsAddTenantOpen(false);
@@ -1452,6 +1455,7 @@ export default function UserManagement() {
                               { key: 'announcements', label: t.announcements },
                               { key: 'complaints', label: t.complaints },
                               { key: 'discussions', label: t.discussions },
+                              { key: 'panic_button', label: language === 'en' ? 'Panic Button' : 'Butang Panik' },
                             ].map(({ key, label }) => (
                               <div key={key} className="flex items-center justify-between">
                                 <Label htmlFor={`perm-${key}`} className="text-sm">
