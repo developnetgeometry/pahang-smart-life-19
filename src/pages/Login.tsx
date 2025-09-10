@@ -497,7 +497,35 @@ export default function Login() {
         }
       }
     } catch (err: any) {
-      setError(err?.message || "Something went wrong. Please try again.");
+      console.error("Error during signup/signin:", err);
+      
+      // Handle common error cases with user-friendly messages
+      let errorMessage = "Something went wrong. Please try again.";
+      
+      if (err?.message) {
+        if (err.message.includes("user_already_exists") || err.message.includes("User already registered")) {
+          errorMessage = language === "en" 
+            ? "An account with this email already exists. Please sign in instead or use a different email address."
+            : "Akaun dengan emel ini sudah wujud. Sila log masuk atau gunakan alamat emel yang lain.";
+        } else if (err.message.includes("Invalid login credentials")) {
+          errorMessage = language === "en"
+            ? "Invalid email or password. Please check your credentials and try again."
+            : "Emel atau kata laluan tidak sah. Sila semak kelayakan anda dan cuba lagi.";
+        } else if (err.message.includes("Email not confirmed")) {
+          errorMessage = language === "en"
+            ? "Please check your email and confirm your account before signing in."
+            : "Sila semak emel anda dan sahkan akaun anda sebelum log masuk.";
+        } else if (err.message.includes("Database error") || err.message.includes("saving new user")) {
+          errorMessage = language === "en"
+            ? "There was an issue creating your account. Please try again or contact support if the problem persists."
+            : "Terdapat masalah mencipta akaun anda. Sila cuba lagi atau hubungi sokongan jika masalah berterusan.";
+        } else {
+          // For other errors, show the original message but make it more user-friendly
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
