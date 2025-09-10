@@ -15,7 +15,8 @@ import {
   Eye,
   AlertTriangle,
   Info,
-  Star
+  Star,
+  Calendar
 } from 'lucide-react';
 
 interface Announcement {
@@ -175,16 +176,12 @@ export function AnnouncementSlideshow() {
 
   if (announcements.length === 0) {
     return (
-      <Card className="w-full">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
-            <div className="text-center space-y-2">
-              <Megaphone className="h-12 w-12 mx-auto opacity-50" />
-              <p>{language === 'en' ? 'No pinned announcements available' : 'Tiada pengumuman yang disematkan'}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="w-full h-64 rounded-xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center space-y-4 text-white/80">
+          <Megaphone className="h-16 w-16 mx-auto opacity-50" />
+          <p className="text-lg">{language === 'en' ? 'No pinned announcements available' : 'Tiada pengumuman yang disematkan'}</p>
+        </div>
+      </div>
     );
   }
 
@@ -192,136 +189,143 @@ export function AnnouncementSlideshow() {
 
   return (
     <>
-      <Card className="w-full overflow-hidden">
-        <CardContent className="p-0">
-          <div className="relative">
-            {/* Main Content */}
-            <div className={`relative p-6 ${getPriorityBackground(currentAnnouncement.is_urgent)}`}>
-              <div className="flex flex-col md:flex-row gap-6">
-                {/* Image Section */}
-                <div className="md:w-1/3">
-                  {currentAnnouncement.image_url && !imageLoadError ? (
-                    <img
-                      src={currentAnnouncement.image_url}
-                      alt={getLocalizedTitle(currentAnnouncement)}
-                      className="w-full h-48 md:h-32 object-cover rounded-lg"
-                      onError={() => setImageLoadError(currentAnnouncement.id)}
-                    />
-                  ) : (
-                    <div className="w-full h-48 md:h-32 bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg flex items-center justify-center">
-                      <Megaphone className="h-12 w-12 text-primary/60" />
-                    </div>
-                  )}
-                </div>
+      <div className="w-full overflow-hidden rounded-xl">
+        <div className="relative h-80 md:h-96">
+          {/* Background Image or Gradient */}
+          {currentAnnouncement.image_url && !imageLoadError ? (
+            <>
+              <img
+                src={currentAnnouncement.image_url}
+                alt={getLocalizedTitle(currentAnnouncement)}
+                className="absolute inset-0 w-full h-full object-cover"
+                onError={() => setImageLoadError(currentAnnouncement.id)}
+              />
+              <div className="absolute inset-0 bg-black/50" />
+            </>
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
+          )}
 
-                {/* Content Section */}
-                <div className="md:w-2/3 space-y-3">
-                  {/* Header */}
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-2 flex-1">
-                      <div className="flex items-center gap-2">
-                        <Star className="h-4 w-4 text-yellow-500" />
-                        <Badge variant={getTypeColor(currentAnnouncement.type) as any}>
-                          {currentAnnouncement.type}
-                        </Badge>
-                        {currentAnnouncement.is_urgent && (
-                          <Badge variant="destructive">
-                            <AlertTriangle className="h-3 w-3 mr-1" />
-                            {language === 'en' ? 'Urgent' : 'Segera'}
-                          </Badge>
-                        )}
-                      </div>
-                      <h3 className="text-lg font-semibold text-foreground leading-tight">
-                        {getLocalizedTitle(currentAnnouncement)}
-                      </h3>
-                    </div>
-                  </div>
-
-                  {/* Content Preview */}
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {getLocalizedContent(currentAnnouncement).substring(0, 150)}
-                    {getLocalizedContent(currentAnnouncement).length > 150 && '...'}
-                  </p>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {new Date(currentAnnouncement.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowDetailsModal(true)}
-                      className="text-xs"
-                    >
-                      <Eye className="h-3 w-3 mr-1" />
-                      {language === 'en' ? 'View Details' : 'Lihat Butiran'}
-                    </Button>
-                  </div>
-                </div>
-              </div>
+          {/* Content Overlay */}
+          <div className="relative h-full flex flex-col justify-between p-6 md:p-8 text-white">
+            {/* Top Badges */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge 
+                variant="secondary" 
+                className="bg-white/20 text-white border-white/30 backdrop-blur-sm"
+              >
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                {currentAnnouncement.type.toUpperCase()}
+              </Badge>
+              <Badge 
+                variant="secondary" 
+                className="bg-blue-600/80 text-white border-blue-400/50 backdrop-blur-sm"
+              >
+                {language === 'en' ? 'DISTRICT LEVEL' : 'TAHAP DAERAH'}
+              </Badge>
+              {currentAnnouncement.is_urgent && (
+                <Badge 
+                  variant="destructive" 
+                  className="bg-red-600/90 text-white border-red-400/50 backdrop-blur-sm"
+                >
+                  {language === 'en' ? 'URGENT' : 'SEGERA'}
+                </Badge>
+              )}
+              <Badge 
+                variant="secondary" 
+                className="bg-yellow-600/80 text-white border-yellow-400/50 backdrop-blur-sm"
+              >
+                <Star className="h-3 w-3 mr-1" />
+                {language === 'en' ? 'PINNED' : 'DISEMATKAN'}
+              </Badge>
             </div>
 
-            {/* Navigation Controls */}
-            {announcements.length > 1 && (
-              <div className="absolute inset-y-0 left-2 right-2 flex items-center justify-between pointer-events-none">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={prevSlide}
-                  className="pointer-events-auto bg-background/80 hover:bg-background shadow-sm"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={nextSlide}
-                  className="pointer-events-auto bg-background/80 hover:bg-background shadow-sm"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+            {/* Main Content */}
+            <div className="space-y-4 flex-1 flex flex-col justify-center">
+              <h2 className="text-2xl md:text-4xl font-bold leading-tight">
+                {getLocalizedTitle(currentAnnouncement)}
+              </h2>
+              <p className="text-lg md:text-xl text-white/90 leading-relaxed max-w-3xl">
+                {getLocalizedContent(currentAnnouncement).substring(0, 200)}
+                {getLocalizedContent(currentAnnouncement).length > 200 && '...'}
+              </p>
+            </div>
+
+            {/* Bottom Info */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4 text-white/80">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>{new Date(currentAnnouncement.created_at).toLocaleDateString()}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span>{new Date(currentAnnouncement.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
               </div>
-            )}
+              <Button
+                variant="secondary"
+                onClick={() => setShowDetailsModal(true)}
+                className="bg-white/20 text-white border-white/30 backdrop-blur-sm hover:bg-white/30"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                {language === 'en' ? 'View Details' : 'Lihat Butiran'}
+              </Button>
+            </div>
           </div>
 
-          {/* Bottom Bar */}
+          {/* Navigation Controls */}
           {announcements.length > 1 && (
-            <div className="bg-muted/30 px-6 py-3 flex items-center justify-between">
-              {/* Slide Indicators */}
-              <div className="flex items-center gap-2">
-                {announcements.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentSlide(index)}
-                    className={`w-2 h-2 rounded-full transition-colors ${
-                      index === currentSlide ? 'bg-primary' : 'bg-muted-foreground/30'
-                    }`}
-                  />
-                ))}
-              </div>
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={prevSlide}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 text-white hover:bg-black/50 border border-white/20 backdrop-blur-sm"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={nextSlide}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 text-white hover:bg-black/50 border border-white/20 backdrop-blur-sm"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </>
+          )}
 
-              {/* Controls */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsAutoPlay(!isAutoPlay)}
-                  className="h-7 w-7 p-0"
-                >
-                  {isAutoPlay ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  {currentSlide + 1} / {announcements.length}
-                </span>
-              </div>
+          {/* Slide Indicators */}
+          {announcements.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
+              {announcements.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentSlide(index)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    index === currentSlide 
+                      ? 'bg-white w-8' 
+                      : 'bg-white/50 hover:bg-white/75'
+                  }`}
+                />
+              ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+
+          {/* Auto-play Control */}
+          {announcements.length > 1 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsAutoPlay(!isAutoPlay)}
+              className="absolute top-4 right-4 bg-black/30 text-white hover:bg-black/50 border border-white/20 backdrop-blur-sm w-10 h-10 p-0"
+            >
+              {isAutoPlay ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            </Button>
+          )}
+        </div>
+      </div>
 
       {/* Details Modal */}
       <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
