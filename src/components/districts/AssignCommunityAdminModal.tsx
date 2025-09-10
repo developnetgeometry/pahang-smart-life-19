@@ -253,7 +253,7 @@ export default function AssignCommunityAdminModal({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex w-full">
+          <TabsList className="flex w-full overflow-x-hidden">
             <TabsTrigger value="create" className="flex-1">
               <User className="w-4 h-4 mr-2" />
               {t.createNew}
