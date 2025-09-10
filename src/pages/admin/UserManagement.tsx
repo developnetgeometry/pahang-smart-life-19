@@ -1272,7 +1272,7 @@ export default function UserManagement() {
                 filteredUsers.map((user) => (
                   <div 
                     key={user.id} 
-                    className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-muted/30 transition-colors"
+                    className="flex items-center justify-between p-4 border rounded-lg cursor-pointer"
                     onClick={() => handleUserClick(user)}
                   >
                     <div className="flex items-center gap-4">
