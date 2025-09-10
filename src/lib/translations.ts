@@ -141,6 +141,8 @@ export const translations = {
     'visitorManagement': 'Visitor Management',
     'advertisementManagement': 'Advertisement Management',
     'serviceRequests': 'Service Requests',
+    'services': 'Services',
+    'myListings': 'My Listings',
     
     // Ratings and Reviews
     'outOf5': 'out of 5',
@@ -296,6 +298,8 @@ export const translations = {
     'visitorManagement': 'Pengurusan Pelawat',
     'advertisementManagement': 'Pengurusan Iklan',
     'serviceRequests': 'Permintaan Perkhidmatan',
+    'services': 'Perkhidmatan',
+    'myListings': 'Senarai Saya',
     
     // Ratings and Reviews
     'outOf5': 'daripada 5',

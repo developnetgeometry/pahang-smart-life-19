@@ -23,6 +23,9 @@ import SellerDashboard from "./pages/SellerDashboard";
 import ResidentAnalytics from "./pages/ResidentAnalytics";
 import AdvertisementDetail from "./pages/AdvertisementDetail";
 import AdvertisementManagement from "./pages/AdvertisementManagement";
+import Services from "./pages/Services";
+import MyListings from "./pages/MyListings";
+import SellerProfile from "./pages/SellerProfile";
 import CCTVLiveFeed from "./pages/CCTVLiveFeed";
 import UserManagement from "./pages/admin/UserManagement";
 import PermissionsManagement from "./pages/admin/PermissionsManagement";
@@ -335,6 +338,36 @@ const App = () => (
                       <SellerDashboard />
                     </Layout>
                   </RequireRoles>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/services"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Services />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-listings"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <MyListings />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/seller/:sellerId"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <SellerProfile />
+                  </Layout>
                 </ProtectedRoute>
               }
             />

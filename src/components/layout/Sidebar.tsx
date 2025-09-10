@@ -178,6 +178,16 @@ export function AppSidebar() {
         url: "/marketplace",
         icon: ShoppingCart,
       });
+      servicesItems.push({
+        title: t("services"),
+        url: "/services",
+        icon: Building,
+      });
+      servicesItems.push({
+        title: t("myListings"),
+        url: "/my-listings",
+        icon: Package,
+      });
     }
 
     // Add facilities if module is enabled
