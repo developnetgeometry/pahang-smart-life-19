@@ -97,7 +97,7 @@ export const useDistricts = () => {
       const districtsWithCounts = (districtsData || []).map(district => ({
         ...district,
         communities_count: districtStats[district.id]?.count || 0,
-        population: districtStats[district.id]?.population || district.population || 0
+        population: districtStats[district.id]?.population || 0
       }));
 
       setDistricts(districtsWithCounts);

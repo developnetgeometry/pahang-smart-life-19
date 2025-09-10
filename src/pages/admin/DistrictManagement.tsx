@@ -390,7 +390,7 @@ export default function DistrictManagement() {
                     <div>
                       <p className="font-medium">{t.population}</p>
                       <p className="text-muted-foreground">
-                        {district.population ? district.population.toLocaleString() : 'N/A'}
+                        {(district.population || 0).toLocaleString()}
                       </p>
                     </div>
                   </div>
