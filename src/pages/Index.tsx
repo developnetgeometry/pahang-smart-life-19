@@ -10,57 +10,41 @@ import { CommunityLeaderDashboard } from '@/components/dashboard/CommunityLeader
 import { StateServiceManagerDashboard } from '@/components/dashboard/StateServiceManagerDashboard';
 import { ResidentDashboard } from '@/components/dashboard/ResidentDashboard';
 import { AnnouncementSlideshow } from '@/components/dashboard/AnnouncementSlideshow';
-import { Calendar, Clock } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { WeatherWidget } from '@/components/dashboard/WeatherWidget';
 
-const DashboardHeader = ({ title, subtitle }: { title: string; subtitle: string }) => {
-  const [currentTime, setCurrentTime] = useState(new Date());
+const DashboardHeader = () => {
+  const { user, language } = useAuth();
+  
+  const getWelcomeMessage = () => {
+    const userName = user?.display_name || 'User';
+    return language === 'en' ? `Welcome back, ${userName}` : `Selamat kembali, ${userName}`;
+  };
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000); // Update every second
-
-    return () => clearInterval(timer);
-  }, []);
+  const getLocationInfo = () => {
+    if (!user) return '';
+    
+    const parts = [];
+    if (user.district) parts.push(user.district);
+    if (user.unit_type) parts.push(`Unit ${user.unit_type}`);
+    
+    return parts.join(' - ') || user.address || '';
+  };
   
   return (
     <div className="relative mb-6 overflow-hidden rounded-xl">
-      <div className="relative h-32 bg-background border border-border">
-        <div className="relative h-full flex flex-col justify-between p-6">
-          {/* Top section with date and time */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-foreground">
-                {currentTime.toLocaleDateString('en-US', { 
-                  month: 'numeric', 
-                  day: 'numeric', 
-                  year: 'numeric' 
-                })}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-foreground">
-                {currentTime.toLocaleTimeString([], { 
-                  hour: '2-digit', 
-                  minute: '2-digit',
-                  second: '2-digit',
-                  hour12: true 
-                }).toUpperCase()}
-              </span>
-            </div>
-          </div>
-          
-          {/* Bottom section with title and subtitle */}
-          <div className="space-y-1">
+      <div className="relative bg-background border border-border p-6">
+        <div className="flex justify-between items-start">
+          <div className="space-y-2">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              {title}
+              {getWelcomeMessage()}
             </h1>
             <p className="text-muted-foreground text-base">
-              {subtitle}
+              {getLocationInfo()}
             </p>
+          </div>
+          
+          <div className="hidden md:block w-80">
+            <WeatherWidget />
           </div>
         </div>
       </div>
@@ -83,40 +67,28 @@ const Index = () => {
   // Determine which dashboard to show based on user's highest role
   if (hasRole('state_admin')) return (
     <div className="space-y-6">
-      <DashboardHeader 
-        title={language === 'en' ? 'State Admin Dashboard' : 'Papan Pemuka Admin Negeri'}
-        subtitle={language === 'en' ? 'State-wide management and oversight' : 'Pengurusan dan pengawasan seluruh negeri'}
-      />
+      <DashboardHeader />
       <AnnouncementSlideshow />
       <StateAdminDashboard />
     </div>
   );
   if (hasRole('district_coordinator')) return (
     <div className="space-y-6">
-      <DashboardHeader 
-        title={language === 'en' ? 'District Coordinator Dashboard' : 'Papan Pemuka Penyelaras Daerah'}
-        subtitle={language === 'en' ? 'District coordination and community oversight' : 'Penyelarasan daerah dan pengawasan komuniti'}
-      />
+      <DashboardHeader />
       <AnnouncementSlideshow />
       <DistrictCoordinatorDashboard />
     </div>
   );
   if (hasRole('community_admin')) return (
     <div className="space-y-6">
-      <DashboardHeader 
-        title={language === 'en' ? 'Community Admin Dashboard' : 'Papan Pemuka Admin Komuniti'}
-        subtitle={language === 'en' ? 'Community management and resident services' : 'Pengurusan komuniti dan perkhidmatan penduduk'}
-      />
+      <DashboardHeader />
       <AnnouncementSlideshow />
       <CommunityAdminDashboard />
     </div>
   );
   if (hasRole('facility_manager')) return (
     <div className="space-y-6">
-      <DashboardHeader 
-        title={language === 'en' ? 'Facility Manager Dashboard' : 'Papan Pemuka Pengurus Kemudahan'}
-        subtitle={language === 'en' ? 'Facility management and maintenance oversight' : 'Pengurusan kemudahan dan pengawasan penyelenggaraan'}
-      />
+      <DashboardHeader />
       <AnnouncementSlideshow />
       <FacilityManagerDashboard />
     </div>
@@ -124,20 +96,14 @@ const Index = () => {
   
   if (hasRole('security_officer')) return (
     <div className="space-y-6">
-      <DashboardHeader 
-        title={language === 'en' ? 'Security Officer Dashboard' : 'Papan Pemuka Pegawai Keselamatan'}
-        subtitle={language === 'en' ? 'Security monitoring and incident management' : 'Pemantauan keselamatan dan pengurusan insiden'}
-      />
+      <DashboardHeader />
       <AnnouncementSlideshow />
       <SecurityOfficerDashboard />
     </div>
   );
   if (hasRole('maintenance_staff')) return (
     <div className="space-y-6">
-      <DashboardHeader 
-        title={language === 'en' ? 'Maintenance Staff Dashboard' : 'Papan Pemuka Kakitangan Penyelenggaraan'}
-        subtitle={language === 'en' ? 'Maintenance tasks and work order management' : 'Tugas penyelenggaraan dan pengurusan perintah kerja'}
-      />
+      <DashboardHeader />
       <AnnouncementSlideshow />
       <MaintenanceStaffDashboard />
     </div>
@@ -145,20 +111,14 @@ const Index = () => {
   if (hasRole('service_provider')) return <ServiceProviderEnhancedDashboard />;
   if (hasRole('community_leader')) return (
     <div className="space-y-6">
-      <DashboardHeader 
-        title={language === 'en' ? 'Community Leader Dashboard' : 'Papan Pemuka Ketua Komuniti'}
-        subtitle={language === 'en' ? 'Community leadership and resident coordination' : 'Kepimpinan komuniti dan penyelarasan penduduk'}
-      />
+      <DashboardHeader />
       <AnnouncementSlideshow />
       <CommunityLeaderDashboard />
     </div>
   );
   if (hasRole('state_service_manager')) return (
     <div className="space-y-6">
-      <DashboardHeader 
-        title={language === 'en' ? 'State Service Manager Dashboard' : 'Papan Pemuka Pengurus Perkhidmatan Negeri'}
-        subtitle={language === 'en' ? 'State service management and coordination' : 'Pengurusan dan penyelarasan perkhidmatan negeri'}
-      />
+      <DashboardHeader />
       <AnnouncementSlideshow />
       <StateServiceManagerDashboard />
     </div>
@@ -167,10 +127,7 @@ const Index = () => {
   // Only show resident dashboard if user actually has resident role
   if (hasRole('resident')) return (
     <div className="space-y-6">
-      <DashboardHeader 
-        title={language === 'en' ? 'Resident Dashboard' : 'Papan Pemuka Penduduk'}
-        subtitle={language === 'en' ? 'Community services and personal management' : 'Perkhidmatan komuniti dan pengurusan peribadi'}
-      />
+      <DashboardHeader />
       <AnnouncementSlideshow />
       <ResidentDashboard />
     </div>
