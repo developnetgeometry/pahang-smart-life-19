@@ -1306,7 +1306,7 @@ export default function UserManagement() {
                               variant="outline" 
                               size="sm" 
                               onClick={() => handleApproveUser(user.id)}
-                              className="text-green-600 hover:text-green-700"
+                              className="text-green-600"
                               title={t.approve}
                             >
                               <UserCheck className="h-4 w-4" />
@@ -1315,7 +1315,7 @@ export default function UserManagement() {
                               variant="outline" 
                               size="sm" 
                               onClick={() => handleRejectUser(user.id)}
-                              className="text-red-600 hover:text-red-700"
+                              className="text-red-600"
                               title={t.reject}
                             >
                               <UserX className="h-4 w-4" />
@@ -1334,7 +1334,7 @@ export default function UserManagement() {
                           variant="outline" 
                           size="sm" 
                           onClick={() => handleDelete(user.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-red-600"
                           title={t.delete}
                         >
                           <Trash2 className="h-4 w-4" />
