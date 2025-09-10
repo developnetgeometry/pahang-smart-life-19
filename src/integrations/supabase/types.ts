@@ -7886,52 +7886,79 @@ export type Database = {
       }
       service_provider_businesses: {
         Row: {
+          accepts_emergency: boolean | null
+          address_formatted: string | null
           business_address: string | null
           business_email: string | null
           business_name: string
           business_phone: string | null
           business_registration_number: string | null
           business_type: string | null
+          coverage_radius_km: number | null
           created_at: string | null
+          geocoded_at: string | null
           id: string
+          is_mobile: boolean | null
           is_verified: boolean | null
           license_expiry: string | null
           license_number: string | null
+          location_latitude: number | null
+          location_longitude: number | null
+          operating_hours: Json | null
           service_areas: string[] | null
+          travel_fee: number | null
           updated_at: string | null
           user_id: string
           verification_documents: Json | null
         }
         Insert: {
+          accepts_emergency?: boolean | null
+          address_formatted?: string | null
           business_address?: string | null
           business_email?: string | null
           business_name: string
           business_phone?: string | null
           business_registration_number?: string | null
           business_type?: string | null
+          coverage_radius_km?: number | null
           created_at?: string | null
+          geocoded_at?: string | null
           id?: string
+          is_mobile?: boolean | null
           is_verified?: boolean | null
           license_expiry?: string | null
           license_number?: string | null
+          location_latitude?: number | null
+          location_longitude?: number | null
+          operating_hours?: Json | null
           service_areas?: string[] | null
+          travel_fee?: number | null
           updated_at?: string | null
           user_id: string
           verification_documents?: Json | null
         }
         Update: {
+          accepts_emergency?: boolean | null
+          address_formatted?: string | null
           business_address?: string | null
           business_email?: string | null
           business_name?: string
           business_phone?: string | null
           business_registration_number?: string | null
           business_type?: string | null
+          coverage_radius_km?: number | null
           created_at?: string | null
+          geocoded_at?: string | null
           id?: string
+          is_mobile?: boolean | null
           is_verified?: boolean | null
           license_expiry?: string | null
           license_number?: string | null
+          location_latitude?: number | null
+          location_longitude?: number | null
+          operating_hours?: Json | null
           service_areas?: string[] | null
+          travel_fee?: number | null
           updated_at?: string | null
           user_id?: string
           verification_documents?: Json | null
@@ -10107,6 +10134,10 @@ export type Database = {
       auto_escalate_complaints: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      calculate_distance_km: {
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
       }
       cleanup_old_typing_indicators: {
         Args: Record<PropertyKey, never>
