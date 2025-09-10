@@ -74,10 +74,10 @@ serve(async (req) => {
       )
     }
 
-    // Get admin's community to check module enablement (relaxed for state_admin)
+    // Get admin's community and district context (relaxed for state_admin)
     const { data: adminProfile, error: adminProfileError } = await supabase
       .from('profiles')
-      .select('community_id')
+      .select('community_id, district_id')
       .eq('id', currentUser.id)
       .single()
 
@@ -91,6 +91,15 @@ serve(async (req) => {
 
     // Check if required modules are enabled for role creation
     const checkModuleEnabled = async (moduleName: string) => {
+      // State admins bypass module checks
+      if (isStateAdmin) {
+        return true
+      }
+
+      if (!adminProfile?.community_id) {
+        return false
+      }
+
       const { data, error } = await supabase
         .from('community_features')
         .select('is_enabled')
@@ -112,9 +121,10 @@ serve(async (req) => {
       full_name,
       phone,
       role,
-      district_id,
-      community_id,
+      // Auto-assign district/community from admin (form doesn't send these)
       // Role-specific fields
+      unit_number, // for residents
+      access_expires_at, // for guests
       family_size,
       emergency_contact_name,
       emergency_contact_phone,
@@ -130,8 +140,8 @@ serve(async (req) => {
       email,
       full_name,
       role,
-      district_id,
-      community_id
+      admin_district: adminProfile?.district_id,
+      admin_community: adminProfile?.community_id
     })
 
     // Validate role against enabled modules
@@ -172,7 +182,7 @@ serve(async (req) => {
         throw new Error(`Failed to invite user: ${authError.message}`)
       }
     } else {
-      // For non-residents, use direct creation with password
+      // For guests and staff, use direct creation with password
       const createResult = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
@@ -197,24 +207,37 @@ serve(async (req) => {
 
     console.log('Auth user created/invited:', authUser.user.id)
 
-    // Create profile
-    const profileData = {
-      id: authUser.user.id,
+    // Wait a moment for the trigger to create the initial profile
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    // Update the profile created by the trigger with admin data and role-specific fields
+    const profileData: any = {
       full_name,
       phone: phone || null,
       email,
-      district_id: district_id || null,
-      community_id: community_id || null,
+      // Auto-assign admin's district and community (override trigger defaults)
+      district_id: adminProfile?.district_id || null,
+      community_id: adminProfile?.community_id || null,
       account_status: 'approved'
     }
 
-    // Set account status based on role and creation method
+    // Set account status and role-specific fields based on role and creation method
     if (role === 'resident') {
-      profileData.account_status = 'pending_completion'
+      profileData.account_status = 'pending'
       if (unit_number) profileData.unit_number = unit_number
       if (family_size) profileData.family_size = parseInt(family_size)
       if (emergency_contact_name) profileData.emergency_contact_name = emergency_contact_name
       if (emergency_contact_phone) profileData.emergency_contact_phone = emergency_contact_phone
+    } else if (role === 'guest') {
+      profileData.account_status = 'approved'
+      // Guest users require expiration date
+      if (access_expires_at) {
+        profileData.access_expires_at = access_expires_at
+      } else {
+        throw new Error('Guest users require an expiration date')
+      }
+      // Set default access level if not provided
+      profileData.access_level = 'basic'
     } else {
       profileData.account_status = 'approved'
       if (role === 'security_officer') {
@@ -228,36 +251,37 @@ serve(async (req) => {
       }
     }
 
+    // Update the existing profile instead of inserting
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert(profileData)
+      .update(profileData)
+      .eq('user_id', authUser.user.id)
 
     if (profileError) {
-      console.error('Profile creation error:', profileError)
-      // Clean up auth user if profile creation fails
+      console.error('Profile update error:', profileError)
+      // Clean up auth user if profile update fails
       await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
-      throw new Error(`Failed to create profile: ${profileError.message}`)
+      throw new Error(`Failed to update profile: ${profileError.message}`)
     }
 
     console.log('Profile created successfully')
 
-    // Assign role
-    const { error: roleAssignError } = await supabaseAdmin
+    // Update the role created by the trigger with the correct role and admin context
+    const { error: roleUpdateError } = await supabaseAdmin
       .from('enhanced_user_roles')
-      .insert({
-        user_id: authUser.user.id,
+      .update({
         role: role,
-        is_active: true,
         assigned_by: currentUser.id,
-        district_id: district_id || null
+        district_id: adminProfile?.district_id || null
       })
+      .eq('user_id', authUser.user.id)
 
-    if (roleAssignError) {
-      console.error('Role assignment error:', roleAssignError)
-      // Clean up user and profile if role assignment fails
+    if (roleUpdateError) {
+      console.error('Role update error:', roleUpdateError)
+      // Clean up user and profile if role update fails
       await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
-      await supabaseAdmin.from('profiles').delete().eq('id', authUser.user.id)
-      throw new Error(`Failed to assign role: ${roleAssignError.message}`)
+      await supabaseAdmin.from('profiles').delete().eq('user_id', authUser.user.id)
+      throw new Error(`Failed to update role: ${roleUpdateError.message}`)
     }
 
     console.log('Role assigned successfully')
@@ -271,7 +295,8 @@ serve(async (req) => {
           full_name,
           role
         },
-        invitation_sent: role === 'resident'
+        invitation_sent: role === 'resident',
+        credentials_created: role === 'guest'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
