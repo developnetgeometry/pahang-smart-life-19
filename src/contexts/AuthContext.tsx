@@ -61,6 +61,7 @@ interface AuthContextType {
   switchLanguage: (lang: Language) => void;
   switchTheme: (theme: Theme) => void;
   updateProfile: (updates: Partial<User>) => void;
+  loadProfileAndRoles: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -104,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .select(
               "full_name, email, district_id, language_preference, account_status"
             )
-            .eq("user_id", userId)
+            .eq("id", userId)
             .maybeSingle(),
           supabase
             .from("enhanced_user_roles")
@@ -117,8 +118,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Set account status regardless of approval state
       setAccountStatus(profile?.account_status || "pending");
 
-      // Check if account is approved (account_status should be 'approved' for approved accounts)
-      if (profile?.account_status !== "approved") {
+      // Check if account is approved or pending completion
+      if (profile?.account_status !== "approved" && profile?.account_status !== "pending_completion") {
         console.log(
           "User account not approved, account_status:",
           profile?.account_status
@@ -280,6 +281,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     switchLanguage,
     switchTheme,
     updateProfile,
+    loadProfileAndRoles: () => {
+      const session = supabase.auth.getSession();
+      return session.then(({ data }) => {
+        if (data.session?.user?.id) {
+          return loadProfileAndRoles(data.session.user.id);
+        }
+        return Promise.resolve();
+      });
+    },
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

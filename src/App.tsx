@@ -80,6 +80,7 @@ import MaintenanceComplaintCenterPage from "./pages/MaintenanceComplaintCenter";
 import PatrolInterfacePage from "./pages/PatrolInterface";
 import FacilityComplaintCenterPage from "./pages/FacilityComplaintCenter";
 import PendingApproval from "./pages/PendingApproval";
+import CompleteAccount from "./pages/CompleteAccount";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -91,7 +92,7 @@ const queryClient = new QueryClient({
 });
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, initializing, isApproved } = useAuth();
+  const { isAuthenticated, initializing, isApproved, accountStatus } = useAuth();
   
   if (initializing) {
     return (
@@ -105,7 +106,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />;
   }
   
-  if (isAuthenticated && !isApproved) {
+  if (isAuthenticated && accountStatus === 'pending_completion') {
+    return <Navigate to="/complete-account" replace />;
+  }
+  
+  if (isAuthenticated && !isApproved && accountStatus !== 'pending_completion') {
     return <Navigate to="/pending-approval" replace />;
   }
   
@@ -113,7 +118,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, initializing, isApproved } = useAuth();
+  const { isAuthenticated, initializing, isApproved, accountStatus } = useAuth();
   
   if (initializing) {
     return <>{children}</>;
@@ -123,7 +128,11 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/" replace />;
   }
   
-  if (isAuthenticated && !isApproved) {
+  if (isAuthenticated && accountStatus === 'pending_completion') {
+    return <Navigate to="/complete-account" replace />;
+  }
+  
+  if (isAuthenticated && !isApproved && accountStatus !== 'pending_completion') {
     return <Navigate to="/pending-approval" replace />;
   }
   
@@ -150,6 +159,12 @@ const App = () => (
             <Route
               path="/pending-approval"
               element={<PendingApproval />}
+            />
+            <Route
+              path="/complete-account"
+              element={
+                <CompleteAccount />
+              }
             />
             <Route
               path="/"

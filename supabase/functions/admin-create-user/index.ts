@@ -149,26 +149,52 @@ serve(async (req) => {
       }
     }
 
-    // Create auth user
-    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        full_name
+    let authUser;
+    let authError;
+    
+    // For residents, use invite flow instead of direct creation
+    if (role === 'resident') {
+      const redirectUrl = `${Deno.env.get('SUPABASE_URL')?.replace('/v1', '')}/complete-account`;
+      
+      const inviteResult = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+        redirectTo: redirectUrl,
+        data: {
+          full_name
+        }
+      })
+      
+      authUser = inviteResult.data;
+      authError = inviteResult.error;
+      
+      if (authError) {
+        console.error('Auth invitation error:', authError)
+        throw new Error(`Failed to invite user: ${authError.message}`)
       }
-    })
-
-    if (authError) {
-      console.error('Auth creation error:', authError)
-      throw new Error(`Failed to create user: ${authError.message}`)
+    } else {
+      // For non-residents, use direct creation with password
+      const createResult = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          full_name
+        }
+      })
+      
+      authUser = createResult.data;
+      authError = createResult.error;
+      
+      if (authError) {
+        console.error('Auth creation error:', authError)
+        throw new Error(`Failed to create user: ${authError.message}`)
+      }
     }
 
     if (!authUser.user) {
       throw new Error('Failed to create user: No user returned')
     }
 
-    console.log('Auth user created:', authUser.user.id)
+    console.log('Auth user created/invited:', authUser.user.id)
 
     // Create profile
     const profileData = {
@@ -181,19 +207,23 @@ serve(async (req) => {
       account_status: 'approved'
     }
 
-    // Add role-specific fields
+    // Set account status based on role and creation method
     if (role === 'resident') {
+      profileData.account_status = 'pending_completion'
       if (family_size) profileData.family_size = parseInt(family_size)
       if (emergency_contact_name) profileData.emergency_contact_name = emergency_contact_name
       if (emergency_contact_phone) profileData.emergency_contact_phone = emergency_contact_phone
-    } else if (role === 'security_officer') {
-      if (security_license_number) profileData.security_license_number = security_license_number
-      if (badge_id) profileData.badge_id = badge_id
-      if (shift_type) profileData.shift_type = shift_type
-    } else if (role === 'maintenance_staff' || role === 'facility_manager') {
-      if (specialization) profileData.specialization = specialization
-      if (certifications) profileData.certifications = Array.isArray(certifications) ? certifications : [certifications]
-      if (years_experience) profileData.years_experience = parseInt(years_experience)
+    } else {
+      profileData.account_status = 'approved'
+      if (role === 'security_officer') {
+        if (security_license_number) profileData.security_license_number = security_license_number
+        if (badge_id) profileData.badge_id = badge_id
+        if (shift_type) profileData.shift_type = shift_type
+      } else if (role === 'maintenance_staff' || role === 'facility_manager') {
+        if (specialization) profileData.specialization = specialization
+        if (certifications) profileData.certifications = Array.isArray(certifications) ? certifications : [certifications]
+        if (years_experience) profileData.years_experience = parseInt(years_experience)
+      }
     }
 
     const { error: profileError } = await supabaseAdmin
@@ -238,7 +268,8 @@ serve(async (req) => {
           email: authUser.user.email,
           full_name,
           role
-        }
+        },
+        invitation_sent: role === 'resident'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

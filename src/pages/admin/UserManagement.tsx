@@ -419,7 +419,7 @@ export default function UserManagement() {
   };
 
   const handleCreateUser = async () => {
-    if (!form.name || !form.email || !form.role || !form.status) {
+    if (!form.name || !form.email || !form.role) {
       toast({ title: t.createUser, description: 'Please fill all required fields.' });
       return;
     }
@@ -443,8 +443,9 @@ export default function UserManagement() {
       return;
     }
 
-    // Password validation for new users
-    if (!editingId) {
+    // For residents, no password or status required (handled by invite flow)
+    // For other roles, password validation is still required
+    if (!editingId && form.role !== 'resident') {
       if (!form.password) {
         toast({ title: 'Error', description: t.passwordRequired, variant: 'destructive' });
         return;
@@ -457,6 +458,12 @@ export default function UserManagement() {
         toast({ title: 'Error', description: 'Password must be at least 6 characters long', variant: 'destructive' });
         return;
       }
+    }
+
+    // For non-residents, status is required
+    if (form.role !== 'resident' && !form.status) {
+      toast({ title: t.createUser, description: 'Please select account status.' });
+      return;
     }
 
     try {
@@ -494,26 +501,26 @@ export default function UserManagement() {
         toast({ title: t.userUpdated });
       } else {
         // Create new user using edge function
+        const requestBody: any = {
+          email: form.email,
+          full_name: form.name,
+          phone: form.phone,
+          role: form.role,
+        };
+
+        // Only include password and status for non-residents
+        if (form.role !== 'resident') {
+          requestBody.password = form.password;
+          requestBody.status = form.status;
+        }
+
+        // Add unit for residents
+        if (form.role === 'resident' && form.unit) {
+          requestBody.unit_number = form.unit;
+        }
+
         const { data, error } = await supabase.functions.invoke('admin-create-user', {
-          body: {
-            email: form.email,
-            password: form.password,
-            full_name: form.name,
-            phone: form.phone,
-            role: form.role,
-            district_id: null,
-            community_id: null,
-            // Role-specific data
-            family_size: form.familySize,
-            emergency_contact_name: form.emergencyContactName,
-            emergency_contact_phone: form.emergencyContactPhone,
-            security_license_number: form.badgeId,
-            badge_id: form.badgeId,
-            shift_type: form.shiftType,
-            specialization: form.specialization,
-            certifications: form.certificationsText ? [form.certificationsText] : undefined,
-            years_experience: form.yearsExperience ? parseInt(form.yearsExperience) : undefined
-          }
+          body: requestBody
         });
 
         if (error) throw error;
