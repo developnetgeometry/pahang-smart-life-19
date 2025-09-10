@@ -1346,21 +1346,21 @@ export default function UserManagement() {
         </CardContent>
       </Card>
 
-      {/* User Details Sheet */}
-      <Sheet open={isUserDetailsOpen} onOpenChange={setIsUserDetailsOpen}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-2">
+      {/* User Details Dialog */}
+      <Dialog open={isUserDetailsOpen} onOpenChange={setIsUserDetailsOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
               <Home className="h-5 w-5" />
               {t.userDetails}
-            </SheetTitle>
-            <SheetDescription>
+            </DialogTitle>
+            <DialogDescription>
               {language === 'en' 
                 ? 'View user information and manage household members' 
                 : 'Lihat maklumat pengguna dan urus ahli rumah'
               }
-            </SheetDescription>
-          </SheetHeader>
+            </DialogDescription>
+          </DialogHeader>
 
           {selectedUser && (
             <div className="mt-6 space-y-6">
@@ -1520,8 +1520,8 @@ export default function UserManagement() {
               </div>
             </div>
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
