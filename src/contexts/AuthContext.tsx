@@ -118,17 +118,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Set account status regardless of approval state
       setAccountStatus(profile?.account_status || "pending");
 
-      // Check if account is approved or pending completion
-      if (profile?.account_status !== "approved" && profile?.account_status !== "pending_completion") {
-        console.log(
-          "User account not approved, account_status:",
-          profile?.account_status
-        );
-        // Don't sign out, just set user to null and clear roles
-        setUser(null);
-        setRoles([]);
-        return;
-      }
+      // Always create user object for authenticated users, regardless of approval status
+      // This allows rejected users to access their applications
 
       let districtName = "";
       if (profile?.district_id) {
