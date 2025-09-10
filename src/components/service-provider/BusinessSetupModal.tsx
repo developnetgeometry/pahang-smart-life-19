@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -8,8 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { Building, MapPin, Phone, Mail, FileText } from 'lucide-react';
+import { Building, MapPin, Phone, Mail, FileText, Clock } from 'lucide-react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface BusinessSetupModalProps {
   open: boolean;
@@ -44,8 +47,28 @@ export function BusinessSetupModal({ open, onOpenChange, onComplete }: BusinessS
     businessType: '',
     licenseNumber: '',
     serviceAreas: [] as string[],
-    serveAllAreas: false
+    serveAllAreas: false,
+    latitude: null as number | null,
+    longitude: null as number | null,
+    coverageRadius: 5,
+    isMobile: false,
+    acceptsEmergency: false,
+    travelFee: 0,
+    operatingHours: {
+      monday: { open: '09:00', close: '17:00', closed: false },
+      tuesday: { open: '09:00', close: '17:00', closed: false },
+      wednesday: { open: '09:00', close: '17:00', closed: false },
+      thursday: { open: '09:00', close: '17:00', closed: false },
+      friday: { open: '09:00', close: '17:00', closed: false },
+      saturday: { open: '09:00', close: '17:00', closed: false },
+      sunday: { open: '09:00', close: '17:00', closed: true }
+    }
   });
+
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const marker = useRef<mapboxgl.Marker | null>(null);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
 
   const text = {
     en: {
@@ -111,8 +134,122 @@ export function BusinessSetupModal({ open, onOpenChange, onComplete }: BusinessS
   useEffect(() => {
     if (open) {
       fetchDistrictsAndCommunities();
+      fetchMapboxToken();
     }
   }, [open]);
+
+  useEffect(() => {
+    if (open && mapboxToken && mapContainer.current && !map.current) {
+      initializeMap();
+    }
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, [open, mapboxToken]);
+
+  const fetchMapboxToken = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+      if (error) throw error;
+      setMapboxToken(data.token);
+    } catch (error) {
+      console.error('Error fetching Mapbox token:', error);
+    }
+  };
+
+  const initializeMap = () => {
+    if (!mapboxToken || !mapContainer.current || map.current) return;
+
+    mapboxgl.accessToken = mapboxToken;
+    
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [101.4551, 3.2278], // Default to Kuala Selangor
+      zoom: 12
+    });
+
+    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    // Add click handler to place marker
+    map.current.on('click', (e) => {
+      const { lng, lat } = e.lngLat;
+      setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
+      
+      if (marker.current) {
+        marker.current.remove();
+      }
+      
+      marker.current = new mapboxgl.Marker({ draggable: true })
+        .setLngLat([lng, lat])
+        .addTo(map.current!);
+
+      marker.current.on('dragend', () => {
+        const lngLat = marker.current!.getLngLat();
+        setFormData(prev => ({ 
+          ...prev, 
+          latitude: lngLat.lat, 
+          longitude: lngLat.lng 
+        }));
+      });
+    });
+  };
+
+  const geocodeAddress = async () => {
+    if (!formData.businessAddress.trim()) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('geocode-address', {
+        body: { address: formData.businessAddress }
+      });
+
+      if (error) throw error;
+
+      const { latitude, longitude, formatted_address } = data;
+      setFormData(prev => ({ 
+        ...prev, 
+        latitude, 
+        longitude,
+        businessAddress: formatted_address
+      }));
+
+      if (map.current) {
+        map.current.flyTo({ center: [longitude, latitude], zoom: 15 });
+        
+        if (marker.current) {
+          marker.current.remove();
+        }
+        
+        marker.current = new mapboxgl.Marker({ draggable: true })
+          .setLngLat([longitude, latitude])
+          .addTo(map.current);
+
+        marker.current.on('dragend', () => {
+          const lngLat = marker.current!.getLngLat();
+          setFormData(prev => ({ 
+            ...prev, 
+            latitude: lngLat.lat, 
+            longitude: lngLat.lng 
+          }));
+        });
+      }
+
+      toast({
+        title: language === 'en' ? 'Location Found' : 'Lokasi Dijumpai',
+        description: language === 'en' ? 'Address geocoded successfully' : 'Alamat berjaya dikodkan'
+      });
+    } catch (error: any) {
+      console.error('Geocoding error:', error);
+      toast({
+        title: language === 'en' ? 'Geocoding Failed' : 'Pengekodan Gagal',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  };
 
   const fetchDistrictsAndCommunities = async () => {
     try {
@@ -156,7 +293,7 @@ export function BusinessSetupModal({ open, onOpenChange, onComplete }: BusinessS
 
       if (error) throw error;
 
-      // Update the business profile with additional details
+      // Update the business profile with additional details including location
       const { error: updateError } = await supabase
         .from('service_provider_businesses')
         .update({
@@ -164,7 +301,16 @@ export function BusinessSetupModal({ open, onOpenChange, onComplete }: BusinessS
           business_address: formData.businessAddress || null,
           business_phone: formData.businessPhone || null,
           business_email: formData.businessEmail || null,
-          license_number: formData.licenseNumber || null
+          license_number: formData.licenseNumber || null,
+          location_latitude: formData.latitude,
+          location_longitude: formData.longitude,
+          coverage_radius_km: formData.coverageRadius,
+          is_mobile: formData.isMobile,
+          accepts_emergency: formData.acceptsEmergency,
+          travel_fee: formData.travelFee > 0 ? formData.travelFee : null,
+          operating_hours: formData.operatingHours,
+          address_formatted: formData.businessAddress || null,
+          geocoded_at: formData.latitude && formData.longitude ? new Date().toISOString() : null
         })
         .eq('id', data);
 
@@ -272,16 +418,97 @@ export function BusinessSetupModal({ open, onOpenChange, onComplete }: BusinessS
             </div>
           </div>
 
-          {/* Business Address */}
+          {/* Business Address with Geocoding */}
           <div className="space-y-2">
             <Label htmlFor="businessAddress">{t.businessAddress}</Label>
-            <Textarea
-              id="businessAddress"
-              value={formData.businessAddress}
-              onChange={(e) => setFormData(prev => ({ ...prev, businessAddress: e.target.value }))}
-              placeholder="Enter your business address"
-              rows={3}
-            />
+            <div className="flex gap-2">
+              <Textarea
+                id="businessAddress"
+                value={formData.businessAddress}
+                onChange={(e) => setFormData(prev => ({ ...prev, businessAddress: e.target.value }))}
+                placeholder="Enter your business address"
+                rows={3}
+                className="flex-1"
+              />
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={geocodeAddress}
+                disabled={!formData.businessAddress.trim()}
+                className="h-fit"
+              >
+                <MapPin className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Map for Location Selection */}
+          {mapboxToken && (
+            <div className="space-y-2">
+              <Label>Business Location</Label>
+              <div 
+                ref={mapContainer} 
+                className="h-64 w-full rounded-lg border"
+                style={{ minHeight: '200px' }}
+              />
+              <p className="text-sm text-muted-foreground">
+                Click on the map to set your business location, or use the geocode button above.
+              </p>
+            </div>
+          )}
+
+          {/* Service Coverage */}
+          <div className="space-y-4">
+            <Label>Service Coverage & Options</Label>
+            
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="isMobile"
+                  checked={formData.isMobile}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isMobile: !!checked }))}
+                />
+                <Label htmlFor="isMobile">Mobile Service (I travel to customers)</Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="acceptsEmergency"
+                  checked={formData.acceptsEmergency}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, acceptsEmergency: !!checked }))}
+                />
+                <Label htmlFor="acceptsEmergency">Accept Emergency Calls</Label>
+              </div>
+            </div>
+
+            {formData.isMobile && (
+              <>
+                <div className="space-y-2">
+                  <Label>Coverage Radius: {formData.coverageRadius} km</Label>
+                  <Slider
+                    value={[formData.coverageRadius]}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, coverageRadius: value[0] }))}
+                    max={50}
+                    min={1}
+                    step={1}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="travelFee">Travel Fee (RM)</Label>
+                  <Input
+                    id="travelFee"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.travelFee}
+                    onChange={(e) => setFormData(prev => ({ ...prev, travelFee: parseFloat(e.target.value) || 0 }))}
+                    placeholder="0.00"
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           {/* License Number */}
@@ -353,6 +580,69 @@ export function BusinessSetupModal({ open, onOpenChange, onComplete }: BusinessS
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Operating Hours */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Operating Hours
+            </Label>
+            
+            <div className="grid grid-cols-1 gap-3">
+              {Object.entries(formData.operatingHours).map(([day, hours]) => (
+                <div key={day} className="flex items-center gap-3">
+                  <div className="w-20">
+                    <Label className="text-sm capitalize">{day}</Label>
+                  </div>
+                  
+                  <Checkbox
+                    checked={!hours.closed}
+                    onCheckedChange={(checked) => setFormData(prev => ({
+                      ...prev,
+                      operatingHours: {
+                        ...prev.operatingHours,
+                        [day]: { ...hours, closed: !checked }
+                      }
+                    }))}
+                  />
+                  
+                  {!hours.closed && (
+                    <>
+                      <Input
+                        type="time"
+                        value={hours.open}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          operatingHours: {
+                            ...prev.operatingHours,
+                            [day]: { ...hours, open: e.target.value }
+                          }
+                        }))}
+                        className="w-28"
+                      />
+                      <span className="text-sm text-muted-foreground">to</span>
+                      <Input
+                        type="time"
+                        value={hours.close}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          operatingHours: {
+                            ...prev.operatingHours,
+                            [day]: { ...hours, close: e.target.value }
+                          }
+                        }))}
+                        className="w-28"
+                      />
+                    </>
+                  )}
+                  
+                  {hours.closed && (
+                    <span className="text-sm text-muted-foreground">Closed</span>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Action Buttons */}

@@ -328,9 +328,9 @@ export function QuickServicesWidget({ language }: QuickServicesWidgetProps) {
           variant="outline" 
           size="sm" 
           className="w-full mt-3"
-          onClick={() => navigate('/marketplace')}
+          onClick={() => navigate('/services?view=map')}
         >
-          {language === 'en' ? 'View All Services' : 'Lihat Semua Perkhidmatan'}
+          {language === 'en' ? 'View on Map' : 'Lihat di Peta'}
         </Button>
       </CardContent>
     </Card>

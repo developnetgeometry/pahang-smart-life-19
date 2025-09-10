@@ -5,12 +5,14 @@ import { useModuleAccess } from '@/hooks/use-module-access';
 import { useUserRoles } from '@/hooks/use-user-roles';
 import AdvancedSearch from '@/components/marketplace/AdvancedSearch';
 import StarRating from '@/components/marketplace/StarRating';
+import { ServicesMap } from '@/components/services/ServicesMap';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, MapPin, Phone, Mail, ExternalLink, Shield, Building2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Search, MapPin, Phone, Mail, ExternalLink, Shield, Building2, Map, List } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { SmartImage } from '@/components/ui/dynamic-image';
@@ -69,7 +71,10 @@ export default function Services() {
       verified: 'Verified Provider',
       noServices: 'No services found',
       noServicesDesc: 'Try adjusting your search or category filters',
-      clickCount: 'views'
+      clickCount: 'views',
+      listView: 'List View',
+      mapView: 'Map View',
+      viewOnMap: 'View on Map'
     },
     ms: {
       title: 'Perkhidmatan Komuniti',
@@ -87,7 +92,10 @@ export default function Services() {
       verified: 'Penyedia Disahkan',
       noServices: 'Tiada perkhidmatan dijumpai',
       noServicesDesc: 'Cuba laraskan carian atau penapis kategori anda',
-      clickCount: 'paparan'
+      clickCount: 'paparan',
+      listView: 'Paparan Senarai',
+      mapView: 'Paparan Peta',
+      viewOnMap: 'Lihat di Peta'
     }
   };
 
@@ -296,104 +304,128 @@ export default function Services() {
         </select>
       </div>
 
-      {/* Services Grid */}
-      {filteredServices.length === 0 ? (
-        <Card>
-          <CardContent className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">{t.noServices}</h3>
-              <p className="text-sm text-muted-foreground">{t.noServicesDesc}</p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredServices.map((service) => (
-            <Card key={service.id} className="cursor-pointer hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg line-clamp-2">{service.title}</CardTitle>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">{service.business_name}</span>
-                    </div>
-                  </div>
-                  {service.is_featured && (
-                    <Badge variant="secondary" className="ml-2">{t.featured}</Badge>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {service.image_url && (
-                  <SmartImage
-                    src={service.image_url}
-                    alt={service.title}
-                    className="w-full h-40 object-cover rounded-lg"
-                  />
-                )}
-                
-                <p className="text-sm text-muted-foreground line-clamp-3">
-                  {service.description}
-                </p>
+      {/* View Toggle and Content */}
+      <Tabs defaultValue="list" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="list" className="flex items-center gap-2">
+            <List className="w-4 h-4" />
+            {t.listView}
+          </TabsTrigger>
+          <TabsTrigger value="map" className="flex items-center gap-2">
+            <Map className="w-4 h-4" />
+            {t.mapView}
+          </TabsTrigger>
+        </TabsList>
 
-                <div className="flex items-center justify-between text-sm">
-                  <Badge variant="outline">{service.category}</Badge>
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <span>{service.click_count}</span>
-                    <span>{t.clickCount}</span>
-                  </div>
-                </div>
-
-                {service.service_areas.length > 0 && (
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <MapPin className="h-3 w-3" />
-                    <span className="line-clamp-1">{service.service_areas.join(', ')}</span>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={service.advertiser_profile?.avatar_url} />
-                      <AvatarFallback>
-                        {service.advertiser_profile?.full_name?.charAt(0) || 'S'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs text-muted-foreground">
-                      {service.advertiser_profile?.full_name || 'Service Provider'}
-                    </span>
-                  </div>
-                  {service.price && (
-                    <span className="font-semibold text-primary">
-                      RM{service.price.toFixed(2)}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleServiceClick(service.id)}
-                    className="flex-1"
-                  >
-                    {t.viewDetails}
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    onClick={() => handleContactProvider(service)}
-                    className="flex-1"
-                  >
-                    {t.contactProvider}
-                  </Button>
+        <TabsContent value="list" className="mt-6">
+          {/* Services Grid */}
+          {filteredServices.length === 0 ? (
+            <Card>
+              <CardContent className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">{t.noServices}</h3>
+                  <p className="text-sm text-muted-foreground">{t.noServicesDesc}</p>
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredServices.map((service) => (
+                <Card key={service.id} className="cursor-pointer hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg line-clamp-2">{service.title}</CardTitle>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">{service.business_name}</span>
+                        </div>
+                      </div>
+                      {service.is_featured && (
+                        <Badge variant="secondary" className="ml-2">{t.featured}</Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {service.image_url && (
+                      <SmartImage
+                        src={service.image_url}
+                        alt={service.title}
+                        className="w-full h-40 object-cover rounded-lg"
+                      />
+                    )}
+                    
+                    <p className="text-sm text-muted-foreground line-clamp-3">
+                      {service.description}
+                    </p>
+
+                    <div className="flex items-center justify-between text-sm">
+                      <Badge variant="outline">{service.category}</Badge>
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <span>{service.click_count}</span>
+                        <span>{t.clickCount}</span>
+                      </div>
+                    </div>
+
+                    {service.service_areas.length > 0 && (
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <MapPin className="h-3 w-3" />
+                        <span className="line-clamp-1">{service.service_areas.join(', ')}</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={service.advertiser_profile?.avatar_url} />
+                          <AvatarFallback>
+                            {service.advertiser_profile?.full_name?.charAt(0) || 'S'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-xs text-muted-foreground">
+                          {service.advertiser_profile?.full_name || 'Service Provider'}
+                        </span>
+                      </div>
+                      {service.price && (
+                        <span className="font-semibold text-primary">
+                          RM{service.price.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleServiceClick(service.id)}
+                        className="flex-1"
+                      >
+                        {t.viewDetails}
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleContactProvider(service)}
+                        className="flex-1"
+                      >
+                        {t.contactProvider}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="map" className="mt-6">
+          <ServicesMap 
+            language={language}
+            selectedCategory={selectedCategory}
+            searchTerm={searchTerm}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
