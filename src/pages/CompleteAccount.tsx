@@ -207,7 +207,7 @@ export default function CompleteAccount() {
               <Label htmlFor="language_preference">{t.languagePreference} *</Label>
               <Select 
                 value={form.language_preference} 
-                onValueChange={(value) => setForm({ ...form, language_preference: value })}
+                onValueChange={(value) => setForm({ ...form, language_preference: value as Language })}
               >
                 <SelectTrigger>
                   <SelectValue />
