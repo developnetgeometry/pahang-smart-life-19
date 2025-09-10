@@ -30,7 +30,6 @@ import {
   Radio,
   Megaphone,
   FileText,
-  Home,
   Activity,
   Bell,
   UserCheck,
@@ -278,12 +277,6 @@ export function AppSidebar() {
           title: t("userManagement"),
           url: "/admin/users",
           icon: UserPlus,
-          requiredRoles: ["state_admin", "community_admin"],
-        },
-        {
-          title: t("communityManagement"),
-          url: "/admin/communities",
-          icon: Home,
           requiredRoles: ["state_admin", "community_admin"],
         }
       );
