@@ -81,67 +81,14 @@ export const useDistricts = () => {
     }
   }, []);
 
-  const createDistrict = async (districtData: Omit<District, 'id' | 'created_at' | 'updated_at' | 'coordinator_name'>) => {
-    try {
-      if (!user?.id) {
-        toast.error('You must be logged in to create districts');
-        return false;
-      }
-
-      // Client-side duplicate check
-      const trimmedName = districtData.name?.trim().toLowerCase();
-      const isDuplicate = districts.some(d => 
-        d.name?.trim().toLowerCase() === trimmedName
-      );
-
-      if (isDuplicate) {
-        toast.error('A district with this name already exists');
-        return false;
-      }
-
-      const { data, error } = await supabase
-        .from('districts')
-        .insert([districtData])
-        .select('*')
-        .single();
-
-      if (error) {
-        console.error('Error creating district:', error);
-        
-        // Handle unique constraint violation
-        if (error.code === '23505') {
-          toast.error('A district with this name already exists');
-        } else {
-          toast.error('Failed to create district');
-        }
-        return false;
-      }
-
-      setDistricts(prev => [...prev, data]);
-      toast.success('District created successfully');
-      return true;
-    } catch (error) {
-      console.error('Error creating district:', error);
-      toast.error('Failed to create district');
-      return false;
+  useEffect(() => {
+    if (user) {
+      fetchDistricts();
     }
-  };
+  }, [user, fetchDistricts]);
 
   const updateDistrict = async (id: string, updates: Partial<District>) => {
     try {
-      // Client-side duplicate check for name updates
-      if (updates.name) {
-        const trimmedName = updates.name.trim().toLowerCase();
-        const isDuplicate = districts.some(d => 
-          d.id !== id && d.name?.trim().toLowerCase() === trimmedName
-        );
-
-        if (isDuplicate) {
-          toast.error('A district with this name already exists');
-          return false;
-        }
-      }
-
       const { data, error } = await supabase
         .from('districts')
         .update(updates)
@@ -151,13 +98,7 @@ export const useDistricts = () => {
 
       if (error) {
         console.error('Error updating district:', error);
-        
-        // Handle unique constraint violation
-        if (error.code === '23505') {
-          toast.error('A district with this name already exists');
-        } else {
-          toast.error('Failed to update district');
-        }
+        toast.error('Failed to update district');
         return false;
       }
 
@@ -173,41 +114,10 @@ export const useDistricts = () => {
     }
   };
 
-  const deleteDistrict = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('districts')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        console.error('Error deleting district:', error);
-        toast.error('Failed to delete district');
-        return false;
-      }
-
-      setDistricts(prev => prev.filter(district => district.id !== id));
-      toast.success('District deleted successfully');
-      return true;
-    } catch (error) {
-      console.error('Error deleting district:', error);
-      toast.error('Failed to delete district');
-      return false;
-    }
-  };
-
-  useEffect(() => {
-    if (user) {
-      fetchDistricts();
-    }
-  }, [user, fetchDistricts]);
-
   return {
     districts,
     loading,
-    createDistrict,
     updateDistrict,
-    deleteDistrict,
     refetchDistricts: fetchDistricts
   };
 };
