@@ -39,7 +39,14 @@ serve(async (req) => {
     // Get current user and verify permissions
     const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser()
     if (userError || !currentUser) {
-      throw new Error('Authentication required')
+      console.error('Authentication error:', userError)
+      return new Response(
+        JSON.stringify({ error: 'Authentication required. Please log in again.' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401,
+        }
+      )
     }
 
     // Check if user has admin role
@@ -58,7 +65,13 @@ serve(async (req) => {
     )
 
     if (!hasAdminRole) {
-      throw new Error('Insufficient permissions')
+      return new Response(
+        JSON.stringify({ error: 'Insufficient permissions. Admin role required.' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403,
+        }
+      )
     }
 
     // Get admin's community to check module enablement (relaxed for state_admin)

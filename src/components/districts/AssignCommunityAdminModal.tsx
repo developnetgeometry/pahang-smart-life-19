@@ -156,6 +156,12 @@ export default function AssignCommunityAdminModal({
 
     setLoading(true);
     try {
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session found. Please log in again.');
+      }
+
       const { data, error } = await supabase.functions.invoke('admin-create-user', {
         body: {
           email: createData.email,
@@ -165,10 +171,20 @@ export default function AssignCommunityAdminModal({
           role: 'community_admin',
           district_id: districtId,
           community_id: community.id
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Function error:', error);
+        throw new Error(error.message || 'Failed to create admin');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
       toast.success('Community admin created successfully');
       onOpenChange(false);
@@ -189,15 +205,31 @@ export default function AssignCommunityAdminModal({
 
     setLoading(true);
     try {
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session found. Please log in again.');
+      }
+
       const { data, error } = await supabase.functions.invoke('assign-community-admin', {
         body: {
           user_id: selectedUser.id,
           community_id: community.id,
           district_id: districtId
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Function error:', error);
+        throw new Error(error.message || 'Failed to assign admin');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
       toast.success('Community admin assigned successfully');
       onOpenChange(false);
@@ -221,12 +253,12 @@ export default function AssignCommunityAdminModal({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="create">
+          <TabsList className="flex w-full">
+            <TabsTrigger value="create" className="flex-1">
               <User className="w-4 h-4 mr-2" />
               {t.createNew}
             </TabsTrigger>
-            <TabsTrigger value="assign">
+            <TabsTrigger value="assign" className="flex-1">
               <UserCheck className="w-4 h-4 mr-2" />
               {t.assignExisting}
             </TabsTrigger>
