@@ -134,6 +134,10 @@ export default function DistrictManagement() {
 
   const t = text[language];
 
+  // Check for duplicate district name
+  const isDuplicateName = formData.name.trim() !== '' && 
+    districts.some(d => d.name?.trim().toLowerCase() === formData.name.trim().toLowerCase());
+
   // Only show content if user has state_admin role
   if (!hasRole('state_admin')) {
     return (
@@ -276,7 +280,13 @@ export default function DistrictManagement() {
                     placeholder={t.name}
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className={isDuplicateName ? "border-destructive" : ""}
                   />
+                  {isDuplicateName && (
+                    <p className="text-sm text-destructive">
+                      {language === 'en' ? 'A district with this name already exists' : 'Daerah dengan nama ini sudah wujud'}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="code">{t.code}</Label>
@@ -453,7 +463,10 @@ export default function DistrictManagement() {
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
                   {t.cancel}
                 </Button>
-                <Button onClick={handleCreateDistrict}>
+                <Button 
+                  onClick={handleCreateDistrict}
+                  disabled={!formData.name.trim() || isDuplicateName}
+                >
                   {t.create}
                 </Button>
               </div>

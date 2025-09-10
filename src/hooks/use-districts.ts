@@ -88,6 +88,17 @@ export const useDistricts = () => {
         return false;
       }
 
+      // Client-side duplicate check
+      const trimmedName = districtData.name?.trim().toLowerCase();
+      const isDuplicate = districts.some(d => 
+        d.name?.trim().toLowerCase() === trimmedName
+      );
+
+      if (isDuplicate) {
+        toast.error('A district with this name already exists');
+        return false;
+      }
+
       const { data, error } = await supabase
         .from('districts')
         .insert([districtData])
@@ -96,7 +107,13 @@ export const useDistricts = () => {
 
       if (error) {
         console.error('Error creating district:', error);
-        toast.error('Failed to create district');
+        
+        // Handle unique constraint violation
+        if (error.code === '23505') {
+          toast.error('A district with this name already exists');
+        } else {
+          toast.error('Failed to create district');
+        }
         return false;
       }
 
@@ -112,6 +129,19 @@ export const useDistricts = () => {
 
   const updateDistrict = async (id: string, updates: Partial<District>) => {
     try {
+      // Client-side duplicate check for name updates
+      if (updates.name) {
+        const trimmedName = updates.name.trim().toLowerCase();
+        const isDuplicate = districts.some(d => 
+          d.id !== id && d.name?.trim().toLowerCase() === trimmedName
+        );
+
+        if (isDuplicate) {
+          toast.error('A district with this name already exists');
+          return false;
+        }
+      }
+
       const { data, error } = await supabase
         .from('districts')
         .update(updates)
@@ -121,7 +151,13 @@ export const useDistricts = () => {
 
       if (error) {
         console.error('Error updating district:', error);
-        toast.error('Failed to update district');
+        
+        // Handle unique constraint violation
+        if (error.code === '23505') {
+          toast.error('A district with this name already exists');
+        } else {
+          toast.error('Failed to update district');
+        }
         return false;
       }
 
