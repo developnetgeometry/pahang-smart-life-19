@@ -38,18 +38,29 @@ export function useModuleAccess() {
 
       try {
         // Get user's community first
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("community_id")
           .eq("user_id", user.id)
           .single();
 
-        if (!profile?.community_id) {
-          console.log("User has no community assigned");
+        console.log("Profile query result:", { profile, profileError });
+
+        if (profileError) {
+          console.error("Error fetching user profile:", profileError);
           setEnabledModules([]);
           setLoading(false);
           return;
         }
+
+        if (!profile?.community_id) {
+          console.log("User has no community assigned, profile data:", profile);
+          setEnabledModules([]);
+          setLoading(false);
+          return;
+        }
+
+        console.log("User community_id:", profile.community_id);
 
         // Get community-controlled modules
         const { data: communityModules, error } = await supabase
@@ -58,6 +69,12 @@ export function useModuleAccess() {
           .eq("community_id", profile.community_id)
           .eq("is_enabled", true);
 
+        console.log("Community modules query result:", { 
+          communityModules, 
+          error, 
+          community_id: profile.community_id 
+        });
+
         if (error) {
           console.error("Error fetching community modules:", error);
         }
@@ -65,6 +82,14 @@ export function useModuleAccess() {
         // All modules are now controlled by community admin - no role-based bypasses
         const allModuleNames =
           communityModules?.map((m) => m.module_name) || [];
+
+        // If no modules are enabled for the community, provide default modules for service providers
+        if (allModuleNames.length === 0 && hasRole && hasRole("service_provider")) {
+          console.log("No community modules found, adding default service provider modules");
+          allModuleNames.push("marketplace", "announcements");
+        }
+
+        console.log("Final module names:", allModuleNames);
 
         // Transform to match the expected interface
         const modules: EnabledModule[] = allModuleNames.map((moduleName) => {
