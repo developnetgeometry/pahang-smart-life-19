@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Map as MapIcon, MapPin, Search, Building, Users, Settings, Loader2, Eye, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -16,10 +19,54 @@ export default function DistrictManagement() {
   const navigate = useNavigate();
   const { language } = useAuth();
   const { hasRole } = useUserRoles();
-  const { districts, loading } = useDistricts();
+  const { districts, loading, updateDistrict, refetchDistricts } = useDistricts();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [isUpdatingAreas, setIsUpdatingAreas] = useState(false);
+  const [editingDistrict, setEditingDistrict] = useState<any>(null);
+  const [editForm, setEditForm] = useState({
+    latitude: '',
+    longitude: '',
+    description: '',
+    address: '',
+    postal_code: ''
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const openEditModal = (district: any) => {
+    setEditingDistrict(district);
+    setEditForm({
+      latitude: district.latitude?.toString() || '',
+      longitude: district.longitude?.toString() || '',
+      description: district.description || '',
+      address: district.address || '',
+      postal_code: district.postal_code || ''
+    });
+  };
+
+  const handleUpdateDistrict = async () => {
+    if (!editingDistrict) return;
+    
+    setIsUpdating(true);
+    try {
+      const updates = {
+        latitude: editForm.latitude ? parseFloat(editForm.latitude) : null,
+        longitude: editForm.longitude ? parseFloat(editForm.longitude) : null,
+        description: editForm.description || null,
+        address: editForm.address || null,
+        postal_code: editForm.postal_code || null
+      };
+
+      await updateDistrict(editingDistrict.id, updates);
+      setEditingDistrict(null);
+      toast.success('District updated successfully');
+    } catch (error) {
+      console.error('Error updating district:', error);
+      toast.error('Failed to update district');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const text = {
     en: {
@@ -380,7 +427,11 @@ export default function DistrictManagement() {
                     <Eye className="h-4 w-4 mr-1" />
                     {t.view}
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => openEditModal(district)}
+                  >
                     <Settings className="h-4 w-4" />
                   </Button>
                 </div>
@@ -395,6 +446,77 @@ export default function DistrictManagement() {
           )}
         </div>
       )}
+      
+      {/* Edit District Modal */}
+      <Dialog open={!!editingDistrict} onOpenChange={(open) => !open && setEditingDistrict(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit District - {editingDistrict?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="latitude">Latitude</Label>
+                <Input
+                  id="latitude"
+                  type="number"
+                  step="any"
+                  placeholder="3.1390"
+                  value={editForm.latitude}
+                  onChange={(e) => setEditForm({ ...editForm, latitude: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="longitude">Longitude</Label>
+                <Input
+                  id="longitude"
+                  type="number"
+                  step="any"
+                  placeholder="101.6869"
+                  value={editForm.longitude}
+                  onChange={(e) => setEditForm({ ...editForm, longitude: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="address">Address</Label>
+              <Textarea
+                id="address"
+                placeholder="District address..."
+                value={editForm.address}
+                onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="postal_code">Postal Code</Label>
+              <Input
+                id="postal_code"
+                placeholder="25000"
+                value={editForm.postal_code}
+                onChange={(e) => setEditForm({ ...editForm, postal_code: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                placeholder="District description..."
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setEditingDistrict(null)}>
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateDistrict} disabled={isUpdating}>
+                {isUpdating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Update District
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
