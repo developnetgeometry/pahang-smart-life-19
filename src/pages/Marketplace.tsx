@@ -604,23 +604,25 @@ export default function Marketplace() {
       // Create direct chat with the seller
       const roomId = await createDirectChat(sellerData.seller_id);
 
-      // Navigate to communication hub with the created room
-      navigate("/communication", {
+      // Navigate to communication-hub with proper state and URL parameters
+      navigate(`/communication-hub?roomId=${roomId}`, {
         state: {
-          roomId,
-          chatWith: item.seller,
-          presetMessage:
-            language === "en"
-              ? `Hi, is this item still available? - ${
-                  item.title
-                } (RM${item.price.toLocaleString()})`
-              : `Hai, adakah item ini masih tersedia? - ${
-                  item.title
-                } (RM${item.price.toLocaleString()})`,
-          itemInfo: {
-            title: item.title,
-            price: item.price,
-            id: item.id,
+          initialRoomId: roomId,
+          marketplaceChat: {
+            chatWith: item.seller,
+            presetMessage:
+              language === "en"
+                ? `Hi, is this item still available? - ${
+                    item.title
+                  } (RM${item.price.toLocaleString()})`
+                : `Hai, adakah item ini masih tersedia? - ${
+                    item.title
+                  } (RM${item.price.toLocaleString()})`,
+            itemInfo: {
+              title: item.title,
+              price: item.price,
+              id: item.id,
+            },
           },
         },
       });

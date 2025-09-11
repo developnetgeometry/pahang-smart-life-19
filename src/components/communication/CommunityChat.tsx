@@ -128,14 +128,15 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
   }, [directoryChat, language]);
 
   useEffect(() => {
-    if (initialRoomId) {
-      // If an initial room ID is provided, select it
+    if (initialRoomId && initialRoomId !== selectedRoomId) {
+      // If an initial room ID is provided, select it immediately
+      console.log('Setting room ID from initial:', initialRoomId);
       setSelectedRoomId(initialRoomId);
-    } else if (rooms.length > 0 && !selectedRoomId) {
-      // Otherwise, select the first available room
+    } else if (rooms.length > 0 && !selectedRoomId && !initialRoomId) {
+      // Otherwise, select the first available room only if no initial room was specified
       setSelectedRoomId(rooms[0].id);
     }
-  }, [rooms, selectedRoomId, initialRoomId]);
+  }, [rooms, initialRoomId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -381,7 +382,7 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
 
       {/* Chat Area */}
       <div className="flex-1 flex flex-col">
-        {selectedRoom ? (
+        {selectedRoomId ? (
           <>
             {/* Chat Header */}
             <div className="p-4 border-b border-border/50 bg-gradient-to-r from-primary/10 via-background to-secondary/10 backdrop-blur-md shadow-sm">
