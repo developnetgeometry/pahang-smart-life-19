@@ -140,10 +140,25 @@ export default function CompleteAccount() {
         setUser(existingSession.user);
         setUserEmail(existingSession.user.email || '');
         setSessionValid(true);
-        return; // Use existing session, no need to process tokens
+        
+        // Check if this is a normal login flow (no tokens in URL)
+        const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const hasTokens = urlParams.get('code') || urlParams.get('token_hash') || 
+                         hashParams.get('access_token') || hashParams.get('refresh_token');
+        
+        if (!hasTokens) {
+          console.log('✅ Normal login flow - user has valid session, no invitation tokens');
+        } else {
+          console.log('✅ Invitation link flow - user has valid session with tokens');
+          // Clean up URL for invitation flows
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        
+        return; // Use existing session
       }
 
-      // 2. PARSE TOKENS: Extract tokens from URL (for invitation links)
+      // 2. PARSE TOKENS: Extract tokens from URL (for invitation links only)
       console.log('Step 2: No existing session, parsing tokens from URL');
       const urlParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -162,21 +177,23 @@ export default function CompleteAccount() {
         refreshToken: !!refreshToken 
       });
 
-      // If no tokens found, this might be a regular login flow issue
+      // If no tokens found and no session, redirect to login
       if (!code && !tokenHash && !accessToken && !refreshToken) {
-        console.log('No tokens found in URL - this appears to be a regular login flow');
+        console.log('❌ No session and no tokens - redirecting to login');
         setSessionValid(false);
-        setProcessingError('No invitation tokens found. Please ensure you accessed this page through a valid invitation link.');
+        setProcessingError('Please log in to access this page.');
+        // Redirect to login after a brief delay
+        setTimeout(() => navigate('/login'), 2000);
         return;
       }
 
-      // 3. PROCESS TOKENS: Try to establish session using tokens
+      // 3. PROCESS TOKENS: Try to establish session using tokens (invitation link flow)
       let sessionEstablished = false;
       
       try {
-        console.log('Step 3: Processing tokens to establish session');
+        console.log('Step 3: Processing invitation tokens to establish session');
         
-        // Priority 1: Hash tokens (most reliable)
+        // Priority 1: Hash tokens (most reliable for invitations)
         if (accessToken && refreshToken) {
           console.log('Using access_token/refresh_token from hash');
           const { data, error } = await supabase.auth.setSession({
@@ -229,7 +246,7 @@ export default function CompleteAccount() {
           window.history.replaceState({}, document.title, window.location.pathname);
           console.log('✅ URL cleaned up');
         } else {
-          console.error('❌ Failed to establish session from any token method');
+          console.error('❌ Failed to establish session from invitation tokens');
           setSessionValid(false);
           setProcessingError('Invalid or expired invitation link');
         }
@@ -242,7 +259,7 @@ export default function CompleteAccount() {
     };
 
     initializeSession();
-  }, []);
+  }, [navigate]);
 
   const handleResendInvitation = () => {
     toast({
@@ -440,36 +457,51 @@ export default function CompleteAccount() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
-            <CardTitle>{t.linkExpired}</CardTitle>
+            <CardTitle>
+              {processingError?.includes('Please log in') ? 'Login Required' : t.linkExpired}
+            </CardTitle>
             <CardDescription>
               {processingError || t.linkExpiredDesc}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {t.sessionExpiredDesc}
-              </AlertDescription>
-            </Alert>
+            {!processingError?.includes('Please log in') && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {t.sessionExpiredDesc}
+                </AlertDescription>
+              </Alert>
+            )}
             
             <div className="space-y-2">
-              <Button 
-                onClick={handleResendInvitation} 
-                className="w-full"
-                variant="outline"
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                {t.resendInvitation}
-              </Button>
-              
-              <Button 
-                onClick={handleTryAnotherEmail} 
-                className="w-full"
-                variant="secondary"
-              >
-                {t.tryAgain}
-              </Button>
+              {processingError?.includes('Please log in') ? (
+                <Button 
+                  onClick={() => navigate('/login')} 
+                  className="w-full"
+                >
+                  Go to Login
+                </Button>
+              ) : (
+                <>
+                  <Button 
+                    onClick={handleResendInvitation} 
+                    className="w-full"
+                    variant="outline"
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    {t.resendInvitation}
+                  </Button>
+                  
+                  <Button 
+                    onClick={handleTryAnotherEmail} 
+                    className="w-full"
+                    variant="secondary"
+                  >
+                    {t.tryAgain}
+                  </Button>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
