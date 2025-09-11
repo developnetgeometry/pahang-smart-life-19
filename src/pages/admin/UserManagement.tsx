@@ -1787,11 +1787,11 @@ export default function UserManagement() {
                 filteredUsers.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center justify-between p-4 border rounded-lg cursor-pointer"
+                    className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg cursor-pointer"
                     onClick={() => handleUserClick(user)}
                   >
-                    <div className="flex items-center gap-4">
-                      <Avatar>
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <Avatar className="flex-shrink-0">
                         <AvatarImage src="" />
                         <AvatarFallback>
                           {user.name
@@ -1800,10 +1800,10 @@ export default function UserManagement() {
                             .join("")}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
-                        <h4 className="font-medium">{user.name}</h4>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-medium truncate">{user.name}</h4>
                         <div className="text-sm text-muted-foreground space-y-1">
-                          <p>{user.email}</p>
+                          <p className="truncate">{user.email}</p>
                           <p>{user.phone}</p>
                           <p>
                             {t.unit}: {user.unit}
@@ -1814,7 +1814,7 @@ export default function UserManagement() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 flex-shrink-0">
                       <Badge className={getRoleColor(user.role)}>
                         {getRoleText(user.role)}
                       </Badge>
