@@ -47,22 +47,31 @@ serve(async (req: Request) => {
 
     const { user_id, redirect_url }: ResendInvitationRequest = await req.json();
 
-    // Get user profile information
+    console.log(`Attempting to resend invitation for user: ${user_id}`);
+
+    // Get user profile information - use 'id' column not 'user_id'
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('full_name, email, account_status')
-      .eq('user_id', user_id)
+      .select('id, full_name, email, account_status, access_expires_at')
+      .eq('id', user_id)
       .single();
 
     if (profileError || !profile) {
+      console.error('Profile not found:', profileError);
       throw new Error('User not found');
     }
 
-    // Check if user is eligible for invitation resend
-    if (profile.account_status === 'approved') {
-      throw new Error('User is already approved');
-    }
+    console.log(`Found profile for ${profile.email}, status: ${profile.account_status}`);
 
+    // Get user role to determine email type - use the actual user_id from auth
+    const { data: userRoles } = await supabaseAdmin
+      .from('enhanced_user_roles')
+      .select('role')
+      .eq('user_id', profile.id)
+      .eq('is_active', true);
+
+    const isGuest = userRoles?.some(r => r.role === 'guest');
+    
     const frontendUrl = redirect_url || 
       Deno.env.get("FRONTEND_URL") || 
       req.headers.get("origin") || 
@@ -70,20 +79,58 @@ serve(async (req: Request) => {
     
     const redirectTo = `${frontendUrl}/complete-account`;
 
-    // Resend invitation
-    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      profile.email,
-      {
-        redirectTo,
-        data: {
-          full_name: profile.full_name,
-          signup_flow: 'invitation_resend'
-        },
-      }
-    );
+    let emailSentType = 'none';
+    let emailResult = null;
 
-    if (inviteError) {
-      throw new Error(`Failed to resend invitation: ${inviteError.message}`);
+    // Try invitation first, then fallback to password reset if email already exists
+    try {
+      console.log(`Attempting to invite user: ${profile.email}`);
+      
+      const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+        profile.email,
+        {
+          redirectTo,
+          data: {
+            full_name: profile.full_name,
+            signup_flow: 'invitation_resend',
+            is_guest: isGuest,
+            access_expires_at: profile.access_expires_at
+          },
+        }
+      );
+
+      if (inviteError) {
+        // Check if it's "email already exists" error
+        if (inviteError.message.includes('already been registered') || 
+            inviteError.message.includes('email_exists') ||
+            inviteError.status === 422) {
+          
+          console.log(`Email already registered, sending password reset instead: ${profile.email}`);
+          
+          // Use password reset for existing users
+          const { data: resetData, error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(
+            profile.email,
+            {
+              redirectTo: redirectTo
+            }
+          );
+
+          if (resetError) {
+            throw new Error(`Failed to send password reset: ${resetError.message}`);
+          }
+          
+          emailSentType = 'password_reset';
+          emailResult = resetData;
+        } else {
+          throw inviteError;
+        }
+      } else {
+        emailSentType = 'invitation';
+        emailResult = inviteData;
+      }
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      throw new Error(`Failed to resend invitation: ${error.message}`);
     }
 
     // Log the activity
@@ -98,13 +145,14 @@ serve(async (req: Request) => {
       }
     });
 
-    console.log(`Successfully resent invitation to ${profile.email} for user ${user_id}`);
+    console.log(`Successfully sent ${emailSentType} email to ${profile.email} for user ${user_id}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Invitation resent successfully',
-        user_email: profile.email
+        message: `${emailSentType === 'invitation' ? 'Invitation' : 'Password reset'} email sent successfully`,
+        user_email: profile.email,
+        email_type: emailSentType
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
