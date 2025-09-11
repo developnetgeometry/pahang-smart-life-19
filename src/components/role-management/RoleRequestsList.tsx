@@ -1,23 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  AlertTriangle, 
-  FileText, 
+import {
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  FileText,
   Calendar,
   User,
   ArrowRight,
-  RefreshCw
+  RefreshCw,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -44,34 +50,34 @@ interface RoleRequest {
 }
 
 const STATUS_COLORS = {
-  'pending': 'default',
-  'under_review': 'secondary', 
-  'approved': 'default',
-  'rejected': 'destructive',
-  'on_probation': 'secondary',
-  'active': 'default',
-  'expired': 'outline'
+  pending: "default",
+  under_review: "secondary",
+  approved: "default",
+  rejected: "destructive",
+  on_probation: "secondary",
+  active: "default",
+  expired: "outline",
 } as const;
 
 const STATUS_ICONS = {
-  'pending': Clock,
-  'under_review': RefreshCw,
-  'approved': CheckCircle,
-  'rejected': XCircle,
-  'on_probation': AlertTriangle,
-  'active': CheckCircle,
-  'expired': XCircle
+  pending: Clock,
+  under_review: RefreshCw,
+  approved: CheckCircle,
+  rejected: XCircle,
+  on_probation: AlertTriangle,
+  active: CheckCircle,
+  expired: XCircle,
 };
 
 const ROLE_LABELS = {
-  'resident': 'Resident',
-  'community_leader': 'Community Leader', 
-  'service_provider': 'Service Provider',
-  'security': 'Security Officer',
-  'community_admin': 'Community Admin',
-  'district_coordinator': 'District Coordinator',
-  'state_admin': 'State Admin',
-  'admin': 'System Admin'
+  resident: "Resident",
+  community_leader: "Community Leader",
+  service_provider: "Service Provider",
+  security: "Security Officer",
+  community_admin: "Community Admin",
+  district_coordinator: "District Coordinator",
+  state_admin: "State Admin",
+  admin: "System Admin",
 };
 
 export const RoleRequestsList: React.FC = () => {
@@ -79,7 +85,9 @@ export const RoleRequestsList: React.FC = () => {
   const { toast } = useToast();
   const [requests, setRequests] = useState<RoleRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'my-requests' | 'pending-approval'>('my-requests');
+  const [activeTab, setActiveTab] = useState<
+    "my-requests" | "pending-approval"
+  >("my-requests");
 
   const text = {
     en: {
@@ -89,7 +97,7 @@ export const RoleRequestsList: React.FC = () => {
       pendingApproval: "Pending Approval",
       noRequests: "No requests found",
       requestedBy: "Requested by",
-      currentRole: "Current Role", 
+      currentRole: "Current Role",
       requestedRole: "Requested Role",
       status: "Status",
       reason: "Reason",
@@ -99,7 +107,7 @@ export const RoleRequestsList: React.FC = () => {
       lastUpdated: "Last updated",
       approve: "Approve",
       reject: "Reject",
-      viewDetails: "View Details"
+      viewDetails: "View Details",
     },
     ms: {
       title: "Permohonan Perubahan Peranan",
@@ -109,7 +117,7 @@ export const RoleRequestsList: React.FC = () => {
       noRequests: "Tiada permohonan dijumpai",
       requestedBy: "Dimohon oleh",
       currentRole: "Peranan Semasa",
-      requestedRole: "Peranan Dimohon", 
+      requestedRole: "Peranan Dimohon",
       status: "Status",
       reason: "Sebab",
       justification: "Justifikasi",
@@ -118,8 +126,8 @@ export const RoleRequestsList: React.FC = () => {
       lastUpdated: "Kemaskini terakhir",
       approve: "Luluskan",
       reject: "Tolak",
-      viewDetails: "Lihat Butiran"
-    }
+      viewDetails: "Lihat Butiran",
+    },
   };
 
   const t = text[language];
@@ -133,42 +141,44 @@ export const RoleRequestsList: React.FC = () => {
 
     setIsLoading(true);
     try {
-      let query = supabase
-        .from('role_change_requests')
-        .select('*');
+      let query = supabase.from("role_change_requests").select("*");
 
-      if (activeTab === 'my-requests') {
+      if (activeTab === "my-requests") {
         // Fetch user's own requests
-        query = query.eq('requester_id', user.id);
+        query = query.eq("requester_id", user.id);
       } else {
         // Fetch requests that need approval based on user's role
         // This is a simplified approach - you might want to implement more complex logic
-        query = query.neq('requester_id', user.id).eq('status', 'pending');
+        query = query.neq("requester_id", user.id).eq("status", "pending");
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await query.order("created_at", {
+        ascending: false,
+      });
 
       if (error) throw error;
-      
+
       // Fetch profiles separately for simplicity
-      const requestsWithProfiles = await Promise.all((data || []).map(async (request) => {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name, email')
-          .eq('id', request.requester_id)
-          .single();
-        
-        return {
-          ...request,
-          requester_profile: profile
-        } as RoleRequest;
-      }));
+      const requestsWithProfiles = await Promise.all(
+        (data || []).map(async (request) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name, email")
+            .eq("user_id", request.requester_id)
+            .single();
+
+          return {
+            ...request,
+            requester_profile: profile,
+          } as RoleRequest;
+        })
+      );
 
       setRequests(requestsWithProfiles);
     } catch (error) {
-      console.error('Error fetching role requests:', error);
+      console.error("Error fetching role requests:", error);
       toast({
-        title: "Error", 
+        title: "Error",
         description: "Failed to fetch role requests",
         variant: "destructive",
       });
@@ -180,27 +190,29 @@ export const RoleRequestsList: React.FC = () => {
   const handleApproval = async (requestId: string, approve: boolean) => {
     try {
       const updateData = {
-        status: approve ? 'approved' as const : 'rejected' as const,
+        status: approve ? ("approved" as const) : ("rejected" as const),
         approved_by: user?.id,
         approved_at: approve ? new Date().toISOString() : null,
-        rejection_reason: approve ? null : 'Rejected by approver'
+        rejection_reason: approve ? null : "Rejected by approver",
       };
 
       const { error } = await supabase
-        .from('role_change_requests')
+        .from("role_change_requests")
         .update(updateData)
-        .eq('id', requestId);
+        .eq("id", requestId);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: `Request ${approve ? 'approved' : 'rejected'} successfully`,
+        description: `Request ${
+          approve ? "approved" : "rejected"
+        } successfully`,
       });
 
       fetchRequests(); // Refresh the list
     } catch (error) {
-      console.error('Error updating request:', error);
+      console.error("Error updating request:", error);
       toast({
         title: "Error",
         description: "Failed to update request",
@@ -210,8 +222,9 @@ export const RoleRequestsList: React.FC = () => {
   };
 
   const RoleRequestCard: React.FC<{ request: RoleRequest }> = ({ request }) => {
-    const StatusIcon = STATUS_ICONS[request.status as keyof typeof STATUS_ICONS];
-    
+    const StatusIcon =
+      STATUS_ICONS[request.status as keyof typeof STATUS_ICONS];
+
     return (
       <Card className="mb-4">
         <CardHeader className="pb-3">
@@ -220,40 +233,58 @@ export const RoleRequestsList: React.FC = () => {
               <User className="h-4 w-4 text-muted-foreground" />
               <div>
                 <CardTitle className="text-base">
-                  {activeTab === 'my-requests' ? 'My Request' : request.requester_profile?.full_name || 'Unknown User'}
+                  {activeTab === "my-requests"
+                    ? "My Request"
+                    : request.requester_profile?.full_name || "Unknown User"}
                 </CardTitle>
                 <CardDescription className="text-sm">
                   {request.requester_profile?.email}
                 </CardDescription>
               </div>
             </div>
-            <Badge variant={STATUS_COLORS[request.status as keyof typeof STATUS_COLORS]}>
+            <Badge
+              variant={
+                STATUS_COLORS[request.status as keyof typeof STATUS_COLORS]
+              }
+            >
               <StatusIcon className="h-3 w-3 mr-1" />
-              {request.status.replace('_', ' ').toUpperCase()}
+              {request.status.replace("_", " ").toUpperCase()}
             </Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-2 text-sm">
             <Badge variant="outline">
-              {ROLE_LABELS[request.current_user_role as keyof typeof ROLE_LABELS]}
+              {
+                ROLE_LABELS[
+                  request.current_user_role as keyof typeof ROLE_LABELS
+                ]
+              }
             </Badge>
             <ArrowRight className="h-4 w-4 text-muted-foreground" />
             <Badge variant="secondary">
-              {ROLE_LABELS[request.requested_user_role as keyof typeof ROLE_LABELS]}
+              {
+                ROLE_LABELS[
+                  request.requested_user_role as keyof typeof ROLE_LABELS
+                ]
+              }
             </Badge>
           </div>
 
           <div className="space-y-2">
             <div>
               <span className="text-sm font-medium">{t.reason}: </span>
-              <span className="text-sm text-muted-foreground">{request.reason}</span>
+              <span className="text-sm text-muted-foreground">
+                {request.reason}
+              </span>
             </div>
-            
+
             {request.justification && (
               <div>
                 <span className="text-sm font-medium">{t.justification}: </span>
-                <span className="text-sm text-muted-foreground">{request.justification}</span>
+                <span className="text-sm text-muted-foreground">
+                  {request.justification}
+                </span>
               </div>
             )}
 
@@ -280,35 +311,38 @@ export const RoleRequestsList: React.FC = () => {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                {t.submittedOn}: {format(new Date(request.created_at), 'MMM dd, yyyy')}
+                {t.submittedOn}:{" "}
+                {format(new Date(request.created_at), "MMM dd, yyyy")}
               </div>
               {request.updated_at !== request.created_at && (
                 <div className="flex items-center gap-1">
                   <RefreshCw className="h-3 w-3" />
-                  {t.lastUpdated}: {format(new Date(request.updated_at), 'MMM dd, yyyy')}
+                  {t.lastUpdated}:{" "}
+                  {format(new Date(request.updated_at), "MMM dd, yyyy")}
                 </div>
               )}
             </div>
 
-            {activeTab === 'pending-approval' && request.status === 'pending' && (
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleApproval(request.id, false)}
-                >
-                  <XCircle className="h-3 w-3 mr-1" />
-                  {t.reject}
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => handleApproval(request.id, true)}
-                >
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  {t.approve}
-                </Button>
-              </div>
-            )}
+            {activeTab === "pending-approval" &&
+              request.status === "pending" && (
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleApproval(request.id, false)}
+                  >
+                    <XCircle className="h-3 w-3 mr-1" />
+                    {t.reject}
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleApproval(request.id, true)}
+                  >
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    {t.approve}
+                  </Button>
+                </div>
+              )}
           </div>
         </CardContent>
       </Card>
@@ -322,14 +356,21 @@ export const RoleRequestsList: React.FC = () => {
         <CardDescription>{t.description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(value: any) => setActiveTab(value)}
+        >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="my-requests">{t.myRequests}</TabsTrigger>
-            {(hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin')) && (
-              <TabsTrigger value="pending-approval">{t.pendingApproval}</TabsTrigger>
+            {(hasRole("community_admin") ||
+              hasRole("district_coordinator") ||
+              hasRole("state_admin")) && (
+              <TabsTrigger value="pending-approval">
+                {t.pendingApproval}
+              </TabsTrigger>
             )}
           </TabsList>
-          
+
           <TabsContent value="my-requests">
             <ScrollArea className="h-[600px]">
               {isLoading ? (

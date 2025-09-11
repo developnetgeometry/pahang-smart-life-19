@@ -1,16 +1,44 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Wrench, AlertTriangle, Clock, User, Calendar, CheckCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Plus,
+  Wrench,
+  AlertTriangle,
+  Clock,
+  User,
+  Calendar,
+  CheckCircle,
+} from "lucide-react";
+import { toast } from "sonner";
 
 interface Facility {
   id: string;
@@ -49,24 +77,30 @@ export function WorkOrderCreator() {
   const [loading, setLoading] = useState(false);
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
-  const [maintenanceStaff, setMaintenanceStaff] = useState<MaintenanceStaff[]>([]);
+  const [maintenanceStaff, setMaintenanceStaff] = useState<MaintenanceStaff[]>(
+    []
+  );
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
-  
+
   // Form state
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    facility_id: '',
-    equipment_id: '',
-    work_order_type: 'maintenance',
-    priority: 'medium',
-    assigned_to: '',
-    estimated_cost: '',
-    estimated_duration_hours: '',
-    scheduled_start: '',
-    safety_requirements: '',
+    title: "",
+    description: "",
+    facility_id: "",
+    equipment_id: "",
+    work_order_type: "maintenance",
+    priority: "medium",
+    assigned_to: "",
+    estimated_cost: "",
+    estimated_duration_hours: "",
+    scheduled_start: "",
+    safety_requirements: "",
     required_skills: [] as string[],
-    parts_needed: [] as Array<{name: string, quantity: number, estimated_cost: number}>
+    parts_needed: [] as Array<{
+      name: string;
+      quantity: number;
+      estimated_cost: number;
+    }>,
   });
 
   useEffect(() => {
@@ -77,29 +111,32 @@ export function WorkOrderCreator() {
     try {
       // Fetch facilities
       const { data: facilitiesData } = await supabase
-        .from('facilities')
-        .select('id, name, location')
-        .eq('is_available', true);
+        .from("facilities")
+        .select("id, name, location")
+        .eq("is_available", true);
 
       // Fetch equipment
       const { data: equipmentData } = await supabase
-        .from('facility_equipment')
-        .select('id, name, equipment_type, facility_id')
-        .eq('is_active', true);
+        .from("facility_equipment")
+        .select("id, name, equipment_type, facility_id")
+        .eq("is_active", true);
 
       // Fetch maintenance staff - simplified approach
       const { data: staffRoles } = await supabase
-        .from('enhanced_user_roles')
-        .select('user_id')
-        .eq('role', 'maintenance_staff')
-        .eq('is_active', true);
+        .from("enhanced_user_roles")
+        .select("user_id")
+        .eq("role", "maintenance_staff")
+        .eq("is_active", true);
 
       if (staffRoles && staffRoles.length > 0) {
         const { data: staffProfiles } = await supabase
-          .from('profiles')
-          .select('id, full_name, email')
-          .in('id', staffRoles.map(s => s.user_id));
-        
+          .from("profiles")
+          .select("id, user_id, full_name, email")
+          .in(
+            "user_id",
+            staffRoles.map((s) => s.user_id)
+          );
+
         setMaintenanceStaff(staffProfiles || []);
       } else {
         setMaintenanceStaff([]);
@@ -107,29 +144,30 @@ export function WorkOrderCreator() {
 
       // Fetch existing work orders
       const { data: workOrdersData } = await supabase
-        .from('facility_work_orders')
-        .select(`
+        .from("facility_work_orders")
+        .select(
+          `
           *,
           facilities(name),
           facility_equipment(name)
-        `)
-        .in('status', ['pending', 'assigned', 'in_progress'])
-        .order('created_at', { ascending: false });
+        `
+        )
+        .in("status", ["pending", "assigned", "in_progress"])
+        .order("created_at", { ascending: false });
 
       setFacilities(facilitiesData || []);
       setEquipment(equipmentData || []);
       setWorkOrders(workOrdersData || []);
-
     } catch (error) {
-      console.error('Error fetching data:', error);
-      toast.error('Failed to load data');
+      console.error("Error fetching data:", error);
+      toast.error("Failed to load data");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.description || !formData.facility_id) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -145,17 +183,21 @@ export function WorkOrderCreator() {
         priority: formData.priority,
         created_by: user?.id,
         assigned_to: formData.assigned_to || null,
-        estimated_cost: formData.estimated_cost ? parseFloat(formData.estimated_cost) : null,
-        estimated_duration_hours: formData.estimated_duration_hours ? parseFloat(formData.estimated_duration_hours) : null,
+        estimated_cost: formData.estimated_cost
+          ? parseFloat(formData.estimated_cost)
+          : null,
+        estimated_duration_hours: formData.estimated_duration_hours
+          ? parseFloat(formData.estimated_duration_hours)
+          : null,
         scheduled_start: formData.scheduled_start || null,
         safety_requirements: formData.safety_requirements || null,
         required_skills: formData.required_skills,
         parts_needed: formData.parts_needed,
-        status: formData.assigned_to ? 'assigned' : 'pending'
+        status: formData.assigned_to ? "assigned" : "pending",
       };
 
       const { data, error } = await supabase
-        .from('facility_work_orders')
+        .from("facility_work_orders")
         .insert(workOrderData)
         .select()
         .single();
@@ -164,30 +206,30 @@ export function WorkOrderCreator() {
 
       // Send notification to assigned staff if any
       if (formData.assigned_to) {
-        await supabase
-          .from('notifications')
-          .insert({
-            recipient_id: formData.assigned_to,
-            title: 'New Work Order Assigned',
-            message: `You have been assigned a new work order: ${formData.title}`,
-            notification_type: 'work_order',
-            category: 'maintenance',
-            reference_id: data.id,
-            reference_table: 'facility_work_orders',
-            created_by: user?.id,
-            sent_at: new Date().toISOString(),
-            priority: formData.priority === 'critical' || formData.priority === 'high' ? 'high' : 'normal'
-          });
+        await supabase.from("notifications").insert({
+          recipient_id: formData.assigned_to,
+          title: "New Work Order Assigned",
+          message: `You have been assigned a new work order: ${formData.title}`,
+          notification_type: "work_order",
+          category: "maintenance",
+          reference_id: data.id,
+          reference_table: "facility_work_orders",
+          created_by: user?.id,
+          sent_at: new Date().toISOString(),
+          priority:
+            formData.priority === "critical" || formData.priority === "high"
+              ? "high"
+              : "normal",
+        });
       }
 
-      toast.success('Work order created successfully');
+      toast.success("Work order created successfully");
       setOpen(false);
       resetForm();
       fetchData(); // Refresh the list
-
     } catch (error) {
-      console.error('Error creating work order:', error);
-      toast.error('Failed to create work order');
+      console.error("Error creating work order:", error);
+      toast.error("Failed to create work order");
     } finally {
       setLoading(false);
     }
@@ -195,42 +237,51 @@ export function WorkOrderCreator() {
 
   const resetForm = () => {
     setFormData({
-      title: '',
-      description: '',
-      facility_id: '',
-      equipment_id: '',
-      work_order_type: 'maintenance',
-      priority: 'medium',
-      assigned_to: '',
-      estimated_cost: '',
-      estimated_duration_hours: '',
-      scheduled_start: '',
-      safety_requirements: '',
+      title: "",
+      description: "",
+      facility_id: "",
+      equipment_id: "",
+      work_order_type: "maintenance",
+      priority: "medium",
+      assigned_to: "",
+      estimated_cost: "",
+      estimated_duration_hours: "",
+      scheduled_start: "",
+      safety_requirements: "",
       required_skills: [],
-      parts_needed: []
+      parts_needed: [],
     });
   };
 
   const getFilteredEquipment = () => {
-    return equipment.filter(eq => eq.facility_id === formData.facility_id);
+    return equipment.filter((eq) => eq.facility_id === formData.facility_id);
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case "critical":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "high":
+        return "bg-orange-100 text-orange-800 border-orange-200";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-gray-100 text-gray-800';
-      case 'assigned': return 'bg-blue-100 text-blue-800';
-      case 'in_progress': return 'bg-orange-100 text-orange-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "pending":
+        return "bg-gray-100 text-gray-800";
+      case "assigned":
+        return "bg-blue-100 text-blue-800";
+      case "in_progress":
+        return "bg-orange-100 text-orange-800";
+      case "completed":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -239,7 +290,9 @@ export function WorkOrderCreator() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Work Orders</h2>
-          <p className="text-muted-foreground">Create and manage facility work orders</p>
+          <p className="text-muted-foreground">
+            Create and manage facility work orders
+          </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -263,7 +316,9 @@ export function WorkOrderCreator() {
                   <Input
                     id="title"
                     value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
                     placeholder="e.g. Fix broken air conditioning in gym"
                     required
                   />
@@ -274,7 +329,9 @@ export function WorkOrderCreator() {
                   <Textarea
                     id="description"
                     value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
                     placeholder="Detailed description of the work needed..."
                     rows={3}
                     required
@@ -283,9 +340,16 @@ export function WorkOrderCreator() {
 
                 <div>
                   <Label htmlFor="facility">Facility *</Label>
-                  <Select value={formData.facility_id} onValueChange={(value) => 
-                    setFormData({...formData, facility_id: value, equipment_id: ''})
-                  }>
+                  <Select
+                    value={formData.facility_id}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        facility_id: value,
+                        equipment_id: "",
+                      })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select facility" />
                     </SelectTrigger>
@@ -301,9 +365,12 @@ export function WorkOrderCreator() {
 
                 <div>
                   <Label htmlFor="equipment">Equipment (Optional)</Label>
-                  <Select value={formData.equipment_id} onValueChange={(value) => 
-                    setFormData({...formData, equipment_id: value})
-                  }>
+                  <Select
+                    value={formData.equipment_id}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, equipment_id: value })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select equipment" />
                     </SelectTrigger>
@@ -319,9 +386,12 @@ export function WorkOrderCreator() {
 
                 <div>
                   <Label htmlFor="type">Work Order Type</Label>
-                  <Select value={formData.work_order_type} onValueChange={(value) => 
-                    setFormData({...formData, work_order_type: value})
-                  }>
+                  <Select
+                    value={formData.work_order_type}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, work_order_type: value })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -337,9 +407,12 @@ export function WorkOrderCreator() {
 
                 <div>
                   <Label htmlFor="priority">Priority</Label>
-                  <Select value={formData.priority} onValueChange={(value) => 
-                    setFormData({...formData, priority: value})
-                  }>
+                  <Select
+                    value={formData.priority}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, priority: value })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -354,9 +427,12 @@ export function WorkOrderCreator() {
 
                 <div>
                   <Label htmlFor="assigned_to">Assign To</Label>
-                  <Select value={formData.assigned_to} onValueChange={(value) => 
-                    setFormData({...formData, assigned_to: value})
-                  }>
+                  <Select
+                    value={formData.assigned_to}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, assigned_to: value })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select staff member" />
                     </SelectTrigger>
@@ -376,7 +452,12 @@ export function WorkOrderCreator() {
                     id="scheduled_start"
                     type="datetime-local"
                     value={formData.scheduled_start}
-                    onChange={(e) => setFormData({...formData, scheduled_start: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        scheduled_start: e.target.value,
+                      })
+                    }
                   />
                 </div>
 
@@ -387,29 +468,48 @@ export function WorkOrderCreator() {
                     type="number"
                     step="0.01"
                     value={formData.estimated_cost}
-                    onChange={(e) => setFormData({...formData, estimated_cost: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        estimated_cost: e.target.value,
+                      })
+                    }
                     placeholder="0.00"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="estimated_duration">Estimated Duration (Hours)</Label>
+                  <Label htmlFor="estimated_duration">
+                    Estimated Duration (Hours)
+                  </Label>
                   <Input
                     id="estimated_duration"
                     type="number"
                     step="0.5"
                     value={formData.estimated_duration_hours}
-                    onChange={(e) => setFormData({...formData, estimated_duration_hours: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        estimated_duration_hours: e.target.value,
+                      })
+                    }
                     placeholder="0.0"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <Label htmlFor="safety_requirements">Safety Requirements</Label>
+                  <Label htmlFor="safety_requirements">
+                    Safety Requirements
+                  </Label>
                   <Textarea
                     id="safety_requirements"
                     value={formData.safety_requirements}
-                    onChange={(e) => setFormData({...formData, safety_requirements: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        safety_requirements: e.target.value,
+                      })
+                    }
                     placeholder="Special safety considerations or requirements..."
                     rows={2}
                   />
@@ -417,7 +517,11 @@ export function WorkOrderCreator() {
               </div>
 
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={loading}>
@@ -440,8 +544,12 @@ export function WorkOrderCreator() {
           <Card>
             <CardContent className="text-center py-8">
               <Wrench className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">No Active Work Orders</h3>
-              <p className="text-muted-foreground">All work orders are completed or none have been created yet.</p>
+              <h3 className="text-lg font-medium mb-2">
+                No Active Work Orders
+              </h3>
+              <p className="text-muted-foreground">
+                All work orders are completed or none have been created yet.
+              </p>
             </CardContent>
           </Card>
         ) : (
@@ -474,7 +582,7 @@ export function WorkOrderCreator() {
                         {workOrder.priority}
                       </Badge>
                       <Badge className={getStatusColor(workOrder.status)}>
-                        {workOrder.status.replace('_', ' ')}
+                        {workOrder.status.replace("_", " ")}
                       </Badge>
                     </div>
                     <Badge variant="outline" className="text-xs">
@@ -484,7 +592,9 @@ export function WorkOrderCreator() {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">{workOrder.description}</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {workOrder.description}
+                </p>
                 <div className="text-xs text-muted-foreground">
                   Created on {new Date(workOrder.created_at).toLocaleString()}
                 </div>

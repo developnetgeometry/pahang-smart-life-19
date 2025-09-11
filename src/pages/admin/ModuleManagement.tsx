@@ -1,15 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Settings, Shield, Users, Building, MessageSquare, Calendar, ShoppingCart, Camera, UserCheck, Phone, Megaphone, AlertTriangle } from 'lucide-react';
-import SecurityOfficerManagement from '@/components/security/SecurityOfficerManagement';
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Settings,
+  Shield,
+  Users,
+  Building,
+  MessageSquare,
+  Calendar,
+  ShoppingCart,
+  Camera,
+  UserCheck,
+  Phone,
+  Megaphone,
+  AlertTriangle,
+} from "lucide-react";
+import SecurityOfficerManagement from "@/components/security/SecurityOfficerManagement";
 
 interface Community {
   id: string;
@@ -30,39 +55,123 @@ interface ModuleFeature {
 }
 
 const AVAILABLE_MODULES = [
-  { module_name: 'announcements', display_name: 'Announcements', category: 'communication', icon: Megaphone, description: 'Community announcements and updates' },
-  { module_name: 'directory', display_name: 'Community Directory', category: 'information', icon: Users, description: 'Community contact directory' },
-  { module_name: 'complaints', display_name: 'Complaints Management', category: 'services', icon: AlertTriangle, description: 'Submit and manage complaints' },
-  { module_name: 'security', display_name: 'Security Management', category: 'security', icon: Shield, description: 'Panic alerts and security operations. Disabling will deactivate all Security Officer accounts in this community.' },
-  { module_name: 'facilities', display_name: 'Facilities Management', category: 'community', icon: Building, description: 'Manage community facilities and bookings. Disabling will deactivate all Facility Manager and Maintenance Staff accounts in this community.' },
-  { module_name: 'bookings', display_name: 'Facility Bookings', category: 'community', icon: Calendar, description: 'Book and manage facility reservations' },
-  { module_name: 'marketplace', display_name: 'Marketplace', category: 'community', icon: ShoppingCart, description: 'Community marketplace for buying/selling' },
-  { module_name: 'discussions', display_name: 'Community Discussions', category: 'communication', icon: MessageSquare, description: 'Community forum and discussions' },
-  { module_name: 'service_requests', display_name: 'Service Requests', category: 'services', icon: Settings, description: 'Request community services' },
-  { module_name: 'events', display_name: 'Events', category: 'community', icon: Calendar, description: 'Community events and activities' },
-  { module_name: 'cctv', display_name: 'CCTV Monitoring', category: 'security', icon: Camera, description: 'Security camera monitoring' },
-  { module_name: 'visitor_management', display_name: 'Visitor Management', category: 'security', icon: UserCheck, description: 'Manage visitor access and tracking' },
+  {
+    module_name: "announcements",
+    display_name: "Announcements",
+    category: "communication",
+    icon: Megaphone,
+    description: "Community announcements and updates",
+  },
+  {
+    module_name: "directory",
+    display_name: "Community Directory",
+    category: "information",
+    icon: Users,
+    description: "Community contact directory",
+  },
+  {
+    module_name: "complaints",
+    display_name: "Complaints Management",
+    category: "services",
+    icon: AlertTriangle,
+    description: "Submit and manage complaints",
+  },
+  {
+    module_name: "security",
+    display_name: "Security Management",
+    category: "security",
+    icon: Shield,
+    description:
+      "Panic alerts and security operations. Disabling will deactivate all Security Officer accounts in this community.",
+  },
+  {
+    module_name: "facilities",
+    display_name: "Facilities Management",
+    category: "community",
+    icon: Building,
+    description:
+      "Manage community facilities and bookings. Disabling will deactivate all Facility Manager and Maintenance Staff accounts in this community.",
+  },
+  {
+    module_name: "bookings",
+    display_name: "Facility Bookings",
+    category: "community",
+    icon: Calendar,
+    description: "Book and manage facility reservations",
+  },
+  {
+    module_name: "marketplace",
+    display_name: "Marketplace",
+    category: "community",
+    icon: ShoppingCart,
+    description: "Community marketplace for buying/selling",
+  },
+  {
+    module_name: "discussions",
+    display_name: "Community Discussions",
+    category: "communication",
+    icon: MessageSquare,
+    description: "Community forum and discussions",
+  },
+  {
+    module_name: "service_requests",
+    display_name: "Service Requests",
+    category: "services",
+    icon: Settings,
+    description: "Request community services",
+  },
+  {
+    module_name: "events",
+    display_name: "Events",
+    category: "community",
+    icon: Calendar,
+    description: "Community events and activities",
+  },
+  {
+    module_name: "cctv",
+    display_name: "CCTV Monitoring",
+    category: "security",
+    icon: Camera,
+    description: "Security camera monitoring",
+  },
+  {
+    module_name: "visitor_management",
+    display_name: "Visitor Management",
+    category: "security",
+    icon: UserCheck,
+    description: "Manage visitor access and tracking",
+  },
 ];
 
 const CORE_MODULES: string[] = []; // No core modules - Community Admin controls everything
 
 const getCategoryIcon = (category: string) => {
   switch (category) {
-    case 'community': return Building;
-    case 'communication': return MessageSquare;
-    case 'services': return Settings;
-    case 'security': return Shield;
-    default: return Settings;
+    case "community":
+      return Building;
+    case "communication":
+      return MessageSquare;
+    case "services":
+      return Settings;
+    case "security":
+      return Shield;
+    default:
+      return Settings;
   }
 };
 
 const getCategoryColor = (category: string) => {
   switch (category) {
-    case 'community': return 'bg-blue-500/20 text-blue-700 border-blue-200';
-    case 'communication': return 'bg-green-500/20 text-green-700 border-green-200';
-    case 'services': return 'bg-purple-500/20 text-purple-700 border-purple-200';
-    case 'security': return 'bg-red-500/20 text-red-700 border-red-200';
-    default: return 'bg-gray-500/20 text-gray-700 border-gray-200';
+    case "community":
+      return "bg-blue-500/20 text-blue-700 border-blue-200";
+    case "communication":
+      return "bg-green-500/20 text-green-700 border-green-200";
+    case "services":
+      return "bg-purple-500/20 text-purple-700 border-purple-200";
+    case "security":
+      return "bg-red-500/20 text-red-700 border-red-200";
+    default:
+      return "bg-gray-500/20 text-gray-700 border-gray-200";
   }
 };
 
@@ -73,7 +182,7 @@ export default function ModuleManagement() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const canManageOwnCommunity = hasRole('community_admin');
+  const canManageOwnCommunity = hasRole("community_admin");
 
   // Fetch user's community - single community system
   useEffect(() => {
@@ -86,40 +195,42 @@ export default function ModuleManagement() {
       try {
         // Get user's community from their profile
         const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('community_id')
-          .eq('id', user.id)
+          .from("profiles")
+          .select("community_id")
+          .eq("user_id", user.id)
           .single();
-        
+
         if (profileError) throw profileError;
-        
+
         if (profile?.community_id) {
           // Get community details with district name
           const { data: community, error: communityError } = await supabase
-            .from('communities')
-            .select(`
+            .from("communities")
+            .select(
+              `
               id, 
               name, 
               district_id,
               description,
               districts!inner(name)
-            `)
-            .eq('id', profile.community_id)
+            `
+            )
+            .eq("id", profile.community_id)
             .single();
-          
+
           if (communityError) throw communityError;
-          
+
           setUserCommunity({
             id: community.id,
             name: community.name,
             district_id: community.district_id,
             description: community.description,
-            district_name: community.districts?.name
+            district_name: community.districts?.name,
           });
         }
       } catch (error) {
-        console.error('Error fetching user community:', error);
-        toast.error('Failed to load community information');
+        console.error("Error fetching user community:", error);
+        toast.error("Failed to load community information");
       } finally {
         setLoading(false);
       }
@@ -135,151 +246,175 @@ export default function ModuleManagement() {
 
       try {
         const { data, error } = await supabase
-          .from('community_features')
-          .select('*')
-          .eq('community_id', userCommunity.id);
+          .from("community_features")
+          .select("*")
+          .eq("community_id", userCommunity.id);
 
         if (error) throw error;
 
         // Create module features array with all available modules
-        const features: ModuleFeature[] = AVAILABLE_MODULES.map(module => {
-          const existingFeature = data?.find(f => f.module_name === module.module_name);
+        const features: ModuleFeature[] = AVAILABLE_MODULES.map((module) => {
+          const existingFeature = data?.find(
+            (f) => f.module_name === module.module_name
+          );
           return {
             id: existingFeature?.id,
             module_name: module.module_name,
             display_name: module.display_name,
             category: module.category,
             is_enabled: existingFeature?.is_enabled || false,
-            notes: existingFeature?.notes || '',
-            is_core: false // No core modules - everything is controllable
+            notes: existingFeature?.notes || "",
+            is_core: false, // No core modules - everything is controllable
           };
         });
 
         setModuleFeatures(features);
       } catch (error) {
-        console.error('Error fetching module features:', error);
-        toast.error('Failed to load module features');
+        console.error("Error fetching module features:", error);
+        toast.error("Failed to load module features");
       }
     };
 
     fetchModuleFeatures();
   }, [userCommunity]);
 
-  const handleToggleModule = async (moduleFeature: ModuleFeature, enabled: boolean) => {
+  const handleToggleModule = async (
+    moduleFeature: ModuleFeature,
+    enabled: boolean
+  ) => {
     if (!userCommunity) return;
-    
+
     // Show confirmation for critical modules being disabled
-    if (!enabled && ['security', 'facilities'].includes(moduleFeature.module_name)) {
+    if (
+      !enabled &&
+      ["security", "facilities"].includes(moduleFeature.module_name)
+    ) {
       const moduleNames = {
-        security: 'Security Management',
-        facilities: 'Facilities Management'
+        security: "Security Management",
+        facilities: "Facilities Management",
       };
-      
+
       const staffRoles = {
-        security: 'Security Officers',
-        facilities: 'Facility Managers and Maintenance Staff'
+        security: "Security Officers",
+        facilities: "Facility Managers and Maintenance Staff",
       };
-      
+
       const confirmed = window.confirm(
-        `Are you sure you want to disable ${moduleNames[moduleFeature.module_name as keyof typeof moduleNames]}?\n\n` +
-        `This will:\n` +
-        `• Hide related features from residents\n` +
-        `• Deactivate all ${staffRoles[moduleFeature.module_name as keyof typeof staffRoles]} accounts in this community\n` +
-        `• Remove access to panic buttons and security features\n\n` +
-        `You can re-enable this module later, but staff accounts will need to be manually reactivated.`
+        `Are you sure you want to disable ${
+          moduleNames[moduleFeature.module_name as keyof typeof moduleNames]
+        }?\n\n` +
+          `This will:\n` +
+          `• Hide related features from residents\n` +
+          `• Deactivate all ${
+            staffRoles[moduleFeature.module_name as keyof typeof staffRoles]
+          } accounts in this community\n` +
+          `• Remove access to panic buttons and security features\n\n` +
+          `You can re-enable this module later, but staff accounts will need to be manually reactivated.`
       );
-      
+
       if (!confirmed) return;
     }
-    
+
     try {
       setSaving(true);
-      
+
       if (moduleFeature.id) {
         // Update existing record
         const { error } = await supabase
-          .from('community_features')
+          .from("community_features")
           .update({
             is_enabled: enabled,
             enabled_by: user?.id,
-            enabled_at: new Date().toISOString()
+            enabled_at: new Date().toISOString(),
           })
-          .eq('id', moduleFeature.id);
+          .eq("id", moduleFeature.id);
 
         if (error) throw error;
       } else {
         // Create new record
-        const { error } = await supabase
-          .from('community_features')
-          .insert({
-            community_id: userCommunity.id,
-            module_name: moduleFeature.module_name,
-            is_enabled: enabled,
-            enabled_by: user?.id,
-            enabled_at: new Date().toISOString()
-          });
+        const { error } = await supabase.from("community_features").insert({
+          community_id: userCommunity.id,
+          module_name: moduleFeature.module_name,
+          is_enabled: enabled,
+          enabled_by: user?.id,
+          enabled_at: new Date().toISOString(),
+        });
 
         if (error) throw error;
       }
 
       // Call sync function to deactivate staff accounts if needed
-      if (['security', 'facilities'].includes(moduleFeature.module_name)) {
+      if (["security", "facilities"].includes(moduleFeature.module_name)) {
         try {
-          const { error: syncError } = await supabase.functions.invoke('sync-community-roles', {
-            body: {
-              community_id: userCommunity.id,
-              module_name: moduleFeature.module_name,
-              is_enabled: enabled
+          const { error: syncError } = await supabase.functions.invoke(
+            "sync-community-roles",
+            {
+              body: {
+                community_id: userCommunity.id,
+                module_name: moduleFeature.module_name,
+                is_enabled: enabled,
+              },
             }
-          });
+          );
 
           if (syncError) {
-            console.error('Error syncing roles:', syncError);
-            toast.error('Module updated but failed to sync staff accounts. Please check manually.');
+            console.error("Error syncing roles:", syncError);
+            toast.error(
+              "Module updated but failed to sync staff accounts. Please check manually."
+            );
           }
         } catch (syncError) {
-          console.error('Error calling sync function:', syncError);
-          toast.error('Module updated but failed to sync staff accounts.');
+          console.error("Error calling sync function:", syncError);
+          toast.error("Module updated but failed to sync staff accounts.");
         }
       }
 
       // Update local state
-      setModuleFeatures(prev => prev.map(f => 
-        f.module_name === moduleFeature.module_name 
-          ? { ...f, is_enabled: enabled }
-          : f
-      ));
+      setModuleFeatures((prev) =>
+        prev.map((f) =>
+          f.module_name === moduleFeature.module_name
+            ? { ...f, is_enabled: enabled }
+            : f
+        )
+      );
 
-      toast.success(`${moduleFeature.display_name} ${enabled ? 'enabled' : 'disabled'} successfully`);
+      toast.success(
+        `${moduleFeature.display_name} ${
+          enabled ? "enabled" : "disabled"
+        } successfully`
+      );
     } catch (error) {
-      console.error('Error updating module feature:', error);
-      toast.error('Failed to update module feature');
+      console.error("Error updating module feature:", error);
+      toast.error("Failed to update module feature");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleUpdateNotes = async (moduleFeature: ModuleFeature, notes: string) => {
+  const handleUpdateNotes = async (
+    moduleFeature: ModuleFeature,
+    notes: string
+  ) => {
     try {
       if (moduleFeature.id) {
         const { error } = await supabase
-          .from('community_features')
+          .from("community_features")
           .update({ notes })
-          .eq('id', moduleFeature.id);
+          .eq("id", moduleFeature.id);
 
         if (error) throw error;
       }
 
-      setModuleFeatures(prev => prev.map(f => 
-        f.module_name === moduleFeature.module_name 
-          ? { ...f, notes }
-          : f
-      ));
+      setModuleFeatures((prev) =>
+        prev.map((f) =>
+          f.module_name === moduleFeature.module_name ? { ...f, notes } : f
+        )
+      );
 
-      toast.success('Notes updated successfully');
+      toast.success("Notes updated successfully");
     } catch (error) {
-      console.error('Error updating notes:', error);
-      toast.error('Failed to update notes');
+      console.error("Error updating notes:", error);
+      toast.error("Failed to update notes");
     }
   };
 
@@ -290,7 +425,9 @@ export default function ModuleManagement() {
           <CardContent className="flex items-center justify-center py-12">
             <div className="text-center">
               <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">Access Denied</h3>
+              <h3 className="text-lg font-medium text-foreground mb-2">
+                Access Denied
+              </h3>
               <p className="text-sm text-muted-foreground">
                 You don't have permission to manage module features.
               </p>
@@ -312,7 +449,9 @@ export default function ModuleManagement() {
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Module Management</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-2">
+          Module Management
+        </h1>
         <p className="text-muted-foreground">
           Enable or disable community modules for your community
         </p>
@@ -323,7 +462,9 @@ export default function ModuleManagement() {
               Managing: {userCommunity.name}
             </h2>
             {userCommunity.description && (
-              <p className="text-blue-700 dark:text-blue-300 mt-1">{userCommunity.description}</p>
+              <p className="text-blue-700 dark:text-blue-300 mt-1">
+                {userCommunity.description}
+              </p>
             )}
             {userCommunity.district_name && (
               <p className="text-blue-600 dark:text-blue-400 text-sm mt-1">
@@ -340,13 +481,12 @@ export default function ModuleManagement() {
             <div className="text-center">
               <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
-                {loading ? 'Loading Community...' : 'No Community Found'}
+                {loading ? "Loading Community..." : "No Community Found"}
               </h3>
               <p className="text-sm text-muted-foreground">
-                {loading 
-                  ? 'Please wait while we load your community information.'
-                  : 'You are not assigned to any community. Please contact your administrator.'
-                }
+                {loading
+                  ? "Please wait while we load your community information."
+                  : "You are not assigned to any community. Please contact your administrator."}
               </p>
             </div>
           </CardContent>
@@ -361,7 +501,9 @@ export default function ModuleManagement() {
                   <div className="flex items-center gap-3">
                     <CategoryIcon className="h-5 w-5 text-primary" />
                     <div>
-                      <CardTitle className="capitalize">{category} Modules</CardTitle>
+                      <CardTitle className="capitalize">
+                        {category} Modules
+                      </CardTitle>
                       <CardDescription>
                         Manage {category} related features for this community
                       </CardDescription>
@@ -369,58 +511,81 @@ export default function ModuleManagement() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {modules.map(module => {
-                    const moduleFeature = moduleFeatures.find(f => f.module_name === module.module_name);
+                  {modules.map((module) => {
+                    const moduleFeature = moduleFeatures.find(
+                      (f) => f.module_name === module.module_name
+                    );
                     const ModuleIcon = module.icon;
 
                     return (
-                      <div key={module.module_name} className="border rounded-lg p-4 space-y-3">
+                      <div
+                        key={module.module_name}
+                        className="border rounded-lg p-4 space-y-3"
+                      >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <ModuleIcon className="h-5 w-5 text-muted-foreground" />
                             <div>
                               <div className="flex items-center gap-2">
-                                <h4 className="font-medium">{module.display_name}</h4>
-                                <Badge 
-                                  variant="outline" 
-                                  className={`text-xs ${getCategoryColor(module.category)}`}
+                                <h4 className="font-medium">
+                                  {module.display_name}
+                                </h4>
+                                <Badge
+                                  variant="outline"
+                                  className={`text-xs ${getCategoryColor(
+                                    module.category
+                                  )}`}
                                 >
                                   {module.category}
                                 </Badge>
                               </div>
-                              <p className="text-sm text-muted-foreground">{module.description}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {module.description}
+                              </p>
                             </div>
                           </div>
                           <Switch
                             checked={moduleFeature?.is_enabled || false}
-                            onCheckedChange={(enabled) => handleToggleModule(moduleFeature || {
-                              module_name: module.module_name,
-                              display_name: module.display_name,
-                              category: module.category,
-                              is_enabled: false
-                            }, enabled)}
+                            onCheckedChange={(enabled) =>
+                              handleToggleModule(
+                                moduleFeature || {
+                                  module_name: module.module_name,
+                                  display_name: module.display_name,
+                                  category: module.category,
+                                  is_enabled: false,
+                                },
+                                enabled
+                              )
+                            }
                             disabled={saving || loading}
                           />
                         </div>
-                        
+
                         {moduleFeature && (
                           <div className="pl-8 space-y-4">
                             <Textarea
                               placeholder="Add notes about this module configuration..."
-                              value={moduleFeature.notes || ''}
-                              onChange={(e) => setModuleFeatures(prev => prev.map(f => 
-                                f.module_name === module.module_name 
-                                  ? { ...f, notes: e.target.value }
-                                  : f
-                              ))}
-                              onBlur={(e) => handleUpdateNotes(moduleFeature, e.target.value)}
+                              value={moduleFeature.notes || ""}
+                              onChange={(e) =>
+                                setModuleFeatures((prev) =>
+                                  prev.map((f) =>
+                                    f.module_name === module.module_name
+                                      ? { ...f, notes: e.target.value }
+                                      : f
+                                  )
+                                )
+                              }
+                              onBlur={(e) =>
+                                handleUpdateNotes(moduleFeature, e.target.value)
+                              }
                               className="text-sm"
                               rows={2}
                             />
-                            
-                            {module.module_name === 'security' && moduleFeature.is_enabled && (
-                              <SecurityOfficerManagement />
-                            )}
+
+                            {module.module_name === "security" &&
+                              moduleFeature.is_enabled && (
+                                <SecurityOfficerManagement />
+                              )}
                           </div>
                         )}
                       </div>

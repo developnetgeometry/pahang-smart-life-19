@@ -1,17 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { toast } from 'sonner';
-import { Building, CheckCircle, Upload, X } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import { Building, CheckCircle, Upload, X } from "lucide-react";
 
 // Categories and business types will be fetched from database
 
@@ -32,76 +44,76 @@ export default function ServiceProviderApplication() {
   const fetchServiceCategories = async () => {
     try {
       const { data, error } = await supabase
-        .from('service_categories')
-        .select('name')
-        .eq('is_active', true)
-        .order('name');
+        .from("service_categories")
+        .select("name")
+        .eq("is_active", true)
+        .order("name");
 
       if (error) throw error;
-      setServiceCategories(data?.map(cat => cat.name) || []);
+      setServiceCategories(data?.map((cat) => cat.name) || []);
     } catch (error) {
-      console.error('Error fetching service categories:', error);
-      toast.error('Failed to load service categories');
+      console.error("Error fetching service categories:", error);
+      toast.error("Failed to load service categories");
     }
   };
 
   const fetchBusinessTypes = async () => {
     try {
       const { data, error } = await supabase
-        .from('business_types')
-        .select('name')
-        .eq('is_active', true)
-        .order('name');
+        .from("business_types")
+        .select("name")
+        .eq("is_active", true)
+        .order("name");
 
       if (error) throw error;
-      setBusinessTypes(data?.map(type => type.name) || []);
+      setBusinessTypes(data?.map((type) => type.name) || []);
     } catch (error) {
-      console.error('Error fetching business types:', error);
-      toast.error('Failed to load business types');
+      console.error("Error fetching business types:", error);
+      toast.error("Failed to load business types");
     }
   };
 
   const [formData, setFormData] = useState({
     // Business Information
-    businessName: '',
-    businessType: '',
-    businessDescription: '',
-    businessRegistrationNumber: '',
-    taxId: '',
-    
+    businessName: "",
+    businessType: "",
+    businessDescription: "",
+    businessRegistrationNumber: "",
+    taxId: "",
+
     // Contact Information
-    contactPerson: '',
-    contactPhone: '',
-    contactEmail: user?.email || '',
-    businessAddress: '',
-    
+    contactPerson: "",
+    contactPhone: "",
+    contactEmail: user?.email || "",
+    businessAddress: "",
+
     // Services
-    customService: '',
-    
+    customService: "",
+
     // Additional Information
-    websiteUrl: '',
-    experienceYears: '',
+    websiteUrl: "",
+    experienceYears: "",
   });
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const addCustomService = () => {
     if (formData.customService.trim()) {
-      setSelectedServices(prev => [...prev, formData.customService.trim()]);
-      setFormData(prev => ({ ...prev, customService: '' }));
+      setSelectedServices((prev) => [...prev, formData.customService.trim()]);
+      setFormData((prev) => ({ ...prev, customService: "" }));
     }
   };
 
   const removeService = (service: string) => {
-    setSelectedServices(prev => prev.filter(s => s !== service));
+    setSelectedServices((prev) => prev.filter((s) => s !== service));
   };
 
   const toggleCategory = (category: string) => {
-    setSelectedCategories(prev => 
-      prev.includes(category) 
-        ? prev.filter(c => c !== category)
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
         : [...prev, category]
     );
   };
@@ -109,36 +121,45 @@ export default function ServiceProviderApplication() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-      toast.error('You must be logged in to submit an application');
+      toast.error("You must be logged in to submit an application");
       return;
     }
 
     // Validation
     if (!formData.businessName.trim()) {
-      toast.error('Business name is required');
+      toast.error("Business name is required");
       return;
     }
 
     if (!formData.businessType) {
-      toast.error('Business type is required');
+      toast.error("Business type is required");
       return;
     }
 
     if (selectedCategories.length === 0) {
-      toast.error('Please select at least one service category');
+      toast.error("Please select at least one service category");
       return;
     }
 
     setLoading(true);
-    
+
     try {
+      // Validate and clean UUID fields
+      const validateUUID = (value: any): string | null => {
+        if (!value || typeof value !== "string" || value.trim() === "") {
+          return null;
+        }
+        return value.trim();
+      };
+
       const applicationData = {
         applicant_id: user.id,
-        district_id: user.active_community_id,
+        district_id: validateUUID(user.active_community_id), // Convert empty string to null
         business_name: formData.businessName,
         business_type: formData.businessType,
         business_description: formData.businessDescription,
-        business_registration_number: formData.businessRegistrationNumber || null,
+        business_registration_number:
+          formData.businessRegistrationNumber || null,
         tax_id: formData.taxId || null,
         contact_person: formData.contactPerson,
         contact_phone: formData.contactPhone,
@@ -147,20 +168,22 @@ export default function ServiceProviderApplication() {
         services_offered: selectedServices,
         service_categories: selectedCategories,
         website_url: formData.websiteUrl || null,
-        experience_years: formData.experienceYears ? parseInt(formData.experienceYears) : null,
+        experience_years: formData.experienceYears
+          ? parseInt(formData.experienceYears)
+          : null,
       };
 
       const { error } = await supabase
-        .from('service_provider_applications')
+        .from("service_provider_applications")
         .insert(applicationData);
 
       if (error) throw error;
 
-      toast.success('Application submitted successfully!');
-      navigate('/my-applications');
+      toast.success("Application submitted successfully!");
+      navigate("/my-applications");
     } catch (error: any) {
-      console.error('Error submitting application:', error);
-      toast.error('Failed to submit application. Please try again.');
+      console.error("Error submitting application:", error);
+      toast.error("Failed to submit application. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -196,21 +219,30 @@ export default function ServiceProviderApplication() {
                 <Input
                   id="businessName"
                   value={formData.businessName}
-                  onChange={(e) => handleInputChange('businessName', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("businessName", e.target.value)
+                  }
                   placeholder="Enter your business name"
                   required
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="businessType">Business Type *</Label>
-                <Select value={formData.businessType} onValueChange={(value) => handleInputChange('businessType', value)}>
+                <Select
+                  value={formData.businessType}
+                  onValueChange={(value) =>
+                    handleInputChange("businessType", value)
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select business type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {businessTypes.map(type => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    {businessTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -222,7 +254,9 @@ export default function ServiceProviderApplication() {
               <Textarea
                 id="businessDescription"
                 value={formData.businessDescription}
-                onChange={(e) => handleInputChange('businessDescription', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("businessDescription", e.target.value)
+                }
                 placeholder="Describe your business, experience, and what makes you unique"
                 rows={4}
               />
@@ -230,21 +264,28 @@ export default function ServiceProviderApplication() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="registrationNumber">Business Registration Number</Label>
+                <Label htmlFor="registrationNumber">
+                  Business Registration Number
+                </Label>
                 <Input
                   id="registrationNumber"
                   value={formData.businessRegistrationNumber}
-                  onChange={(e) => handleInputChange('businessRegistrationNumber', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange(
+                      "businessRegistrationNumber",
+                      e.target.value
+                    )
+                  }
                   placeholder="e.g., 202301234567"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="taxId">Tax ID / SSM Number</Label>
                 <Input
                   id="taxId"
                   value={formData.taxId}
-                  onChange={(e) => handleInputChange('taxId', e.target.value)}
+                  onChange={(e) => handleInputChange("taxId", e.target.value)}
                   placeholder="Enter tax identification number"
                 />
               </div>
@@ -267,18 +308,22 @@ export default function ServiceProviderApplication() {
                 <Input
                   id="contactPerson"
                   value={formData.contactPerson}
-                  onChange={(e) => handleInputChange('contactPerson', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("contactPerson", e.target.value)
+                  }
                   placeholder="Primary contact name"
                   required
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="contactPhone">Contact Phone *</Label>
                 <Input
                   id="contactPhone"
                   value={formData.contactPhone}
-                  onChange={(e) => handleInputChange('contactPhone', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("contactPhone", e.target.value)
+                  }
                   placeholder="e.g., +60123456789"
                   required
                 />
@@ -292,18 +337,22 @@ export default function ServiceProviderApplication() {
                   id="contactEmail"
                   type="email"
                   value={formData.contactEmail}
-                  onChange={(e) => handleInputChange('contactEmail', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("contactEmail", e.target.value)
+                  }
                   placeholder="business@example.com"
                   required
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="websiteUrl">Website URL</Label>
                 <Input
                   id="websiteUrl"
                   value={formData.websiteUrl}
-                  onChange={(e) => handleInputChange('websiteUrl', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("websiteUrl", e.target.value)
+                  }
                   placeholder="https://yourwebsite.com"
                 />
               </div>
@@ -314,7 +363,9 @@ export default function ServiceProviderApplication() {
               <Textarea
                 id="businessAddress"
                 value={formData.businessAddress}
-                onChange={(e) => handleInputChange('businessAddress', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("businessAddress", e.target.value)
+                }
                 placeholder="Full business address including postcode"
                 rows={2}
                 required
@@ -333,19 +384,23 @@ export default function ServiceProviderApplication() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-sm font-medium">Service Categories *</Label>
+              <Label className="text-sm font-medium">
+                Service Categories *
+              </Label>
               <p className="text-xs text-muted-foreground mb-3">
                 Select all categories that apply to your business
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {serviceCategories.map(category => (
+                {serviceCategories.map((category) => (
                   <div key={category} className="flex items-center space-x-2">
                     <Checkbox
                       id={category}
                       checked={selectedCategories.includes(category)}
                       onCheckedChange={() => toggleCategory(category)}
                     />
-                    <Label htmlFor={category} className="text-sm">{category}</Label>
+                    <Label htmlFor={category} className="text-sm">
+                      {category}
+                    </Label>
                   </div>
                 ))}
               </div>
@@ -359,22 +414,36 @@ export default function ServiceProviderApplication() {
               <div className="flex flex-col sm:flex-row gap-2 mb-3">
                 <Input
                   value={formData.customService}
-                  onChange={(e) => handleInputChange('customService', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("customService", e.target.value)
+                  }
                   placeholder="e.g., Plumbing repair, House cleaning, etc."
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomService())}
+                  onKeyPress={(e) =>
+                    e.key === "Enter" &&
+                    (e.preventDefault(), addCustomService())
+                  }
                   className="flex-1"
                 />
-                <Button type="button" onClick={addCustomService} variant="outline" className="whitespace-nowrap">
+                <Button
+                  type="button"
+                  onClick={addCustomService}
+                  variant="outline"
+                  className="whitespace-nowrap"
+                >
                   Add
                 </Button>
               </div>
               {selectedServices.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {selectedServices.map(service => (
-                    <Badge key={service} variant="secondary" className="flex items-center gap-1">
+                  {selectedServices.map((service) => (
+                    <Badge
+                      key={service}
+                      variant="secondary"
+                      className="flex items-center gap-1"
+                    >
                       {service}
-                      <X 
-                        className="h-3 w-3 cursor-pointer" 
+                      <X
+                        className="h-3 w-3 cursor-pointer"
                         onClick={() => removeService(service)}
                       />
                     </Badge>
@@ -391,7 +460,9 @@ export default function ServiceProviderApplication() {
                   type="number"
                   min="0"
                   value={formData.experienceYears}
-                  onChange={(e) => handleInputChange('experienceYears', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("experienceYears", e.target.value)
+                  }
                   placeholder="e.g., 5"
                 />
               </div>
@@ -401,16 +472,16 @@ export default function ServiceProviderApplication() {
 
         {/* Submit Button */}
         <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => navigate('/')}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate("/")}
             className="w-full sm:w-auto"
           >
             Cancel
           </Button>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={loading}
             className="w-full sm:w-auto min-w-[120px]"
           >

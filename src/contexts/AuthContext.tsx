@@ -6,6 +6,8 @@ import React, {
   useState,
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { CheckCircle } from "lucide-react";
 
 export type UserRole =
   | "resident"
@@ -76,6 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
   const [theme, setTheme] = useState<Theme>("light");
   const [roles, setRoles] = useState<UserRole[]>([]);
+  const { toast } = useToast();
 
   const isApproved = accountStatus === "approved";
 
@@ -84,6 +87,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (theme === "dark") document.documentElement.classList.add("dark");
     else document.documentElement.classList.remove("dark");
   }, [theme]);
+
+  // Show welcome toast only once per session when user logs in successfully
+  // useEffect(() => {
+  //   const toastShown = sessionStorage.getItem("loginToastShown");
+  //   if (user && accountStatus === "approved" && !toastShown) {
+  //     // Add a small delay to ensure everything is loaded
+  //     const timer = setTimeout(() => {
+  //       sessionStorage.setItem("loginToastShown", "true");
+  //       toast({
+  //         variant: "welcome" as any,
+  //         title: "Welcome back!",
+  //         description: `Good to see you again, ${
+  //           user.display_name || user.email || "User"
+  //         }!`,
+  //         duration: 3000,
+  //       });
+  //     }, 500);
+
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [user, accountStatus, toast]);
 
   const hasRole = useMemo(
     () => (role: UserRole) => {
@@ -103,9 +127,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           supabase
             .from("profiles")
             .select(
-              "full_name, email, district_id, language_preference, account_status"
+              "full_name, email, district_id, community_id, language_preference, account_status"
             )
-            .eq("id", userId)
+            .eq("user_id", userId)
             .maybeSingle(),
           supabase
             .from("enhanced_user_roles")
@@ -118,8 +142,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Set account status regardless of approval state
       setAccountStatus(profile?.account_status || "pending");
 
-      // Always create user object for authenticated users, regardless of approval status
-      // This allows rejected users to access their applications
+      // Check if account is approved or pending completion
+      if (
+        profile?.account_status !== "approved" &&
+        profile?.account_status !== "pending_completion"
+      ) {
+        console.log(
+          "User account not approved, account_status:",
+          profile?.account_status
+        );
+        // Don't sign out, just set user to null and clear roles
+        setUser(null);
+        setRoles([]);
+        return;
+      }
 
       let districtName = "";
       if (profile?.district_id) {
@@ -154,7 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         display_name: profile?.full_name || profile?.email || "",
         email: profile?.email || "",
         associated_community_ids: [],
-        active_community_id: "",
+        active_community_id: profile?.community_id || "",
         district: districtName,
         user_role: primaryRole,
         available_roles: roleList.length ? roleList : ["resident"],
@@ -213,11 +249,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data: authData, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
     if (error) throw error;
+
+    // After successful authentication, check account status
+    if (authData.user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("account_status, is_active, full_name")
+        .eq("user_id", authData.user.id)
+        .single();
+
+      if (profile) {
+        // Check if account is active
+        if (!profile.is_active) {
+          await supabase.auth.signOut();
+          throw new Error("ACCOUNT_INACTIVE");
+        }
+
+        // Check account status
+        if (profile.account_status === "pending") {
+          await supabase.auth.signOut();
+          throw new Error("ACCOUNT_PENDING");
+        }
+
+        if (profile.account_status === "rejected") {
+          await supabase.auth.signOut();
+          throw new Error("ACCOUNT_REJECTED");
+        }
+
+        if (profile.account_status === "suspended") {
+          await supabase.auth.signOut();
+          throw new Error("ACCOUNT_SUSPENDED");
+        }
+
+        if (
+          profile.account_status !== "approved" &&
+          profile.account_status !== "pending_completion"
+        ) {
+          await supabase.auth.signOut();
+          throw new Error("ACCOUNT_NOT_APPROVED");
+        }
+      }
+    }
   };
 
   const logout = async () => {
@@ -227,6 +305,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setRoles([]);
+    sessionStorage.removeItem("loginToastShown");
   };
 
   const switchLanguage = async (lang: Language) => {

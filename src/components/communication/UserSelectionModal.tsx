@@ -1,11 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, MessageCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import React, { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Search, MessageCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface User {
   id: string;
@@ -28,26 +33,26 @@ export const UserSelectionModal: React.FC<UserSelectionModalProps> = ({
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, avatar_url')
-        .neq('id', currentUser?.id)
-        .eq('is_active', true)
-        .order('full_name');
+        .from("profiles")
+        .select("id, full_name, email, avatar_url")
+        .neq("user_id", currentUser?.id)
+        .eq("is_active", true)
+        .order("full_name");
 
       if (error) throw error;
-      
+
       const usersData = data || [];
       setUsers(usersData);
       setFilteredUsers(usersData);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error("Error fetching users:", error);
     } finally {
       setLoading(false);
     }
@@ -56,14 +61,15 @@ export const UserSelectionModal: React.FC<UserSelectionModalProps> = ({
   useEffect(() => {
     if (open) {
       fetchUsers();
-      setSearchQuery('');
+      setSearchQuery("");
     }
   }, [open]);
 
   useEffect(() => {
-    const filtered = users.filter(user =>
-      user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filtered = users.filter(
+      (user) =>
+        user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredUsers(filtered);
   }, [searchQuery, users]);
@@ -74,7 +80,13 @@ export const UserSelectionModal: React.FC<UserSelectionModalProps> = ({
   };
 
   const getUserInitials = (name: string) => {
-    return name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?';
+    return (
+      name
+        ?.split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase() || "?"
+    );
   };
 
   return (
@@ -117,12 +129,12 @@ export const UserSelectionModal: React.FC<UserSelectionModalProps> = ({
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={user.avatar_url} />
                     <AvatarFallback>
-                      {getUserInitials(user.full_name || '')}
+                      {getUserInitials(user.full_name || "")}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">
-                      {user.full_name || 'Unknown User'}
+                      {user.full_name || "Unknown User"}
                     </p>
                     <p className="text-sm text-muted-foreground truncate">
                       {user.email}
