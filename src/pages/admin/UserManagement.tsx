@@ -55,6 +55,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useModuleAccess } from "@/hooks/use-module-access";
+import { useUserRoles } from "@/hooks/use-user-roles";
 import RoleCreationValidator from "@/components/admin/RoleCreationValidator";
 import RoleValidationTests from "@/components/admin/RoleValidationTests";
 
@@ -68,6 +69,7 @@ interface User {
   status: "active" | "inactive" | "pending" | "approved" | "rejected";
   joinDate: string;
   district_id: string;
+  community_id: string;
 }
 
 interface HouseholdAccount {
@@ -110,6 +112,7 @@ export default function UserManagement() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isModuleEnabled } = useModuleAccess();
+  const { hasRole } = useUserRoles();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -350,18 +353,45 @@ export default function UserManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data: profiles, error: profilesError } = await supabase.from(
-        "profiles"
-      ).select(`
+      
+      // Build query with role-based filtering
+      let query = supabase.from("profiles").select(`
           id,
           full_name,
           email,
           phone,
           unit_number,
           district_id,
+          community_id,
           account_status,
           created_at
         `);
+
+      // Apply filtering based on user role
+      if (hasRole('community_admin') && !hasRole('district_coordinator') && !hasRole('state_admin')) {
+        // Community Admin: only see users from their community
+        if (user?.active_community_id) {
+          query = query.eq('community_id', user.active_community_id);
+        }
+      } else if (hasRole('district_coordinator') && !hasRole('state_admin')) {
+        // District Coordinator: see all users in their district
+        // Note: We need to get the district_id from the user's profile
+        if (user?.id) {
+          // Get user's district_id from their profile
+          const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('district_id')
+            .eq('id', user.id)
+            .single();
+          
+          if (userProfile?.district_id) {
+            query = query.eq('district_id', userProfile.district_id);
+          }
+        }
+      }
+      // State Admins see all users (no additional filtering)
+
+      const { data: profiles, error: profilesError } = await query;
 
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
@@ -404,6 +434,7 @@ export default function UserManagement() {
           ? new Date(profile.created_at).toISOString().slice(0, 10)
           : "",
         district_id: profile.district_id || "",
+        community_id: profile.community_id || "",
       }));
 
       setUsers(formattedUsers);
