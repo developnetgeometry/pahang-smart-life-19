@@ -94,7 +94,10 @@ async function createAuthUser(
       userData.email,
       {
         redirectTo: redirectUrl,
-        data: { full_name: userData.full_name },
+        data: { 
+          full_name: userData.full_name,
+          signup_flow: 'guest_invite'
+        },
       }
     );
 

@@ -129,19 +129,25 @@ export default function CompleteAccount() {
     const type = urlParams.get('type');
     const code = urlParams.get('code');
     
-    if (tokenHash && type) {
-      console.log('Processing invitation link with token_hash and type:', type);
+    // CRITICAL: Force sign out for ALL invitation types to prevent session mixing
+    if (tokenHash || code) {
+      console.log('Processing invitation link - forcing sign out to prevent session mixing');
       
-      // Sign out any existing session to prevent session mixing
       try {
         const { data: currentSession } = await supabase.auth.getSession();
         if (currentSession.session) {
           console.log('Signing out existing session before processing invitation');
           await supabase.auth.signOut();
+          // Add small delay to ensure signout completes
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
       } catch (error) {
         console.error('Error signing out existing session:', error);
       }
+    }
+    
+    if (tokenHash && type) {
+      console.log('Processing invitation link with token_hash and type:', type);
       
       try {
         const { data, error } = await supabase.auth.verifyOtp({
@@ -150,7 +156,7 @@ export default function CompleteAccount() {
         });
           
           if (error) {
-            console.error('Token verification failed:', error);
+            console.error('Token verification failed:', error.message, error);
             if (!hasSetInitialSession) {
               setSessionValid(false);
               hasSetInitialSession = true;
@@ -158,10 +164,11 @@ export default function CompleteAccount() {
             return;
           }
           
-          if (data.session) {
-            console.log('Session established from invitation link');
+          if (data.session && data.user) {
+            console.log('Session established from invitation link for user:', data.user.email);
+            console.log('User metadata:', data.user.user_metadata);
             setSessionValid(true);
-            setUser(data.session.user);
+            setUser(data.user);
             hasSetInitialSession = true;
             
             // Clean up URL parameters
@@ -185,7 +192,7 @@ export default function CompleteAccount() {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           
           if (error) {
-            console.error('Code exchange failed:', error);
+            console.error('Code exchange failed:', error.message, error);
             if (!hasSetInitialSession) {
               setSessionValid(false);
               hasSetInitialSession = true;
@@ -193,10 +200,11 @@ export default function CompleteAccount() {
             return;
           }
           
-          if (data.session) {
-            console.log('Session established from code exchange');
+          if (data.session && data.user) {
+            console.log('Session established from code exchange for user:', data.user.email);
+            console.log('User metadata:', data.user.user_metadata);
             setSessionValid(true);
-            setUser(data.session.user);
+            setUser(data.user);
             hasSetInitialSession = true;
             
             // Clean up URL parameters
@@ -322,6 +330,18 @@ export default function CompleteAccount() {
 
       // Update profile - use 'user_id' column to match profile record
       console.log('Updating profile for user ID:', user?.id);
+      console.log('User metadata signup_flow:', user?.user_metadata?.signup_flow);
+      
+      // Determine correct account status based on role
+      const signupFlow = user?.user_metadata?.signup_flow || 'unknown';
+      let accountStatus = "approved"; // Default for guests
+      
+      if (signupFlow === 'resident_invite' || hasRole('resident')) {
+        accountStatus = "pending"; // Residents need approval after completing form
+      }
+      
+      console.log('Setting account_status to:', accountStatus, 'based on signup_flow:', signupFlow);
+      
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -332,7 +352,7 @@ export default function CompleteAccount() {
           emergency_contact_phone: form.emergency_contact_phone,
           vehicle_plate_number: form.vehicle_number || null,
           language_preference: form.language_preference,
-          account_status: "approved",
+          account_status: accountStatus,
         })
         .eq("user_id", user?.id);
 
@@ -416,6 +436,37 @@ export default function CompleteAccount() {
           <CardDescription className="text-center">
             {t.subtitle}
           </CardDescription>
+          
+          {/* User Identity Validation */}
+          {user?.email && (
+            <div className="mt-4 p-3 bg-muted/50 rounded-lg border">
+              <p className="text-sm text-muted-foreground">
+                Completing account for: <span className="font-medium text-foreground">{user.email}</span>
+              </p>
+              {user.user_metadata?.signup_flow && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Account type: {user.user_metadata.signup_flow === 'guest_invite' ? 'Guest' : 'Resident'}
+                </p>
+              )}
+            </div>
+          )}
+          
+          {/* Wrong account notification */}
+          {user?.email && (
+            <div className="mt-2">
+              <Button 
+                variant="link" 
+                size="sm" 
+                onClick={() => {
+                  supabase.auth.signOut();
+                  navigate("/login");
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Wrong account? Sign out and try again
+              </Button>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

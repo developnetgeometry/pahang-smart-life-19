@@ -111,8 +111,7 @@ serve(async (req: Request) => {
           redirectTo,
           data: {
             full_name: profile.full_name,
-            signup_flow: 'invitation_resend',
-            is_guest: isGuest,
+            signup_flow: isGuest ? 'guest_invite' : 'resident_invite',
             access_expires_at: profile.access_expires_at
           },
         }
