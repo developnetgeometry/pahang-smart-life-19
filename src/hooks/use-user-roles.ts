@@ -18,18 +18,28 @@ export type EnhancedUserRole =
   | 'guest';
 
 export function useUserRoles() {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const [userRoles, setUserRoles] = useState<EnhancedUserRole[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
+  // Use roles from AuthContext when available to avoid duplicate DB calls
   useEffect(() => {
-    const fetchUserRoles = async () => {
-      if (!user) {
-        setUserRoles([]);
-        setLoading(false);
-        return;
-      }
+    if (!user) {
+      setUserRoles([]);
+      setLoading(false);
+      return;
+    }
 
+    // If roles are already loaded in AuthContext, use them
+    if (roles && roles.length > 0) {
+      setUserRoles(roles as EnhancedUserRole[]);
+      setLoading(false);
+      return;
+    }
+
+    // Fallback: fetch roles if not available in context
+    const fetchUserRoles = async () => {
+      setLoading(true);
       try {
         const { data, error } = await supabase
           .from('enhanced_user_roles')
@@ -39,8 +49,8 @@ export function useUserRoles() {
 
         if (error) throw error;
 
-        const roles = data?.map(item => item.role as EnhancedUserRole) || [];
-        setUserRoles(roles);
+        const fetchedRoles = data?.map(item => item.role as EnhancedUserRole) || [];
+        setUserRoles(fetchedRoles);
       } catch (error) {
         console.error('Error fetching user roles:', error);
         setUserRoles([]);
@@ -50,7 +60,7 @@ export function useUserRoles() {
     };
 
     fetchUserRoles();
-  }, [user]);
+  }, [user, roles]);
 
   const hasRole = (role: EnhancedUserRole): boolean => {
     return userRoles.includes(role);

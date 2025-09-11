@@ -24,37 +24,38 @@ import {
   Sun
 } from 'lucide-react';
 
-export function Header() {
-  const { user, language, switchLanguage, theme, switchTheme, logout } = useAuth();
-  const { userRoles, hasRole } = useUserRoles();
+import React from 'react';
+
+export const Header = React.memo(() => {
+  const { user, language, switchLanguage, theme, switchTheme, logout, roles } = useAuth();
   const { t } = useTranslation(language || 'ms');
   const navigate = useNavigate();
 
-  // Get the highest priority role for display
-  const getPrimaryRole = () => {
+  // Memoized primary role calculation using roles from auth context
+  const primaryRole = React.useMemo(() => {
     const roleHierarchy = [
       'state_admin',
-      'spouse', // Spouse should show higher than regular resident
+      'spouse',
       'district_coordinator', 
       'community_admin',
       'state_service_manager',
-      'facility_manager', // Added facility_manager to hierarchy
+      'facility_manager',
       'security_officer',
       'maintenance_staff',
       'service_provider',
       'community_leader',
       'resident',
-      'tenant', // Tenant is the lowest priority
-      'guest' // Guest is the lowest priority
+      'tenant',
+      'guest'
     ];
     
     for (const role of roleHierarchy) {
-      if (userRoles.includes(role as any)) {
+      if (roles.includes(role as any)) {
         return role;
       }
     }
     return 'resident';
-  };
+  }, [roles]);
 
   if (!user) return null;
 
@@ -121,7 +122,7 @@ export function Header() {
                   {user.community || '—'}
                 </Badge>
                 <Badge variant="outline" className="text-xs">
-                  {getPrimaryRole().replace('_', ' ')}
+                  {primaryRole.replace('_', ' ')}
                 </Badge>
               </div>
             </div>
@@ -144,4 +145,6 @@ export function Header() {
       </DropdownMenu>
     </div>
   );
-}
+});
+
+Header.displayName = 'Header';
