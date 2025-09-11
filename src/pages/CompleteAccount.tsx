@@ -20,13 +20,16 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Loader2, UserCheck } from "lucide-react";
+import { Loader2, UserCheck, Eye, EyeOff } from "lucide-react";
 
 export default function CompleteAccount() {
   const { user, language, loadProfileAndRoles } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
   const [form, setForm] = useState({
     phone: "",
     unit_number: "",
@@ -35,6 +38,8 @@ export default function CompleteAccount() {
     emergency_contact_phone: "",
     vehicle_number: "",
     language_preference: (language as Language) || "ms",
+    password: "",
+    confirmPassword: "",
   });
 
   const text = {
@@ -49,6 +54,12 @@ export default function CompleteAccount() {
       emergencyContactPhone: "Emergency Contact Phone",
       vehicleNumber: "Vehicle Number (Optional)",
       languagePreference: "Language Preference",
+      password: "New Password (Optional)",
+      confirmPassword: "Confirm Password",
+      showPassword: "Show password",
+      hidePassword: "Hide password",
+      passwordTooShort: "Password must be at least 6 characters",
+      passwordsDoNotMatch: "Passwords do not match",
       english: "English",
       malay: "Bahasa Malaysia",
       complete: "Complete Account",
@@ -68,6 +79,12 @@ export default function CompleteAccount() {
       emergencyContactPhone: "Telefon Hubungan Kecemasan",
       vehicleNumber: "Nombor Kenderaan (Pilihan)",
       languagePreference: "Pilihan Bahasa",
+      password: "Kata Laluan Baru (Pilihan)",
+      confirmPassword: "Sahkan Kata Laluan",
+      showPassword: "Tunjukkan kata laluan",
+      hidePassword: "Sembunyikan kata laluan",
+      passwordTooShort: "Kata laluan mestilah sekurang-kurangnya 6 aksara",
+      passwordsDoNotMatch: "Kata laluan tidak sepadan",
       english: "Bahasa Inggeris",
       malay: "Bahasa Malaysia",
       complete: "Lengkapkan Akaun",
@@ -97,9 +114,34 @@ export default function CompleteAccount() {
       return;
     }
 
+    // Validate password if provided
+    if (form.password) {
+      if (form.password.length < 6) {
+        setPasswordError(t.passwordTooShort);
+        return;
+      }
+      if (form.password !== form.confirmPassword) {
+        setPasswordError(t.passwordsDoNotMatch);
+        return;
+      }
+    }
+
     setLoading(true);
+    setPasswordError("");
 
     try {
+      // Update password if provided
+      if (form.password) {
+        const { error: passwordError } = await supabase.auth.updateUser({
+          password: form.password
+        });
+        
+        if (passwordError) {
+          throw passwordError;
+        }
+      }
+
+      // Update profile
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -237,6 +279,70 @@ export default function CompleteAccount() {
                 placeholder="ABC 1234"
               />
             </div>
+
+            {/* Password Section */}
+            <div className="space-y-2">
+              <Label htmlFor="password">{t.password}</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={(e) => {
+                    setForm({ ...form, password: e.target.value });
+                    setPasswordError("");
+                  }}
+                  placeholder="••••••••"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? t.hidePassword : t.showPassword}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {form.password && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">{t.confirmPassword}</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={form.confirmPassword}
+                    onChange={(e) => {
+                      setForm({ ...form, confirmPassword: e.target.value });
+                      setPasswordError("");
+                    }}
+                    placeholder="••••••••"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    aria-label={showConfirmPassword ? t.hidePassword : t.showPassword}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                </div>
+                {passwordError && (
+                  <p className="text-xs text-destructive mt-1">{passwordError}</p>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="language_preference">
