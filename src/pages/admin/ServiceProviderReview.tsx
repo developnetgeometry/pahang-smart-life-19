@@ -240,6 +240,19 @@ export default function ServiceProviderReview() {
   const updateApplicationStatus = async (newStatus: string) => {
     if (!application || !user) return;
 
+    // Validate required fields
+    if (newStatus === "rejected" && !rejectionReason.trim()) {
+      toast.error("Please provide a rejection reason");
+      return;
+    }
+
+    if (newStatus === "additional_info_required" && !reviewNotes.trim()) {
+      toast.error(
+        "Please provide details about what additional information is required"
+      );
+      return;
+    }
+
     setActionLoading(true);
     try {
       const updateData: any = {
@@ -273,6 +286,7 @@ export default function ServiceProviderReview() {
       }
 
       // Send email notification
+      let emailSent = false;
       try {
         await supabase.functions.invoke("send-application-status-email", {
           body: {

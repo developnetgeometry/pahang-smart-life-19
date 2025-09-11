@@ -129,12 +129,13 @@ export default function UserManagement() {
     vehicleNumber?: string;
     familySize?: number;
     specialization?: string;
+    access_expires_at?: string; // For guest users
   }>({
     name: "",
     email: "",
     phone: "",
     unit: "",
-    role: "",
+    role: "resident",
     status: "",
     password: "",
     confirmPassword: "",
@@ -147,6 +148,7 @@ export default function UserManagement() {
     vehicleNumber: "",
     familySize: 1,
     specialization: "",
+    access_expires_at: "",
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -409,6 +411,7 @@ export default function UserManagement() {
   const roles = [
     { value: "all", label: t.allRoles },
     { value: "resident", label: t.resident },
+    { value: "guest", label: "Guest" },
     ...(isModuleEnabled("security")
       ? [{ value: "security_officer", label: t.security }]
       : []),
@@ -447,6 +450,8 @@ export default function UserManagement() {
         return "bg-emerald-100 text-emerald-800";
       case "resident":
         return "bg-green-100 text-green-800";
+      case "guest":
+        return "bg-yellow-100 text-yellow-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -485,6 +490,8 @@ export default function UserManagement() {
         return "Community Leader";
       case "resident":
         return t.resident;
+      case "guest":
+        return "Guest";
       default:
         return role.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase());
     }
@@ -569,9 +576,10 @@ export default function UserManagement() {
       return;
     }
 
-    // For residents, no password or status required (handled by invite flow)
+    // For residents and guests, no password or status required
+    // Residents use invite flow, guests get temporary passwords from backend
     // For other roles, password validation is still required
-    if (!editingId && form.role !== "resident") {
+    if (!editingId && form.role !== "resident" && form.role !== "guest") {
       if (!form.password) {
         toast({
           title: "Error",
@@ -598,11 +606,21 @@ export default function UserManagement() {
       }
     }
 
-    // For non-residents, status is required
-    if (form.role !== "resident" && !form.status) {
+    // For staff roles (not residents or guests), status is required
+    if (form.role !== "resident" && form.role !== "guest" && !form.status) {
       toast({
         title: t.createUser,
         description: "Please select account status.",
+      });
+      return;
+    }
+
+    // For guests, expiration date is required
+    if (form.role === "guest" && !form.access_expires_at) {
+      toast({
+        title: "Error",
+        description: "Please select an expiration date for guest access.",
+        variant: "destructive",
       });
       return;
     }
@@ -652,8 +670,8 @@ export default function UserManagement() {
           role: form.role,
         };
 
-        // Only include password and status for non-residents
-        if (form.role !== "resident") {
+        // Only include password and status for non-residents and non-guests
+        if (form.role !== "resident" && form.role !== "guest") {
           requestBody.password = form.password;
           requestBody.status = form.status;
         }
@@ -661,6 +679,11 @@ export default function UserManagement() {
         // Add unit for residents
         if (form.role === "resident" && form.unit) {
           requestBody.unit_number = form.unit;
+        }
+
+        // Add expiration date for guests
+        if (form.role === "guest" && form.access_expires_at) {
+          requestBody.access_expires_at = form.access_expires_at;
         }
 
         const { data, error } = await supabase.functions.invoke(
@@ -682,7 +705,7 @@ export default function UserManagement() {
         email: "",
         phone: "",
         unit: "",
-        role: "",
+        role: "resident",
         status: "",
         password: "",
         confirmPassword: "",
@@ -695,6 +718,7 @@ export default function UserManagement() {
         vehicleNumber: "",
         familySize: 1,
         specialization: "",
+        access_expires_at: "",
       });
       fetchUsers(); // Refresh the user list
     } catch (error) {
@@ -930,6 +954,44 @@ export default function UserManagement() {
               <DialogDescription>{t.createSubtitle}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              {/* Role Selection - Always shown first */}
+              <div className="space-y-2">
+                <Label htmlFor="role">{t.role} *</Label>
+                <Select
+                  value={form.role || "resident"}
+                  onValueChange={handleRoleChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t.selectRole} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.slice(1).map((role) => {
+                      const isDisabled =
+                        (role.value === "security_officer" &&
+                          !isModuleEnabled("security")) ||
+                        ((role.value === "facility_manager" ||
+                          role.value === "maintenance_staff") &&
+                          !isModuleEnabled("facilities"));
+
+                      return (
+                        <SelectItem
+                          key={role.value}
+                          value={role.value}
+                          disabled={isDisabled}
+                        >
+                          {role.label}
+                          {isDisabled && (
+                            <span className="text-xs text-muted-foreground ml-2">
+                              (Module disabled)
+                            </span>
+                          )}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Simplified form for residents, full form for other roles */}
               {form.role === "resident" || !form.role ? (
                 <>
@@ -1013,16 +1075,29 @@ export default function UserManagement() {
                       />
                     </div>
                   </div>
-
-                  {/* Hidden role field defaulted to resident */}
-                  <input type="hidden" value="resident" />
                 </>
-              ) : (
+              ) : form.role === "guest" ? (
                 <>
-                  {/* Full form for other roles */}
+                  {/* Guest-specific form */}
+                  <div className="space-y-3 p-4 bg-yellow-50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <UserPlus className="h-4 w-4 text-yellow-600" />
+                      <span className="text-sm font-medium text-yellow-800">
+                        {language === "en"
+                          ? "Creating New Guest"
+                          : "Mencipta Tetamu Baru"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-yellow-700">
+                      {language === "en"
+                        ? "Guest users will receive temporary credentials with an expiration date."
+                        : "Pengguna tetamu akan menerima kelayakan sementara dengan tarikh tamat tempoh."}
+                    </p>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">{t.fullName}</Label>
+                      <Label htmlFor="name">{t.fullName} *</Label>
                       <Input
                         id="name"
                         placeholder={t.fullName}
@@ -1033,7 +1108,7 @@ export default function UserManagement() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="email">{t.email}</Label>
+                      <Label htmlFor="email">{t.email} *</Label>
                       <Input
                         id="email"
                         type="email"
@@ -1050,11 +1125,82 @@ export default function UserManagement() {
                     </div>
                   </div>
 
-                  {/* Password fields for non-resident new users */}
-                  {!editingId && (
+                  {/* Guest-specific fields */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="access_expires_at">
+                        Access Expires *
+                      </Label>
+                      <Input
+                        id="access_expires_at"
+                        type="date"
+                        value={form.access_expires_at}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            access_expires_at: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">{t.phone}</Label>
+                      <Input
+                        id="phone"
+                        placeholder={
+                          language === "en"
+                            ? "e.g. +60123456789"
+                            : "cth: +60123456789"
+                        }
+                        value={form.phone}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            phone: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Full form for staff roles */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">{t.fullName} *</Label>
+                      <Input
+                        id="name"
+                        placeholder={t.fullName}
+                        value={form.name}
+                        onChange={(e) =>
+                          setForm((prev) => ({ ...prev, name: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">{t.email} *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder={t.email}
+                        value={form.email}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            email: e.target.value,
+                          }))
+                        }
+                        disabled={!!editingId}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password fields for staff roles only (not guests) */}
+                  {!editingId && form.role !== "guest" && (
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="password">{t.password}</Label>
+                        <Label htmlFor="password">{t.password} *</Label>
                         <Input
                           id="password"
                           type="password"
@@ -1070,7 +1216,7 @@ export default function UserManagement() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="confirmPassword">
-                          {t.confirmPassword}
+                          {t.confirmPassword} *
                         </Label>
                         <Input
                           id="confirmPassword"
@@ -1158,29 +1304,35 @@ export default function UserManagement() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="status">{t.status}</Label>
-                      <Select
-                        value={form.status}
-                        onValueChange={(v) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            status: v as User["status"],
-                          }))
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={t.selectStatus} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {statuses.slice(1).map((status) => (
-                            <SelectItem key={status.value} value={status.value}>
-                              {status.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {/* Status field for staff roles only (not residents or guests) */}
+                    {form.role !== "resident" && form.role !== "guest" && (
+                      <div className="space-y-2">
+                        <Label htmlFor="status">{t.status}</Label>
+                        <Select
+                          value={form.status}
+                          onValueChange={(v) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              status: v as User["status"],
+                            }))
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={t.selectStatus} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {statuses.slice(1).map((status) => (
+                              <SelectItem
+                                key={status.value}
+                                value={status.value}
+                              >
+                                {status.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </div>
                 </>
               )}

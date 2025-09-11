@@ -10,7 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { ImageUpload } from '@/components/ui/image-upload';
+import { Plus, Edit, Trash2, Eye, EyeOff, Package, DollarSign, Truck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -31,6 +33,21 @@ interface Advertisement {
   end_date: string;
   click_count: number;
   created_at: string;
+  // New e-commerce fields
+  price?: number;
+  currency?: string;
+  product_type?: 'service' | 'product' | 'both';
+  is_in_stock?: boolean;
+  stock_quantity?: number;
+  low_stock_alert?: number;
+  shipping_required?: boolean;
+  shipping_cost?: number;
+  product_weight?: number;
+  condition_status?: string;
+  product_dimensions?: string;
+  warranty_period?: string;
+  return_policy?: string;
+  service_areas?: string[];
 }
 
 interface AdvertisementManagementProps {
@@ -46,10 +63,11 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingAd, setEditingAd] = useState<Advertisement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   const isServiceProvider = hasRole('service_provider');
 
-  const [formData, setFormData] = useState({
+  const getDefaultFormData = () => ({
     title: '',
     description: '',
     business_name: '',
@@ -61,8 +79,27 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
     image_url: '',
     is_featured: false,
     start_date: '',
-    end_date: ''
+    end_date: '',
+    // New e-commerce fields
+    price: '',
+    currency: 'MYR',
+    product_type: 'service' as 'service' | 'product' | 'both',
+    is_in_stock: true,
+    stock_quantity: '',
+    low_stock_alert: '5',
+    shipping_required: false,
+    shipping_cost: '',
+    product_weight: '',
+    condition_status: 'new',
+    product_dimensions: '',
+    warranty_period: '',
+    return_policy: '',
+    service_areas: '',
+    target_my_district: false,
+    target_my_community: false
   });
+
+  const [formData, setFormData] = useState(getDefaultFormData());
 
   const text = {
     en: {
@@ -103,7 +140,36 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
       createSuccess: 'Advertisement created successfully!',
       updateSuccess: 'Advertisement updated successfully!',
       deleteSuccess: 'Advertisement deleted successfully!',
-      accessDenied: 'Only service providers can manage advertisements'
+      accessDenied: 'Only service providers can manage advertisements',
+      // New fields
+      generalInfo: 'General Information',
+      pricingInventory: 'Pricing & Inventory',
+      shipping: 'Shipping Information',
+      specifications: 'Specifications',
+      policies: 'Policies & Warranty',
+      targeting: 'Service Areas',
+      productType: 'Type',
+      price: 'Price',
+      currency: 'Currency',
+      inStock: 'In Stock',
+      stockQuantity: 'Stock Quantity',
+      lowStockAlert: 'Low Stock Alert',
+      shippingRequired: 'Shipping Required',
+      shippingCost: 'Shipping Cost',
+      productWeight: 'Product Weight (kg)',
+      conditionStatus: 'Condition',
+      productDimensions: 'Product Dimensions',
+      warrantyPeriod: 'Warranty Period',
+      returnPolicy: 'Return Policy',
+      targetMyDistrict: 'Target My District',
+      targetMyCommunity: 'Target My Community',
+      additionalAreas: 'Additional Area IDs',
+      serviceType: 'Service',
+      productSale: 'Product',
+      bothTypes: 'Both Service & Product',
+      conditionNew: 'New',
+      conditionUsed: 'Used',
+      conditionRefurbished: 'Refurbished'
     },
     ms: {
       title: 'Pengurusan Iklan',
@@ -143,7 +209,36 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
       createSuccess: 'Iklan berjaya dicipta!',
       updateSuccess: 'Iklan berjaya dikemaskini!',
       deleteSuccess: 'Iklan berjaya dipadam!',
-      accessDenied: 'Hanya penyedia perkhidmatan boleh menguruskan iklan'
+      accessDenied: 'Hanya penyedia perkhidmatan boleh menguruskan iklan',
+      // New fields
+      generalInfo: 'Maklumat Am',
+      pricingInventory: 'Harga & Inventori',
+      shipping: 'Maklumat Penghantaran',
+      specifications: 'Spesifikasi',
+      policies: 'Polisi & Waranti',
+      targeting: 'Kawasan Perkhidmatan',
+      productType: 'Jenis',
+      price: 'Harga',
+      currency: 'Mata Wang',
+      inStock: 'Dalam Stok',
+      stockQuantity: 'Kuantiti Stok',
+      lowStockAlert: 'Amaran Stok Rendah',
+      shippingRequired: 'Penghantaran Diperlukan',
+      shippingCost: 'Kos Penghantaran',
+      productWeight: 'Berat Produk (kg)',
+      conditionStatus: 'Keadaan',
+      productDimensions: 'Dimensi Produk',
+      warrantyPeriod: 'Tempoh Waranti',
+      returnPolicy: 'Polisi Pemulangan',
+      targetMyDistrict: 'Sasarkan Daerah Saya',
+      targetMyCommunity: 'Sasarkan Komuniti Saya',
+      additionalAreas: 'ID Kawasan Tambahan',
+      serviceType: 'Perkhidmatan',
+      productSale: 'Produk',
+      bothTypes: 'Perkhidmatan & Produk',
+      conditionNew: 'Baru',
+      conditionUsed: 'Terpakai',
+      conditionRefurbished: 'Diperbaharui'
     }
   };
 
@@ -159,11 +254,39 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
     { value: 'others', label: t.others }
   ];
 
+  const productTypes = [
+    { value: 'service', label: t.serviceType },
+    { value: 'product', label: t.productSale },
+    { value: 'both', label: t.bothTypes }
+  ];
+
+  const conditionOptions = [
+    { value: 'new', label: t.conditionNew },
+    { value: 'used', label: t.conditionUsed },
+    { value: 'refurbished', label: t.conditionRefurbished }
+  ];
+
   useEffect(() => {
     if (user && isServiceProvider) {
       fetchAdvertisements();
+      fetchUserProfile();
     }
   }, [user, isServiceProvider]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('district_id, community_id')
+        .eq('id', user?.id)
+        .single();
+
+      if (error) throw error;
+      setUserProfile(data);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   const fetchAdvertisements = async () => {
     try {
@@ -174,7 +297,14 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAdvertisements(data || []);
+      
+      // Type the data properly
+      const typedData = (data || []).map(ad => ({
+        ...ad,
+        product_type: ad.product_type as 'service' | 'product' | 'both'
+      }));
+      
+      setAdvertisements(typedData);
     } catch (error) {
       console.error('Error fetching advertisements:', error);
     } finally {
@@ -200,9 +330,41 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
       return;
     }
 
+    // Validation for product-specific fields
+    if (formData.product_type === 'product' && formData.is_in_stock && formData.stock_quantity && parseInt(formData.stock_quantity) < 0) {
+      toast({
+        title: language === 'en' ? 'Validation Error' : 'Ralat Pengesahan',
+        description: language === 'en' ? 'Stock quantity must be 0 or greater' : 'Kuantiti stok mestilah 0 atau lebih',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (formData.price && parseFloat(formData.price) < 0) {
+      toast({
+        title: language === 'en' ? 'Validation Error' : 'Ralat Pengesahan',
+        description: language === 'en' ? 'Price must be 0 or greater' : 'Harga mestilah 0 atau lebih',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      // Build service areas array
+      let serviceAreas: string[] = [];
+      if (formData.target_my_district && userProfile?.district_id) {
+        serviceAreas.push(userProfile.district_id);
+      }
+      if (formData.target_my_community && userProfile?.community_id) {
+        serviceAreas.push(userProfile.community_id);
+      }
+      if (formData.service_areas) {
+        const additionalAreas = formData.service_areas.split(',').map(area => area.trim()).filter(Boolean);
+        serviceAreas.push(...additionalAreas);
+      }
+
       const adData = {
         advertiser_id: user.id,
         title: formData.title,
@@ -216,7 +378,22 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
         image_url: formData.image_url,
         is_featured: formData.is_featured,
         start_date: formData.start_date || null,
-        end_date: formData.end_date || null
+        end_date: formData.end_date || null,
+        // New fields
+        price: formData.price ? parseFloat(formData.price) : null,
+        currency: formData.currency,
+        product_type: formData.product_type,
+        is_in_stock: formData.product_type === 'product' ? formData.is_in_stock : null,
+        stock_quantity: formData.product_type === 'product' && formData.stock_quantity ? parseInt(formData.stock_quantity) : null,
+        low_stock_alert: formData.product_type === 'product' && formData.low_stock_alert ? parseInt(formData.low_stock_alert) : null,
+        shipping_required: formData.product_type === 'product' ? formData.shipping_required : null,
+        shipping_cost: formData.shipping_required && formData.shipping_cost ? parseFloat(formData.shipping_cost) : null,
+        product_weight: formData.product_weight ? parseFloat(formData.product_weight) : null,
+        condition_status: formData.product_type === 'product' ? formData.condition_status : null,
+        product_dimensions: formData.product_dimensions || null,
+        warranty_period: formData.warranty_period || null,
+        return_policy: formData.return_policy || null,
+        service_areas: serviceAreas.length > 0 ? serviceAreas : null
       };
 
       if (editingAd) {
@@ -237,20 +414,7 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
       }
 
       // Reset form and close dialog
-      setFormData({
-        title: '',
-        description: '',
-        business_name: '',
-        contact_phone: '',
-        contact_email: '',
-        website_url: '',
-        category: '',
-        tags: '',
-        image_url: '',
-        is_featured: false,
-        start_date: '',
-        end_date: ''
-      });
+      setFormData(getDefaultFormData());
       setIsCreateOpen(false);
       setEditingAd(null);
       fetchAdvertisements();
@@ -268,6 +432,22 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
 
   const handleEdit = (ad: Advertisement) => {
     setEditingAd(ad);
+    
+    // Determine targeting flags from service_areas
+    let targetMyDistrict = false;
+    let targetMyCommunity = false;
+    let additionalAreas = '';
+    
+    if (ad.service_areas && userProfile) {
+      targetMyDistrict = ad.service_areas.includes(userProfile.district_id);
+      targetMyCommunity = ad.service_areas.includes(userProfile.community_id);
+      
+      const otherAreas = ad.service_areas.filter(area => 
+        area !== userProfile.district_id && area !== userProfile.community_id
+      );
+      additionalAreas = otherAreas.join(', ');
+    }
+    
     setFormData({
       title: ad.title,
       description: ad.description || '',
@@ -280,7 +460,24 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
       image_url: ad.image_url || '',
       is_featured: ad.is_featured,
       start_date: ad.start_date?.split('T')[0] || '',
-      end_date: ad.end_date?.split('T')[0] || ''
+      end_date: ad.end_date?.split('T')[0] || '',
+      // New fields
+      price: ad.price?.toString() || '',
+      currency: ad.currency || 'MYR',
+      product_type: ad.product_type || 'service',
+      is_in_stock: ad.is_in_stock ?? true,
+      stock_quantity: ad.stock_quantity?.toString() || '',
+      low_stock_alert: ad.low_stock_alert?.toString() || '5',
+      shipping_required: ad.shipping_required ?? false,
+      shipping_cost: ad.shipping_cost?.toString() || '',
+      product_weight: ad.product_weight?.toString() || '',
+      condition_status: ad.condition_status || 'new',
+      product_dimensions: ad.product_dimensions || '',
+      warranty_period: ad.warranty_period || '',
+      return_policy: ad.return_policy || '',
+      service_areas: additionalAreas,
+      target_my_district: targetMyDistrict,
+      target_my_community: targetMyCommunity
     });
     setIsCreateOpen(true);
   };
@@ -319,6 +516,10 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
     }
   };
 
+  const handleImageUpload = (url: string) => {
+    setFormData(prev => ({ ...prev, image_url: url }));
+  };
+
   if (!isServiceProvider) {
     return (
       <Card>
@@ -340,20 +541,7 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
           setIsCreateOpen(open);
           if (!open) {
             setEditingAd(null);
-            setFormData({
-              title: '',
-              description: '',
-              business_name: '',
-              contact_phone: '',
-              contact_email: '',
-              website_url: '',
-              category: '',
-              tags: '',
-              image_url: '',
-              is_featured: false,
-              start_date: '',
-              end_date: ''
-            });
+            setFormData(getDefaultFormData());
           }
         }}>
           <DialogTrigger asChild>
@@ -362,57 +550,82 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
               {t.newAd}
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingAd ? t.editTitle : t.createTitle}</DialogTitle>
               <DialogDescription>{t.createSubtitle}</DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="business_name">{t.businessName}*</Label>
-                  <Input
-                    id="business_name"
-                    value={formData.business_name}
-                    onChange={(e) => setFormData({...formData, business_name: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="title">{t.adTitle}*</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  />
-                </div>
-              </div>
+            <div className="space-y-6">
               
-              <div className="space-y-2">
-                <Label htmlFor="description">{t.description}</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">{t.category}*</Label>
-                  <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t.selectCategory} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.value} value={category.value}>
-                          {category.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              {/* General Information */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  <h3 className="text-lg font-semibold">{t.generalInfo}</h3>
                 </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="business_name">{t.businessName}*</Label>
+                    <Input
+                      id="business_name"
+                      value={formData.business_name}
+                      onChange={(e) => setFormData({...formData, business_name: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="title">{t.adTitle}*</Label>
+                    <Input
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) => setFormData({...formData, title: e.target.value})}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="description">{t.description}</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="product_type">{t.productType}*</Label>
+                    <Select value={formData.product_type} onValueChange={(value: 'service' | 'product' | 'both') => setFormData({...formData, product_type: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {productTypes.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="category">{t.category}*</Label>
+                    <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t.selectCategory} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.value} value={category.value}>
+                            {category.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="tags">{t.tags}</Label>
                   <Input
@@ -422,76 +635,324 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
                     placeholder="service, repair, professional"
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="start_date">{t.startDate}</Label>
+                    <Input
+                      id="start_date"
+                      type="date"
+                      value={formData.start_date}
+                      onChange={(e) => setFormData({...formData, start_date: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="end_date">{t.endDate}</Label>
+                    <Input
+                      id="end_date"
+                      type="date"
+                      value={formData.end_date}
+                      onChange={(e) => setFormData({...formData, end_date: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="is_featured"
+                    checked={formData.is_featured}
+                    onCheckedChange={(checked) => setFormData({...formData, is_featured: checked})}
+                  />
+                  <Label htmlFor="is_featured">{t.featured}</Label>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <Separator />
+
+              {/* Pricing & Inventory */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  <h3 className="text-lg font-semibold">{t.pricingInventory}</h3>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="price">{t.price}</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.price}
+                      onChange={(e) => setFormData({...formData, price: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="currency">{t.currency}</Label>
+                    <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MYR">MYR</SelectItem>
+                        <SelectItem value="USD">USD</SelectItem>
+                        <SelectItem value="SGD">SGD</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {formData.product_type === 'product' && (
+                  <>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="is_in_stock"
+                        checked={formData.is_in_stock}
+                        onCheckedChange={(checked) => setFormData({...formData, is_in_stock: checked})}
+                      />
+                      <Label htmlFor="is_in_stock">{t.inStock}</Label>
+                    </div>
+
+                    {formData.is_in_stock && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="stock_quantity">{t.stockQuantity}</Label>
+                          <Input
+                            id="stock_quantity"
+                            type="number"
+                            min="0"
+                            value={formData.stock_quantity}
+                            onChange={(e) => setFormData({...formData, stock_quantity: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="low_stock_alert">{t.lowStockAlert}</Label>
+                          <Input
+                            id="low_stock_alert"
+                            type="number"
+                            min="0"
+                            value={formData.low_stock_alert}
+                            onChange={(e) => setFormData({...formData, low_stock_alert: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label htmlFor="condition_status">{t.conditionStatus}</Label>
+                      <Select value={formData.condition_status} onValueChange={(value) => setFormData({...formData, condition_status: value})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {conditionOptions.map((condition) => (
+                            <SelectItem key={condition.value} value={condition.value}>
+                              {condition.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Shipping Information */}
+              {formData.product_type === 'product' && (
+                <>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Truck className="h-4 w-4" />
+                      <h3 className="text-lg font-semibold">{t.shipping}</h3>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="shipping_required"
+                        checked={formData.shipping_required}
+                        onCheckedChange={(checked) => setFormData({...formData, shipping_required: checked})}
+                      />
+                      <Label htmlFor="shipping_required">{t.shippingRequired}</Label>
+                    </div>
+
+                    {formData.shipping_required && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="shipping_cost">{t.shippingCost}</Label>
+                          <Input
+                            id="shipping_cost"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={formData.shipping_cost}
+                            onChange={(e) => setFormData({...formData, shipping_cost: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="product_weight">{t.productWeight}</Label>
+                          <Input
+                            id="product_weight"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={formData.product_weight}
+                            onChange={(e) => setFormData({...formData, product_weight: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <Separator />
+                </>
+              )}
+
+              {/* Specifications */}
+              {formData.product_type === 'product' && (
+                <>
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">{t.specifications}</h3>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="product_dimensions">{t.productDimensions}</Label>
+                      <Input
+                        id="product_dimensions"
+                        value={formData.product_dimensions}
+                        onChange={(e) => setFormData({...formData, product_dimensions: e.target.value})}
+                        placeholder="L x W x H (cm)"
+                      />
+                    </div>
+                  </div>
+                  <Separator />
+                </>
+              )}
+
+              {/* Policies & Warranty */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">{t.policies}</h3>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="contact_phone">{t.contactPhone}</Label>
-                  <Input
-                    id="contact_phone"
-                    value={formData.contact_phone}
-                    onChange={(e) => setFormData({...formData, contact_phone: e.target.value})}
+                  <Label htmlFor="warranty_period">{t.warrantyPeriod}</Label>
+                  <Textarea
+                    id="warranty_period"
+                    value={formData.warranty_period}
+                    onChange={(e) => setFormData({...formData, warranty_period: e.target.value})}
+                    rows={2}
+                    placeholder="e.g., 1 year manufacturer warranty"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="contact_email">{t.contactEmail}</Label>
-                  <Input
-                    id="contact_email"
-                    type="email"
-                    value={formData.contact_email}
-                    onChange={(e) => setFormData({...formData, contact_email: e.target.value})}
+                  <Label htmlFor="return_policy">{t.returnPolicy}</Label>
+                  <Textarea
+                    id="return_policy"
+                    value={formData.return_policy}
+                    onChange={(e) => setFormData({...formData, return_policy: e.target.value})}
+                    rows={3}
+                    placeholder="e.g., 30-day return policy, item must be in original condition"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="website_url">{t.website}</Label>
-                <Input
-                  id="website_url"
-                  type="url"
-                  value={formData.website_url}
-                  onChange={(e) => setFormData({...formData, website_url: e.target.value})}
+              <Separator />
+
+              {/* Service Areas */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">{t.targeting}</h3>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="target_my_district"
+                      checked={formData.target_my_district}
+                      onCheckedChange={(checked) => setFormData({...formData, target_my_district: checked})}
+                    />
+                    <Label htmlFor="target_my_district">{t.targetMyDistrict}</Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="target_my_community"
+                      checked={formData.target_my_community}
+                      onCheckedChange={(checked) => setFormData({...formData, target_my_community: checked})}
+                    />
+                    <Label htmlFor="target_my_community">{t.targetMyCommunity}</Label>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="service_areas">{t.additionalAreas}</Label>
+                    <Input
+                      id="service_areas"
+                      value={formData.service_areas}
+                      onChange={(e) => setFormData({...formData, service_areas: e.target.value})}
+                      placeholder="area-id-1, area-id-2, area-id-3"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Contact Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Contact Information</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="contact_phone">{t.contactPhone}</Label>
+                    <Input
+                      id="contact_phone"
+                      value={formData.contact_phone}
+                      onChange={(e) => setFormData({...formData, contact_phone: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contact_email">{t.contactEmail}</Label>
+                    <Input
+                      id="contact_email"
+                      type="email"
+                      value={formData.contact_email}
+                      onChange={(e) => setFormData({...formData, contact_email: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="website_url">{t.website}</Label>
+                  <Input
+                    id="website_url"
+                    type="url"
+                    value={formData.website_url}
+                    onChange={(e) => setFormData({...formData, website_url: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Image Upload */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Images</h3>
+                
+                <ImageUpload
+                  bucket="marketplace-images"
+                  onUploadComplete={handleImageUpload}
+                  maxFiles={1}
+                  existingImages={formData.image_url ? [formData.image_url] : []}
+                  onRemoveImage={() => setFormData({...formData, image_url: ''})}
                 />
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="image_url">{t.imageUrl}</Label>
-                <Input
-                  id="image_url"
-                  type="url"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="start_date">{t.startDate}</Label>
+                  <Label htmlFor="image_url">{t.imageUrl} (fallback)</Label>
                   <Input
-                    id="start_date"
-                    type="date"
-                    value={formData.start_date}
-                    onChange={(e) => setFormData({...formData, start_date: e.target.value})}
+                    id="image_url"
+                    type="url"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData({...formData, image_url: e.target.value})}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="end_date">{t.endDate}</Label>
-                  <Input
-                    id="end_date"
-                    type="date"
-                    value={formData.end_date}
-                    onChange={(e) => setFormData({...formData, end_date: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="is_featured"
-                  checked={formData.is_featured}
-                  onCheckedChange={(checked) => setFormData({...formData, is_featured: checked})}
-                />
-                <Label htmlFor="is_featured">{t.featured}</Label>
               </div>
 
               <div className="flex justify-end space-x-2">
@@ -559,6 +1020,7 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
                         ) : (
                           <Badge variant="secondary">Inactive</Badge>
                         )}
+                        <Badge variant="outline">{productTypes.find(p => p.value === ad.product_type)?.label}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mb-1">{ad.business_name}</p>
                       {ad.description && (
@@ -567,6 +1029,17 @@ export default function AdvertisementManagement({ language }: AdvertisementManag
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span>{t.clicks}: {ad.click_count}</span>
                         <span>Category: {categories.find(c => c.value === ad.category)?.label}</span>
+                        {ad.price && (
+                          <span>Price: {ad.currency} {ad.price}</span>
+                        )}
+                        {ad.product_type === 'product' && (
+                          <span>
+                            Stock: {ad.is_in_stock ? ad.stock_quantity || 'Available' : 'Out of Stock'}
+                          </span>
+                        )}
+                        {ad.service_areas && ad.service_areas.length > 0 && (
+                          <span>Areas: {ad.service_areas.length}</span>
+                        )}
                       </div>
                     </div>
                   </div>

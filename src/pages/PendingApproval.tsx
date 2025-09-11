@@ -131,17 +131,25 @@ export default function PendingApproval() {
                 }
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button variant="outline" className="flex-1" onClick={handleLogout}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  {language === "en" ? "Back to Login" : "Kembali ke Log Masuk"}
-                </Button>
-                
-                <Button variant="outline" className="flex-1" asChild>
-                  <Link to="/login">
-                    {language === "en" ? "Contact Administrator" : "Hubungi Pentadbir"}
+              <div className="flex flex-col gap-3">
+                <Button variant="default" className="w-full" asChild>
+                  <Link to="/my-applications">
+                    {language === "en" ? "View My Applications" : "Lihat Permohonan Saya"}
                   </Link>
                 </Button>
+                
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button variant="outline" className="flex-1" onClick={handleLogout}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    {language === "en" ? "Back to Login" : "Kembali ke Log Masuk"}
+                  </Button>
+                  
+                  <Button variant="outline" className="flex-1" asChild>
+                    <Link to="/login">
+                      {language === "en" ? "Contact Administrator" : "Hubungi Pentadbir"}
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>

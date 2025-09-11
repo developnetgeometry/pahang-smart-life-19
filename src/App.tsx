@@ -39,6 +39,7 @@ import ComplaintsAnalytics from "./pages/admin/ComplaintsAnalytics";
 import CCTVManagement from "./pages/admin/CCTVManagement";
 import RequireRoles from "@/components/routing/RequireRoles";
 import RequireNotRoles from "@/components/routing/RequireNotRoles";
+import AuthOnlyRoute from "@/components/routing/AuthOnlyRoute";
 import AnnouncementManagement from "./pages/admin/AnnouncementManagement";
 import FacilitiesManagement from "./pages/admin/FacilitiesManagement";
 import FloorPlanManagement from "./pages/admin/FloorPlanManagement";
@@ -213,21 +214,21 @@ const App = () => (
             <Route
               path="/my-applications"
               element={
-                <ProtectedRoute>
+                <AuthOnlyRoute>
                   <Layout>
                     <MyApplications />
                   </Layout>
-                </ProtectedRoute>
+                </AuthOnlyRoute>
               }
             />
             <Route
               path="/service-provider-application"
               element={
-                <ProtectedRoute>
+                <AuthOnlyRoute>
                   <Layout>
                     <ServiceProviderApplication />
                   </Layout>
-                </ProtectedRoute>
+                </AuthOnlyRoute>
               }
             />
             <Route

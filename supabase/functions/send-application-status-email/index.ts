@@ -179,7 +179,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { subject, html } = getEmailContent(status, businessName, reviewNotes, rejectionReason);
 
     const emailResponse = await resend.emails.send({
-      from: "Community Management <noreply@lovable.app>",
+      from: "Community Management <onboarding@resend.dev>",
       to: [applicantEmail],
       subject: subject,
       html: html,
@@ -190,10 +190,10 @@ const handler = async (req: Request): Promise<Response> => {
     // Log the email sending in the database for tracking
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    await supabase
+    const { error: logError } = await supabase
       .from('application_communications')
       .insert({
         application_id: applicationId,
@@ -202,6 +202,11 @@ const handler = async (req: Request): Promise<Response> => {
         is_internal: true,
         sender_id: null
       });
+
+    if (logError) {
+      console.error('Failed to log email in database:', logError);
+      // Don't fail the entire operation just because logging failed
+    }
 
     return new Response(JSON.stringify({ 
       success: true, 
