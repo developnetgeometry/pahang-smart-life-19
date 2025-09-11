@@ -193,8 +193,8 @@ export function AppSidebar() {
       });
     }
 
-    // Add facilities if module is enabled
-    if (isModuleEnabled("facilities")) {
+    // Add facilities if module is enabled (exclude security officers)
+    if (isModuleEnabled("facilities") && !hasRole("security_officer")) {
       servicesItems.push({
         title: t("facilities"),
         url: "/facilities",
