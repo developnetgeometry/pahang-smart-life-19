@@ -194,10 +194,24 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       // Check if tenant email already exists
-      const { data: existingUser, error: checkError } =
-        await supabaseAdmin.auth.admin.getUserByEmail(body.tenant_email);
+      const { data: existingProfile, error: checkError } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("email", body.tenant_email)
+        .maybeSingle();
 
-      if (existingUser?.user) {
+      if (checkError) {
+        console.error("Error checking existing user:", checkError);
+        return new Response(
+          JSON.stringify({ error: "Failed to check existing user" }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      if (existingProfile) {
         return new Response(
           JSON.stringify({ error: "User with this email already exists" }),
           {
@@ -225,7 +239,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       // Generate temporary password
-      const tempPassword = `TenantTemp${Math.random().toString(36).slice(-8)}`;
+      const tempPassword = `GuestTemp${Math.random().toString(36).slice(-8)}`;
 
       // Create auth user using service role
       const { data: newUser, error: authError } =
@@ -236,14 +250,14 @@ const handler = async (req: Request): Promise<Response> => {
           user_metadata: {
             full_name: body.tenant_name,
             created_by_admin: true,
-            account_type: "tenant",
+            account_type: "guest",
           },
         });
 
       if (authError || !newUser.user) {
-        console.error("Error creating tenant auth user:", authError);
+        console.error("Error creating guest auth user:", authError);
         return new Response(
-          JSON.stringify({ error: "Failed to create tenant account" }),
+          JSON.stringify({ error: "Failed to create guest account" }),
           {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -251,10 +265,12 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      // Create profile for the tenant
+      console.log("Auth user created:", newUser.user.id);
+
+      // Update or create profile for the guest (in case trigger already created it)
       const { error: profileError } = await supabaseAdmin
         .from("profiles")
-        .insert({
+        .upsert({
           id: newUser.user.id,
           full_name: body.tenant_name,
           email: body.tenant_email,
@@ -262,14 +278,16 @@ const handler = async (req: Request): Promise<Response> => {
           district_id: hostProfile.district_id,
           community_id: hostProfile.community_id,
           account_status: "approved",
+        }, {
+          onConflict: 'id'
         });
 
       if (profileError) {
-        console.error("Error creating tenant profile:", profileError);
+        console.error("Error upserting guest profile:", profileError);
         // Clean up auth user if profile creation fails
         await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
         return new Response(
-          JSON.stringify({ error: "Failed to create tenant profile" }),
+          JSON.stringify({ error: "Failed to create guest profile" }),
           {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -277,7 +295,9 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      // Assign resident role to tenant
+      console.log("Profile created/updated successfully");
+
+      // Assign resident role to guest
       const { error: roleError } = await supabaseAdmin
         .from("enhanced_user_roles")
         .insert({
@@ -290,18 +310,20 @@ const handler = async (req: Request): Promise<Response> => {
         });
 
       if (roleError) {
-        console.error("Error assigning role to tenant:", roleError);
+        console.error("Error assigning role to guest:", roleError);
         // Clean up user if role assignment fails
         await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
         await supabaseAdmin.from("profiles").delete().eq("id", newUser.user.id);
         return new Response(
-          JSON.stringify({ error: "Failed to assign role to tenant" }),
+          JSON.stringify({ error: "Failed to assign role to guest" }),
           {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
         );
       }
+
+      console.log("Role assigned successfully");
 
       // Create household account link
       const { error: householdError } = await supabaseAdmin
@@ -355,7 +377,7 @@ const handler = async (req: Request): Promise<Response> => {
           success: true,
           tenant_id: newUser.user.id,
           message:
-            "Tenant account created successfully. Invitation email sent.",
+            "Guest account created successfully. Invitation email sent.",
         }),
         {
           status: 201,
