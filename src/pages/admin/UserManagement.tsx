@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getRoleSpecificFunction, isRoleSupported } from "@/lib/user-creation-utils";
+import { validateUserDataForRole, getRoleDefaults, canCreateRole } from "@/lib/role-validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +55,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useModuleAccess } from "@/hooks/use-module-access";
+import RoleCreationValidator from "@/components/admin/RoleCreationValidator";
+import RoleValidationTests from "@/components/admin/RoleValidationTests";
 
 interface User {
   id: string;
@@ -703,11 +706,45 @@ export default function UserManagement() {
           return;
         }
 
+        // Validate user data for the specific role
+        const validationErrors = validateUserDataForRole(form.role, {
+          email: form.email,
+          full_name: form.name,
+          phone: form.phone,
+          password: form.password,
+          unit_number: form.unit,
+          access_expires_at: form.access_expires_at,
+          district_id: form.district_id,
+          community_id: form.community_id,
+          status: form.status
+        });
+
+        if (validationErrors.length > 0) {
+          const errorMessages = validationErrors.map(err => err.message).join(', ');
+          toast({
+            title: "Validation Error",
+            description: errorMessages,
+            variant: "destructive",
+          });
+          console.error('Role validation errors:', validationErrors);
+          return;
+        }
+
+        console.log(`Creating ${form.role} user:`, {
+          email: form.email,
+          full_name: form.name,
+          role: form.role
+        });
+
+        // Apply role defaults
+        const roleDefaults = getRoleDefaults(form.role);
+        
         // Create new user using edge function
         const requestBody: any = {
           email: form.email,
           full_name: form.name,
           phone: form.phone,
+          ...roleDefaults // Apply role-specific defaults
         };
 
         // Only include password and status for non-residents and non-guests
@@ -734,17 +771,50 @@ export default function UserManagement() {
           requestBody.community_id = form.community_id;
         }
 
-        const functionName = getRoleSpecificFunction(form.role);
-        const { data, error } = await supabase.functions.invoke(
-          functionName,
-          {
-            body: requestBody,
+        try {
+          const functionName = getRoleSpecificFunction(form.role);
+          console.log(`Calling ${functionName} with payload:`, requestBody);
+          
+          const { data, error } = await supabase.functions.invoke(
+            functionName,
+            {
+              body: requestBody,
+            }
+          );
+
+          if (error) {
+            console.error(`Error from ${functionName}:`, error);
+            throw error;
           }
-        );
 
-        if (error) throw error;
-
-        toast({ title: t.userCreated });
+          console.log(`Successfully created ${form.role} user:`, data);
+          toast({ 
+            title: t.userCreated,
+            description: `${form.role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} account created successfully.`
+          });
+        } catch (error: any) {
+          console.error('User creation error:', error);
+          
+          // Provide specific error messages based on common issues
+          let errorMessage = "Failed to create user account";
+          
+          if (error.message?.includes('already exists')) {
+            errorMessage = "A user with this email already exists";
+          } else if (error.message?.includes('permission')) {
+            errorMessage = "You don't have permission to create this type of account";
+          } else if (error.message?.includes('module')) {
+            errorMessage = "Required module is not enabled for this community";
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+          
+          toast({
+            title: "Account Creation Failed",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          throw error;
+        }
       }
 
       setIsCreateOpen(false);
@@ -2181,6 +2251,12 @@ export default function UserManagement() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Role Creation Validation Suite - Only shown in development/admin mode */}
+      <RoleCreationValidator />
+      
+      {/* Comprehensive Role Testing Suite */}
+      <RoleValidationTests />
     </div>
   );
 }
