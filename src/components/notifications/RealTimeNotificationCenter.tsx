@@ -257,18 +257,18 @@ export default function RealTimeNotificationCenter() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            {t.title}
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardTitle className="flex items-center gap-2 flex-1 min-w-0">
+            <Bell className="h-5 w-5 shrink-0" />
+            <span className="truncate">{t.title}</span>
             {unreadCount > 0 && (
-              <Badge variant="destructive" className="ml-2">
+              <Badge variant="destructive" className="shrink-0">
                 {unreadCount}
               </Badge>
             )}
           </CardTitle>
           {unreadCount > 0 && (
-            <Button variant="outline" size="sm" onClick={markAllAsRead}>
+            <Button variant="outline" size="sm" onClick={markAllAsRead} className="shrink-0">
               {t.markAllRead}
             </Button>
           )}
