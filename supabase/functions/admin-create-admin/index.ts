@@ -270,7 +270,7 @@ serve(async (req) => {
       full_name,
       phone: phone || null,
       email,
-      // Removed account_status as it may not exist in profiles table
+      account_status: 'approved', // Auto-approve all admin accounts for immediate login
     };
 
     // Set district/community based on role and assignments
@@ -308,7 +308,7 @@ serve(async (req) => {
           community_id: profileData.community_id,
         },
         credentials_created: true,
-        message: `${role.replace('_', ' ')} account created successfully.`,
+        message: `${role.replace('_', ' ')} account created and approved successfully. Admin can login immediately.`,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
