@@ -354,21 +354,9 @@ export function AppSidebar() {
     ) {
       operationsItems.push(
         {
-          title: t("facilitiesManagement"),
-          url: "/admin/facilities",
-          icon: Building,
-          requiredRoles: ["facility_manager", "state_admin", "community_admin"],
-        },
-        {
           title: t("floorPlanManagement"),
           url: "/admin/floor-plans",
           icon: Monitor,
-          requiredRoles: ["facility_manager", "state_admin", "community_admin"],
-        },
-        {
-          title: t("maintenanceManagement"),
-          url: "/admin/maintenance",
-          icon: Wrench,
           requiredRoles: ["facility_manager", "state_admin", "community_admin"],
         }
       );
@@ -376,47 +364,7 @@ export function AppSidebar() {
 
     // Admin and Facility Manager items - removed complaints center from here
 
-    // Asset Management - for facility managers and above
-    if (
-      hasRole("facility_manager") ||
-      hasRole("community_admin") ||
-      hasRole("district_coordinator") ||
-      hasRole("state_admin")
-    ) {
-      operationsItems.push({
-        title: t("assetManagement"),
-        url: "/asset-management",
-        icon: Package,
-        requiredRoles: [
-          "facility_manager",
-          "community_admin",
-          "district_coordinator",
-          "state_admin",
-        ],
-      });
-    }
-
-    // Inventory Management - for facility managers and above
-    if (
-      hasRole("facility_manager") ||
-      hasRole("maintenance_staff") ||
-      hasRole("community_admin") ||
-      hasRole("district_coordinator") ||
-      hasRole("state_admin")
-    ) {
-      operationsItems.push({
-        title: t("inventoryManagement"),
-        url: "/inventory-management",
-        icon: BarChart3,
-        requiredRoles: [
-          "facility_manager",
-          "maintenance_staff",
-          "community_admin",
-          "district_coordinator",
-          "state_admin",
-        ],
-      });
-    }
+    // Asset Management and Inventory Management modules are hidden
 
     // Financial Management - for community admins and above
     if (
@@ -492,14 +440,7 @@ export function AppSidebar() {
       }
     }
 
-    if (hasRole("state_admin") || hasRole("community_admin")) {
-      securityItems.push({
-        title: t("visitorAnalytics"),
-        url: "/visitor-analytics",
-        icon: Activity,
-        requiredRoles: ["state_admin", "community_admin"],
-      });
-    }
+    // Visitor Analytics module is hidden
 
     if (securityItems.length > 0) {
       nav.push({
