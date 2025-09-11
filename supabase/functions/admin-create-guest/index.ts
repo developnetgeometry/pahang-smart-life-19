@@ -79,14 +79,17 @@ async function createAuthUser(
   context: AdminContext,
   req: Request
 ) {
+  const frontendUrl =
+    Deno.env.get("FRONTEND_URL") || req.headers.get("origin") || "http://localhost:3000";
+  const redirectUrl = `${frontendUrl}/complete-account`;
+
   let authUser: any;
   let authError: any;
+  let emailSentType: 'invite' | 'reset' | 'none' = 'none';
 
   if (useInviteFlow) {
-    const frontendUrl =
-      Deno.env.get("FRONTEND_URL") || req.headers.get("origin") || "http://localhost:3000";
-    const redirectUrl = `${frontendUrl}/complete-account`;
-
+    console.log(`Attempting to invite user: ${userData.email}`);
+    
     const inviteResult = await context.supabaseAdmin.auth.admin.inviteUserByEmail(
       userData.email,
       {
@@ -97,6 +100,43 @@ async function createAuthUser(
 
     authUser = inviteResult.data;
     authError = inviteResult.error;
+    
+    // If invite failed due to existing user, try password reset instead
+    if (authError && (authError.status === 422 || authError.message?.includes("already been registered"))) {
+      console.log(`User with email ${userData.email} already exists, sending password reset email`);
+      
+      // First, look up existing user
+      const { data: users, error: getUserError } = await context.supabaseAdmin.auth.admin.listUsers();
+      
+      if (getUserError) {
+        throw new Error(`Failed to lookup existing user: ${getUserError.message}`);
+      }
+      
+      const existingUser = users.users.find((u: any) => u.email === userData.email);
+      
+      if (!existingUser) {
+        throw new Error(`User exists but could not be found: ${userData.email}`);
+      }
+      
+      // Send password reset email with redirect to complete-account
+      const { error: resetError } = await context.supabase.auth.resetPasswordForEmail(
+        userData.email,
+        {
+          redirectTo: redirectUrl,
+        }
+      );
+      
+      if (resetError) {
+        throw new Error(`Failed to send password reset email: ${resetError.message}`);
+      }
+      
+      console.log(`Password reset email sent for existing user: ${existingUser.id}`);
+      authUser = { user: existingUser };
+      authError = null;
+      emailSentType = 'reset';
+    } else if (!authError) {
+      emailSentType = 'invite';
+    }
   } else {
     console.log(`Attempting to create user directly: ${userData.email}`);
     
@@ -111,36 +151,16 @@ async function createAuthUser(
     authError = createResult.error;
   }
 
-  // Handle existing email error gracefully for guest users
-  if (authError && authError.message?.includes("already been registered")) {
-    console.log(`User with email ${userData.email} already exists, attempting to reuse account`);
-    
-    // Look up existing user by email
-    const { data: users, error: getUserError } = await context.supabaseAdmin.auth.admin.listUsers();
-    
-    if (getUserError) {
-      throw new Error(`Failed to lookup existing user: ${getUserError.message}`);
-    }
-    
-    const existingUser = users.users.find((u: any) => u.email === userData.email);
-    
-    if (!existingUser) {
-      throw new Error(`User exists but could not be found: ${userData.email}`);
-    }
-    
-    console.log(`Found existing user: ${existingUser.id}`);
-    authUser = { user: existingUser };
-    authError = null;
-  } else if (authError) {
-    throw new Error(`Failed to create user: ${authError.message}`);
+  if (authError) {
+    throw new Error(`Failed to process user: ${authError.message}`);
   }
 
   if (!authUser?.user) {
     throw new Error("Failed to create or retrieve user");
   }
 
-  console.log(`Auth user ${useInviteFlow ? 'invited' : 'created'}: ${authUser.user.id}`);
-  return authUser.user.id;
+  console.log(`Auth user ${useInviteFlow ? 'processed' : 'created'}: ${authUser.user.id}, email type: ${emailSentType}`);
+  return { userId: authUser.user.id, emailSentType };
 }
 
 async function updateUserProfile(userId: string, profileData: any, context: AdminContext) {
@@ -250,10 +270,10 @@ serve(async (req) => {
 
     console.log("Creating guest with validated data:", validatedData);
 
-    // Create auth user directly (no invite flow for guests)
-    const userId = await createAuthUser(
+    // Create auth user using invite flow for guests to send email
+    const { userId, emailSentType } = await createAuthUser(
       { email, password, full_name },
-      false, // Use direct creation for guests
+      true, // Use invite flow for guests to send email
       context,
       req
     );
@@ -273,8 +293,15 @@ serve(async (req) => {
     console.log("Guest creation completed successfully:", {
       userId: userId,
       email: email,
-      role: "guest"
+      role: "guest",
+      emailSentType: emailSentType
     });
+
+    const message = emailSentType === 'invite' 
+      ? "Guest account created successfully. Invitation email sent."
+      : emailSentType === 'reset'
+      ? "Guest account created successfully. Password reset email sent for existing user."
+      : "Guest account created successfully with temporary access.";
 
     return new Response(
       JSON.stringify({
@@ -286,8 +313,9 @@ serve(async (req) => {
           role: "guest",
           access_expires_at,
         },
-        credentials_created: true,
-        message: "Guest account created successfully with temporary access.",
+        email_sent: emailSentType !== 'none',
+        email_type: emailSentType,
+        message: message,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

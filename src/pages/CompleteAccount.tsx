@@ -104,7 +104,7 @@ export default function CompleteAccount() {
   // Check if user is a guest
   const isGuest = hasRole('guest');
 
-  // Check session validity on component mount with auth state listener
+  // Check session validity and handle invitation links
   useEffect(() => {
     let hasSetInitialSession = false;
     
@@ -122,8 +122,87 @@ export default function CompleteAccount() {
       }
     );
 
-    // THEN check for existing session
-    const checkSession = async () => {
+    // Check for invitation/verification parameters in URL
+    const handleInvitationLink = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tokenHash = urlParams.get('token_hash');
+      const type = urlParams.get('type');
+      const code = urlParams.get('code');
+      
+      if (tokenHash && type) {
+        console.log('Processing invitation link with token_hash and type:', type);
+        try {
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: type as any,
+          });
+          
+          if (error) {
+            console.error('Token verification failed:', error);
+            if (!hasSetInitialSession) {
+              setSessionValid(false);
+              hasSetInitialSession = true;
+            }
+            return;
+          }
+          
+          if (data.session) {
+            console.log('Session established from invitation link');
+            setSessionValid(true);
+            setUser(data.session.user);
+            hasSetInitialSession = true;
+            
+            // Clean up URL parameters
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+            return;
+          }
+        } catch (error) {
+          console.error('Invitation link processing error:', error);
+          if (!hasSetInitialSession) {
+            setSessionValid(false);
+            hasSetInitialSession = true;
+          }
+          return;
+        }
+      }
+      
+      if (code) {
+        console.log('Processing invitation link with code');
+        try {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (error) {
+            console.error('Code exchange failed:', error);
+            if (!hasSetInitialSession) {
+              setSessionValid(false);
+              hasSetInitialSession = true;
+            }
+            return;
+          }
+          
+          if (data.session) {
+            console.log('Session established from code exchange');
+            setSessionValid(true);
+            setUser(data.session.user);
+            hasSetInitialSession = true;
+            
+            // Clean up URL parameters
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+            return;
+          }
+        } catch (error) {
+          console.error('Code exchange error:', error);
+          if (!hasSetInitialSession) {
+            setSessionValid(false);
+            hasSetInitialSession = true;
+          }
+          return;
+        }
+      }
+      
+      // If no URL parameters, check for existing session
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
@@ -148,7 +227,7 @@ export default function CompleteAccount() {
       }
     };
     
-    checkSession();
+    handleInvitationLink();
     
     return () => subscription.unsubscribe();
   }, []);
