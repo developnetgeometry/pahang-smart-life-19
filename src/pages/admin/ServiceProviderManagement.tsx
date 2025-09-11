@@ -86,7 +86,7 @@ const PRIORITY_COLORS = {
 };
 
 export default function ServiceProviderManagement() {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const navigate = useNavigate();
   const [applications, setApplications] = useState<Application[]>([]);
   const [providers, setProviders] = useState<ServiceProvider[]>([]);
@@ -118,10 +118,20 @@ export default function ServiceProviderManagement() {
           services_offered
         `);
 
-      // Only filter by district if user has an active community set
-      if (user?.active_community_id) {
-        query = query.eq("district_id", user.active_community_id);
+      // Apply district filtering based on role
+      if (!hasRole("state_admin")) {
+        // For non-state admins, filter by their district
+        const { data: me } = await supabase
+          .from('profiles')
+          .select('district_id')
+          .eq('id', user?.id)
+          .maybeSingle();
+        
+        if (me?.district_id) {
+          query = query.eq("district_id", me.district_id);
+        }
       }
+      // State admins see all applications (no filter)
 
       const { data, error } = await query.order("created_at", {
         ascending: false,
@@ -164,10 +174,20 @@ export default function ServiceProviderManagement() {
           service_categories
         `);
 
-      // Only filter by district if user has an active community set
-      if (user?.active_community_id) {
-        query = query.eq("district_id", user.active_community_id);
+      // Apply district filtering based on role
+      if (!hasRole("state_admin")) {
+        // For non-state admins, filter by their district
+        const { data: me } = await supabase
+          .from('profiles')
+          .select('district_id')
+          .eq('id', user?.id)
+          .maybeSingle();
+        
+        if (me?.district_id) {
+          query = query.eq("district_id", me.district_id);
+        }
       }
+      // State admins see all providers (no filter)
 
       const { data, error } = await query.order("business_name");
 
