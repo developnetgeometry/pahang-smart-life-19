@@ -73,9 +73,10 @@ interface DirectoryChatInfo {
 interface CommunityChatProps {
   marketplaceChat?: MarketplaceChatInfo | null;
   directoryChat?: DirectoryChatInfo | null;
+  initialRoomId?: string;
 }
 
-export default function CommunityChat({ marketplaceChat, directoryChat }: CommunityChatProps = {}) {
+export default function CommunityChat({ marketplaceChat, directoryChat, initialRoomId }: CommunityChatProps = {}) {
   const { language, user } = useAuth();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -127,10 +128,14 @@ export default function CommunityChat({ marketplaceChat, directoryChat }: Commun
   }, [directoryChat, language]);
 
   useEffect(() => {
-    if (rooms.length > 0 && !selectedRoomId) {
+    if (initialRoomId) {
+      // If an initial room ID is provided, select it
+      setSelectedRoomId(initialRoomId);
+    } else if (rooms.length > 0 && !selectedRoomId) {
+      // Otherwise, select the first available room
       setSelectedRoomId(rooms[0].id);
     }
-  }, [rooms, selectedRoomId]);
+  }, [rooms, selectedRoomId, initialRoomId]);
 
   useEffect(() => {
     scrollToBottom();

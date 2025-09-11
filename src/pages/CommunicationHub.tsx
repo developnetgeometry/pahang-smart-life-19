@@ -287,7 +287,11 @@ export default function CommunicationHub() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6">
-            <CommunityChat marketplaceChat={marketplaceChat} directoryChat={directoryChat} />
+            <CommunityChat 
+              marketplaceChat={marketplaceChat} 
+              directoryChat={directoryChat}
+              initialRoomId={location.state?.roomId}
+            />
           </CardContent>
         </Card>
 
