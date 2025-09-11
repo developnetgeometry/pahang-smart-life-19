@@ -121,7 +121,7 @@ export default function CompleteAccount() {
   // Check if user is a guest
   const isGuest = hasRole('guest');
 
-  // Aggressive session cleanup and token processing
+  // Smart session initialization - handle both invitation links and regular login flow
   useEffect(() => {
     let processed = false;
 
@@ -131,29 +131,20 @@ export default function CompleteAccount() {
 
       console.log('=== STARTING COMPLETE ACCOUNT INITIALIZATION ===');
       
-      // 1. AGGRESSIVE CLEANUP: Clear ALL sessions and storage
-      try {
-        console.log('Step 1: Aggressive cleanup - clearing all sessions and storage');
-        
-        // Clear localStorage completely
-        localStorage.clear();
-        
-        // Clear sessionStorage completely  
-        sessionStorage.clear();
-        
-        // Force sign out any existing Supabase session
-        await supabase.auth.signOut();
-        
-        // Wait for cleanup to complete
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        console.log('✅ Cleanup completed');
-      } catch (error) {
-        console.error('Cleanup error (continuing anyway):', error);
+      // 1. CHECK FOR EXISTING SESSION FIRST
+      console.log('Step 1: Checking for existing valid session');
+      const { data: { session: existingSession } } = await supabase.auth.getSession();
+      
+      if (existingSession?.user) {
+        console.log('✅ Found existing valid session for:', existingSession.user.email);
+        setUser(existingSession.user);
+        setUserEmail(existingSession.user.email || '');
+        setSessionValid(true);
+        return; // Use existing session, no need to process tokens
       }
 
-      // 2. PARSE TOKENS: Extract tokens from URL
-      console.log('Step 2: Parsing tokens from URL');
+      // 2. PARSE TOKENS: Extract tokens from URL (for invitation links)
+      console.log('Step 2: No existing session, parsing tokens from URL');
       const urlParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       
@@ -171,7 +162,15 @@ export default function CompleteAccount() {
         refreshToken: !!refreshToken 
       });
 
-      // 3. PROCESS TOKENS: Try to establish session using single clean flow
+      // If no tokens found, this might be a regular login flow issue
+      if (!code && !tokenHash && !accessToken && !refreshToken) {
+        console.log('No tokens found in URL - this appears to be a regular login flow');
+        setSessionValid(false);
+        setProcessingError('No invitation tokens found. Please ensure you accessed this page through a valid invitation link.');
+        return;
+      }
+
+      // 3. PROCESS TOKENS: Try to establish session using tokens
       let sessionEstablished = false;
       
       try {
