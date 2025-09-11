@@ -112,22 +112,8 @@ export function SecurityOfficerDashboard() {
       case "visitors":
         navigate("/visitor-security");
         break;
-      case "incident":
-        navigate("/my-complaints");
-        break;
       case "complaints_center":
         navigate("/admin/complaints");
-        break;
-      case "system":
-        toast({
-          title: language === "en" ? "System Check" : "Semak Sistem",
-          description:
-            language === "en"
-              ? "All systems operational. Last check: " +
-                new Date().toLocaleTimeString()
-              : "Semua sistem beroperasi. Pemeriksaan terakhir: " +
-                new Date().toLocaleTimeString(),
-        });
         break;
       default:
         break;
@@ -459,7 +445,7 @@ export function SecurityOfficerDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button
               className="flex items-center gap-2 h-12"
               onClick={() => handleQuickAction("cameras")}
@@ -482,22 +468,6 @@ export function SecurityOfficerDashboard() {
             >
               <AlertTriangle className="h-4 w-4" />
               {language === "en" ? "Complaints Center" : "Pusat Aduan"}
-            </Button>
-            <Button
-              className="flex items-center gap-2 h-12"
-              variant="outline"
-              onClick={() => handleQuickAction("incident")}
-            >
-              <FileText className="h-4 w-4" />
-              {language === "en" ? "Incident Report" : "Laporan Insiden"}
-            </Button>
-            <Button
-              className="flex items-center gap-2 h-12"
-              variant="outline"
-              onClick={() => handleQuickAction("system")}
-            >
-              <Activity className="h-4 w-4" />
-              {language === "en" ? "System Check" : "Semak Sistem"}
             </Button>
           </div>
         </CardContent>
