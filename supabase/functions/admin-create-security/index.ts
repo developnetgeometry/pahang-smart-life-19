@@ -170,7 +170,7 @@ async function assignUserRole(userId: string, role: string, context: AdminContex
       district_id: context.adminProfile?.district_id || null,
       is_active: true,
       assigned_at: new Date().toISOString(),
-    });
+    }, { onConflict: "user_id,role,district_id" });
 
   if (roleUpsertError) {
     await context.supabaseAdmin.auth.admin.deleteUser(userId);
