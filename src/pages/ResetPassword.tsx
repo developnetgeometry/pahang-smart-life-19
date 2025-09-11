@@ -42,9 +42,17 @@ export default function ResetPassword() {
         // Wait a bit for cleanup
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        console.log('Full URL:', window.location.href);
-        console.log('Hash:', window.location.hash);
-        console.log('Search:', window.location.search);
+        const currentUrl = window.location.href;
+        const urlObj = new URL(currentUrl);
+        
+        console.log('=== DETAILED RESET PASSWORD DEBUG ===');
+        console.log('Current timestamp:', new Date().toISOString());
+        console.log('Full URL:', currentUrl);
+        console.log('Pathname:', urlObj.pathname);
+        console.log('Hash raw:', window.location.hash);
+        console.log('Hash length:', window.location.hash.length);
+        console.log('Search raw:', window.location.search);
+        console.log('Search length:', window.location.search.length);
         
         // Parse tokens from URL hash (Supabase password reset format)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -57,17 +65,23 @@ export default function ResetPassword() {
         const searchRefreshToken = searchParams.get('refresh_token');
         const searchType = searchParams.get('type');
         
-        console.log('Hash tokens:', { 
-          hasAccessToken: !!accessToken, 
-          hasRefreshToken: !!refreshToken, 
-          type 
-        });
+        console.log('Hash parameters found:');
+        for (const [key, value] of hashParams) {
+          console.log(`  ${key}: ${value ? '***PRESENT***' : 'null'}`);
+        }
         
-        console.log('Search tokens:', { 
-          hasAccessToken: !!searchAccessToken, 
-          hasRefreshToken: !!searchRefreshToken, 
-          type: searchType 
-        });
+        console.log('Search parameters found:');
+        for (const [key, value] of new URLSearchParams(window.location.search)) {
+          console.log(`  ${key}: ${value ? '***PRESENT***' : 'null'}`);
+        }
+        
+        console.log('Token extraction results:');
+        console.log('  Hash access token:', accessToken ? 'FOUND' : 'MISSING');
+        console.log('  Hash refresh token:', refreshToken ? 'FOUND' : 'MISSING');
+        console.log('  Hash type:', type || 'MISSING');
+        console.log('  Search access token:', searchAccessToken ? 'FOUND' : 'MISSING');
+        console.log('  Search refresh token:', searchRefreshToken ? 'FOUND' : 'MISSING');
+        console.log('  Search type:', searchType || 'MISSING');
         
         // Try hash tokens first (standard Supabase redirect format)
         let finalAccessToken = accessToken;
@@ -79,11 +93,13 @@ export default function ResetPassword() {
           finalAccessToken = searchAccessToken;
           finalRefreshToken = searchRefreshToken;
           finalType = searchType;
+          console.log('Using search params as fallback');
         }
         
         if (finalAccessToken && finalRefreshToken) {
-          console.log('Using tokens from:', finalAccessToken === accessToken ? 'hash' : 'search');
-          console.log('Token type:', finalType);
+          console.log('✅ Valid tokens found, attempting session setup...');
+          console.log('Token source:', finalAccessToken === accessToken ? 'hash' : 'search');
+          console.log('Token type:', finalType || 'no type specified');
           
           // Establish session using tokens (don't require specific type for flexibility)
           const { data, error } = await supabase.auth.setSession({
@@ -92,20 +108,20 @@ export default function ResetPassword() {
           });
           
           if (error) {
-            console.error('Session establishment error:', error);
+            console.error('❌ Session establishment error:', error);
             throw new Error(`Failed to establish reset session: ${error.message}`);
           }
           
           // Verify session is actually established
           const { data: { session } } = await supabase.auth.getSession();
           if (!session) {
+            console.error('❌ No session after setSession call');
             throw new Error('Session not established after setSession');
           }
           
-          console.log('Password reset session established successfully', { 
-            userId: session.user?.id,
-            email: session.user?.email 
-          });
+          console.log('✅ Password reset session established successfully');
+          console.log('User ID:', session.user?.id);
+          console.log('User email:', session.user?.email);
           
           setIsVerifying(false);
           return;
@@ -116,22 +132,29 @@ export default function ResetPassword() {
         const errorDescription = hashParams.get('error_description') || searchParams.get('error_description');
         
         if (errorParam) {
-          console.error('URL contains error:', errorParam, errorDescription);
+          console.error('❌ URL contains error parameters:', errorParam, errorDescription);
           throw new Error(`Authentication error: ${errorDescription || errorParam}`);
         }
         
-        // No valid reset tokens found
-        console.error('No tokens found in URL');
+        // No valid reset tokens found - this is the main issue!
+        console.error('❌ NO TOKENS FOUND IN URL');
+        console.error('This usually means:');
+        console.error('1. You\'re using an OLD email (sent before Supabase config changes)');
+        console.error('2. Supabase Auth redirect URLs are still incorrect');
+        console.error('3. There\'s a redirect loop removing the tokens');
+        console.error('');
+        console.error('SOLUTION: Request a NEW password reset email and use that link');
+        
         throw new Error(
           language === "en"
-            ? "This page can only be accessed through the password reset link sent to your email. Please check your inbox and click the 'Reset Password' button in the email."
-            : "Halaman ini hanya boleh diakses melalui pautan tetapan semula kata laluan yang dihantar ke emel anda. Sila semak peti masuk anda dan klik butang 'Tetapkan Semula Kata Laluan' dalam emel tersebut."
+            ? "This page can only be accessed through a fresh password reset link. Please request a NEW password reset from the login page (the old email won't work after configuration changes)."
+            : "Halaman ini hanya boleh diakses melalui pautan tetapan semula kata laluan yang baharu. Sila minta tetapan semula kata laluan BAHARU dari halaman log masuk (emel lama tidak akan berfungsi selepas perubahan konfigurasi)."
         );
         
       } catch (error: any) {
-        console.error('Reset session setup error:', error);
+        console.error('❌ Reset session setup error:', error);
         setError(
-          error.message.includes('tokens found') || error.message.includes('Authentication error')
+          error.message.includes('tokens found') || error.message.includes('Authentication error') || error.message.includes('fresh password reset')
             ? error.message
             : (language === "en"
               ? "Invalid or expired reset link. Please request a new password reset."
