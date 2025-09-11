@@ -341,7 +341,7 @@ export default function UserManagement() {
   useEffect(() => {
     fetchUsers();
     fetchDistricts();
-  }, [user]);
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -1104,45 +1104,35 @@ export default function UserManagement() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="district">District *</Label>
-                      <Select
-                        value={form.district_id}
-                        onValueChange={(value) =>
-                          setForm((prev) => ({ ...prev, district_id: value, community_id: "" }))
+                      <Label htmlFor="unit">{t.unit} *</Label>
+                      <Input
+                        id="unit"
+                        placeholder={
+                          language === "en" ? "e.g. A-15-03" : "cth: A-15-03"
                         }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select district" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {districts.map((district) => (
-                            <SelectItem key={district.id} value={district.id}>
-                              {district.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        value={form.unit}
+                        onChange={(e) =>
+                          setForm((prev) => ({ ...prev, unit: e.target.value }))
+                        }
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="community">Community *</Label>
-                      <Select
-                        value={form.community_id}
-                        onValueChange={(value) =>
-                          setForm((prev) => ({ ...prev, community_id: value }))
+                      <Label htmlFor="phone">{t.phone}</Label>
+                      <Input
+                        id="phone"
+                        placeholder={
+                          language === "en"
+                            ? "e.g. +60123456789"
+                            : "cth: +60123456789"
                         }
-                        disabled={!form.district_id}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select community" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {communities.map((community) => (
-                            <SelectItem key={community.id} value={community.id}>
-                              {community.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        value={form.phone}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            phone: e.target.value,
+                          }))
+                        }
+                      />
                     </div>
                   </div>
                 </>
