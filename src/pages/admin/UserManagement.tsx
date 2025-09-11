@@ -346,37 +346,18 @@ export default function UserManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-
-      // Get the current admin's profile to find their community_id
-      const { data: adminProfile, error: adminError } = await supabase
-        .from("profiles")
-        .select("community_id")
-        .eq("id", user.id)
-        .single();
-
-      if (adminError || !adminProfile) {
-        throw new Error("Could not fetch admin profile or community.");
-      }
-
-      // Base query for profiles
-      let query = supabase.from("profiles").select(`
-        id,
-        full_name,
-        email,
-        phone,
-        unit_number,
-        district_id,
-        account_status,
-        created_at,
-        community_id
-      `);
-
-      // Filter profiles by the admin's community_id
-      if (adminProfile.community_id) {
-        query = query.eq("community_id", adminProfile.community_id);
-      }
-
-      const { data: profiles, error: profilesError } = await query;
+      const { data: profiles, error: profilesError } = await supabase.from(
+        "profiles"
+      ).select(`
+          id,
+          full_name,
+          email,
+          phone,
+          unit_number,
+          district_id,
+          account_status,
+          created_at
+        `);
 
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
@@ -387,14 +368,11 @@ export default function UserManagement() {
         });
         return;
       }
-      
-      const userIds = profiles.map(p => p.id);
 
-      // Get user roles separately for the fetched users
+      // Get user roles separately
       const { data: userRoles, error: rolesError } = await supabase
         .from("enhanced_user_roles")
         .select("user_id, role")
-        .in("user_id", userIds)
         .eq("is_active", true);
 
       if (rolesError) {
