@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Map as MapIcon, MapPin, Search, Building, Users, Loader2, Eye, RefreshCw } from 'lucide-react';
+import { Map as MapIcon, MapPin, Search, Building, Users, Settings, Loader2, Eye, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -426,6 +426,13 @@ export default function DistrictManagement() {
                   >
                     <Eye className="h-4 w-4 mr-1" />
                     {t.view}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => openEditModal(district)}
+                  >
+                    <Settings className="h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
