@@ -10449,6 +10449,10 @@ export type Database = {
         Args: { check_user_id?: string; min_level: number }
         Returns: boolean
       }
+      is_guest_access_expired: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
       is_module_enabled_for_community: {
         Args: { community_id?: string; module_name: string }
         Returns: boolean
