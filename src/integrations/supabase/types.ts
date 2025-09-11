@@ -1597,6 +1597,7 @@ export type Database = {
           district_id: string | null
           established_date: string | null
           id: string
+          is_active: boolean | null
           latitude: number | null
           longitude: number | null
           name: string
@@ -1615,6 +1616,7 @@ export type Database = {
           district_id?: string | null
           established_date?: string | null
           id?: string
+          is_active?: boolean | null
           latitude?: number | null
           longitude?: number | null
           name: string
@@ -1633,6 +1635,7 @@ export type Database = {
           district_id?: string | null
           established_date?: string | null
           id?: string
+          is_active?: boolean | null
           latitude?: number | null
           longitude?: number | null
           name?: string

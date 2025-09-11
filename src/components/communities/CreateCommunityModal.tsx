@@ -80,6 +80,7 @@ export default function CreateCommunityModal({
       create: 'Create Community',
       creating: 'Creating...',
       nameRequired: 'Community name is required',
+      duplicateName: 'A community with this name already exists in this district',
       success: 'Community created successfully',
       error: 'Failed to create community'
     },
@@ -117,6 +118,7 @@ export default function CreateCommunityModal({
       create: 'Cipta Komuniti',
       creating: 'Mencipta...',
       nameRequired: 'Nama komuniti diperlukan',
+      duplicateName: 'Komuniti dengan nama ini sudah wujud dalam daerah ini',
       success: 'Komuniti berjaya dicipta',
       error: 'Gagal mencipta komuniti'
     }
@@ -135,6 +137,20 @@ export default function CreateCommunityModal({
     setLoading(true);
     
     try {
+      // Pre-check for existing community with same name in district
+      const { data: existingCommunity } = await supabase
+        .from('communities')
+        .select('id')
+        .eq('district_id', districtId)
+        .eq('is_active', true)
+        .ilike('name', formData.name.trim())
+        .maybeSingle();
+
+      if (existingCommunity) {
+        toast.error(t.duplicateName);
+        return;
+      }
+
       const { error } = await supabase
         .from('communities')
         .insert({
@@ -148,10 +164,18 @@ export default function CreateCommunityModal({
           latitude: formData.latitude ? parseFloat(formData.latitude) : null,
           longitude: formData.longitude ? parseFloat(formData.longitude) : null,
           district_id: districtId,
-          status: 'active'
+          status: 'active',
+          is_active: true
         });
 
-      if (error) throw error;
+      if (error) {
+        // Handle unique constraint violation (duplicate name)
+        if (error.code === '23505' && error.message.includes('idx_communities_unique_name_per_district')) {
+          toast.error(t.duplicateName);
+          return;
+        }
+        throw error;
+      }
 
       toast.success(t.success);
       onOpenChange(false);
