@@ -21,11 +21,12 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Loader2, UserCheck, Eye, EyeOff } from "lucide-react";
+import { Loader2, UserCheck, Eye, EyeOff, AlertCircle, RefreshCw } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function CompleteAccount() {
-  const { user: authUser, language, loadProfileAndRoles } = useAuth();
-  const [user, setUser] = useState<any>(authUser);
+  const { language, loadProfileAndRoles } = useAuth();
+  const [user, setUser] = useState<any>(null);
   const { hasRole } = useUserRoles();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -34,6 +35,8 @@ export default function CompleteAccount() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [processingError, setProcessingError] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
   const [form, setForm] = useState({
     phone: "",
     unit_number: "",
@@ -49,8 +52,8 @@ export default function CompleteAccount() {
   const text = {
     en: {
       title: "Complete Your Account",
-      subtitle:
-        "Please provide the following information to complete your account setup",
+      subtitle: "Please provide the following information to complete your account setup",
+      completingFor: "Completing account for:",
       phone: "Phone Number",
       unitNumber: "Unit Number",
       familySize: "Family Size",
@@ -71,11 +74,18 @@ export default function CompleteAccount() {
       success: "Account completed successfully!",
       error: "Failed to complete account",
       required: "This field is required",
+      sessionExpired: "Session Expired",
+      sessionExpiredDesc: "Your invitation link has expired. Please contact an administrator for a new invitation.",
+      linkExpired: "Invitation Link Expired",
+      linkExpiredDesc: "This invitation link is no longer valid or has already been used.",
+      tryAgain: "Try Another Email",
+      resendInvitation: "Request New Invitation",
+      wrongAccount: "Wrong account? Sign out",
     },
     ms: {
       title: "Lengkapkan Akaun Anda",
-      subtitle:
-        "Sila berikan maklumat berikut untuk melengkapkan persediaan akaun anda",
+      subtitle: "Sila berikan maklumat berikut untuk melengkapkan persediaan akaun anda",
+      completingFor: "Melengkapkan akaun untuk:",
       phone: "Nombor Telefon",
       unitNumber: "Nombor Unit",
       familySize: "Saiz Keluarga",
@@ -96,6 +106,13 @@ export default function CompleteAccount() {
       success: "Akaun berjaya dilengkapkan!",
       error: "Gagal melengkapkan akaun",
       required: "Medan ini diperlukan",
+      sessionExpired: "Sesi Tamat Tempoh",
+      sessionExpiredDesc: "Pautan jemputan anda telah tamat tempoh. Sila hubungi pentadbir untuk jemputan baharu.",
+      linkExpired: "Pautan Jemputan Tamat Tempoh",
+      linkExpiredDesc: "Pautan jemputan ini tidak sah lagi atau telah digunakan.",
+      tryAgain: "Cuba Emel Lain",
+      resendInvitation: "Minta Jemputan Baharu",
+      wrongAccount: "Akaun salah? Daftar keluar",
     },
   };
 
@@ -104,208 +121,146 @@ export default function CompleteAccount() {
   // Check if user is a guest
   const isGuest = hasRole('guest');
 
-  // Check session validity and handle invitation links
+  // Aggressive session cleanup and token processing
   useEffect(() => {
-    let hasSetInitialSession = false;
-    
-    // Set up auth state listener FIRST to catch auth events
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state change in CompleteAccount:', event, session ? 'session exists' : 'no session');
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          setSessionValid(!!session);
-          setUser(session?.user ?? null);
-        } else if (event === 'SIGNED_OUT') {
-          setSessionValid(false);
-          setUser(null);
-        }
-      }
-    );
+    let processed = false;
 
-    // Check for invitation/verification parameters in URL
-    const handleInvitationLink = async () => {
+    const initializeSession = async () => {
+      if (processed) return;
+      processed = true;
+
+      console.log('=== STARTING COMPLETE ACCOUNT INITIALIZATION ===');
+      
+      // 1. AGGRESSIVE CLEANUP: Clear ALL sessions and storage
+      try {
+        console.log('Step 1: Aggressive cleanup - clearing all sessions and storage');
+        
+        // Clear localStorage completely
+        localStorage.clear();
+        
+        // Clear sessionStorage completely  
+        sessionStorage.clear();
+        
+        // Force sign out any existing Supabase session
+        await supabase.auth.signOut();
+        
+        // Wait for cleanup to complete
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        console.log('✅ Cleanup completed');
+      } catch (error) {
+        console.error('Cleanup error (continuing anyway):', error);
+      }
+
+      // 2. PARSE TOKENS: Extract tokens from URL
+      console.log('Step 2: Parsing tokens from URL');
       const urlParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      
+      const code = urlParams.get('code');
       const tokenHash = urlParams.get('token_hash');
       const type = urlParams.get('type');
-      const code = urlParams.get('code');
-      
-      // Parse tokens from URL hash (where Supabase often places them)
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get('access_token');
       const refreshToken = hashParams.get('refresh_token');
       
-      // CRITICAL: Force sign out for ALL invitation types to prevent session mixing
-      if (tokenHash || code || accessToken || refreshToken) {
-        console.log('Processing invitation link - forcing sign out to prevent session mixing');
-        console.log('Detected tokens:', { tokenHash: !!tokenHash, code: !!code, accessToken: !!accessToken, refreshToken: !!refreshToken });
-        
-        try {
-          const { data: currentSession } = await supabase.auth.getSession();
-          if (currentSession.session) {
-            console.log('Signing out existing session before processing invitation');
-            await supabase.auth.signOut();
-            // Add delay to ensure signout completes
-            await new Promise(resolve => setTimeout(resolve, 200));
-          }
-        } catch (error) {
-          console.error('Error signing out existing session:', error);
-        }
-      }
+      console.log('Found tokens:', { 
+        code: !!code, 
+        tokenHash: !!tokenHash, 
+        type, 
+        accessToken: !!accessToken, 
+        refreshToken: !!refreshToken 
+      });
+
+      // 3. PROCESS TOKENS: Try to establish session using single clean flow
+      let sessionEstablished = false;
       
-      // Handle access_token/refresh_token from URL hash (priority)
-      if (accessToken && refreshToken) {
-        console.log('Processing invitation link with access_token/refresh_token from hash');
+      try {
+        console.log('Step 3: Processing tokens to establish session');
         
-        try {
+        // Priority 1: Hash tokens (most reliable)
+        if (accessToken && refreshToken) {
+          console.log('Using access_token/refresh_token from hash');
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
           });
           
-          if (error) {
-            console.error('Session establishment failed:', error.message, error);
-            if (!hasSetInitialSession) {
-              setSessionValid(false);
-              hasSetInitialSession = true;
-            }
-            return;
-          }
-          
-          if (data.session && data.user) {
-            console.log('Session established from hash tokens for user:', data.user.email);
-            console.log('User metadata:', data.user.user_metadata);
-            setSessionValid(true);
+          if (data.session && data.user && !error) {
             setUser(data.user);
-            hasSetInitialSession = true;
-            
-            // Clean up URL parameters
-            const cleanUrl = window.location.pathname;
-            window.history.replaceState({}, document.title, cleanUrl);
-            return;
+            setUserEmail(data.user.email || '');
+            setSessionValid(true);
+            sessionEstablished = true;
+            console.log('✅ Session established via hash tokens for:', data.user.email);
           }
-        } catch (error) {
-          console.error('Hash token processing error:', error);
-          if (!hasSetInitialSession) {
-            setSessionValid(false);
-            hasSetInitialSession = true;
-          }
-          return;
         }
-      }
-      
-      // Handle token_hash verification (secondary)
-      if (tokenHash && type) {
-        console.log('Processing invitation link with token_hash and type:', type);
         
-        try {
+        // Priority 2: Code exchange
+        if (!sessionEstablished && code) {
+          console.log('Using code exchange');
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (data.session && data.user && !error) {
+            setUser(data.user);
+            setUserEmail(data.user.email || '');
+            setSessionValid(true);
+            sessionEstablished = true;
+            console.log('✅ Session established via code exchange for:', data.user.email);
+          }
+        }
+        
+        // Priority 3: Token hash verification
+        if (!sessionEstablished && tokenHash && type) {
+          console.log('Using token_hash verification');
           const { data, error } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
             type: type as any,
           });
-            
-            if (error) {
-              console.error('Token verification failed:', error.message, error);
-              if (!hasSetInitialSession) {
-                setSessionValid(false);
-                hasSetInitialSession = true;
-              }
-              return;
-            }
-            
-            if (data.session && data.user) {
-              console.log('Session established from invitation link for user:', data.user.email);
-              console.log('User metadata:', data.user.user_metadata);
-              setSessionValid(true);
-              setUser(data.user);
-              hasSetInitialSession = true;
-              
-              // Clean up URL parameters
-              const cleanUrl = window.location.pathname;
-              window.history.replaceState({}, document.title, cleanUrl);
-              return;
-            }
-          } catch (error) {
-            console.error('Invitation link processing error:', error);
-            if (!hasSetInitialSession) {
-              setSessionValid(false);
-              hasSetInitialSession = true;
-            }
-            return;
+          
+          if (data.session && data.user && !error) {
+            setUser(data.user);
+            setUserEmail(data.user.email || '');
+            setSessionValid(true);
+            sessionEstablished = true;
+            console.log('✅ Session established via token_hash for:', data.user.email);
           }
         }
         
-        // Handle code exchange (tertiary)
-        if (code) {
-          console.log('Processing invitation link with code');
-          try {
-            const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
-            
-            if (error) {
-              console.error('Code exchange failed:', error.message, error);
-              if (!hasSetInitialSession) {
-                setSessionValid(false);
-                hasSetInitialSession = true;
-              }
-              return;
-            }
-            
-            if (data.session && data.user) {
-              console.log('Session established from code exchange for user:', data.user.email);
-              console.log('User metadata:', data.user.user_metadata);
-              setSessionValid(true);
-              setUser(data.user);
-              hasSetInitialSession = true;
-              
-              // Clean up URL parameters
-              const cleanUrl = window.location.pathname;
-              window.history.replaceState({}, document.title, cleanUrl);
-              return;
-            }
-          } catch (error) {
-            console.error('Code exchange error:', error);
-            if (!hasSetInitialSession) {
-              setSessionValid(false);
-              hasSetInitialSession = true;
-            }
-            return;
-          }
+        if (sessionEstablished) {
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          console.log('✅ URL cleaned up');
+        } else {
+          console.error('❌ Failed to establish session from any token method');
+          setSessionValid(false);
+          setProcessingError('Invalid or expired invitation link');
         }
         
-        // If no URL parameters, check for existing session
-        try {
-          const { data: { session }, error } = await supabase.auth.getSession();
-          if (error) {
-            console.error("Session check error:", error);
-            if (!hasSetInitialSession) {
-              setSessionValid(false);
-              hasSetInitialSession = true;
-            }
-            return;
-          }
-          if (!hasSetInitialSession) {
-            setSessionValid(!!session);
-            setUser(session?.user ?? null);
-            hasSetInitialSession = true;
-          }
-        } catch (error) {
-          console.error("Session validation error:", error);
-          if (!hasSetInitialSession) {
-            setSessionValid(false);
-            hasSetInitialSession = true;
-          }
-        }
-      };
-      
-      handleInvitationLink();
-      
-      return () => subscription.unsubscribe();
-    }, []);
+      } catch (error: any) {
+        console.error('❌ Token processing error:', error);
+        setSessionValid(false);
+        setProcessingError(error.message || 'Failed to process invitation link');
+      }
+    };
 
-  const handleSessionRecovery = () => {
+    initializeSession();
+  }, []);
+
+  const handleResendInvitation = () => {
     toast({
-      title: "Session Expired",
-      description: "Please log in again to continue",
-      variant: "destructive",
+      title: "Contact Administrator",
+      description: "Please contact your community administrator for a new invitation link.",
+    });
+  };
+
+  const handleTryAnotherEmail = () => {
+    navigate("/login");
+  };
+
+  const handleWrongAccount = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Signed Out",
+      description: "Please use the correct invitation link for your account.",
     });
     navigate("/login");
   };
@@ -343,45 +298,46 @@ export default function CompleteAccount() {
     setPasswordError("");
 
     try {
-      // CRITICAL: Get authoritative user ID from current session to prevent profile mixing
+      // 4. SESSION VERIFICATION: Get current user from session
+      console.log('Step 4: Verifying session and user identity');
       const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
       
       if (userError || !currentUser) {
-        console.error("No valid session for account completion:", userError);
+        console.error("❌ No valid session for account completion:", userError);
         toast({
           title: "Session Expired",
-          description: "Please log in again to complete your account.",
+          description: "Please use your invitation link again to complete your account.",
           variant: "destructive",
         });
-        navigate("/login");
+        setSessionValid(false);
         return;
       }
 
-      // Verify session belongs to the invited user
+      // Verify we're completing the correct user's account
       if (currentUser.id !== user?.id) {
-        console.error("Session user mismatch - invited user:", user?.id, "current user:", currentUser.id);
+        console.error("❌ Session user mismatch - expected:", user?.id, "got:", currentUser.id);
         toast({
-          title: "Session Mismatch",
-          description: "You are signed in as a different user. Please sign out and use the correct invitation link.",
+          title: "Account Mismatch",
+          description: "Session belongs to different user. Please sign out and use the correct invitation link.",
           variant: "destructive",
         });
         await supabase.auth.signOut();
-        navigate("/login");
+        setSessionValid(false);
         return;
       }
 
-      console.log('VERIFIED: Completing account for user ID:', currentUser.id, 'email:', currentUser.email);
+      console.log('✅ VERIFIED: Completing account for user:', currentUser.email);
 
       // Update password if provided
       if (form.password) {
+        console.log('Updating password...');
         const { error: passwordError } = await supabase.auth.updateUser({
           password: form.password
         });
         
         if (passwordError) {
-          // If password update fails due to session, still allow profile completion
           if (passwordError.message?.includes("session") || passwordError.message?.includes("auth")) {
-            console.warn("Password update failed due to session issue, continuing with profile update only");
+            console.warn("Password update failed due to session issue, continuing with profile update");
             toast({
               title: "Password Update Failed",
               description: "Your profile will be updated, but password change failed due to session expiry.",
@@ -391,23 +347,24 @@ export default function CompleteAccount() {
             throw passwordError;
           }
         } else {
-          console.log('Password updated successfully for user:', currentUser.email);
+          console.log('✅ Password updated successfully');
         }
       }
 
-      // Determine correct account status and is_active based on signup flow
+      // 5. STATUS MANAGEMENT: Set correct account status for residents
+      console.log('Step 5: Setting account status');
       const signupFlow = currentUser?.user_metadata?.signup_flow || 'unknown';
-      let accountStatus = "approved"; // Default for guests
+      let accountStatus = "approved"; // Default for all
       let isActive = true; // Default active
       
       if (signupFlow === 'resident_invite') {
-        // Residents should be approved and active after completing their profile
+        // Residents should be approved and active after completing profile
         accountStatus = "approved";
         isActive = true;
-        console.log('Setting resident to approved and active status');
+        console.log('✅ Setting resident to approved and active status');
       }
       
-      console.log('Setting account_status to:', accountStatus, 'and is_active to:', isActive, 'based on signup_flow:', signupFlow);
+      console.log('Setting account_status to:', accountStatus, 'and is_active to:', isActive);
       
       const { error } = await supabase
         .from("profiles")
@@ -422,32 +379,32 @@ export default function CompleteAccount() {
           account_status: accountStatus,
           is_active: isActive,
         })
-        .eq("user_id", currentUser.id); // Use authoritative user ID
+        .eq("user_id", currentUser.id);
 
       if (error) {
-        console.error('Profile update error:', error);
+        console.error('❌ Profile update error:', error);
         throw error;
       }
 
-      console.log('Profile updated successfully for user:', currentUser.email, 'with status:', accountStatus, 'active:', isActive);
+      console.log('✅ Profile updated successfully with status:', accountStatus);
 
       toast({
         title: t.success,
         description: "Welcome to the community management system!",
       });
 
-      // Reload profile and roles to update auth context
-      console.log('Reloading profile and roles after account completion');
+      // Reload profile and roles
+      console.log('Reloading profile and roles...');
       await loadProfileAndRoles();
 
-      // Add a small delay to ensure context updates properly
+      // Navigate to home
       setTimeout(() => {
-        console.log('Navigating to home page');
+        console.log('✅ Navigating to home page');
         navigate("/");
       }, 500);
+      
     } catch (error) {
-      console.error("Error completing account:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
+      console.error("❌ Error completing account:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : t.error,
@@ -458,15 +415,15 @@ export default function CompleteAccount() {
     }
   };
 
-  // Show loading while checking session
+  // Show loading while processing
   if (sessionValid === null) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle>Connecting your session...</CardTitle>
+            <CardTitle>Processing Invitation...</CardTitle>
             <CardDescription>
-              Please wait while we verify your authentication.
+              Setting up your account session
             </CardDescription>
           </CardHeader>
           <CardContent className="flex items-center justify-center p-8">
@@ -477,99 +434,115 @@ export default function CompleteAccount() {
     );
   }
 
-  // Show session recovery UI if session is invalid
+  // Show error recovery UI if session setup failed
   if (sessionValid === false) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle>Session Expired</CardTitle>
+            <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
+            <CardTitle>{t.linkExpired}</CardTitle>
             <CardDescription>
-              Your session has expired. Please log in again to complete your account setup.
+              {processingError || t.linkExpiredDesc}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button onClick={handleSessionRecovery} className="w-full">
-              Go to Login
-            </Button>
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {t.sessionExpiredDesc}
+              </AlertDescription>
+            </Alert>
+            
+            <div className="space-y-2">
+              <Button 
+                onClick={handleResendInvitation} 
+                className="w-full"
+                variant="outline"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                {t.resendInvitation}
+              </Button>
+              
+              <Button 
+                onClick={handleTryAnotherEmail} 
+                className="w-full"
+                variant="secondary"
+              >
+                {t.tryAgain}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
     );
   }
 
+  // Main account completion form
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-            <UserCheck className="w-6 h-6 text-primary" />
+          <div className="mx-auto flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-4">
+            <UserCheck className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle>{t.title}</CardTitle>
-          <CardDescription className="text-center">
-            {t.subtitle}
-          </CardDescription>
+          <CardTitle className="text-2xl font-bold">{t.title}</CardTitle>
+          <CardDescription>{t.subtitle}</CardDescription>
           
-          {/* User Identity Validation */}
-          {user?.email && (
-            <div className="mt-4 p-3 bg-muted/50 rounded-lg border">
+          {userEmail && (
+            <div className="mt-4 p-3 bg-muted/50 rounded-lg">
               <p className="text-sm text-muted-foreground">
-                Completing account for: <span className="font-medium text-foreground">{user.email}</span>
+                {t.completingFor} <span className="font-semibold text-foreground">{userEmail}</span>
               </p>
-              {user.user_metadata?.signup_flow && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Account type: {user.user_metadata.signup_flow === 'guest_invite' ? 'Guest' : 'Resident'}
-                </p>
-              )}
-            </div>
-          )}
-          
-          {/* Wrong account notification */}
-          {user?.email && (
-            <div className="mt-2">
               <Button 
-                variant="link" 
+                onClick={handleWrongAccount}
+                variant="ghost" 
                 size="sm" 
-                onClick={() => {
-                  supabase.auth.signOut();
-                  navigate("/login");
-                }}
-                className="text-xs text-muted-foreground hover:text-foreground"
+                className="mt-2 text-xs"
               >
-                Wrong account? Sign out and try again
+                {t.wrongAccount}
               </Button>
             </div>
           )}
         </CardHeader>
+
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="phone">{t.phone} *</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="+60123456789"
-                required
-              />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-medium">
+                  {t.phone} *
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  placeholder="01X-XXXXXXX"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="unit_number" className="text-sm font-medium">
+                  {t.unitNumber} *
+                </Label>
+                <Input
+                  id="unit_number"
+                  value={form.unit_number}
+                  onChange={(e) =>
+                    setForm({ ...form, unit_number: e.target.value })
+                  }
+                  placeholder="A-01-01"
+                  required
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="unit_number">{t.unitNumber} *</Label>
-              <Input
-                id="unit_number"
-                value={form.unit_number}
-                onChange={(e) =>
-                  setForm({ ...form, unit_number: e.target.value })
-                }
-                placeholder="A-10-05"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="family_size">{t.familySize} *</Label>
+              <Label htmlFor="family_size" className="text-sm font-medium">
+                {t.familySize} *
+              </Label>
               <Input
                 id="family_size"
                 type="number"
@@ -577,125 +550,61 @@ export default function CompleteAccount() {
                 max="20"
                 value={form.family_size}
                 onChange={(e) =>
-                  setForm({
-                    ...form,
-                    family_size: parseInt(e.target.value) || 1,
-                  })
+                  setForm({ ...form, family_size: parseInt(e.target.value) || 1 })
                 }
                 required
               />
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="emergency_contact_name" className="text-sm font-medium">
+                  {t.emergencyContactName} *
+                </Label>
+                <Input
+                  id="emergency_contact_name"
+                  value={form.emergency_contact_name}
+                  onChange={(e) =>
+                    setForm({ ...form, emergency_contact_name: e.target.value })
+                  }
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="emergency_contact_phone" className="text-sm font-medium">
+                  {t.emergencyContactPhone} *
+                </Label>
+                <Input
+                  id="emergency_contact_phone"
+                  type="tel"
+                  value={form.emergency_contact_phone}
+                  onChange={(e) =>
+                    setForm({ ...form, emergency_contact_phone: e.target.value })
+                  }
+                  placeholder="01X-XXXXXXX"
+                  required
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="emergency_contact_name">
-                {t.emergencyContactName} *
+              <Label htmlFor="vehicle_number" className="text-sm font-medium">
+                {t.vehicleNumber}
               </Label>
-              <Input
-                id="emergency_contact_name"
-                value={form.emergency_contact_name}
-                onChange={(e) =>
-                  setForm({ ...form, emergency_contact_name: e.target.value })
-                }
-                placeholder="John Doe"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="emergency_contact_phone">
-                {t.emergencyContactPhone} *
-              </Label>
-              <Input
-                id="emergency_contact_phone"
-                type="tel"
-                value={form.emergency_contact_phone}
-                onChange={(e) =>
-                  setForm({ ...form, emergency_contact_phone: e.target.value })
-                }
-                placeholder="+60123456789"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="vehicle_number">{t.vehicleNumber}</Label>
               <Input
                 id="vehicle_number"
                 value={form.vehicle_number}
                 onChange={(e) =>
                   setForm({ ...form, vehicle_number: e.target.value })
                 }
-                placeholder="ABC 1234"
+                placeholder="ABC1234"
               />
             </div>
 
-            {/* Password Section */}
             <div className="space-y-2">
-              <Label htmlFor="password">{t.password}</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={form.password}
-                  onChange={(e) => {
-                    setForm({ ...form, password: e.target.value });
-                    setPasswordError("");
-                  }}
-                  placeholder="••••••••"
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? t.hidePassword : t.showPassword}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {form.password && (
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">{t.confirmPassword}</Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={form.confirmPassword}
-                    onChange={(e) => {
-                      setForm({ ...form, confirmPassword: e.target.value });
-                      setPasswordError("");
-                    }}
-                    placeholder="••••••••"
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    aria-label={showConfirmPassword ? t.hidePassword : t.showPassword}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </button>
-                </div>
-                {passwordError && (
-                  <p className="text-xs text-destructive mt-1">{passwordError}</p>
-                )}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="language_preference">
-                {t.languagePreference} *
+              <Label htmlFor="language_preference" className="text-sm font-medium">
+                {t.languagePreference}
               </Label>
               <Select
                 value={form.language_preference}
@@ -713,7 +622,76 @@ export default function CompleteAccount() {
               </Select>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium">
+                  {t.password}
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                  {t.confirmPassword}
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={form.confirmPassword}
+                    onChange={(e) =>
+                      setForm({ ...form, confirmPassword: e.target.value })
+                    }
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {passwordError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{passwordError}</AlertDescription>
+              </Alert>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading}
+            >
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
