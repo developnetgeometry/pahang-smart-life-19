@@ -40,10 +40,8 @@ import CCTVManagement from "./pages/admin/CCTVManagement";
 import RequireRoles from "@/components/routing/RequireRoles";
 import RequireNotRoles from "@/components/routing/RequireNotRoles";
 import AuthOnlyRoute from "@/components/routing/AuthOnlyRoute";
-import AnnouncementManagement from "./pages/admin/AnnouncementManagement";
 import FacilitiesManagement from "./pages/admin/FacilitiesManagement";
 import FloorPlanManagement from "./pages/admin/FloorPlanManagement";
-import DiscussionManagement from "./pages/admin/DiscussionManagement";
 import VisitorSecurity from "./pages/VisitorSecurity";
 import VisitorAnalytics from "./pages/VisitorAnalytics";
 import WorkOrdersManagement from "./pages/WorkOrdersManagement";
@@ -714,36 +712,6 @@ const App = () => (
                       <CCTVManagement />
                     </Layout>
                   </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/announcements"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <AnnouncementManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/announcement-management"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <AnnouncementManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/discussions"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <DiscussionManagement />
-                  </Layout>
                 </ProtectedRoute>
               }
             />

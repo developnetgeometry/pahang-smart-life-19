@@ -529,31 +529,6 @@ export function AppSidebar() {
 
     // Service Provider Management - moved to Role Management section above
 
-    // Communication Management - for state_admin and community_admin roles
-    const commMgmtItems = [];
-    if (hasRole("state_admin") || hasRole("community_admin")) {
-      commMgmtItems.push(
-        {
-          title: t("announcementManagement"),
-          url: "/admin/announcements",
-          icon: Megaphone,
-          requiredRoles: ["state_admin", "community_admin"],
-        },
-        {
-          title: t("discussionManagement"),
-          url: "/admin/discussions",
-          icon: MessageSquare,
-          requiredRoles: ["state_admin", "community_admin"],
-        }
-      );
-    }
-
-    if (commMgmtItems.length > 0) {
-      nav.push({
-        label: t("communicationManagement"),
-        items: commMgmtItems,
-      });
-    }
 
     return nav;
   };
