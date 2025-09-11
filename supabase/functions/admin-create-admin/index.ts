@@ -198,7 +198,7 @@ serve(async (req) => {
 
     const {
       email,
-      password = "TempPassword123!", // Default password for admin accounts
+      password,
       full_name,
       phone,
       role, // community_admin, district_coordinator, state_admin
@@ -254,8 +254,9 @@ serve(async (req) => {
     });
 
     // Create auth user with direct creation
+    const safePassword = typeof password === 'string' && password.length >= 8 ? password : 'TempPassword123!';
     const authUser = await createAuthUser(
-      { email, password, full_name },
+      { email, password: safePassword, full_name },
       false, // Direct creation for admin staff
       context,
       req

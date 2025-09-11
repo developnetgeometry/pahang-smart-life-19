@@ -153,8 +153,7 @@ async function updateUserProfile(
 ) {
   const { error: profileError } = await context.supabaseAdmin
     .from("profiles")
-    .update(profileData)
-    .eq("user_id", userId);
+    .upsert({ id: userId, ...profileData });
   if (profileError) {
     await context.supabaseAdmin.auth.admin.deleteUser(userId);
     throw new Error(`Failed to update profile: ${profileError.message}`);
@@ -164,20 +163,18 @@ async function updateUserProfile(
 async function assignUserRole(userId: string, role: string, context: AdminContext) {
   const { error: roleUpsertError } = await context.supabaseAdmin
     .from("enhanced_user_roles")
-    .insert({
+    .upsert({
       user_id: userId,
       role,
       assigned_by: context.currentUser.id,
       district_id: context.adminProfile?.district_id || null,
       is_active: true,
       assigned_at: new Date().toISOString(),
-    })
-    .onConflict("user_id,role")
-    .select();
+    });
 
   if (roleUpsertError) {
     await context.supabaseAdmin.auth.admin.deleteUser(userId);
-    await context.supabaseAdmin.from("profiles").delete().eq("user_id", userId);
+    await context.supabaseAdmin.from("profiles").delete().eq("id", userId);
     throw new Error(`Failed to assign role: ${roleUpsertError.message}`);
   }
 }
@@ -216,8 +213,10 @@ serve(async (req) => {
     });
 
     // Create auth user with direct creation
+    const safePassword = typeof password === 'string' && password.length >= 8 ? password : 'TempPassword123!';
+
     const authUser = await createAuthUser(
-      { email, password, full_name },
+      { email, password: safePassword, full_name },
       false, // Direct creation for staff
       context,
       req

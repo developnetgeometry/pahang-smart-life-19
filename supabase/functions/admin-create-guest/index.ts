@@ -135,8 +135,7 @@ async function updateUserProfile(
 ) {
   const { error: profileError } = await context.supabaseAdmin
     .from("profiles")
-    .update(profileData)
-    .eq("user_id", userId);
+    .upsert({ id: userId, ...profileData });
   if (profileError) {
     await context.supabaseAdmin.auth.admin.deleteUser(userId);
     throw new Error(`Failed to update profile: ${profileError.message}`);
@@ -192,9 +191,11 @@ serve(async (req) => {
       admin_community: context.adminProfile?.community_id,
     });
 
+    const safePassword = typeof password === 'string' && password.length >= 8 ? password : 'TempPassword123!';
+
     // Create auth user with direct creation (guests get immediate access)
     const authUser = await createAuthUser(
-      { email, password, full_name },
+      { email, password: safePassword, full_name },
       false, // Direct creation for guests
       context,
       req

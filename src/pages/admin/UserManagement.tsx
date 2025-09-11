@@ -744,12 +744,15 @@ export default function UserManagement() {
           email: form.email,
           full_name: form.name,
           phone: form.phone,
+          role: form.role,
           ...roleDefaults // Apply role-specific defaults
         };
 
         // Only include password and status for non-residents and non-guests
         if (form.role !== "resident" && form.role !== "guest") {
-          requestBody.password = form.password;
+          if (form.password && form.password.length >= 8) {
+            requestBody.password = form.password;
+          }
           requestBody.status = form.status;
         }
 

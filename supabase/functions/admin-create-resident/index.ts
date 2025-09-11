@@ -135,8 +135,7 @@ async function updateUserProfile(
 ) {
   const { error: profileError } = await context.supabaseAdmin
     .from("profiles")
-    .update(profileData)
-    .eq("user_id", userId);
+    .upsert({ id: userId, ...profileData });
   if (profileError) {
     await context.supabaseAdmin.auth.admin.deleteUser(userId);
     throw new Error(`Failed to update profile: ${profileError.message}`);
@@ -146,20 +145,18 @@ async function updateUserProfile(
 async function assignUserRole(userId: string, role: string, context: AdminContext) {
   const { error: roleUpsertError } = await context.supabaseAdmin
     .from("enhanced_user_roles")
-    .insert({
+    .upsert({
       user_id: userId,
       role,
       assigned_by: context.currentUser.id,
       district_id: context.adminProfile?.district_id || null,
       is_active: true,
       assigned_at: new Date().toISOString(),
-    })
-    .onConflict("user_id,role")
-    .select();
+    });
 
   if (roleUpsertError) {
     await context.supabaseAdmin.auth.admin.deleteUser(userId);
-    await context.supabaseAdmin.from("profiles").delete().eq("user_id", userId);
+    await context.supabaseAdmin.from("profiles").delete().eq("id", userId);
     throw new Error(`Failed to assign role: ${roleUpsertError.message}`);
   }
 }
