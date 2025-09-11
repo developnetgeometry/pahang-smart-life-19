@@ -122,77 +122,48 @@ export default function CompleteAccount() {
       }
     );
 
-  // Check for invitation/verification parameters in URL
-  const handleInvitationLink = async () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tokenHash = urlParams.get('token_hash');
-    const type = urlParams.get('type');
-    const code = urlParams.get('code');
-    
-    // CRITICAL: Force sign out for ALL invitation types to prevent session mixing
-    if (tokenHash || code) {
-      console.log('Processing invitation link - forcing sign out to prevent session mixing');
+    // Check for invitation/verification parameters in URL
+    const handleInvitationLink = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tokenHash = urlParams.get('token_hash');
+      const type = urlParams.get('type');
+      const code = urlParams.get('code');
       
-      try {
-        const { data: currentSession } = await supabase.auth.getSession();
-        if (currentSession.session) {
-          console.log('Signing out existing session before processing invitation');
-          await supabase.auth.signOut();
-          // Add small delay to ensure signout completes
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-      } catch (error) {
-        console.error('Error signing out existing session:', error);
-      }
-    }
-    
-    if (tokenHash && type) {
-      console.log('Processing invitation link with token_hash and type:', type);
+      // Parse tokens from URL hash (where Supabase often places them)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
       
-      try {
-        const { data, error } = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: type as any,
-        });
-          
-          if (error) {
-            console.error('Token verification failed:', error.message, error);
-            if (!hasSetInitialSession) {
-              setSessionValid(false);
-              hasSetInitialSession = true;
-            }
-            return;
-          }
-          
-          if (data.session && data.user) {
-            console.log('Session established from invitation link for user:', data.user.email);
-            console.log('User metadata:', data.user.user_metadata);
-            setSessionValid(true);
-            setUser(data.user);
-            hasSetInitialSession = true;
-            
-            // Clean up URL parameters
-            const cleanUrl = window.location.pathname;
-            window.history.replaceState({}, document.title, cleanUrl);
-            return;
-          }
-        } catch (error) {
-          console.error('Invitation link processing error:', error);
-          if (!hasSetInitialSession) {
-            setSessionValid(false);
-            hasSetInitialSession = true;
-          }
-          return;
-        }
-      }
-      
-      if (code) {
-        console.log('Processing invitation link with code');
+      // CRITICAL: Force sign out for ALL invitation types to prevent session mixing
+      if (tokenHash || code || accessToken || refreshToken) {
+        console.log('Processing invitation link - forcing sign out to prevent session mixing');
+        console.log('Detected tokens:', { tokenHash: !!tokenHash, code: !!code, accessToken: !!accessToken, refreshToken: !!refreshToken });
+        
         try {
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          const { data: currentSession } = await supabase.auth.getSession();
+          if (currentSession.session) {
+            console.log('Signing out existing session before processing invitation');
+            await supabase.auth.signOut();
+            // Add delay to ensure signout completes
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+        } catch (error) {
+          console.error('Error signing out existing session:', error);
+        }
+      }
+      
+      // Handle access_token/refresh_token from URL hash (priority)
+      if (accessToken && refreshToken) {
+        console.log('Processing invitation link with access_token/refresh_token from hash');
+        
+        try {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
           
           if (error) {
-            console.error('Code exchange failed:', error.message, error);
+            console.error('Session establishment failed:', error.message, error);
             if (!hasSetInitialSession) {
               setSessionValid(false);
               hasSetInitialSession = true;
@@ -201,7 +172,7 @@ export default function CompleteAccount() {
           }
           
           if (data.session && data.user) {
-            console.log('Session established from code exchange for user:', data.user.email);
+            console.log('Session established from hash tokens for user:', data.user.email);
             console.log('User metadata:', data.user.user_metadata);
             setSessionValid(true);
             setUser(data.user);
@@ -213,7 +184,7 @@ export default function CompleteAccount() {
             return;
           }
         } catch (error) {
-          console.error('Code exchange error:', error);
+          console.error('Hash token processing error:', error);
           if (!hasSetInitialSession) {
             setSessionValid(false);
             hasSetInitialSession = true;
@@ -222,35 +193,113 @@ export default function CompleteAccount() {
         }
       }
       
-      // If no URL parameters, check for existing session
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error("Session check error:", error);
+      // Handle token_hash verification (secondary)
+      if (tokenHash && type) {
+        console.log('Processing invitation link with token_hash and type:', type);
+        
+        try {
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: type as any,
+          });
+            
+            if (error) {
+              console.error('Token verification failed:', error.message, error);
+              if (!hasSetInitialSession) {
+                setSessionValid(false);
+                hasSetInitialSession = true;
+              }
+              return;
+            }
+            
+            if (data.session && data.user) {
+              console.log('Session established from invitation link for user:', data.user.email);
+              console.log('User metadata:', data.user.user_metadata);
+              setSessionValid(true);
+              setUser(data.user);
+              hasSetInitialSession = true;
+              
+              // Clean up URL parameters
+              const cleanUrl = window.location.pathname;
+              window.history.replaceState({}, document.title, cleanUrl);
+              return;
+            }
+          } catch (error) {
+            console.error('Invitation link processing error:', error);
+            if (!hasSetInitialSession) {
+              setSessionValid(false);
+              hasSetInitialSession = true;
+            }
+            return;
+          }
+        }
+        
+        // Handle code exchange (tertiary)
+        if (code) {
+          console.log('Processing invitation link with code');
+          try {
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            
+            if (error) {
+              console.error('Code exchange failed:', error.message, error);
+              if (!hasSetInitialSession) {
+                setSessionValid(false);
+                hasSetInitialSession = true;
+              }
+              return;
+            }
+            
+            if (data.session && data.user) {
+              console.log('Session established from code exchange for user:', data.user.email);
+              console.log('User metadata:', data.user.user_metadata);
+              setSessionValid(true);
+              setUser(data.user);
+              hasSetInitialSession = true;
+              
+              // Clean up URL parameters
+              const cleanUrl = window.location.pathname;
+              window.history.replaceState({}, document.title, cleanUrl);
+              return;
+            }
+          } catch (error) {
+            console.error('Code exchange error:', error);
+            if (!hasSetInitialSession) {
+              setSessionValid(false);
+              hasSetInitialSession = true;
+            }
+            return;
+          }
+        }
+        
+        // If no URL parameters, check for existing session
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          if (error) {
+            console.error("Session check error:", error);
+            if (!hasSetInitialSession) {
+              setSessionValid(false);
+              hasSetInitialSession = true;
+            }
+            return;
+          }
+          if (!hasSetInitialSession) {
+            setSessionValid(!!session);
+            setUser(session?.user ?? null);
+            hasSetInitialSession = true;
+          }
+        } catch (error) {
+          console.error("Session validation error:", error);
           if (!hasSetInitialSession) {
             setSessionValid(false);
             hasSetInitialSession = true;
           }
-          return;
         }
-        if (!hasSetInitialSession) {
-          setSessionValid(!!session);
-          setUser(session?.user ?? null);
-          hasSetInitialSession = true;
-        }
-      } catch (error) {
-        console.error("Session validation error:", error);
-        if (!hasSetInitialSession) {
-          setSessionValid(false);
-          hasSetInitialSession = true;
-        }
-      }
-    };
-    
-    handleInvitationLink();
-    
-    return () => subscription.unsubscribe();
-  }, []);
+      };
+      
+      handleInvitationLink();
+      
+      return () => subscription.unsubscribe();
+    }, []);
 
   const handleSessionRecovery = () => {
     toast({
@@ -294,21 +343,37 @@ export default function CompleteAccount() {
     setPasswordError("");
 
     try {
-      // Check session before attempting password update
-      if (form.password) {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError || !session) {
-          console.error("No valid session for password update:", sessionError);
-          toast({
-            title: "Session Expired",
-            description: "Password update requires a valid session. Please log in again.",
-            variant: "destructive",
-          });
-          navigate("/login");
-          return;
-        }
+      // CRITICAL: Get authoritative user ID from current session to prevent profile mixing
+      const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !currentUser) {
+        console.error("No valid session for account completion:", userError);
+        toast({
+          title: "Session Expired",
+          description: "Please log in again to complete your account.",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
 
+      // Verify session belongs to the invited user
+      if (currentUser.id !== user?.id) {
+        console.error("Session user mismatch - invited user:", user?.id, "current user:", currentUser.id);
+        toast({
+          title: "Session Mismatch",
+          description: "You are signed in as a different user. Please sign out and use the correct invitation link.",
+          variant: "destructive",
+        });
+        await supabase.auth.signOut();
+        navigate("/login");
+        return;
+      }
+
+      console.log('VERIFIED: Completing account for user ID:', currentUser.id, 'email:', currentUser.email);
+
+      // Update password if provided
+      if (form.password) {
         const { error: passwordError } = await supabase.auth.updateUser({
           password: form.password
         });
@@ -325,22 +390,24 @@ export default function CompleteAccount() {
           } else {
             throw passwordError;
           }
+        } else {
+          console.log('Password updated successfully for user:', currentUser.email);
         }
       }
 
-      // Update profile - use 'user_id' column to match profile record
-      console.log('Updating profile for user ID:', user?.id);
-      console.log('User metadata signup_flow:', user?.user_metadata?.signup_flow);
-      
-      // Determine correct account status based on role
-      const signupFlow = user?.user_metadata?.signup_flow || 'unknown';
+      // Determine correct account status and is_active based on signup flow
+      const signupFlow = currentUser?.user_metadata?.signup_flow || 'unknown';
       let accountStatus = "approved"; // Default for guests
+      let isActive = true; // Default active
       
-      if (signupFlow === 'resident_invite' || hasRole('resident')) {
-        accountStatus = "pending"; // Residents need approval after completing form
+      if (signupFlow === 'resident_invite') {
+        // Residents should be approved and active after completing their profile
+        accountStatus = "approved";
+        isActive = true;
+        console.log('Setting resident to approved and active status');
       }
       
-      console.log('Setting account_status to:', accountStatus, 'based on signup_flow:', signupFlow);
+      console.log('Setting account_status to:', accountStatus, 'and is_active to:', isActive, 'based on signup_flow:', signupFlow);
       
       const { error } = await supabase
         .from("profiles")
@@ -353,10 +420,16 @@ export default function CompleteAccount() {
           vehicle_plate_number: form.vehicle_number || null,
           language_preference: form.language_preference,
           account_status: accountStatus,
+          is_active: isActive,
         })
-        .eq("user_id", user?.id);
+        .eq("user_id", currentUser.id); // Use authoritative user ID
 
-      if (error) throw error;
+      if (error) {
+        console.error('Profile update error:', error);
+        throw error;
+      }
+
+      console.log('Profile updated successfully for user:', currentUser.email, 'with status:', accountStatus, 'active:', isActive);
 
       toast({
         title: t.success,
