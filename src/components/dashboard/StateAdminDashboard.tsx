@@ -242,27 +242,6 @@ export function StateAdminDashboard() {
         <PrayerTimesWidget />
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                {language === "en"
-                  ? "State Administration Status"
-                  : "Status Pentadbiran Negeri"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-muted-foreground">
-                {language === "en"
-                  ? "15 districts operational. 12,450 active residents across all regions."
-                  : "15 daerah beroperasi. 12,450 penduduk aktif di semua wilayah."}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
 
       {/* Critical Alerts */}
       <Card>
