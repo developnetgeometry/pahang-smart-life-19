@@ -767,9 +767,9 @@ export default function MyComplaints() {
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                         <div className="flex items-start justify-between mb-2">
-                           <h3 className="font-semibold flex-1 pr-4 break-words">{complaint.title}</h3>
-                           <div className="flex items-center space-x-2 flex-shrink-0">
+                         <div className="flex items-start justify-between mb-2 flex-wrap gap-2">
+                           <h3 className="font-semibold flex-1 min-w-0 break-words">{complaint.title}</h3>
+                           <div className="flex items-center gap-2 flex-wrap">
                              {getEscalationBadge(complaint)}
                              <Badge className={getPriorityColor(complaint.priority)}>
                                {prettyPriority(complaint.priority)}
