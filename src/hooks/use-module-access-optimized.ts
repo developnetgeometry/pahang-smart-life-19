@@ -36,28 +36,31 @@ export function useModuleAccessOptimized() {
       }
 
       try {
-        // Single query with join to get both profile and community modules
-        const { data: communityData, error } = await supabase
+        // Get user profile first
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select(`
-            community_id,
-            communities!inner(
-              community_features(
-                module_name
-              )
-            )
-          `)
+          .select("community_id")
           .eq("user_id", user.id)
-          .eq("communities.community_features.is_enabled", true)
           .single();
+
+        if (profileError || !profile?.community_id) {
+          setEnabledModules([]);
+          setLoading(false);
+          return;
+        }
+
+        // Get community modules in a separate query
+        const { data: communityModules, error } = await supabase
+          .from("community_features")
+          .select("module_name")
+          .eq("community_id", profile.community_id)
+          .eq("is_enabled", true);
 
         if (error) {
           throw error;
         }
 
-        const moduleNames = communityData?.communities?.community_features?.map(
-          (cf: any) => cf.module_name
-        ) || [];
+        const moduleNames = communityModules?.map(cf => cf.module_name) || [];
 
         // Add default service provider modules if needed
         if (moduleNames.length === 0 && hasRole?.("service_provider")) {
@@ -98,7 +101,7 @@ export function useModuleAccessOptimized() {
             event: "*",
             schema: "public",
             table: "community_features",
-            filter: `community_id=eq.${user.community_id}`,
+            filter: `community_id=eq.${profile.community_id}`,
           },
           () => {
             // Clear cache and refetch
