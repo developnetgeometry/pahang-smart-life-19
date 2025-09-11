@@ -121,12 +121,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Load profile + roles for a given user id with optimized queries
   const loadProfileAndRoles = async (userId: string) => {
     try {
+      console.log(`AuthContext: Loading profile for user ${userId}`);
+      
       // Optimized query for profile data
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("full_name, email, district_id, community_id, language_preference, account_status")
         .eq("user_id", userId)
         .maybeSingle();
+
+      console.log(`AuthContext: Profile query result:`, { profileData, profileError });
         
       // Get district and community names in parallel if needed
       const [districtResult, communityResult] = await Promise.all([
@@ -138,10 +142,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           : Promise.resolve({ data: null })
       ]);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error(`AuthContext: Profile error for user ${userId}:`, profileError);
+        throw profileError;
+      }
 
+      if (!profileData) {
+        console.log(`AuthContext: No profile found for user ${userId}`);
+        setUser(null);
+        setRoles([]);
+        setAccountStatus(null);
+        return;
+      }
+
+      console.log(`AuthContext: Getting roles for user ${userId}`);
+      
       // Get roles and primary role in parallel
-      const [{ data: roleRows }, { data: primaryRoleData }] = await Promise.all([
+      const [{ data: roleRows, error: rolesError }, { data: primaryRoleData, error: primaryRoleError }] = await Promise.all([
         supabase
           .from("enhanced_user_roles")
           .select("role")
@@ -150,14 +167,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         supabase.rpc("get_user_highest_role", { check_user_id: userId }),
       ]);
 
+      console.log(`AuthContext: Roles query result:`, { roleRows, rolesError, primaryRoleData, primaryRoleError });
+
       // Set account status regardless of approval state
-      setAccountStatus(profileData?.account_status || "pending");
+      setAccountStatus(profileData.account_status || "pending");
+
+      console.log(`AuthContext: Account status for user ${userId}:`, profileData.account_status);
 
       // Check if account is approved or pending completion
       if (
-        profileData?.account_status !== "approved" &&
-        profileData?.account_status !== "pending_completion"
+        profileData.account_status !== "approved" &&
+        profileData.account_status !== "pending_completion"
       ) {
+        console.log(`AuthContext: User ${userId} account not approved, status: ${profileData.account_status}`);
         setUser(null);
         setRoles([]);
         return;
@@ -165,6 +187,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const roleList: UserRole[] = (roleRows || []).map(r => r.role as UserRole);
       const primaryRole: UserRole = (primaryRoleData as UserRole) || roleList[0] || "resident";
+      
+      console.log(`AuthContext: Processed roles for user ${userId}:`, { roleList, primaryRole });
 
       // Update language from profile if available
       const profileLanguage = profileData?.language_preference as Language;
@@ -198,7 +222,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userObj);
       setRoles(userObj.available_roles);
     } catch (e) {
-      console.error("Failed to load profile/roles", e);
+      console.error(`AuthContext: Failed to load profile/roles for user ${userId}:`, e);
       setUser(null);
       setRoles([]);
       setAccountStatus(null);
@@ -210,53 +234,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Auth state listener + initial session with debouncing
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
+    let isProcessing = false;
     
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       // Clear previous timeout to debounce rapid auth changes
       if (timeoutId) clearTimeout(timeoutId);
       
+      // Prevent multiple simultaneous processing
+      if (isProcessing) return;
+      
       const uid = session?.user?.id;
+      console.log(`AuthContext: Auth state change - Event: ${event}, User ID: ${uid}`);
+      
       if (uid) {
+        isProcessing = true;
+        
         // Handle email confirmation asynchronously without blocking
         if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
-          setTimeout(async () => {
-            try {
-              const { data: profile } = await supabase
+          try {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("account_status")
+              .eq("user_id", uid)
+              .maybeSingle();
+              
+            if (profile?.account_status === "pending") {
+              await supabase
                 .from("profiles")
-                .select("account_status")
-                .eq("user_id", uid)
-                .single();
-                
-              if (profile?.account_status === "pending") {
-                await supabase
-                  .from("profiles")
-                  .update({ account_status: "pending_completion" })
-                  .eq("user_id", uid);
-              }
-            } catch (error) {
-              console.error("Error updating account status:", error);
+                .update({ account_status: "pending_completion" })
+                .eq("user_id", uid);
             }
-          }, 0);
+          } catch (error) {
+            console.error("Error updating account status:", error);
+          }
         }
         
-        // Debounce profile loading to prevent multiple rapid calls
-        timeoutId = setTimeout(() => loadProfileAndRoles(uid), 100);
+        // Load profile and roles directly without debouncing
+        try {
+          await loadProfileAndRoles(uid);
+        } catch (error) {
+          console.error("❌ Failed to establish session from any token method", error);
+        } finally {
+          isProcessing = false;
+        }
       } else {
+        console.log(`AuthContext: No user session, clearing state`);
         setUser(null);
         setRoles([]);
         setAccountStatus(null);
         setInitializing(false);
+        isProcessing = false;
       }
     });
 
     // Initial session check
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       const uid = data.session?.user?.id;
-      if (uid) {
-        timeoutId = setTimeout(() => loadProfileAndRoles(uid), 0);
-      } else {
+      console.log(`AuthContext: Initial session check - User ID: ${uid}`);
+      
+      if (uid && !isProcessing) {
+        isProcessing = true;
+        try {
+          await loadProfileAndRoles(uid);
+        } catch (error) {
+          console.error("❌ Failed to establish session from initial check", error);
+        } finally {
+          isProcessing = false;
+        }
+      } else if (!uid) {
         setInitializing(false);
       }
     });
