@@ -64,7 +64,7 @@ async function initializeAdminContext(req: Request): Promise<AdminContext> {
   const { data: adminProfile, error: adminProfileError } = await supabase
     .from("profiles")
     .select("community_id, district_id")
-    .eq("id", currentUser.id)
+    .eq("user_id", currentUser.id)
     .single();
 
   const isStateAdmin = userRoles?.some((r) => r.role === "state_admin");
@@ -140,9 +140,10 @@ async function updateUserProfile(
     .from("profiles")
     .upsert({
       id: userId,
+      user_id: userId,
       ...profileData
     }, {
-      onConflict: 'id'
+      onConflict: 'user_id'
     });
     
   if (profileError) {
@@ -178,7 +179,7 @@ async function assignUserRole(userId: string, role: string, context: AdminContex
     // Clean up both auth user and profile if role assignment fails
     try {
       await context.supabaseAdmin.auth.admin.deleteUser(userId);
-      await context.supabaseAdmin.from("profiles").delete().eq("id", userId);
+      await context.supabaseAdmin.from("profiles").delete().eq("user_id", userId);
     } catch (cleanupError) {
       console.error("Failed to cleanup user and profile:", cleanupError);
     }
