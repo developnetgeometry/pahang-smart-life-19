@@ -36,24 +36,17 @@ export function useModuleAccessOptimized() {
       }
 
       try {
-        // Get user profile first
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("community_id")
-          .eq("user_id", user.id)
-          .single();
-
-        if (profileError || !profile?.community_id) {
+        if (!user.active_community_id) {
           setEnabledModules([]);
           setLoading(false);
           return;
         }
 
-        // Get community modules in a separate query
+        // Get community modules
         const { data: communityModules, error } = await supabase
           .from("community_features")
           .select("module_name")
-          .eq("community_id", profile.community_id)
+          .eq("community_id", user.active_community_id)
           .eq("is_enabled", true);
 
         if (error) {
@@ -92,7 +85,7 @@ export function useModuleAccessOptimized() {
 
     // Set up lightweight real-time subscription only when needed
     let channel: any = null;
-    if (user?.communityId) {
+    if (user?.active_community_id) {
       channel = supabase
         .channel(`community-features-${user.id}`)
         .on(
@@ -101,7 +94,7 @@ export function useModuleAccessOptimized() {
             event: "*",
             schema: "public",
             table: "community_features",
-            filter: `community_id=eq.${user.communityId}`,
+            filter: `community_id=eq.${user.active_community_id}`,
           },
           () => {
             // Clear cache and refetch
