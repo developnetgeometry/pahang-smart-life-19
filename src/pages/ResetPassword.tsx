@@ -21,6 +21,7 @@ export default function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [searchParams] = useSearchParams();
@@ -29,34 +30,66 @@ export default function ResetPassword() {
   const { t } = useTranslation(language || "en");
   const { toast } = useToast();
 
-  // Check for valid reset session on component mount
+  // Parse tokens from URL hash and establish session
   useEffect(() => {
-    const checkResetSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
+    const setupResetSession = async () => {
+      setIsVerifying(true);
       
-      if (error || !session) {
+      try {
+        // Parse tokens from URL hash (where Supabase places them)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        
+        // Fallback: check for code parameter in search params
+        const code = searchParams.get('code');
+        
+        if (accessToken && refreshToken) {
+          // Establish session using tokens from hash
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          
+          if (error) {
+            console.error('Session establishment error:', error);
+            throw error;
+          }
+          
+          console.log('Password reset session established successfully');
+          setIsVerifying(false);
+          return;
+        }
+        
+        if (code) {
+          // Use code exchange flow
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (error) {
+            console.error('Code exchange error:', error);
+            throw error;
+          }
+          
+          console.log('Password reset session established via code exchange');
+          setIsVerifying(false);
+          return;
+        }
+        
+        // No valid tokens found
+        throw new Error('No valid reset tokens found in URL');
+        
+      } catch (error: any) {
+        console.error('Reset session setup error:', error);
         setError(
           language === "en"
             ? "Invalid or expired reset link. Please request a new password reset."
             : "Pautan tetapan semula tidak sah atau telah tamat tempoh. Sila minta tetapan semula kata laluan baharu."
         );
-        return;
-      }
-
-      // Check if this is actually a password reset session
-      const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
-      
-      if (!accessToken && !refreshToken && !session.user?.email) {
-        setError(
-          language === "en"
-            ? "Invalid reset link. Please request a new password reset."
-            : "Pautan tetapan semula tidak sah. Sila minta tetapan semula kata laluan baharu."
-        );
+        setIsVerifying(false);
       }
     };
 
-    checkResetSession();
+    setupResetSession();
   }, [searchParams, language]);
 
   const validatePassword = (pass: string): string => {
@@ -129,6 +162,28 @@ export default function ResetPassword() {
       setIsLoading(false);
     }
   };
+
+  if (isVerifying) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            </div>
+            <CardTitle className="text-xl font-semibold text-foreground">
+              {language === "en" ? "Verifying Reset Link..." : "Mengesahkan Pautan Tetapan Semula..."}
+            </CardTitle>
+            <CardDescription>
+              {language === "en"
+                ? "Please wait while we verify your password reset link"
+                : "Sila tunggu sementara kami mengesahkan pautan tetapan semula kata laluan anda"}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   if (success) {
     return (
