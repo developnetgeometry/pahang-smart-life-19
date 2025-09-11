@@ -2356,10 +2356,6 @@ export default function Login() {
                       password123
                     </p>
                     <p>
-                      <strong>District Coordinator:</strong>{" "}
-                      districtcoord@test.com / password123
-                    </p>
-                    <p>
                       <strong>Community Admin:</strong> communityadmin@test.com
                       / password123
                     </p>
@@ -2381,14 +2377,6 @@ export default function Login() {
                     <p>
                       <strong>Service Provider:</strong>{" "}
                       serviceprovider@test.com / password123
-                    </p>
-                    <p>
-                      <strong>Community Leader:</strong>{" "}
-                      communityleader@test.com / password123
-                    </p>
-                    <p>
-                      <strong>State Service Manager:</strong>{" "}
-                      stateservicemgr@test.com / password123
                     </p>
                   </div>
                 </div>
