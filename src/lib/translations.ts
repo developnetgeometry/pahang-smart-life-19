@@ -162,6 +162,12 @@ export const translations = {
     // Settings
     settings: "Settings",
     notificationSettingsTitle: "Notification Settings",
+    
+    // User Management
+    approve: "Approve",
+    reject: "Reject",
+    userApproved: "User approved successfully",
+    userRejected: "User rejected successfully",
   },
   ms: {
     // Navigation
@@ -322,6 +328,12 @@ export const translations = {
     // Settings
     settings: "Tetapan",
     notificationSettingsTitle: "Tetapan Notifikasi",
+    
+    // User Management
+    approve: "Lulus",
+    reject: "Tolak",
+    userApproved: "Pengguna berjaya diluluskan",
+    userRejected: "Pengguna berjaya ditolak",
   },
 };
 
