@@ -136,8 +136,9 @@ async function updateUserProfile(
   const { error: profileError } = await context.supabaseAdmin
     .from("profiles")
     .update(profileData)
-    .eq("user_id", userId);
+    .eq("id", userId);
   if (profileError) {
+    console.error("Profile update error:", profileError);
     await context.supabaseAdmin.auth.admin.deleteUser(userId);
     throw new Error(`Failed to update profile: ${profileError.message}`);
   }
@@ -156,8 +157,9 @@ async function assignUserRole(userId: string, role: string, context: AdminContex
     });
 
   if (roleUpsertError) {
+    console.error("Role assignment error:", roleUpsertError);
     await context.supabaseAdmin.auth.admin.deleteUser(userId);
-    await context.supabaseAdmin.from("profiles").delete().eq("user_id", userId);
+    await context.supabaseAdmin.from("profiles").delete().eq("id", userId);
     throw new Error(`Failed to assign role: ${roleUpsertError.message}`);
   }
 }
@@ -172,13 +174,18 @@ serve(async (req) => {
 
     const {
       email,
-      password,
+      password = "TempPassword123!", // Default password for admin accounts
       full_name,
       phone,
       role, // community_admin, district_coordinator, state_admin
       district_id, // for specific assignments
       community_id, // for specific assignments
     } = await req.json();
+
+    // Validate required fields
+    if (!email || !full_name || !role) {
+      throw new Error("Missing required fields: email, full_name, and role are required");
+    }
 
     // Validate role
     const validAdminRoles = ["community_admin", "district_coordinator", "state_admin"];
@@ -192,15 +199,14 @@ serve(async (req) => {
     }
 
     // District coordinators can only create community admins
-    const isDistrictCoordinator = context.adminProfile && 
-      await context.supabase
-        .from("enhanced_user_roles")
-        .select("role")
-        .eq("user_id", context.currentUser.id)
-        .eq("role", "district_coordinator")
-        .eq("is_active", true)
-        .single();
-
+    const { data: userRoles } = await context.supabase
+      .from("enhanced_user_roles")
+      .select("role")
+      .eq("user_id", context.currentUser.id)
+      .eq("is_active", true);
+    
+    const isDistrictCoordinator = userRoles?.some(r => r.role === "district_coordinator");
+    
     if (isDistrictCoordinator && role !== "community_admin") {
       throw new Error("District Coordinators can only create Community Admin accounts");
     }
