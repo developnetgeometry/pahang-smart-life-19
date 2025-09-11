@@ -221,7 +221,7 @@ export function AnnouncementSlideshow() {
           )}
 
           {/* Content Overlay */}
-          <div className="relative h-full flex flex-col justify-between p-6 md:p-8 pl-12 pr-12 sm:pl-14 sm:pr-14 text-white">
+          <div className="relative h-full flex flex-col justify-between p-6 md:p-8 pl-12 pr-12 sm:pl-14 sm:pr-14 pb-14 sm:pb-16 text-white">
             {/* Top Badges */}
             <div className="flex items-center gap-2 flex-wrap">
               <Badge 
@@ -255,20 +255,20 @@ export function AnnouncementSlideshow() {
             </div>
 
             {/* Main Content */}
-            <div className="space-y-4 flex-1 flex flex-col justify-center">
+            <div className="space-y-2 md:space-y-4 flex-1 flex flex-col justify-center">
               <h2 className="text-2xl md:text-4xl font-bold leading-tight">
                 {getLocalizedTitle(currentAnnouncement)}
               </h2>
               <div 
-                className="text-lg md:text-xl text-white/90 leading-relaxed max-w-3xl break-words hyphens-auto"
+                className="hidden md:block text-lg md:text-xl text-white/90 leading-relaxed max-w-3xl"
                 style={{
                   display: '-webkit-box',
-                  WebkitLineClamp: 3,
+                  WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden'
                 }}
               >
-                {truncateAtWord(getLocalizedContent(currentAnnouncement), 220)}
+                {truncateAtWord(getLocalizedContent(currentAnnouncement), 160)}
               </div>
             </div>
 
