@@ -88,8 +88,6 @@ verify_jwt = false
 [functions.admin-create-user]
 verify_jwt = true
 
-[functions.admin-user-utils]
-verify_jwt = true
 
 [functions.admin-create-resident]
 verify_jwt = true
