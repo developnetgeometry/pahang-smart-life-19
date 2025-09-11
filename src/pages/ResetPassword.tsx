@@ -53,6 +53,8 @@ export default function ResetPassword() {
         console.log('Hash length:', window.location.hash.length);
         console.log('Search raw:', window.location.search);
         console.log('Search length:', window.location.search.length);
+        console.log('Document referrer:', document.referrer);
+        console.log('History length:', history.length);
         
         // Parse tokens from URL hash (Supabase password reset format)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
