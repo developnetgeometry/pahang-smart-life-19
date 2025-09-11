@@ -42,23 +42,53 @@ export default function ResetPassword() {
         // Wait a bit for cleanup
         await new Promise(resolve => setTimeout(resolve, 100));
         
+        console.log('Full URL:', window.location.href);
+        console.log('Hash:', window.location.hash);
+        console.log('Search:', window.location.search);
+        
         // Parse tokens from URL hash (Supabase password reset format)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
         const type = hashParams.get('type');
         
-        console.log('Reset tokens found:', { 
+        // Also check search params as fallback
+        const searchAccessToken = searchParams.get('access_token');
+        const searchRefreshToken = searchParams.get('refresh_token');
+        const searchType = searchParams.get('type');
+        
+        console.log('Hash tokens:', { 
           hasAccessToken: !!accessToken, 
           hasRefreshToken: !!refreshToken, 
           type 
         });
         
-        if (accessToken && refreshToken && type === 'recovery') {
-          // Establish session using tokens from password reset email
+        console.log('Search tokens:', { 
+          hasAccessToken: !!searchAccessToken, 
+          hasRefreshToken: !!searchRefreshToken, 
+          type: searchType 
+        });
+        
+        // Try hash tokens first (standard Supabase redirect format)
+        let finalAccessToken = accessToken;
+        let finalRefreshToken = refreshToken;
+        let finalType = type;
+        
+        // Fallback to search params if hash tokens not found
+        if (!finalAccessToken && searchAccessToken) {
+          finalAccessToken = searchAccessToken;
+          finalRefreshToken = searchRefreshToken;
+          finalType = searchType;
+        }
+        
+        if (finalAccessToken && finalRefreshToken) {
+          console.log('Using tokens from:', finalAccessToken === accessToken ? 'hash' : 'search');
+          console.log('Token type:', finalType);
+          
+          // Establish session using tokens (don't require specific type for flexibility)
           const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
+            access_token: finalAccessToken,
+            refresh_token: finalRefreshToken
           });
           
           if (error) {
@@ -81,13 +111,23 @@ export default function ResetPassword() {
           return;
         }
         
+        // Check for error parameters that might indicate token issues
+        const errorParam = hashParams.get('error') || searchParams.get('error');
+        const errorDescription = hashParams.get('error_description') || searchParams.get('error_description');
+        
+        if (errorParam) {
+          console.error('URL contains error:', errorParam, errorDescription);
+          throw new Error(`Authentication error: ${errorDescription || errorParam}`);
+        }
+        
         // No valid reset tokens found
+        console.error('No tokens found in URL');
         throw new Error('No valid password reset tokens found in URL. Please use the link from your password reset email.');
         
       } catch (error: any) {
         console.error('Reset session setup error:', error);
         setError(
-          error.message.includes('tokens found') 
+          error.message.includes('tokens found') || error.message.includes('Authentication error')
             ? error.message
             : (language === "en"
               ? "Invalid or expired reset link. Please request a new password reset."
