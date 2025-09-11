@@ -522,17 +522,17 @@ export default function ModuleManagement() {
                         key={module.module_name}
                         className="border rounded-lg p-4 space-y-3"
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <ModuleIcon className="h-5 w-5 text-muted-foreground" />
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-medium">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <ModuleIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h4 className="font-medium truncate">
                                   {module.display_name}
                                 </h4>
                                 <Badge
                                   variant="outline"
-                                  className={`text-xs ${getCategoryColor(
+                                  className={`text-xs flex-shrink-0 ${getCategoryColor(
                                     module.category
                                   )}`}
                                 >
@@ -544,24 +544,26 @@ export default function ModuleManagement() {
                               </p>
                             </div>
                           </div>
-                          <Switch
-                            checked={moduleFeature?.is_enabled || false}
-                            onCheckedChange={(enabled) =>
-                              handleToggleModule(
-                                moduleFeature || {
-                                  module_name: module.module_name,
-                                  display_name: module.display_name,
-                                  category: module.category,
-                                  is_enabled: false,
-                                },
-                                enabled
-                              )
-                            }
-                            disabled={saving || loading}
-                          />
-                        </div>
+                          <div className="flex-shrink-0">
+                            <Switch
+                              checked={moduleFeature?.is_enabled || false}
+                              onCheckedChange={(enabled) =>
+                                handleToggleModule(
+                                  moduleFeature || {
+                                    module_name: module.module_name,
+                                    display_name: module.display_name,
+                                    category: module.category,
+                                    is_enabled: false,
+                                  },
+                                  enabled
+                                )
+                              }
+                              disabled={saving || loading}
+                            />
+                          </div>
+                         </div>
 
-                        {moduleFeature && (
+                         {moduleFeature && (
                           <div className="pl-8 space-y-4">
                             <Textarea
                               placeholder="Add notes about this module configuration..."
