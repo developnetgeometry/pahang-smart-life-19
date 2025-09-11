@@ -238,7 +238,7 @@ export default function CompleteAccount() {
         if (code) {
           console.log('Processing invitation link with code');
           try {
-            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
             
             if (error) {
               console.error('Code exchange failed:', error.message, error);
