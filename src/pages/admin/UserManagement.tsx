@@ -229,7 +229,7 @@ export default function UserManagement() {
       // User details and tenant management
       userDetails: "User Details",
       householdMembers: "Household Members",
-      addTenant: "Add Tenant",
+      addTenant: "Add Guest",
       tenantName: "Tenant Name",
       tenantEmail: "Tenant Email",
       tenantPhone: "Tenant Phone",
@@ -302,7 +302,7 @@ export default function UserManagement() {
       // User details and tenant management
       userDetails: "Butiran Pengguna",
       householdMembers: "Ahli Rumah",
-      addTenant: "Tambah Penyewa",
+      addTenant: "Tambah Tetamu",
       tenantName: "Nama Penyewa",
       tenantEmail: "E-mel Penyewa",
       tenantPhone: "Telefon Penyewa",
