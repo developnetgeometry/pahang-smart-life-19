@@ -64,7 +64,7 @@ async function initializeAdminContext(req: Request): Promise<AdminContext> {
   const { data: adminProfile, error: adminProfileError } = await supabase
     .from("profiles")
     .select("community_id, district_id")
-    .eq("id", currentUser.id)
+    .eq("user_id", currentUser.id)
     .single();
 
   const isStateAdmin = userRoles?.some((r) => r.role === "state_admin");
@@ -135,7 +135,7 @@ async function updateUserProfile(
 ) {
   const { error: profileError } = await context.supabaseAdmin
     .from("profiles")
-    .upsert({ id: userId, ...profileData });
+    .upsert({ user_id: userId, ...profileData }, { onConflict: "user_id" });
   if (profileError) {
     await context.supabaseAdmin.auth.admin.deleteUser(userId);
     throw new Error(`Failed to update profile: ${profileError.message}`);
@@ -156,7 +156,7 @@ async function assignUserRole(userId: string, role: string, context: AdminContex
 
   if (roleUpsertError) {
     await context.supabaseAdmin.auth.admin.deleteUser(userId);
-    await context.supabaseAdmin.from("profiles").delete().eq("id", userId);
+    await context.supabaseAdmin.from("profiles").delete().eq("user_id", userId);
     throw new Error(`Failed to assign role: ${roleUpsertError.message}`);
   }
 }
@@ -178,6 +178,31 @@ serve(async (req) => {
       emergency_contact_name,
       emergency_contact_phone,
     } = await req.json();
+
+    // Basic validation
+    if (!email || !full_name) {
+      return new Response(
+        JSON.stringify({
+          error: "Email and full name are required fields.",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
+      );
+    }
+
+    if (!unit_number) {
+      return new Response(
+        JSON.stringify({
+          error: "Unit number is required for resident accounts.",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
+      );
+    }
 
     console.log("Creating resident with data:", {
       email,
