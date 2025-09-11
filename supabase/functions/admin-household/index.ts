@@ -119,14 +119,14 @@ const handler = async (req: Request): Promise<Response> => {
         .select(
           `
           id,
-          linked_user_id,
+          linked_account_id,
           relationship_type,
           permissions,
           is_active,
           created_at
         `
         )
-        .eq("primary_user_id", hostUserId)
+        .eq("primary_account_id", hostUserId)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
@@ -141,8 +141,16 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
+      // Return empty array if no household accounts found
+      if (!householdAccounts || householdAccounts.length === 0) {
+        return new Response(JSON.stringify({ data: [] }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Get profile data for linked users separately
-      const linkedUserIds = householdAccounts?.map(account => account.linked_user_id) || [];
+      const linkedUserIds = householdAccounts?.map(account => account.linked_account_id) || [];
       let linkedProfiles = [];
       
       if (linkedUserIds.length > 0) {
@@ -158,10 +166,11 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
 
-      // Map profiles to household accounts
+      // Map profiles to household accounts with the correct format for UI
       const enrichedAccounts = householdAccounts?.map(account => ({
         ...account,
-        profiles: linkedProfiles.find(profile => profile.id === account.linked_user_id)
+        linked_user_id: account.linked_account_id, // Map for UI compatibility
+        profiles: linkedProfiles.find(profile => profile.id === account.linked_account_id)
       })) || [];
 
       return new Response(JSON.stringify({ data: enrichedAccounts }), {
@@ -298,8 +307,8 @@ const handler = async (req: Request): Promise<Response> => {
       const { error: householdError } = await supabaseAdmin
         .from("household_accounts")
         .insert({
-          primary_user_id: body.host_user_id,
-          linked_user_id: newUser.user.id,
+          primary_account_id: body.host_user_id,
+          linked_account_id: newUser.user.id,
           relationship_type: "tenant",
           permissions: body.permissions,
           is_active: true,
