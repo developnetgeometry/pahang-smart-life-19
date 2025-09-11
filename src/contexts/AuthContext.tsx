@@ -236,9 +236,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       const uid = session?.user?.id;
       if (uid) {
+        // Handle email confirmation event - user just verified their email
+        if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
+          // Check if this user has pending status and just confirmed email
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("account_status, email")
+            .eq("user_id", uid)
+            .single();
+            
+          // If user has pending status but is now authenticated with confirmed email,
+          // update status to pending_completion so they can complete their account
+          if (profile?.account_status === "pending") {
+            console.log("Updating account status from pending to pending_completion for user:", uid);
+            await supabase
+              .from("profiles")
+              .update({ account_status: "pending_completion" })
+              .eq("user_id", uid);
+          }
+        }
+        
         // Defer Supabase calls to avoid deadlocks
         setTimeout(() => loadProfileAndRoles(uid), 0);
       } else {
@@ -284,7 +304,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           throw new Error("ACCOUNT_INACTIVE");
         }
 
-        // Check account status
+        // Check account status - only block pure "pending" (email not confirmed)
+        // Allow "pending_completion" (email confirmed, needs to complete profile)
         if (profile.account_status === "pending") {
           await supabase.auth.signOut();
           throw new Error("ACCOUNT_PENDING");
