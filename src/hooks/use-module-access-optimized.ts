@@ -92,7 +92,7 @@ export function useModuleAccessOptimized() {
 
     // Set up lightweight real-time subscription only when needed
     let channel: any = null;
-    if (user) {
+    if (user?.communityId) {
       channel = supabase
         .channel(`community-features-${user.id}`)
         .on(
@@ -101,7 +101,7 @@ export function useModuleAccessOptimized() {
             event: "*",
             schema: "public",
             table: "community_features",
-            filter: `community_id=eq.${profile.community_id}`,
+            filter: `community_id=eq.${user.communityId}`,
           },
           () => {
             // Clear cache and refetch
