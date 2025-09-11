@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, MapPin, Users, Clock, Plus, Search, Car, Dumbbell, Waves, TreePine, Loader2, Shield } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, RefreshCw, Search, Car, Dumbbell, Waves, TreePine, Loader2, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { TimeSlotPicker } from '@/components/facilities/TimeSlotPicker';
@@ -37,7 +37,7 @@ interface Facility {
 
 export default function Facilities() {
   const { language, user } = useAuth();
-  const { isModuleEnabled } = useModuleAccess();
+  const { isModuleEnabled, enabledModules } = useModuleAccess();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
@@ -121,9 +121,20 @@ export default function Facilities() {
 
   const t = text[language];
 
+  // Compute stable facilitiesEnabled boolean
+  const facilitiesEnabled = enabledModules.some(module => module.module_name === 'facilities');
+
   // Fetch facilities from Supabase - ALWAYS call this hook
   const fetchFacilities = async () => {
-    if (!isModuleEnabled('facilities')) {
+    console.log('fetchFacilities called, refreshing state:', refreshing);
+    
+    if (refreshing) {
+      console.log('Already refreshing, skipping fetch');
+      return;
+    }
+    
+    if (!facilitiesEnabled) {
+      console.log('Facilities module not enabled, skipping fetch');
       setLoading(false);
       return;
     }
@@ -275,11 +286,12 @@ export default function Facilities() {
   };
 
   useEffect(() => {
+    console.log('useEffect triggered, facilitiesEnabled:', facilitiesEnabled, 'language:', language);
     fetchFacilities();
-  }, [language, isModuleEnabled]);
+  }, [language, facilitiesEnabled]);
 
   // Check if facilities module is enabled - do this AFTER all hooks
-  if (!isModuleEnabled('facilities')) {
+  if (!facilitiesEnabled) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-12">
@@ -453,7 +465,7 @@ export default function Facilities() {
           {refreshing ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
           ) : (
-            <Plus className="h-4 w-4 mr-2" />
+            <RefreshCw className="h-4 w-4 mr-2" />
           )}
           {refreshing ? 'Refreshing...' : 'Refresh'}
         </Button>
