@@ -437,21 +437,11 @@ export default function MarketplaceItemDetail() {
 
           {/* Action Buttons */}
           <div className="flex gap-3">
-            {item.sellerType === 'service_provider' && (
-              <Button
-                size="lg"
-                onClick={handleAddToCart}
-                className="flex-1"
-              >
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                {t.addToCart}
-              </Button>
-            )}
             <Button
               variant="outline"
               size="lg"
               onClick={handleContactSeller}
-              className={item.sellerType === 'resident' ? 'w-full' : 'flex-1'}
+              className="w-full"
             >
               <MessageCircle className="h-5 w-5 mr-2" />
               {t.contactSeller}
