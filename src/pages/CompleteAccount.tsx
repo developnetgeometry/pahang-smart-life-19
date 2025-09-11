@@ -150,7 +150,7 @@ export default function CompleteAccount() {
           family_size: form.family_size,
           emergency_contact_name: form.emergency_contact_name,
           emergency_contact_phone: form.emergency_contact_phone,
-          vehicle_number: form.vehicle_number || null,
+          vehicle_plate_number: form.vehicle_number || null,
           language_preference: form.language_preference,
           account_status: "approved",
         })
@@ -170,9 +170,10 @@ export default function CompleteAccount() {
       navigate("/");
     } catch (error) {
       console.error("Error completing account:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
       toast({
         title: "Error",
-        description: t.error,
+        description: error instanceof Error ? error.message : t.error,
         variant: "destructive",
       });
     } finally {
