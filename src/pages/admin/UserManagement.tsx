@@ -112,7 +112,7 @@ export default function UserManagement() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isModuleEnabled } = useModuleAccess();
-  const { hasRole } = useUserRoles();
+  const { hasRole, loading: rolesLoading } = useUserRoles();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -346,9 +346,16 @@ export default function UserManagement() {
 
   // Fetch users from database
   useEffect(() => {
-    fetchUsers();
     fetchDistricts();
   }, []);
+  
+  // Fetch users after roles are loaded
+  useEffect(() => {
+    if (!rolesLoading && user?.id) {
+      console.log('Fetching users with role filtering, user:', user);
+      fetchUsers();
+    }
+  }, [rolesLoading, user?.id, user?.active_community_id]);
 
   const fetchUsers = async () => {
     try {
@@ -367,29 +374,38 @@ export default function UserManagement() {
           created_at
         `);
 
+      console.log('User roles check:', {
+        isCommunityAdmin: hasRole('community_admin'),
+        isDistrictCoordinator: hasRole('district_coordinator'), 
+        isStateAdmin: hasRole('state_admin'),
+        userActiveCommunityId: user?.active_community_id
+      });
+
       // Apply filtering based on user role
       if (hasRole('community_admin') && !hasRole('district_coordinator') && !hasRole('state_admin')) {
         // Community Admin: only see users from their community
         if (user?.active_community_id) {
+          console.log('Filtering by community_id:', user.active_community_id);
           query = query.eq('community_id', user.active_community_id);
+        } else {
+          console.log('Community admin but no active_community_id, showing no users');
+          // If no community_id, show no users
+          query = query.eq('id', '00000000-0000-0000-0000-000000000000');
         }
       } else if (hasRole('district_coordinator') && !hasRole('state_admin')) {
         // District Coordinator: see all users in their district
-        // Note: We need to get the district_id from the user's profile
-        if (user?.id) {
-          // Get user's district_id from their profile
-          const { data: userProfile } = await supabase
-            .from('profiles')
-            .select('district_id')
-            .eq('id', user.id)
-            .single();
-          
-          if (userProfile?.district_id) {
-            query = query.eq('district_id', userProfile.district_id);
-          }
+        if (user?.district) {
+          console.log('Filtering by district for coordinator:', user.district);
+          // Use the district field from user object
+          query = query.eq('district_id', user.district);
+        } else {
+          console.log('District coordinator but no district info, showing no users');
+          // If no district info, show no users
+          query = query.eq('id', '00000000-0000-0000-0000-000000000000');
         }
       }
       // State Admins see all users (no additional filtering)
+      console.log('Final query will be executed');
 
       const { data: profiles, error: profilesError } = await query;
 
