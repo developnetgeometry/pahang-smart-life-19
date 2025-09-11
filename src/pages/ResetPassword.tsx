@@ -56,6 +56,28 @@ export default function ResetPassword() {
         console.log('Document referrer:', document.referrer);
         console.log('History length:', history.length);
         
+        // Test if we came from Supabase
+        if (document.referrer.includes('supabase.co')) {
+          console.log('🟡 CAME FROM SUPABASE - checking for redirect issues');
+          console.log('Referrer URL:', document.referrer);
+        }
+        
+        // Check for any URL manipulation
+        console.log('Window location components:');
+        console.log('  protocol:', window.location.protocol);
+        console.log('  hostname:', window.location.hostname);
+        console.log('  port:', window.location.port);
+        console.log('  pathname:', window.location.pathname);
+        console.log('  search:', window.location.search);
+        console.log('  hash:', window.location.hash);
+        
+        // Test direct token parsing from current URL
+        const testHash = window.location.hash;
+        const testSearch = window.location.search;
+        console.log('Testing token extraction methods:');
+        console.log('Hash substring(1):', testHash.substring(1));
+        console.log('Search substring(1):', testSearch.substring(1));
+        
         // Parse tokens from URL hash (Supabase password reset format)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
@@ -146,6 +168,12 @@ export default function ResetPassword() {
         console.error('3. There\'s a redirect loop removing the tokens');
         console.error('');
         console.error('SOLUTION: Request a NEW password reset email and use that link');
+        console.error('');
+        console.error('If this persists, check these Supabase settings:');
+        console.error('- Site URL should be: https://www.primapahang.com');
+        console.error('- Redirect URLs should include: https://www.primapahang.com/reset-password');
+        console.error('- Try waiting 5-10 minutes for configuration to propagate');
+        console.error('- Clear browser cache and request fresh email');
         
         throw new Error(
           language === "en"
