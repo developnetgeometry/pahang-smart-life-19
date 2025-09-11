@@ -133,18 +133,35 @@ async function updateUserProfile(
   profileData: any,
   context: AdminContext
 ) {
+  console.log('Updating profile for user:', userId, 'with data:', profileData);
+  
+  // Use upsert to handle cases where profile doesn't exist yet
   const { error: profileError } = await context.supabaseAdmin
     .from("profiles")
-    .update(profileData)
-    .eq("id", userId);
+    .upsert({
+      id: userId,
+      ...profileData
+    }, {
+      onConflict: 'id'
+    });
+    
   if (profileError) {
-    console.error("Profile update error:", profileError);
-    await context.supabaseAdmin.auth.admin.deleteUser(userId);
+    console.error("Profile upsert error:", profileError);
+    // Clean up auth user if profile creation fails
+    try {
+      await context.supabaseAdmin.auth.admin.deleteUser(userId);
+    } catch (cleanupError) {
+      console.error("Failed to cleanup auth user:", cleanupError);
+    }
     throw new Error(`Failed to update profile: ${profileError.message}`);
   }
+  
+  console.log('Profile updated successfully for user:', userId);
 }
 
 async function assignUserRole(userId: string, role: string, context: AdminContext) {
+  console.log('Assigning role:', role, 'to user:', userId);
+  
   const { error: roleUpsertError } = await context.supabaseAdmin
     .from("enhanced_user_roles")
     .upsert({
@@ -158,10 +175,17 @@ async function assignUserRole(userId: string, role: string, context: AdminContex
 
   if (roleUpsertError) {
     console.error("Role assignment error:", roleUpsertError);
-    await context.supabaseAdmin.auth.admin.deleteUser(userId);
-    await context.supabaseAdmin.from("profiles").delete().eq("id", userId);
+    // Clean up both auth user and profile if role assignment fails
+    try {
+      await context.supabaseAdmin.auth.admin.deleteUser(userId);
+      await context.supabaseAdmin.from("profiles").delete().eq("id", userId);
+    } catch (cleanupError) {
+      console.error("Failed to cleanup user and profile:", cleanupError);
+    }
     throw new Error(`Failed to assign role: ${roleUpsertError.message}`);
   }
+  
+  console.log('Role assigned successfully for user:', userId);
 }
 
 serve(async (req) => {
@@ -185,6 +209,17 @@ serve(async (req) => {
     // Validate required fields
     if (!email || !full_name || !role) {
       throw new Error("Missing required fields: email, full_name, and role are required");
+    }
+
+    // Check if user already exists
+    const { data: existingUser } = await context.supabaseAdmin
+      .from("profiles")
+      .select("id, email")
+      .eq("email", email)
+      .single();
+    
+    if (existingUser) {
+      throw new Error(`User with email ${email} already exists`);
     }
 
     // Validate role
@@ -233,7 +268,7 @@ serve(async (req) => {
       full_name,
       phone: phone || null,
       email,
-      account_status: "approved", // Admins are auto-approved
+      // Removed account_status as it may not exist in profiles table
     };
 
     // Set district/community based on role and assignments
