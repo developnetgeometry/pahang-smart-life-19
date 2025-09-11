@@ -1145,7 +1145,7 @@ export default function UserManagement() {
                       </Select>
                     </div>
                   </div>
-                </>>
+                </>
               ) : form.role === "guest" ? (
                 <>
                   {/* Guest-specific form */}
@@ -1232,7 +1232,7 @@ export default function UserManagement() {
                       />
                     </div>
                   </div>
-                </>>
+                </>
               ) : (
                 <>
                   {/* Full form for staff roles */}
@@ -1431,7 +1431,7 @@ export default function UserManagement() {
                       </div>
                     )}
                   </div>
-                </>>
+                </>
               )}
 
               {/* Role-specific fields */}
