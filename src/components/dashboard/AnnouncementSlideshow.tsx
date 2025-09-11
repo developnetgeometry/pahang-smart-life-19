@@ -207,7 +207,7 @@ export function AnnouncementSlideshow() {
           )}
 
           {/* Content Overlay */}
-          <div className="relative h-full flex flex-col justify-between p-6 md:p-8 pl-14 pr-14 sm:pl-16 sm:pr-16 text-white">
+          <div className="relative h-full flex flex-col justify-between p-6 md:p-8 pl-12 pr-12 sm:pl-14 sm:pr-14 text-white">
             {/* Top Badges */}
             <div className="flex items-center gap-2 flex-wrap">
               <Badge 
