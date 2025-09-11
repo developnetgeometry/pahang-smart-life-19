@@ -171,8 +171,8 @@ export function AppSidebar() {
     // Services & Facilities - available to all users
     const servicesItems = [];
 
-    // Add marketplace if module is enabled
-    if (isModuleEnabled("marketplace")) {
+    // Add marketplace if module is enabled (exclude security officers)
+    if (isModuleEnabled("marketplace") && !hasRole("security_officer")) {
       servicesItems.push({
         title: t("marketplace"),
         url: "/marketplace",
@@ -202,8 +202,8 @@ export function AppSidebar() {
       });
     }
 
-    // Add bookings if module is enabled (exclude facility managers - they manage facilities, don't book them)
-    if (isModuleEnabled("bookings") && !hasRole("facility_manager")) {
+    // Add bookings if module is enabled (exclude facility managers and security officers)
+    if (isModuleEnabled("bookings") && !hasRole("facility_manager") && !hasRole("security_officer")) {
       servicesItems.push({
         title: t("myBookings"),
         url: "/my-bookings",
