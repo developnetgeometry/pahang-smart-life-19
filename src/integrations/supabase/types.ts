@@ -4125,6 +4125,36 @@ export type Database = {
         }
         Relationships: []
       }
+      guest_permissions: {
+        Row: {
+          community_id: string
+          created_at: string
+          created_by: string | null
+          feature_name: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          created_by?: string | null
+          feature_name: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          created_by?: string | null
+          feature_name?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       household_accounts: {
         Row: {
           created_at: string | null
@@ -10285,6 +10315,13 @@ export type Database = {
           module_name: string
         }[]
       }
+      get_guest_permissions_for_community: {
+        Args: { p_community_id: string }
+        Returns: {
+          feature_name: string
+          is_enabled: boolean
+        }[]
+      }
       get_image_url: {
         Args: { bucket_name: string; file_path: string }
         Returns: string
@@ -10373,6 +10410,10 @@ export type Database = {
       get_user_role_level: {
         Args: { check_user_id?: string }
         Returns: number
+      }
+      guest_has_feature_permission: {
+        Args: { p_feature_name: string; p_user_id: string }
+        Returns: boolean
       }
       has_enhanced_role: {
         Args: {

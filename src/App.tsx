@@ -80,6 +80,7 @@ import PatrolInterfacePage from "./pages/PatrolInterface";
 import FacilityComplaintCenterPage from "./pages/FacilityComplaintCenter";
 import PendingApproval from "./pages/PendingApproval";
 import CompleteAccount from "./pages/CompleteAccount";
+import GuestManagement from "./pages/admin/GuestManagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -514,6 +515,18 @@ const App = () => (
                   <Layout>
                     <UserManagement />
                   </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/guest-management"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <GuestManagement />
+                    </Layout>
+                  </RequireRoles>
                 </ProtectedRoute>
               }
             />

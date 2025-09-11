@@ -14,7 +14,8 @@ export type EnhancedUserRole =
   | 'state_admin'
   | 'state_service_manager'
   | 'spouse'
-  | 'tenant';
+  | 'tenant'
+  | 'guest';
 
 export function useUserRoles() {
   const { user } = useAuth();

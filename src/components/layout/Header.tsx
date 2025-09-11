@@ -2,6 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import EnhancedNotificationBell from '@/components/communication/EnhancedNotificationBell';
 import { useTranslation } from '@/lib/translations';
 import { useUserRoles } from '@/hooks/use-user-roles';
+import { GuestIndicator } from '@/components/ui/guest-indicator';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -25,7 +26,7 @@ import {
 
 export function Header() {
   const { user, language, switchLanguage, theme, switchTheme, logout } = useAuth();
-  const { userRoles } = useUserRoles();
+  const { userRoles, hasRole } = useUserRoles();
   const { t } = useTranslation(language || 'ms');
   const navigate = useNavigate();
 
@@ -43,7 +44,8 @@ export function Header() {
       'service_provider',
       'community_leader',
       'resident',
-      'tenant' // Tenant is the lowest priority
+      'tenant', // Tenant is the lowest priority
+      'guest' // Guest is the lowest priority
     ];
     
     for (const role of roleHierarchy) {
@@ -90,8 +92,11 @@ export function Header() {
         {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
       </Button>
 
+      {/* Guest Indicator */}
+      <GuestIndicator />
+
       {/* Notifications */}
-            <EnhancedNotificationBell />
+      <EnhancedNotificationBell />
 
       {/* User Menu */}
       <DropdownMenu>

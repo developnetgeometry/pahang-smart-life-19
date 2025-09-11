@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth, Language } from "@/contexts/AuthContext";
+import { useUserRoles } from "@/hooks/use-user-roles";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,6 +25,7 @@ import { Loader2, UserCheck, Eye, EyeOff } from "lucide-react";
 
 export default function CompleteAccount() {
   const { user, language, loadProfileAndRoles } = useAuth();
+  const { hasRole } = useUserRoles();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -97,6 +99,9 @@ export default function CompleteAccount() {
   };
 
   const t = text[language];
+
+  // Check if user is a guest
+  const isGuest = hasRole('guest');
 
   // Check session validity on component mount
   useEffect(() => {

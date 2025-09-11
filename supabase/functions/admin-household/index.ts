@@ -297,12 +297,12 @@ const handler = async (req: Request): Promise<Response> => {
 
       console.log("Profile created/updated successfully");
 
-      // Assign resident role to guest
+      // Assign guest role to guest user
       const { error: roleError } = await supabaseAdmin
         .from("enhanced_user_roles")
         .insert({
           user_id: newUser.user.id,
-          role: "resident",
+          role: "guest",
           is_active: true,
           assigned_by: user.id,
           assigned_at: new Date().toISOString(),
