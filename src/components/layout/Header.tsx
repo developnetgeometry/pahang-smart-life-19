@@ -111,16 +111,14 @@ export function Header() {
               <p className="text-xs leading-none text-muted-foreground">
                 {user.email}
               </p>
-              {!userRoles.includes('state_admin') && (
-                <div className="flex space-x-1 pt-1">
-                  <Badge variant="secondary" className="text-xs">
-                    {user.district}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    {getPrimaryRole().replace('_', ' ')}
-                  </Badge>
-                </div>
-              )}
+              <div className="flex space-x-1 pt-1">
+                <Badge variant="secondary" className="text-xs">
+                  {user.community || '—'}
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  {getPrimaryRole().replace('_', ' ')}
+                </Badge>
+              </div>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />

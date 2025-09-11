@@ -34,6 +34,7 @@ export interface User {
   associated_community_ids: string[];
   active_community_id: string;
   district: string;
+  community: string;
   user_role: UserRole; // primary role for display
   available_roles: UserRole[];
   // current_view_role removed - using role-based navigation
@@ -158,6 +159,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       let districtName = "";
+      let communityName = "";
+      
       if (profile?.district_id) {
         const { data: district } = await supabase
           .from("districts")
@@ -165,6 +168,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .eq("id", profile.district_id)
           .single();
         districtName = district?.name || "";
+      }
+      
+      if (profile?.community_id) {
+        const { data: community } = await supabase
+          .from("communities")
+          .select("name")
+          .eq("id", profile.community_id)
+          .single();
+        communityName = community?.name || "";
       }
 
       const roleList: UserRole[] = (roleRows || []).map(
@@ -192,6 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         associated_community_ids: [],
         active_community_id: profile?.community_id || "",
         district: districtName,
+        community: communityName,
         user_role: primaryRole,
         available_roles: roleList.length ? roleList : ["resident"],
         phone: "",
