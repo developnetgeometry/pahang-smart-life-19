@@ -70,6 +70,20 @@ export function AnnouncementSlideshow() {
     return announcement.content_en || announcement.content_ms || announcement.content;
   };
 
+  // Helper function to truncate text at word boundaries
+  const truncateAtWord = (text: string, maxLength: number): string => {
+    if (text.length <= maxLength) return text;
+    
+    const truncated = text.substring(0, maxLength);
+    const lastSpace = truncated.lastIndexOf(' ');
+    
+    if (lastSpace > 0) {
+      return truncated.substring(0, lastSpace);
+    }
+    
+    return truncated;
+  };
+
   // Fetch only pinned announcements
   useEffect(() => {
     const fetchAnnouncements = async () => {
@@ -245,10 +259,17 @@ export function AnnouncementSlideshow() {
               <h2 className="text-2xl md:text-4xl font-bold leading-tight">
                 {getLocalizedTitle(currentAnnouncement)}
               </h2>
-              <p className="text-lg md:text-xl text-white/90 leading-relaxed max-w-3xl">
-                {getLocalizedContent(currentAnnouncement).substring(0, 200)}
-                {getLocalizedContent(currentAnnouncement).length > 200 && '...'}
-              </p>
+              <div 
+                className="text-lg md:text-xl text-white/90 leading-relaxed max-w-3xl break-words hyphens-auto"
+                style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden'
+                }}
+              >
+                {truncateAtWord(getLocalizedContent(currentAnnouncement), 220)}
+              </div>
             </div>
 
             {/* Bottom Info */}
