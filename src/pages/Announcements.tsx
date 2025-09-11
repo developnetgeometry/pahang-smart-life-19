@@ -998,20 +998,20 @@ export default function Announcements() {
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="flex items-center gap-2 flex-wrap leading-snug">
                           {announcement.is_urgent && (
                             <span className="text-red-500">🔴</span>
                           )}
-                          {announcement.title}
+                          <span className="min-w-0 break-words">{announcement.title}</span>
+                        </CardTitle>
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
                           {announcement.has_poll && (
-                            <Badge variant="outline" className="ml-2">
+                            <Badge variant="outline">
                               <BarChart3 className="w-3 h-3 mr-1" />
                               {t.poll}
                             </Badge>
                           )}
-                        </CardTitle>
-                        <div className="flex items-center gap-2 mt-2">
                           <Badge
                             variant={getPriorityColor(announcement.priority)}
                           >
@@ -1023,7 +1023,7 @@ export default function Announcements() {
                           <Badge className={getScopeColor(announcement.scope)}>
                             {getScopeText(announcement.scope)}
                           </Badge>
-                          <div className="flex items-center text-sm text-muted-foreground">
+                          <div className="flex items-center text-sm text-muted-foreground ml-auto shrink-0">
                             <Calendar className="w-4 h-4 mr-1" />
                             {announcement.created_date}
                           </div>
@@ -1066,20 +1066,20 @@ export default function Announcements() {
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="flex items-center gap-2 flex-wrap leading-snug">
                           {announcement.is_urgent && (
                             <span className="text-red-500">🔴</span>
                           )}
-                          {announcement.title}
+                          <span className="min-w-0 break-words">{announcement.title}</span>
+                        </CardTitle>
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
                           {announcement.has_poll && (
-                            <Badge variant="outline" className="ml-2">
+                            <Badge variant="outline">
                               <BarChart3 className="w-3 h-3 mr-1" />
                               {t.poll}
                             </Badge>
                           )}
-                        </CardTitle>
-                        <div className="flex items-center gap-2 mt-2">
                           <Badge
                             variant={getPriorityColor(announcement.priority)}
                           >
@@ -1091,7 +1091,7 @@ export default function Announcements() {
                           <Badge className={getScopeColor(announcement.scope)}>
                             {getScopeText(announcement.scope)}
                           </Badge>
-                          <div className="flex items-center text-sm text-muted-foreground">
+                          <div className="flex items-center text-sm text-muted-foreground ml-auto shrink-0">
                             <Calendar className="w-4 h-4 mr-1" />
                             {announcement.created_date}
                           </div>
