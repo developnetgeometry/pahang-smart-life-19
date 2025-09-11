@@ -536,8 +536,33 @@ export function AppSidebar() {
   const navigation = getNavigationForUser();
   const canSee = (item: NavigationItem) =>
     !item.requiredRoles || item.requiredRoles.some((r) => hasRole?.(r as any));
+
+  // State admin specific filtering - hide specific modules
+  const stateAdminHiddenUrls = hasRole("state_admin") ? [
+    "/communication-hub",
+    "/panic-alerts", 
+    "/marketplace",
+    "/my-listings",
+    "/my-bookings",
+    "/role-management",
+    "/services",
+    "/admin/facilities",
+    "/admin/floor-plans", 
+    "/admin/maintenance",
+    "/asset-management",
+    "/inventory-management",
+    "/financial-management",
+    "/visitor-analytics",
+    "/facility-complaint-center"
+  ] : [];
+
   const filteredNavigation = navigation
-    .map((group) => ({ ...group, items: group.items.filter(canSee) }))
+    .map((group) => ({ 
+      ...group, 
+      items: group.items.filter(item => 
+        canSee(item) && !stateAdminHiddenUrls.includes(item.url)
+      ) 
+    }))
     .filter((group) => group.items.length > 0);
 
   return (
