@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getRoleSpecificFunction } from "@/lib/user-creation-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -724,8 +725,9 @@ export default function UserManagement() {
           requestBody.community_id = form.community_id;
         }
 
+        const functionName = getRoleSpecificFunction(form.role);
         const { data, error } = await supabase.functions.invoke(
-          "admin-create-user",
+          functionName,
           {
             body: requestBody,
           }
