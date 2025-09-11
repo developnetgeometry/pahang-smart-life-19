@@ -259,17 +259,7 @@ export function AnnouncementSlideshow() {
               <h2 className="text-2xl md:text-4xl font-bold leading-tight">
                 {getLocalizedTitle(currentAnnouncement)}
               </h2>
-              <div 
-                className="hidden md:block text-lg md:text-xl text-white/90 leading-relaxed max-w-3xl"
-                style={{
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden'
-                }}
-              >
-                {truncateAtWord(getLocalizedContent(currentAnnouncement), 160)}
-              </div>
+              <p className="sr-only">{getLocalizedContent(currentAnnouncement)}</p>
             </div>
 
             {/* Bottom Info */}
@@ -319,7 +309,7 @@ export function AnnouncementSlideshow() {
 
           {/* Slide Indicators */}
           {announcements.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2">
               {announcements.map((_, index) => (
                 <button
                   key={index}
