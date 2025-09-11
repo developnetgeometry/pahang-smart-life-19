@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth, Language } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +27,7 @@ export default function CompleteAccount() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [sessionValid, setSessionValid] = useState<boolean | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
@@ -97,6 +98,35 @@ export default function CompleteAccount() {
 
   const t = text[language];
 
+  // Check session validity on component mount
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Session check error:", error);
+          setSessionValid(false);
+          return;
+        }
+        setSessionValid(!!session);
+      } catch (error) {
+        console.error("Session validation error:", error);
+        setSessionValid(false);
+      }
+    };
+    
+    checkSession();
+  }, []);
+
+  const handleSessionRecovery = () => {
+    toast({
+      title: "Session Expired",
+      description: "Please log in again to continue",
+      variant: "destructive",
+    });
+    navigate("/login");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -130,14 +160,37 @@ export default function CompleteAccount() {
     setPasswordError("");
 
     try {
-      // Update password if provided
+      // Check session before attempting password update
       if (form.password) {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          console.error("No valid session for password update:", sessionError);
+          toast({
+            title: "Session Expired",
+            description: "Password update requires a valid session. Please log in again.",
+            variant: "destructive",
+          });
+          navigate("/login");
+          return;
+        }
+
         const { error: passwordError } = await supabase.auth.updateUser({
           password: form.password
         });
         
         if (passwordError) {
-          throw passwordError;
+          // If password update fails due to session, still allow profile completion
+          if (passwordError.message?.includes("session") || passwordError.message?.includes("auth")) {
+            console.warn("Password update failed due to session issue, continuing with profile update only");
+            toast({
+              title: "Password Update Failed",
+              description: "Your profile will be updated, but password change failed due to session expiry.",
+              variant: "destructive",
+            });
+          } else {
+            throw passwordError;
+          }
         }
       }
 
@@ -180,6 +233,40 @@ export default function CompleteAccount() {
       setLoading(false);
     }
   };
+
+  // Show loading while checking session
+  if (sessionValid === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex items-center justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show session recovery UI if session is invalid
+  if (sessionValid === false) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle>Session Expired</CardTitle>
+            <CardDescription>
+              Your session has expired. Please log in again to complete your account setup.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={handleSessionRecovery} className="w-full">
+              Go to Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
