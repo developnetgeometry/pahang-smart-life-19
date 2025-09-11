@@ -24,6 +24,8 @@ export default function ResetPassword() {
   const [isVerifying, setIsVerifying] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [resetToken, setResetToken] = useState<string | null>(null);
+  const [resetEmail, setResetEmail] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { language } = useAuth();
@@ -36,47 +38,33 @@ export default function ResetPassword() {
       setIsVerifying(true);
       
       try {
-        // Clear any existing session first to avoid conflicts
-        await supabase.auth.signOut();
-        
-        // Wait a bit for cleanup
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
         const currentUrl = window.location.href;
-        const urlObj = new URL(currentUrl);
+        const urlParams = new URLSearchParams(window.location.search);
         
-        console.log('=== DETAILED RESET PASSWORD DEBUG ===');
+        console.log('=== CUSTOM PASSWORD RESET DEBUG ===');
         console.log('Current timestamp:', new Date().toISOString());
         console.log('Full URL:', currentUrl);
-        console.log('Pathname:', urlObj.pathname);
-        console.log('Hash raw:', window.location.hash);
-        console.log('Hash length:', window.location.hash.length);
-        console.log('Search raw:', window.location.search);
-        console.log('Search length:', window.location.search.length);
-        console.log('Document referrer:', document.referrer);
-        console.log('History length:', history.length);
+        console.log('Search params:', window.location.search);
         
-        // Test if we came from Supabase
-        if (document.referrer.includes('supabase.co')) {
-          console.log('🟡 CAME FROM SUPABASE - checking for redirect issues');
-          console.log('Referrer URL:', document.referrer);
+        // Extract custom reset tokens (token and email from query params)
+        const resetToken = urlParams.get('token');
+        const resetEmail = urlParams.get('email');
+        
+        console.log('Custom reset token:', resetToken ? 'FOUND' : 'MISSING');
+        console.log('Custom reset email:', resetEmail ? 'FOUND' : 'MISSING');
+        
+        if (resetToken && resetEmail) {
+          console.log('✅ Custom reset tokens found - using custom reset flow');
+          
+          // Store tokens for the password reset process
+          setResetToken(resetToken);  
+          setResetEmail(resetEmail);
+          setIsVerifying(false);
+          return;
         }
         
-        // Check for any URL manipulation
-        console.log('Window location components:');
-        console.log('  protocol:', window.location.protocol);
-        console.log('  hostname:', window.location.hostname);
-        console.log('  port:', window.location.port);
-        console.log('  pathname:', window.location.pathname);
-        console.log('  search:', window.location.search);
-        console.log('  hash:', window.location.hash);
-        
-        // Test direct token parsing from current URL
-        const testHash = window.location.hash;
-        const testSearch = window.location.search;
-        console.log('Testing token extraction methods:');
-        console.log('Hash substring(1):', testHash.substring(1));
-        console.log('Search substring(1):', testSearch.substring(1));
+        // Fallback: Check for Supabase's built-in reset tokens (hash format)
+        console.log('No custom tokens found, checking for Supabase tokens...');
         
         // Parse tokens from URL hash (Supabase password reset format)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -84,51 +72,16 @@ export default function ResetPassword() {
         const refreshToken = hashParams.get('refresh_token');
         const type = hashParams.get('type');
         
-        // Also check search params as fallback
-        const searchAccessToken = searchParams.get('access_token');
-        const searchRefreshToken = searchParams.get('refresh_token');
-        const searchType = searchParams.get('type');
+        console.log('Supabase tokens - access:', accessToken ? 'FOUND' : 'MISSING', 
+                   'refresh:', refreshToken ? 'FOUND' : 'MISSING', 'type:', type);
         
-        console.log('Hash parameters found:');
-        for (const [key, value] of hashParams) {
-          console.log(`  ${key}: ${value ? '***PRESENT***' : 'null'}`);
-        }
-        
-        console.log('Search parameters found:');
-        for (const [key, value] of new URLSearchParams(window.location.search)) {
-          console.log(`  ${key}: ${value ? '***PRESENT***' : 'null'}`);
-        }
-        
-        console.log('Token extraction results:');
-        console.log('  Hash access token:', accessToken ? 'FOUND' : 'MISSING');
-        console.log('  Hash refresh token:', refreshToken ? 'FOUND' : 'MISSING');
-        console.log('  Hash type:', type || 'MISSING');
-        console.log('  Search access token:', searchAccessToken ? 'FOUND' : 'MISSING');
-        console.log('  Search refresh token:', searchRefreshToken ? 'FOUND' : 'MISSING');
-        console.log('  Search type:', searchType || 'MISSING');
-        
-        // Try hash tokens first (standard Supabase redirect format)
-        let finalAccessToken = accessToken;
-        let finalRefreshToken = refreshToken;
-        let finalType = type;
-        
-        // Fallback to search params if hash tokens not found
-        if (!finalAccessToken && searchAccessToken) {
-          finalAccessToken = searchAccessToken;
-          finalRefreshToken = searchRefreshToken;
-          finalType = searchType;
-          console.log('Using search params as fallback');
-        }
-        
-        if (finalAccessToken && finalRefreshToken) {
-          console.log('✅ Valid tokens found, attempting session setup...');
-          console.log('Token source:', finalAccessToken === accessToken ? 'hash' : 'search');
-          console.log('Token type:', finalType || 'no type specified');
+        if (accessToken && refreshToken) {
+          console.log('✅ Supabase tokens found - using built-in reset flow');
           
-          // Establish session using tokens (don't require specific type for flexibility)
+          // Establish session using Supabase tokens
           const { data, error } = await supabase.auth.setSession({
-            access_token: finalAccessToken,
-            refresh_token: finalRefreshToken
+            access_token: accessToken,
+            refresh_token: refreshToken
           });
           
           if (error) {
@@ -143,48 +96,25 @@ export default function ResetPassword() {
             throw new Error('Session not established after setSession');
           }
           
-          console.log('✅ Password reset session established successfully');
-          console.log('User ID:', session.user?.id);
-          console.log('User email:', session.user?.email);
-          
+          console.log('✅ Supabase password reset session established successfully');
           setIsVerifying(false);
           return;
         }
         
-        // Check for error parameters that might indicate token issues
-        const errorParam = hashParams.get('error') || searchParams.get('error');
-        const errorDescription = hashParams.get('error_description') || searchParams.get('error_description');
-        
-        if (errorParam) {
-          console.error('❌ URL contains error parameters:', errorParam, errorDescription);
-          throw new Error(`Authentication error: ${errorDescription || errorParam}`);
-        }
-        
-        // No valid reset tokens found - this is the main issue!
-        console.error('❌ NO TOKENS FOUND IN URL');
-        console.error('This usually means:');
-        console.error('1. You\'re using an OLD email (sent before Supabase config changes)');
-        console.error('2. Supabase Auth redirect URLs are still incorrect');
-        console.error('3. There\'s a redirect loop removing the tokens');
-        console.error('');
-        console.error('SOLUTION: Request a NEW password reset email and use that link');
-        console.error('');
-        console.error('If this persists, check these Supabase settings:');
-        console.error('- Site URL should be: https://www.primapahang.com');
-        console.error('- Redirect URLs should include: https://www.primapahang.com/reset-password');
-        console.error('- Try waiting 5-10 minutes for configuration to propagate');
-        console.error('- Clear browser cache and request fresh email');
+        // No valid reset tokens found
+        console.error('❌ NO VALID RESET TOKENS FOUND');
+        console.error('Please request a new password reset from the login page');
         
         throw new Error(
           language === "en"
-            ? "This page can only be accessed through a fresh password reset link. Please request a NEW password reset from the login page (the old email won't work after configuration changes)."
-            : "Halaman ini hanya boleh diakses melalui pautan tetapan semula kata laluan yang baharu. Sila minta tetapan semula kata laluan BAHARU dari halaman log masuk (emel lama tidak akan berfungsi selepas perubahan konfigurasi)."
+            ? "This page can only be accessed through a password reset link. Please request a new password reset from the login page."
+            : "Halaman ini hanya boleh diakses melalui pautan tetapan semula kata laluan. Sila minta tetapan semula kata laluan baharu dari halaman log masuk."
         );
         
       } catch (error: any) {
         console.error('❌ Reset session setup error:', error);
         setError(
-          error.message.includes('tokens found') || error.message.includes('Authentication error') || error.message.includes('fresh password reset')
+          error.message.includes('password reset link') || error.message.includes('Authentication error')
             ? error.message
             : (language === "en"
               ? "Invalid or expired reset link. Please request a new password reset."
@@ -233,32 +163,55 @@ export default function ResetPassword() {
         return;
       }
 
-      // Verify session exists before attempting password update
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('Session check error:', sessionError);
-        throw new Error('Failed to verify reset session');
-      }
-      
-      if (!session) {
-        console.error('No active session found for password reset');
-        throw new Error('Reset session expired. Please request a new password reset link.');
-      }
-      
-      console.log('Updating password for user:', session.user?.email);
+      // Check if we're using custom reset tokens or Supabase tokens
+      if (resetToken && resetEmail) {
+        console.log('Using custom password reset flow');
+        
+        // Verify the token and reset password using our custom system
+        const { error: resetError } = await supabase.functions.invoke('reset-password-with-token', {
+          body: {
+            token: resetToken,
+            email: resetEmail,
+            newPassword: password
+          }
+        });
 
-      // Update password with active session
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: password
-      });
+        if (resetError) {
+          console.error('Custom password reset error:', resetError);
+          throw new Error(resetError.message || 'Failed to reset password');
+        }
 
-      if (updateError) {
-        console.error('Password update error:', updateError);
-        throw updateError;
+        console.log('Custom password reset successful');
+      } else {
+        console.log('Using Supabase built-in password reset flow');
+        
+        // Verify session exists before attempting password update
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Session check error:', sessionError);
+          throw new Error('Failed to verify reset session');
+        }
+        
+        if (!session) {
+          console.error('No active session found for password reset');
+          throw new Error('Reset session expired. Please request a new password reset link.');
+        }
+        
+        console.log('Updating password for user:', session.user?.email);
+
+        // Update password with active session
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: password
+        });
+
+        if (updateError) {
+          console.error('Password update error:', updateError);
+          throw updateError;
+        }
+
+        console.log('Supabase password updated successfully');
       }
-
-      console.log('Password updated successfully');
       
       setSuccess(true);
       toast({
@@ -283,6 +236,10 @@ export default function ResetPassword() {
         errorMessage = language === "en"
           ? "Reset session expired. Please request a new password reset link."
           : "Sesi tetapan semula telah tamat tempoh. Sila minta pautan tetapan semula kata laluan baharu.";
+      } else if (error.message?.includes('Token not found') || error.message?.includes('expired')) {
+        errorMessage = language === "en"
+          ? "Reset link has expired. Please request a new password reset."
+          : "Pautan tetapan semula telah tamat tempoh. Sila minta tetapan semula kata laluan baharu.";
       }
       
       setError(

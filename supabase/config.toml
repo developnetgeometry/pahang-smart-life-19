@@ -112,6 +112,12 @@ verify_jwt = false
 [functions.admin-household]
 verify_jwt = true
 
+[functions.send-reset-email]
+verify_jwt = false
+
+[functions.reset-password-with-token]
+verify_jwt = false
+
 [edge_runtime]
 policy = "per_worker"
 inspector_port = 8083

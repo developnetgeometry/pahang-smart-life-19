@@ -1094,11 +1094,17 @@ export default function Login() {
     setError("");
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      // Call our custom reset email edge function
+      const { error } = await supabase.functions.invoke('send-reset-email', {
+        body: {
+          email: resetEmail
+        }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Custom reset email error:', error);
+        throw new Error(error.message || 'Failed to send reset email');
+      }
 
       // Show success animation
       setPasswordResetSent(true);
