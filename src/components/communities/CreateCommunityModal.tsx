@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -30,6 +30,8 @@ export default function CreateCommunityModal({
 }: CreateCommunityModalProps) {
   const { language } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [nameError, setNameError] = useState<string>('');
+  const [checkingName, setCheckingName] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -80,7 +82,8 @@ export default function CreateCommunityModal({
       create: 'Create Community',
       creating: 'Creating...',
       nameRequired: 'Community name is required',
-      duplicateName: 'A community with this name already exists in this district',
+      duplicateName: 'This community is already registered in this district',
+      checkingName: 'Checking availability...',
       success: 'Community created successfully',
       error: 'Failed to create community'
     },
@@ -118,13 +121,67 @@ export default function CreateCommunityModal({
       create: 'Cipta Komuniti',
       creating: 'Mencipta...',
       nameRequired: 'Nama komuniti diperlukan',
-      duplicateName: 'Komuniti dengan nama ini sudah wujud dalam daerah ini',
+      duplicateName: 'Komuniti ini sudah didaftarkan dalam daerah ini',
+      checkingName: 'Semak ketersediaan...',
       success: 'Komuniti berjaya dicipta',
       error: 'Gagal mencipta komuniti'
     }
   };
 
   const t = text[language];
+
+  // Debounced name check
+  const checkNameAvailability = useCallback(async (name: string) => {
+    if (!name.trim() || name.trim().length < 2) {
+      setNameError('');
+      return;
+    }
+
+    setCheckingName(true);
+    setNameError('');
+
+    try {
+      const { data: existingCommunity } = await supabase
+        .from('communities')
+        .select('id')
+        .eq('district_id', districtId)
+        .eq('is_active', true)
+        .ilike('name', name.trim())
+        .maybeSingle();
+
+      if (existingCommunity) {
+        setNameError(t.duplicateName);
+      } else {
+        setNameError('');
+      }
+    } catch (error) {
+      console.error('Error checking name availability:', error);
+    } finally {
+      setCheckingName(false);
+    }
+  }, [districtId, t.duplicateName]);
+
+  // Debounce name checking
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (formData.name.trim()) {
+        checkNameAvailability(formData.name);
+      } else {
+        setNameError('');
+        setCheckingName(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.name, checkNameAvailability]);
+
+  // Reset errors when modal opens/closes
+  useEffect(() => {
+    if (!open) {
+      setNameError('');
+      setCheckingName(false);
+    }
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,22 +191,14 @@ export default function CreateCommunityModal({
       return;
     }
 
+    if (nameError) {
+      toast.error(nameError);
+      return;
+    }
+
     setLoading(true);
     
     try {
-      // Pre-check for existing community with same name in district
-      const { data: existingCommunity } = await supabase
-        .from('communities')
-        .select('id')
-        .eq('district_id', districtId)
-        .eq('is_active', true)
-        .ilike('name', formData.name.trim())
-        .maybeSingle();
-
-      if (existingCommunity) {
-        toast.error(t.duplicateName);
-        return;
-      }
 
       const { error } = await supabase
         .from('communities')
@@ -224,7 +273,17 @@ export default function CreateCommunityModal({
                 placeholder={t.namePlaceholder}
                 required
                 disabled={loading}
+                className={nameError ? 'border-destructive' : ''}
               />
+              {checkingName && (
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  {t.checkingName}
+                </p>
+              )}
+              {nameError && (
+                <p className="text-xs text-destructive mt-1">{nameError}</p>
+              )}
             </div>
 
             {/* Address */}
@@ -407,7 +466,7 @@ export default function CreateCommunityModal({
             >
               {t.cancel}
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || checkingName || !!nameError}>
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
