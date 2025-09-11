@@ -171,8 +171,8 @@ export function AppSidebar() {
     // Services & Facilities - available to all users
     const servicesItems = [];
 
-    // Add marketplace if module is enabled
-    if (isModuleEnabled("marketplace")) {
+    // Add marketplace if module is enabled (exclude security officers)
+    if (isModuleEnabled("marketplace") && !hasRole("security_officer")) {
       servicesItems.push({
         title: t("marketplace"),
         url: "/marketplace",
@@ -202,8 +202,8 @@ export function AppSidebar() {
       });
     }
 
-    // Add bookings if module is enabled (exclude facility managers - they manage facilities, don't book them)
-    if (isModuleEnabled("bookings") && !hasRole("facility_manager")) {
+    // Add bookings if module is enabled (exclude facility managers and security officers)
+    if (isModuleEnabled("bookings") && !hasRole("facility_manager") && !hasRole("security_officer")) {
       servicesItems.push({
         title: t("myBookings"),
         url: "/my-bookings",
@@ -236,34 +236,15 @@ export function AppSidebar() {
       });
     }
 
-    // Role Management & Services - for approval and service provider management roles
-    const roleManagementItems = [];
-
-    // Role Approval Authority - for approval management roles
-    if (
-      hasRole("community_admin") ||
-      hasRole("district_coordinator") ||
-      hasRole("state_admin")
-    ) {
-      roleManagementItems.push({
-        title: t("roleApprovalAuthority"),
-        url: "/role-management",
-        icon: UserCheck,
-        requiredRoles: [
-          "community_admin",
-          "district_coordinator",
-          "state_admin",
-        ],
-      });
-    }
-
     // Service Provider Management - for community admins and above
+    const serviceProviderItems = [];
+    
     if (
       hasRole("community_admin") ||
       hasRole("district_coordinator") ||
       hasRole("state_admin")
     ) {
-      roleManagementItems.push({
+      serviceProviderItems.push({
         title: t("serviceProviders"),
         url: "/admin/service-providers",
         icon: Building,
@@ -275,10 +256,10 @@ export function AppSidebar() {
       });
     }
 
-    if (roleManagementItems.length > 0) {
+    if (serviceProviderItems.length > 0) {
       nav.push({
-        label: t("roleManagement"),
-        items: roleManagementItems,
+        label: t("serviceProviders"),
+        items: serviceProviderItems,
       });
     }
 
@@ -536,8 +517,33 @@ export function AppSidebar() {
   const navigation = getNavigationForUser();
   const canSee = (item: NavigationItem) =>
     !item.requiredRoles || item.requiredRoles.some((r) => hasRole?.(r as any));
+
+  // State admin specific filtering - hide specific modules
+  const stateAdminHiddenUrls = hasRole("state_admin") ? [
+    "/communication-hub",
+    "/panic-alerts", 
+    "/marketplace",
+    "/my-listings",
+    "/my-bookings",
+    "/role-management",
+    "/services",
+    "/admin/facilities",
+    "/admin/floor-plans", 
+    "/admin/maintenance",
+    "/asset-management",
+    "/inventory-management",
+    "/financial-management",
+    "/visitor-analytics",
+    "/facility-complaint-center"
+  ] : [];
+
   const filteredNavigation = navigation
-    .map((group) => ({ ...group, items: group.items.filter(canSee) }))
+    .map((group) => ({ 
+      ...group, 
+      items: group.items.filter(item => 
+        canSee(item) && !stateAdminHiddenUrls.includes(item.url)
+      ) 
+    }))
     .filter((group) => group.items.length > 0);
 
   return (

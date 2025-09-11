@@ -113,7 +113,7 @@ export function Header() {
               </p>
               <div className="flex space-x-1 pt-1">
                 <Badge variant="secondary" className="text-xs">
-                  {user.district}
+                  {user.community || '—'}
                 </Badge>
                 <Badge variant="outline" className="text-xs">
                   {getPrimaryRole().replace('_', ' ')}

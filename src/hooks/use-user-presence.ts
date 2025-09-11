@@ -36,14 +36,14 @@ export const useUserPresence = () => {
       const userIds = presenceData.map((p) => p.user_id);
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, full_name, email")
+        .select("user_id, full_name, email")
         .in("user_id", userIds);
 
       if (profilesError) throw profilesError;
 
       // Combine presence and profile data
       const transformedUsers: OnlineUser[] = presenceData.map((presence) => {
-        const profile = profilesData?.find((p) => p.id === presence.user_id);
+        const profile = profilesData?.find((p) => p.user_id === presence.user_id);
         return {
           id: presence.user_id,
           display_name:
