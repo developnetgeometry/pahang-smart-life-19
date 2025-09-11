@@ -911,6 +911,48 @@ export default function UserManagement() {
     }
   };
 
+  const handleApprove = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ account_status: "approved" })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({ title: t.userApproved });
+      fetchUsers(); // Refresh the list
+    } catch (error) {
+      console.error("Error approving user:", error);
+      toast({
+        title: "Error",
+        description: "Failed to approve user",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ account_status: "rejected" })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({ title: t.userRejected });
+      fetchUsers(); // Refresh the list
+    } catch (error) {
+      console.error("Error rejecting user:", error);
+      toast({
+        title: "Error",
+        description: "Failed to reject user",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Fetch household accounts for a user
   const fetchHouseholdAccounts = async (userId: string) => {
     try {
@@ -1974,6 +2016,28 @@ export default function UserManagement() {
                         className="flex gap-1"
                         onClick={(e) => e.stopPropagation()}
                       >
+                        {user.status === "pending" && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleApprove(user.id)}
+                              className="text-green-600"
+                              title={t.approve}
+                            >
+                              <ShieldCheck className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleReject(user.id)}
+                              className="text-red-600"
+                              title={t.reject}
+                            >
+                              <Shield className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
