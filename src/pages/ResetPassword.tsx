@@ -122,7 +122,11 @@ export default function ResetPassword() {
         
         // No valid reset tokens found
         console.error('No tokens found in URL');
-        throw new Error('No valid password reset tokens found in URL. Please use the link from your password reset email.');
+        throw new Error(
+          language === "en"
+            ? "This page can only be accessed through the password reset link sent to your email. Please check your inbox and click the 'Reset Password' button in the email."
+            : "Halaman ini hanya boleh diakses melalui pautan tetapan semula kata laluan yang dihantar ke emel anda. Sila semak peti masuk anda dan klik butang 'Tetapkan Semula Kata Laluan' dalam emel tersebut."
+        );
         
       } catch (error: any) {
         console.error('Reset session setup error:', error);
