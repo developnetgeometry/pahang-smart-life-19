@@ -135,6 +135,8 @@ export default function UserManagement() {
   }>({
     community_id?: string;
   }>({
+    community_id?: string;
+  }>({
     name: "",
     email: "",
     phone: "",
@@ -157,6 +159,8 @@ export default function UserManagement() {
     community_id: "",
     district_id: "",
     community_id: "",
+    district_id: "",
+    community_id: "",
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -174,6 +178,8 @@ export default function UserManagement() {
   // Add tenant states
   const [isAddTenantOpen, setIsAddTenantOpen] = useState(false);
   const [isCreatingTenant, setIsCreatingTenant] = useState(false);
+  const [districts, setDistricts] = useState<any[]>([]);
+  const [communities, setCommunities] = useState<any[]>([]);
   const [tenantForm, setTenantForm] = useState<TenantFormData>({
     tenant_name: "",
     tenant_email: "",
@@ -342,7 +348,8 @@ export default function UserManagement() {
   // Fetch users from database
   useEffect(() => {
     fetchUsers();
-  }, []);
+    fetchDistricts();
+  }, [user]);
 
   const fetchUsers = async () => {
     try {
@@ -415,6 +422,29 @@ export default function UserManagement() {
       setLoading(false);
     }
   };
+
+  const fetchDistricts = async () => {
+    const { data, error } = await supabase.from("districts").select("id, name");
+    if (data) {
+      setDistricts(data);
+    }
+  };
+
+  const fetchCommunities = async (districtId: string) => {
+    const { data, error } = await supabase
+      .from("communities")
+      .select("id, name")
+      .eq("district_id", districtId);
+    if (data) {
+      setCommunities(data);
+    }
+  };
+
+  useEffect(() => {
+    if (form.district_id) {
+      fetchCommunities(form.district_id);
+    }
+  }, [form.district_id]);
 
   const roles = [
     { value: "all", label: t.allRoles },
@@ -692,6 +722,14 @@ export default function UserManagement() {
         // Add expiration date for guests
         if (form.role === "guest" && form.access_expires_at) {
           requestBody.access_expires_at = form.access_expires_at;
+        }
+
+        // Add district and community IDs
+        if (form.district_id) {
+          requestBody.district_id = form.district_id;
+        }
+        if (form.community_id) {
+          requestBody.community_id = form.community_id;
         }
 
         const { data, error } = await supabase.functions.invoke(
@@ -1050,39 +1088,47 @@ export default function UserManagement() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="unit">{t.unit} *</Label>
-                      <Input
-                        id="unit"
-                        placeholder={
-                          language === "en" ? "e.g. A-15-03" : "cth: A-15-03"
+                      <Label htmlFor="district">District *</Label>
+                      <Select
+                        value={form.district_id}
+                        onValueChange={(value) =>
+                          setForm((prev) => ({ ...prev, district_id: value, community_id: "" }))
                         }
-                        value={form.unit}
-                        onChange={(e) =>
-                          setForm((prev) => ({ ...prev, unit: e.target.value }))
-                        }
-                      />
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select district" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {districts.map((district) => (
+                            <SelectItem key={district.id} value={district.id}>
+                              {district.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">{t.phone}</Label>
-                      <Input
-                        id="phone"
-                        placeholder={
-                          language === "en"
-                            ? "e.g. +60123456789"
-                            : "cth: +60123456789"
+                      <Label htmlFor="community">Community *</Label>
+                      <Select
+                        value={form.community_id}
+                        onValueChange={(value) =>
+                          setForm((prev) => ({ ...prev, community_id: value }))
                         }
-                        value={form.phone}
-                        onChange={(e) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            phone: e.target.value,
-                          }))
-                        }
-                      />
+                        disabled={!form.district_id}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select community" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {communities.map((community) => (
+                            <SelectItem key={community.id} value={community.id}>
+                              {community.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </div>
                 </>
               ) : form.role === "guest" ? (
                 <>
