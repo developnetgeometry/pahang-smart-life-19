@@ -179,16 +179,31 @@ serve(async (req) => {
       access_expires_at,
     } = await req.json();
 
-    // Validate required fields for guests
+    // Enhanced input validation for guests
+    console.log("Raw request data:", { email, password, full_name, phone, access_expires_at });
+    
+    if (!email || !full_name) {
+      throw new Error("Email and full name are required for guest users");
+    }
+    
     if (!access_expires_at) {
       throw new Error("Guest users require an expiration date");
     }
 
-    console.log("Creating guest with data:", {
+    // Validate expiration date is in the future
+    const expirationDate = new Date(access_expires_at);
+    if (expirationDate <= new Date()) {
+      throw new Error("Guest expiration date must be in the future");
+    }
+
+    console.log("Creating guest with validated data:", {
       email,
       full_name,
       access_expires_at,
+      expiration_date_parsed: expirationDate,
       admin_community: context.adminProfile?.community_id,
+      admin_district: context.adminProfile?.district_id,
+      is_state_admin: context.isStateAdmin
     });
 
     const safePassword = typeof password === 'string' && password.length >= 8 ? password : 'TempPassword123!';
@@ -219,9 +234,16 @@ serve(async (req) => {
     await updateUserProfile(authUser.user.id, profileData, context);
     console.log("Guest profile updated successfully");
 
-    // Assign guest role (if you have a guest role, otherwise can be omitted)
-    // For now, guests might not need a specific role assignment
-    // await assignUserRole(authUser.user.id, "guest", context);
+    // Assign guest role - this is required for the system to work properly
+    console.log("Assigning guest role to user:", authUser.user.id);
+    await assignUserRole(authUser.user.id, "guest", context);
+    console.log("Guest role assigned successfully");
+
+    console.log("Guest creation completed successfully:", {
+      userId: authUser.user.id,
+      email: authUser.user.email,
+      role: "guest"
+    });
 
     return new Response(
       JSON.stringify({
@@ -242,11 +264,26 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Create guest error:", error);
+    console.error("Create guest error details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    
+    // Enhanced error response with more details
+    const errorMessage = error.message || "Failed to create guest account";
+    const errorResponse = {
+      success: false,
+      error: errorMessage,
+      timestamp: new Date().toISOString(),
+      details: process.env.NODE_ENV === 'development' ? {
+        stack: error.stack,
+        name: error.name
+      } : undefined
+    };
+    
     return new Response(
-      JSON.stringify({
-        error: error.message || "Failed to create guest account",
-      }),
+      JSON.stringify(errorResponse),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
