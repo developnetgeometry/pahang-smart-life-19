@@ -240,16 +240,6 @@ const App = () => (
               }
             />
             <Route
-              path="/role-management"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <RoleManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/notifications"
               element={
                 <ProtectedRoute>

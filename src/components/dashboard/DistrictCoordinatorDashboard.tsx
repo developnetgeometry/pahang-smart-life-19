@@ -95,15 +95,6 @@ export function DistrictCoordinatorDashboard() {
 
   const pendingActions = [
     {
-      type: "Role Requests",
-      message:
-        language === "en"
-          ? "5 role requests awaiting review"
-          : "5 permohonan peranan menunggu semakan",
-      priority: "high",
-      count: 5,
-    },
-    {
       type: "Reports",
       message:
         language === "en"
@@ -178,8 +169,8 @@ export function DistrictCoordinatorDashboard() {
             <CardContent>
               <div className="text-sm text-muted-foreground">
                 {language === "en"
-                  ? "8 communities active. 5 role requests pending review."
-                  : "8 komuniti aktif. 5 permohonan peranan menunggu semakan."}
+                  ? "8 communities active and operational across the district."
+                  : "8 komuniti aktif dan beroperasi di seluruh daerah."}
               </div>
             </CardContent>
           </Card>

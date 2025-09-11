@@ -236,34 +236,15 @@ export function AppSidebar() {
       });
     }
 
-    // Role Management & Services - for approval and service provider management roles
-    const roleManagementItems = [];
-
-    // Role Approval Authority - for approval management roles
-    if (
-      hasRole("community_admin") ||
-      hasRole("district_coordinator") ||
-      hasRole("state_admin")
-    ) {
-      roleManagementItems.push({
-        title: t("roleApprovalAuthority"),
-        url: "/role-management",
-        icon: UserCheck,
-        requiredRoles: [
-          "community_admin",
-          "district_coordinator",
-          "state_admin",
-        ],
-      });
-    }
-
     // Service Provider Management - for community admins and above
+    const serviceProviderItems = [];
+    
     if (
       hasRole("community_admin") ||
       hasRole("district_coordinator") ||
       hasRole("state_admin")
     ) {
-      roleManagementItems.push({
+      serviceProviderItems.push({
         title: t("serviceProviders"),
         url: "/admin/service-providers",
         icon: Building,
@@ -275,10 +256,10 @@ export function AppSidebar() {
       });
     }
 
-    if (roleManagementItems.length > 0) {
+    if (serviceProviderItems.length > 0) {
       nav.push({
-        label: t("roleManagement"),
-        items: roleManagementItems,
+        label: t("serviceProviders"),
+        items: serviceProviderItems,
       });
     }
 
