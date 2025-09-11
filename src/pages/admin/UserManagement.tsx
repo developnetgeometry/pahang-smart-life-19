@@ -109,6 +109,7 @@ interface TenantFormData {
   tenant_name: string;
   tenant_email: string;
   tenant_phone: string;
+  access_expires_at: string;
   permissions: {
     marketplace: boolean;
     bookings: boolean;
@@ -195,6 +196,7 @@ export default function UserManagement() {
     tenant_name: "",
     tenant_email: "",
     tenant_phone: "",
+    access_expires_at: "",
     permissions: {
       marketplace: true,
       bookings: true,
@@ -1105,12 +1107,12 @@ export default function UserManagement() {
     fetchHouseholdAccounts(user.id);
   };
 
-  // Handle create tenant
+  // Handle create tenant (guest)
   const handleCreateTenant = async () => {
-    if (!selectedUser || !tenantForm.tenant_name || !tenantForm.tenant_email) {
+    if (!selectedUser || !tenantForm.tenant_name || !tenantForm.tenant_email || !tenantForm.access_expires_at) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields including expiration date",
         variant: "destructive",
       });
       return;
@@ -1119,27 +1121,36 @@ export default function UserManagement() {
     try {
       setIsCreatingTenant(true);
 
+      // Call admin-create-guest instead of admin-household
       const { data, error } = await supabase.functions.invoke(
-        "admin-household",
+        "admin-create-guest",
         {
           body: {
-            host_user_id: selectedUser.id,
-            tenant_name: tenantForm.tenant_name,
-            tenant_email: tenantForm.tenant_email,
-            tenant_phone: tenantForm.tenant_phone,
-            permissions: tenantForm.permissions,
+            email: tenantForm.tenant_email,
+            full_name: tenantForm.tenant_name,
+            phone: tenantForm.tenant_phone,
+            access_expires_at: tenantForm.access_expires_at,
+            // Use the selected user's district and community info
+            district_id: selectedUser.district_id,
+            community_id: selectedUser.community_id,
           },
         }
       );
 
       if (error) throw error;
 
+      // Check for errors in response body even with 2xx status
+      if (data?.error || data?.success === false) {
+        console.error('Error in response body from admin-create-guest:', data);
+        throw new Error(data.error || 'Function returned error response');
+      }
+
       toast({
-        title: t.tenantCreated,
+        title: "Guest Created Successfully",
         description:
           language === "en"
-            ? "Tenant invitation email has been sent."
-            : "E-mel jemputan penyewa telah dihantar.",
+            ? "Guest account created with temporary credentials."
+            : "Akaun tetamu dicipta dengan kelayakan sementara.",
       });
 
       // Reset form and close modal
@@ -1147,6 +1158,7 @@ export default function UserManagement() {
         tenant_name: "",
         tenant_email: "",
         tenant_phone: "",
+        access_expires_at: "",
         permissions: {
           marketplace: true,
           bookings: true,
@@ -1163,10 +1175,10 @@ export default function UserManagement() {
         fetchHouseholdAccounts(selectedUser.id);
       }
     } catch (error) {
-      console.error("Error creating tenant:", error);
+      console.error("Error creating guest:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create tenant account",
+        description: error.message || "Failed to create guest account",
         variant: "destructive",
       });
     } finally {
@@ -2367,6 +2379,29 @@ export default function UserManagement() {
                                 ? "Enter tenant phone (optional)"
                                 : "Masukkan telefon penyewa (pilihan)"
                             }
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="tenantExpiresAt">
+                            {language === "en" ? "Access Expires At *" : "Akses Tamat Pada *"}
+                          </Label>
+                          <Input
+                            id="tenantExpiresAt"
+                            type="date"
+                            value={tenantForm.access_expires_at}
+                            onChange={(e) =>
+                              setTenantForm((prev) => ({
+                                ...prev,
+                                access_expires_at: e.target.value,
+                              }))
+                            }
+                            placeholder={
+                              language === "en"
+                                ? "Select expiration date"
+                                : "Pilih tarikh tamat tempoh"
+                            }
+                            min={new Date().toISOString().slice(0, 10)}
                           />
                         </div>
 
