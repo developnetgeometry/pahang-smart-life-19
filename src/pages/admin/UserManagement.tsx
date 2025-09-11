@@ -133,6 +133,8 @@ export default function UserManagement() {
     district_id?: string;
     community_id?: string;
   }>({
+    community_id?: string;
+  }>({
     name: "",
     email: "",
     phone: "",
@@ -153,6 +155,8 @@ export default function UserManagement() {
     access_expires_at: "",
     district_id: "",
     community_id: "",
+    district_id: "",
+    community_id: "",
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -170,6 +174,8 @@ export default function UserManagement() {
   // Add tenant states
   const [isAddTenantOpen, setIsAddTenantOpen] = useState(false);
   const [isCreatingTenant, setIsCreatingTenant] = useState(false);
+  const [districts, setDistricts] = useState<any[]>([]);
+  const [communities, setCommunities] = useState<any[]>([]);
   const [districts, setDistricts] = useState<any[]>([]);
   const [communities, setCommunities] = useState<any[]>([]);
   const [tenantForm, setTenantForm] = useState<TenantFormData>({
@@ -341,42 +347,24 @@ export default function UserManagement() {
   useEffect(() => {
     fetchUsers();
     fetchDistricts();
+  }, [user]);
   }, []);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-
-      // Get the current admin's profile to find their community_id
-      const { data: adminProfile, error: adminError } = await supabase
-        .from("profiles")
-        .select("community_id")
-        .eq("id", user.id)
-        .single();
-
-      if (adminError || !adminProfile) {
-        throw new Error("Could not fetch admin profile or community.");
-      }
-
-      // Base query for profiles
-      let query = supabase.from("profiles").select(`
-        id,
-        full_name,
-        email,
-        phone,
-        unit_number,
-        district_id,
-        account_status,
-        created_at,
-        community_id
-      `);
-
-      // Filter profiles by the admin's community_id
-      if (adminProfile.community_id) {
-        query = query.eq("community_id", adminProfile.community_id);
-      }
-
-      const { data: profiles, error: profilesError } = await query;
+      const { data: profiles, error: profilesError } = await supabase.from(
+        "profiles"
+      ).select(`
+          id,
+          full_name,
+          email,
+          phone,
+          unit_number,
+          district_id,
+          account_status,
+          created_at
+        `);
 
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
@@ -387,14 +375,11 @@ export default function UserManagement() {
         });
         return;
       }
-      
-      const userIds = profiles.map(p => p.id);
 
-      // Get user roles separately for the fetched users
+      // Get user roles separately
       const { data: userRoles, error: rolesError } = await supabase
         .from("enhanced_user_roles")
         .select("user_id, role")
-        .in("user_id", userIds)
         .eq("is_active", true);
 
       if (rolesError) {
@@ -436,6 +421,29 @@ export default function UserManagement() {
       setLoading(false);
     }
   };
+
+  const fetchDistricts = async () => {
+    const { data, error } = await supabase.from("districts").select("id, name");
+    if (data) {
+      setDistricts(data);
+    }
+  };
+
+  const fetchCommunities = async (districtId: string) => {
+    const { data, error } = await supabase
+      .from("communities")
+      .select("id, name")
+      .eq("district_id", districtId);
+    if (data) {
+      setCommunities(data);
+    }
+  };
+
+  useEffect(() => {
+    if (form.district_id) {
+      fetchCommunities(form.district_id);
+    }
+  }, [form.district_id]);
 
   const fetchDistricts = async () => {
     const { data, error } = await supabase.from("districts").select("id, name");
@@ -736,6 +744,14 @@ export default function UserManagement() {
         // Add expiration date for guests
         if (form.role === "guest" && form.access_expires_at) {
           requestBody.access_expires_at = form.access_expires_at;
+        }
+
+        // Add district and community IDs
+        if (form.district_id) {
+          requestBody.district_id = form.district_id;
+        }
+        if (form.community_id) {
+          requestBody.community_id = form.community_id;
         }
 
         // Add district and community IDs
@@ -1102,39 +1118,47 @@ export default function UserManagement() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="unit">{t.unit} *</Label>
-                      <Input
-                        id="unit"
-                        placeholder={
-                          language === "en" ? "e.g. A-15-03" : "cth: A-15-03"
+                      <Label htmlFor="district">District *</Label>
+                      <Select
+                        value={form.district_id}
+                        onValueChange={(value) =>
+                          setForm((prev) => ({ ...prev, district_id: value, community_id: "" }))
                         }
-                        value={form.unit}
-                        onChange={(e) =>
-                          setForm((prev) => ({ ...prev, unit: e.target.value }))
-                        }
-                      />
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select district" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {districts.map((district) => (
+                            <SelectItem key={district.id} value={district.id}>
+                              {district.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">{t.phone}</Label>
-                      <Input
-                        id="phone"
-                        placeholder={
-                          language === "en"
-                            ? "e.g. +60123456789"
-                            : "cth: +60123456789"
+                      <Label htmlFor="community">Community *</Label>
+                      <Select
+                        value={form.community_id}
+                        onValueChange={(value) =>
+                          setForm((prev) => ({ ...prev, community_id: value }))
                         }
-                        value={form.phone}
-                        onChange={(e) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            phone: e.target.value,
-                          }))
-                        }
-                      />
+                        disabled={!form.district_id}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select community" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {communities.map((community) => (
+                            <SelectItem key={community.id} value={community.id}>
+                              {community.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </div>
                 </>
               ) : form.role === "guest" ? (
                 <>
