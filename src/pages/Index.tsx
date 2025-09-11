@@ -117,8 +117,8 @@ const Index = () => {
       </DashboardWrapper>
     );
 
-  // Only show resident dashboard if user actually has resident role
-  if (hasRole("resident"))
+  // Show resident dashboard for both residents and guests
+  if (hasRole("resident") || hasRole("guest"))
     return (
       <DashboardWrapper>
         <ResidentDashboard />

@@ -21,7 +21,8 @@ export type UserRole =
   | "state_admin"
   | "state_service_manager"
   | "spouse"
-  | "tenant";
+  | "tenant"
+  | "guest";
 
 // ViewRole removed - using role-based navigation instead
 export type Language = "en" | "ms";
