@@ -88,6 +88,24 @@ verify_jwt = false
 [functions.admin-create-user]
 verify_jwt = true
 
+[functions.admin-user-utils]
+verify_jwt = true
+
+[functions.admin-create-resident]
+verify_jwt = true
+
+[functions.admin-create-guest]
+verify_jwt = true
+
+[functions.admin-create-security]
+verify_jwt = true
+
+[functions.admin-create-facility-staff]
+verify_jwt = true
+
+[functions.admin-create-admin]
+verify_jwt = true
+
 [functions.assign-community-admin]
 verify_jwt = true
 
