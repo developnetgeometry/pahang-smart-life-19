@@ -366,23 +366,7 @@ export function AppSidebar() {
 
     // Asset Management and Inventory Management modules are hidden
 
-    // Financial Management - for community admins and above
-    if (
-      hasRole("community_admin") ||
-      hasRole("district_coordinator") ||
-      hasRole("state_admin")
-    ) {
-      operationsItems.push({
-        title: t("financialManagement"),
-        url: "/financial-management",
-        icon: DollarSign,
-        requiredRoles: [
-          "community_admin",
-          "district_coordinator",
-          "state_admin",
-        ],
-      });
-    }
+    // Financial Management module is hidden
 
     if (operationsItems.length > 0) {
       nav.push({
