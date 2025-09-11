@@ -30,22 +30,32 @@ export default function ResetPassword() {
   const { t } = useTranslation(language || "en");
   const { toast } = useToast();
 
-  // Parse tokens from URL hash and establish session
+  // Parse tokens from URL and establish session for password reset
   useEffect(() => {
     const setupResetSession = async () => {
       setIsVerifying(true);
       
       try {
-        // Parse tokens from URL hash (where Supabase places them)
+        // Clear any existing session first to avoid conflicts
+        await supabase.auth.signOut();
+        
+        // Wait a bit for cleanup
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Parse tokens from URL hash (Supabase password reset format)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
+        const type = hashParams.get('type');
         
-        // Fallback: check for code parameter in search params
-        const code = searchParams.get('code');
+        console.log('Reset tokens found:', { 
+          hasAccessToken: !!accessToken, 
+          hasRefreshToken: !!refreshToken, 
+          type 
+        });
         
-        if (accessToken && refreshToken) {
-          // Establish session using tokens from hash
+        if (accessToken && refreshToken && type === 'recovery') {
+          // Establish session using tokens from password reset email
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
@@ -53,37 +63,35 @@ export default function ResetPassword() {
           
           if (error) {
             console.error('Session establishment error:', error);
-            throw error;
+            throw new Error(`Failed to establish reset session: ${error.message}`);
           }
           
-          console.log('Password reset session established successfully');
+          // Verify session is actually established
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            throw new Error('Session not established after setSession');
+          }
+          
+          console.log('Password reset session established successfully', { 
+            userId: session.user?.id,
+            email: session.user?.email 
+          });
+          
           setIsVerifying(false);
           return;
         }
         
-        if (code) {
-          // Use code exchange flow
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          
-          if (error) {
-            console.error('Code exchange error:', error);
-            throw error;
-          }
-          
-          console.log('Password reset session established via code exchange');
-          setIsVerifying(false);
-          return;
-        }
-        
-        // No valid tokens found
-        throw new Error('No valid reset tokens found in URL');
+        // No valid reset tokens found
+        throw new Error('No valid password reset tokens found in URL. Please use the link from your password reset email.');
         
       } catch (error: any) {
         console.error('Reset session setup error:', error);
         setError(
-          language === "en"
-            ? "Invalid or expired reset link. Please request a new password reset."
-            : "Pautan tetapan semula tidak sah atau telah tamat tempoh. Sila minta tetapan semula kata laluan baharu."
+          error.message.includes('tokens found') 
+            ? error.message
+            : (language === "en"
+              ? "Invalid or expired reset link. Please request a new password reset."
+              : "Pautan tetapan semula tidak sah atau telah tamat tempoh. Sila minta tetapan semula kata laluan baharu.")
         );
         setIsVerifying(false);
       }
@@ -128,15 +136,33 @@ export default function ResetPassword() {
         return;
       }
 
-      // Update password
+      // Verify session exists before attempting password update
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session check error:', sessionError);
+        throw new Error('Failed to verify reset session');
+      }
+      
+      if (!session) {
+        console.error('No active session found for password reset');
+        throw new Error('Reset session expired. Please request a new password reset link.');
+      }
+      
+      console.log('Updating password for user:', session.user?.email);
+
+      // Update password with active session
       const { error: updateError } = await supabase.auth.updateUser({
         password: password
       });
 
       if (updateError) {
+        console.error('Password update error:', updateError);
         throw updateError;
       }
 
+      console.log('Password updated successfully');
+      
       setSuccess(true);
       toast({
         title: language === "en" ? "Password Reset Successful" : "Kata Laluan Berjaya Ditetapkan Semula",
@@ -152,8 +178,18 @@ export default function ResetPassword() {
 
     } catch (error: any) {
       console.error("Password reset error:", error);
+      
+      // Provide specific error messages for common issues
+      let errorMessage = error.message;
+      
+      if (error.message?.includes('AuthSessionMissingError') || error.message?.includes('session missing')) {
+        errorMessage = language === "en"
+          ? "Reset session expired. Please request a new password reset link."
+          : "Sesi tetapan semula telah tamat tempoh. Sila minta pautan tetapan semula kata laluan baharu.";
+      }
+      
       setError(
-        error.message || 
+        errorMessage || 
         (language === "en"
           ? "Failed to reset password. Please try again."
           : "Gagal menetapkan semula kata laluan. Sila cuba lagi.")
