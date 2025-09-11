@@ -241,7 +241,7 @@ export default function UserManagement() {
       discussions: "Discussions",
       createTenant: "Create Tenant",
       tenantCreated: "Tenant account created successfully!",
-      noHouseholdMembers: "No household members found.",
+      noHouseholdMembers: "No guest registered",
       // Role-specific fields
       familySize: "Family Size",
       vehicleNumber: "Vehicle Number",
