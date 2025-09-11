@@ -84,6 +84,14 @@ export function StateAdminDashboard() {
 
   const criticalAlerts = [
     {
+      type: "Role Request",
+      message:
+        language === "en"
+          ? "3 Role upgrade requests pending approval"
+          : "3 permohonan naik taraf peranan menunggu kelulusan",
+      priority: "high",
+    },
+    {
       type: "Reports",
       message:
         language === "en"

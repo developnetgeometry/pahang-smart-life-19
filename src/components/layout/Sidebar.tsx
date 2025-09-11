@@ -171,8 +171,8 @@ export function AppSidebar() {
     // Services & Facilities - available to all users
     const servicesItems = [];
 
-    // Add marketplace if module is enabled (exclude security officers)
-    if (isModuleEnabled("marketplace") && !hasRole("security_officer")) {
+    // Add marketplace if module is enabled
+    if (isModuleEnabled("marketplace")) {
       servicesItems.push({
         title: t("marketplace"),
         url: "/marketplace",
@@ -202,8 +202,8 @@ export function AppSidebar() {
       });
     }
 
-    // Add bookings if module is enabled (exclude facility managers and security officers)
-    if (isModuleEnabled("bookings") && !hasRole("facility_manager") && !hasRole("security_officer")) {
+    // Add bookings if module is enabled (exclude facility managers - they manage facilities, don't book them)
+    if (isModuleEnabled("bookings") && !hasRole("facility_manager")) {
       servicesItems.push({
         title: t("myBookings"),
         url: "/my-bookings",
@@ -236,15 +236,34 @@ export function AppSidebar() {
       });
     }
 
-    // Service Provider Management - for community admins and above
-    const serviceProviderItems = [];
-    
+    // Role Management & Services - for approval and service provider management roles
+    const roleManagementItems = [];
+
+    // Role Approval Authority - for approval management roles
     if (
       hasRole("community_admin") ||
       hasRole("district_coordinator") ||
       hasRole("state_admin")
     ) {
-      serviceProviderItems.push({
+      roleManagementItems.push({
+        title: t("roleApprovalAuthority"),
+        url: "/role-management",
+        icon: UserCheck,
+        requiredRoles: [
+          "community_admin",
+          "district_coordinator",
+          "state_admin",
+        ],
+      });
+    }
+
+    // Service Provider Management - for community admins and above
+    if (
+      hasRole("community_admin") ||
+      hasRole("district_coordinator") ||
+      hasRole("state_admin")
+    ) {
+      roleManagementItems.push({
         title: t("serviceProviders"),
         url: "/admin/service-providers",
         icon: Building,
@@ -256,10 +275,10 @@ export function AppSidebar() {
       });
     }
 
-    if (serviceProviderItems.length > 0) {
+    if (roleManagementItems.length > 0) {
       nav.push({
-        label: t("serviceProviders"),
-        items: serviceProviderItems,
+        label: t("roleManagement"),
+        items: roleManagementItems,
       });
     }
 

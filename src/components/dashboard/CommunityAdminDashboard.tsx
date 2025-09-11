@@ -49,7 +49,7 @@ export function CommunityAdminDashboard() {
     upcomingEvents: 0,
     recentAnnouncements: 0,
   });
-  
+  const [pendingRoleRequests, setPendingRoleRequests] = useState<any[]>([]);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
 
@@ -72,6 +72,7 @@ export function CommunityAdminDashboard() {
           { data: completedComplaints, count: completedComplaintsCount },
           { data: events, count: eventsCount },
           { data: announcements, count: announcementsCount },
+          { data: roleRequests, count: roleRequestsCount },
         ] = await Promise.all([
           supabase
             .from("profiles")
@@ -97,16 +98,29 @@ export function CommunityAdminDashboard() {
             .select("*", { count: "exact" })
             .eq("district_id", districtId)
             .eq("is_published", true),
+          supabase
+            .from("role_change_requests")
+            .select(
+              `
+            *,
+            profiles!role_change_requests_requester_id_fkey(full_name, email)
+          `,
+              { count: "exact" }
+            )
+            .eq("status", "pending")
+            .eq("district_id", districtId),
         ]);
 
         setDashboardData({
           totalResidents: residentsCount || 0,
-          pendingRegistrations: 0,
+          pendingRegistrations: roleRequestsCount || 0,
           activeComplaints: activeComplaintsCount || 0,
           completedComplaints: completedComplaintsCount || 0,
           upcomingEvents: eventsCount || 0,
           recentAnnouncements: announcementsCount || 0,
         });
+
+        setPendingRoleRequests(roleRequests || []);
 
         // Fetch additional dashboard sections
         await Promise.all([
@@ -132,7 +146,9 @@ export function CommunityAdminDashboard() {
       icon: Users,
       trend: loading
         ? "..."
-        : `${language === "en" ? "active residents" : "penduduk aktif"}`,
+        : `${dashboardData.pendingRegistrations} ${
+            language === "en" ? "pending approvals" : "menunggu kelulusan"
+          }`,
     },
     {
       title: language === "en" ? "Active Issues" : "Isu Aktif",
@@ -154,6 +170,33 @@ export function CommunityAdminDashboard() {
     },
   ];
 
+  const handleRoleRequestAction = async (
+    requestId: string,
+    action: "approved" | "rejected"
+  ) => {
+    try {
+      await supabase
+        .from("role_change_requests")
+        .update({
+          status: action,
+          approved_by: user?.id,
+          approved_at: new Date().toISOString(),
+        })
+        .eq("id", requestId);
+
+      // Refresh the data
+      setPendingRoleRequests((prev) =>
+        prev.filter((req) => req.id !== requestId)
+      );
+
+      setDashboardData((prev) => ({
+        ...prev,
+        pendingRegistrations: prev.pendingRegistrations - 1,
+      }));
+    } catch (error) {
+      console.error("Error updating role request:", error);
+    }
+  };
 
   const fetchRecentActivities = async (districtId: string) => {
     try {
@@ -309,6 +352,16 @@ export function CommunityAdminDashboard() {
                 </div>
 
                 <div className="text-sm text-muted-foreground space-y-1">
+                  <div className="flex justify-between">
+                    <span>
+                      {language === "en"
+                        ? "Pending Registrations:"
+                        : "Pendaftaran Menunggu:"}
+                    </span>
+                    <span className="font-medium">
+                      {loading ? "..." : dashboardData.pendingRegistrations}
+                    </span>
+                  </div>
                   <div className="flex justify-between">
                     <span>
                       {language === "en"
@@ -482,6 +535,87 @@ export function CommunityAdminDashboard() {
         </Card>
       </div>
 
+      {/* Pending Role Requests */}
+      {pendingRoleRequests.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              {language === "en"
+                ? "Pending Role Requests"
+                : "Permohonan Peranan Menunggu"}
+            </CardTitle>
+            <CardDescription>
+              {language === "en"
+                ? "Review and approve role change requests from residents"
+                : "Semak dan luluskan permohonan tukar peranan daripada penduduk"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {pendingRoleRequests.slice(0, 3).map((request) => (
+                <div
+                  key={request.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h4 className="font-medium">
+                        {request.profiles?.full_name || request.profiles?.email}
+                      </h4>
+                      <Badge variant="outline">
+                        {request.current_user_role}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">→</span>
+                      <Badge variant="secondary">
+                        {request.requested_user_role}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {language === "en" ? "Reason:" : "Sebab:"}{" "}
+                      {request.justification || "No reason provided"}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 ml-4">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        handleRoleRequestAction(request.id, "approved")
+                      }
+                      className="text-green-600 border-green-600 hover:bg-green-50"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      {language === "en" ? "Approve" : "Lulus"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        handleRoleRequestAction(request.id, "rejected")
+                      }
+                      className="text-red-600 border-red-600 hover:bg-red-50"
+                    >
+                      <XCircle className="w-4 h-4 mr-1" />
+                      {language === "en" ? "Reject" : "Tolak"}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+
+              {pendingRoleRequests.length > 3 && (
+                <div className="text-center pt-2">
+                  <Button variant="outline" size="sm">
+                    {language === "en"
+                      ? `View all ${pendingRoleRequests.length} requests`
+                      : `Lihat semua ${pendingRoleRequests.length} permohonan`}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Unit Management Section */}
       <Card>

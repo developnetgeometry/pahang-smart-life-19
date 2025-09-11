@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,9 +24,7 @@ import NotificationCenter from '@/components/communication/NotificationCenter';
 export default function CommunicationHub() {
   const { language } = useAuth();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
   const [showNotifications, setShowNotifications] = useState(false);
-  const [resolvedRoomId, setResolvedRoomId] = useState<string | undefined>();
 
   // Real-time hooks
   const { stats: communicationStats, isLoading: statsLoading } = useCommunicationStats();
@@ -34,15 +32,12 @@ export default function CommunicationHub() {
 
   // Check if navigated from marketplace or directory with chat info
   const locationState = location.state as {
-    initialRoomId?: string;
-    marketplaceChat?: {
-      chatWith?: string;
-      presetMessage?: string;
-      itemInfo?: {
-        title: string;
-        price: number;
-        id: string;
-      };
+    chatWith?: string;
+    presetMessage?: string;
+    itemInfo?: {
+      title: string;
+      price: number;
+      id: string;
     };
     directoryChat?: {
       contactId: string;
@@ -51,17 +46,12 @@ export default function CommunicationHub() {
     };
   } | null;
 
-  // Resolve room ID from state or URL parameters
-  useEffect(() => {
-    const roomIdFromUrl = searchParams.get('roomId');
-    const roomIdFromState = locationState?.initialRoomId;
-    
-    // Prefer state over URL, then URL over nothing
-    const targetRoomId = roomIdFromState || roomIdFromUrl;
-    setResolvedRoomId(targetRoomId || undefined);
-  }, [searchParams, locationState]);
+  const marketplaceChat = locationState && locationState.itemInfo ? {
+    chatWith: locationState.chatWith,
+    presetMessage: locationState.presetMessage,
+    itemInfo: locationState.itemInfo
+  } : null;
 
-  const marketplaceChat = locationState?.marketplaceChat;
   const directoryChat = locationState?.directoryChat;
 
   return (
@@ -297,11 +287,7 @@ export default function CommunicationHub() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6">
-            <CommunityChat 
-              marketplaceChat={marketplaceChat} 
-              directoryChat={directoryChat}
-              initialRoomId={resolvedRoomId}
-            />
+            <CommunityChat marketplaceChat={marketplaceChat} directoryChat={directoryChat} />
           </CardContent>
         </Card>
 

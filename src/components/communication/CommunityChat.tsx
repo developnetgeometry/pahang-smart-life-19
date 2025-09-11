@@ -73,10 +73,9 @@ interface DirectoryChatInfo {
 interface CommunityChatProps {
   marketplaceChat?: MarketplaceChatInfo | null;
   directoryChat?: DirectoryChatInfo | null;
-  initialRoomId?: string;
 }
 
-export default function CommunityChat({ marketplaceChat, directoryChat, initialRoomId }: CommunityChatProps = {}) {
+export default function CommunityChat({ marketplaceChat, directoryChat }: CommunityChatProps = {}) {
   const { language, user } = useAuth();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -128,19 +127,10 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
   }, [directoryChat, language]);
 
   useEffect(() => {
-    if (initialRoomId && initialRoomId !== selectedRoomId) {
-      // If an initial room ID is provided, select it immediately
-      console.log('Setting room ID from initial:', initialRoomId);
-      setSelectedRoomId(initialRoomId);
-    } else if (rooms.length > 0 && !selectedRoomId && !initialRoomId) {
-      // Otherwise, select the first available room only if no initial room was specified
-      setSelectedRoomId(rooms[0].id);
-    } else if (initialRoomId && rooms.length > 0 && !rooms.find(room => room.id === initialRoomId)) {
-      // If initial room ID was provided but not found after rooms loaded, fall back to first room
-      console.warn('Initial room ID not found, falling back to first available room:', initialRoomId);
+    if (rooms.length > 0 && !selectedRoomId) {
       setSelectedRoomId(rooms[0].id);
     }
-  }, [rooms, initialRoomId]);
+  }, [rooms, selectedRoomId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -316,7 +306,7 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
 
   // Filter rooms based on search
   const filteredRooms = rooms.filter(room =>
-    (room.name || '').toLowerCase().includes(searchQuery.toLowerCase())
+    room.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const selectedRoom = rooms.find(room => room.id === selectedRoomId);
@@ -386,7 +376,7 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
 
       {/* Chat Area */}
       <div className="flex-1 flex flex-col">
-        {selectedRoomId ? (
+        {selectedRoom ? (
           <>
             {/* Chat Header */}
             <div className="p-4 border-b border-border/50 bg-gradient-to-r from-primary/10 via-background to-secondary/10 backdrop-blur-md shadow-sm">
@@ -395,20 +385,19 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
                   <div className="relative">
                     <Avatar className="h-10 w-10 border-2 border-primary/20 shadow-lg hover-scale">
                       <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-primary-foreground font-semibold">
-                        {getUserInitials(selectedRoom?.name || 'Chat')}
+                        {getUserInitials(selectedRoom.name)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-background rounded-full animate-pulse" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-foreground/90">{selectedRoom?.name || 'Loading chat...'}</h4>
+                    <h4 className="font-semibold text-foreground/90">{selectedRoom.name}</h4>
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-muted-foreground">
-                        {selectedRoom?.room_type === 'group' && selectedRoom?.member_count && (
+                        {selectedRoom.room_type === 'group' && selectedRoom.member_count && (
                           `${selectedRoom.member_count} members`
                         )}
-                        {selectedRoom?.room_type === 'direct' && 'Direct message'}
-                        {!selectedRoom && '...'}
+                        {selectedRoom.room_type === 'direct' && 'Direct message'}
                       </p>
                       <div className="flex items-center gap-1">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />

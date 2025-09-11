@@ -5,10 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
 import { useHouseholdAccounts } from '@/hooks/use-household-accounts';
-import { Users, Trash2, Settings, Heart, Home } from 'lucide-react';
+import { Users, UserPlus, Trash2, Settings, Heart, Home } from 'lucide-react';
 
 interface SpouseFormData {
   email: string;
@@ -17,12 +19,24 @@ interface SpouseFormData {
   mobile_no: string;
 }
 
+interface TenantFormData {
+  email: string;
+  password: string;
+  full_name: string;
+  mobile_no: string;
+  marketplace: boolean;
+  bookings: boolean;
+  announcements: boolean;
+  complaints: boolean;
+  discussions: boolean;
+}
 
 export function HouseholdAccountManager() {
-  const { accounts, loading, createSpouseAccount, removeAccount, updatePermissions, canAddSpouse, refetch } = useHouseholdAccounts();
+  const { accounts, loading, createSpouseAccount, createTenantAccount, removeAccount, updatePermissions, canAddSpouse, refetch } = useHouseholdAccounts();
   const { toast } = useToast();
   
   const [spouseDialogOpen, setSpouseDialogOpen] = useState(false);
+  const [tenantDialogOpen, setTenantDialogOpen] = useState(false);
   const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
 
@@ -35,6 +49,15 @@ export function HouseholdAccountManager() {
   };
 
   const spouseForm = useForm<SpouseFormData>();
+  const tenantForm = useForm<TenantFormData>({
+    defaultValues: {
+      marketplace: false,
+      bookings: true,
+      announcements: true,
+      complaints: true,
+      discussions: false,
+    }
+  });
 
   const handleCreateSpouse = async (data: SpouseFormData) => {
     try {
@@ -54,6 +77,27 @@ export function HouseholdAccountManager() {
     }
   };
 
+  const handleCreateTenant = async (data: TenantFormData) => {
+    try {
+      const { marketplace, bookings, announcements, complaints, discussions, ...accountData } = data;
+      await createTenantAccount({
+        ...accountData,
+        permissions: { marketplace, bookings, announcements, complaints, discussions }
+      });
+      toast({
+        title: "Tenant Account Created",
+        description: "Tenant account has been successfully created with limited access.",
+      });
+      setTenantDialogOpen(false);
+      tenantForm.reset();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create tenant account",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleRemoveAccount = async (accountId: string) => {
     if (window.confirm('Are you sure you want to remove this account? This action cannot be undone.')) {
@@ -96,7 +140,7 @@ export function HouseholdAccountManager() {
           </Button>
         </CardTitle>
         <CardDescription>
-          Manage spouse accounts linked to your primary account. For tenant accounts, contact your community admin.
+          Manage spouse and tenant accounts linked to your primary account
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -160,6 +204,105 @@ export function HouseholdAccountManager() {
             </Dialog>
           )}
 
+          <Dialog open={tenantDialogOpen} onOpenChange={setTenantDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <UserPlus className="h-4 w-4" />
+                Add Tenant Account
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Create Tenant Account</DialogTitle>
+                <DialogDescription>
+                  Create an account for your tenant with customizable access permissions.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={tenantForm.handleSubmit(handleCreateTenant)} className="space-y-4">
+                <div>
+                  <Label htmlFor="tenant-name">Full Name</Label>
+                  <Input 
+                    id="tenant-name"
+                    {...tenantForm.register('full_name', { required: true })}
+                    placeholder="Enter tenant's full name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="tenant-email">Email</Label>
+                  <Input 
+                    id="tenant-email"
+                    type="email"
+                    {...tenantForm.register('email', { required: true })}
+                    placeholder="Enter tenant's email"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="tenant-password">Password</Label>
+                  <Input 
+                    id="tenant-password"
+                    type="password"
+                    {...tenantForm.register('password', { required: true, minLength: 6 })}
+                    placeholder="Create a secure password"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="tenant-mobile">Mobile Number (Optional)</Label>
+                  <Input 
+                    id="tenant-mobile"
+                    {...tenantForm.register('mobile_no')}
+                    placeholder="Enter mobile number"
+                  />
+                </div>
+                
+                <Separator />
+                
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Access Permissions</Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="perm-marketplace" className="text-sm">Marketplace</Label>
+                      <Switch 
+                        id="perm-marketplace"
+                        {...tenantForm.register('marketplace')}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="perm-bookings" className="text-sm">Facility Bookings</Label>
+                      <Switch 
+                        id="perm-bookings"
+                        {...tenantForm.register('bookings')}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="perm-announcements" className="text-sm">View Announcements</Label>
+                      <Switch 
+                        id="perm-announcements"
+                        {...tenantForm.register('announcements')}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="perm-complaints" className="text-sm">Submit Complaints</Label>
+                      <Switch 
+                        id="perm-complaints"
+                        {...tenantForm.register('complaints')}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="perm-discussions" className="text-sm">Community Discussions</Label>
+                      <Switch 
+                        id="perm-discussions"
+                        {...tenantForm.register('discussions')}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <Button type="submit" className="w-full">
+                  Create Tenant Account
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Existing Accounts List */}
@@ -208,7 +351,7 @@ export function HouseholdAccountManager() {
           <div className="text-center py-6 text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p>No linked accounts yet</p>
-            <p className="text-sm">Add a spouse account to get started</p>
+            <p className="text-sm">Add spouse or tenant accounts to get started</p>
           </div>
         )}
       </CardContent>

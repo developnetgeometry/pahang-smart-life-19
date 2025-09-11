@@ -254,23 +254,20 @@ export default function MarketplaceItemDetail() {
     if (!item) return;
 
     try {
-      // Create direct chat with the seller
+      // Create direct chat with the seller instead of empty group chat
       const roomId = await createDirectChat(item.sellerId);
       
-      // Navigate to communication-hub with proper state and URL parameters
-      navigate(`/communication-hub?roomId=${roomId}`, {
+      navigate('/communication', {
         state: {
-          initialRoomId: roomId,
-          marketplaceChat: {
-            chatWith: item.seller,
-            presetMessage: language === 'en' 
-              ? `Hi, is this item still available? - ${item.title} (RM${item.price.toLocaleString()})`
-              : `Hai, adakah item ini masih tersedia? - ${item.title} (RM${item.price.toLocaleString()})`,
-            itemInfo: {
-              title: item.title,
-              price: item.price,
-              id: item.id
-            }
+          roomId,
+          chatWith: item.seller,
+          presetMessage: language === 'en' 
+            ? `Hi, is this item still available? - ${item.title} (RM${item.price.toLocaleString()})`
+            : `Hai, adakah item ini masih tersedia? - ${item.title} (RM${item.price.toLocaleString()})`,
+          itemInfo: {
+            title: item.title,
+            price: item.price,
+            id: item.id
           }
         }
       });
@@ -437,11 +434,21 @@ export default function MarketplaceItemDetail() {
 
           {/* Action Buttons */}
           <div className="flex gap-3">
+            {item.sellerType === 'service_provider' && (
+              <Button
+                size="lg"
+                onClick={handleAddToCart}
+                className="flex-1"
+              >
+                <ShoppingCart className="h-5 w-5 mr-2" />
+                {t.addToCart}
+              </Button>
+            )}
             <Button
               variant="outline"
               size="lg"
               onClick={handleContactSeller}
-              className="w-full"
+              className={item.sellerType === 'resident' ? 'w-full' : 'flex-1'}
             >
               <MessageCircle className="h-5 w-5 mr-2" />
               {t.contactSeller}
