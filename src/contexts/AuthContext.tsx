@@ -194,6 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         emergency_contact_phone: undefined,
       };
 
+      console.log(`AuthContext: User ${userId} loaded with roles:`, roleList, 'primary role:', primaryRole);
       setUser(userObj);
       setRoles(userObj.available_roles);
     } catch (e) {

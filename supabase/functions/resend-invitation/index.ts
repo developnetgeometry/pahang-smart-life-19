@@ -49,12 +49,30 @@ serve(async (req: Request) => {
 
     console.log(`Attempting to resend invitation for user: ${user_id}`);
 
-    // Get user profile information - use 'id' column not 'user_id'
-    const { data: profile, error: profileError } = await supabaseAdmin
+    // Get user profile information - try both id and user_id columns for robustness
+    let profile, profileError;
+    
+    // First try with user_id column
+    const profileResult1 = await supabaseAdmin
       .from('profiles')
-      .select('id, full_name, email, account_status, access_expires_at')
-      .eq('id', user_id)
+      .select('id, user_id, full_name, email, account_status, access_expires_at')
+      .eq('user_id', user_id)
       .single();
+    
+    if (profileResult1.data) {
+      profile = profileResult1.data;
+      profileError = null;
+    } else {
+      // Fallback to id column
+      const profileResult2 = await supabaseAdmin
+        .from('profiles')
+        .select('id, user_id, full_name, email, account_status, access_expires_at')
+        .eq('id', user_id)
+        .single();
+      
+      profile = profileResult2.data;
+      profileError = profileResult2.error;
+    }
 
     if (profileError || !profile) {
       console.error('Profile not found:', profileError);
@@ -63,11 +81,12 @@ serve(async (req: Request) => {
 
     console.log(`Found profile for ${profile.email}, status: ${profile.account_status}`);
 
-    // Get user role to determine email type - use the actual user_id from auth
+    // Get user role to determine email type - use the correct user_id
+    const actualUserId = profile.user_id || profile.id; // Use user_id if available, fallback to id
     const { data: userRoles } = await supabaseAdmin
       .from('enhanced_user_roles')
       .select('role')
-      .eq('user_id', profile.id)
+      .eq('user_id', actualUserId)
       .eq('is_active', true);
 
     const isGuest = userRoles?.some(r => r.role === 'guest');

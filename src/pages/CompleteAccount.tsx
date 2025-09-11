@@ -122,20 +122,32 @@ export default function CompleteAccount() {
       }
     );
 
-    // Check for invitation/verification parameters in URL
-    const handleInvitationLink = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tokenHash = urlParams.get('token_hash');
-      const type = urlParams.get('type');
-      const code = urlParams.get('code');
+  // Check for invitation/verification parameters in URL
+  const handleInvitationLink = async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenHash = urlParams.get('token_hash');
+    const type = urlParams.get('type');
+    const code = urlParams.get('code');
+    
+    if (tokenHash && type) {
+      console.log('Processing invitation link with token_hash and type:', type);
       
-      if (tokenHash && type) {
-        console.log('Processing invitation link with token_hash and type:', type);
-        try {
-          const { data, error } = await supabase.auth.verifyOtp({
-            token_hash: tokenHash,
-            type: type as any,
-          });
+      // Sign out any existing session to prevent session mixing
+      try {
+        const { data: currentSession } = await supabase.auth.getSession();
+        if (currentSession.session) {
+          console.log('Signing out existing session before processing invitation');
+          await supabase.auth.signOut();
+        }
+      } catch (error) {
+        console.error('Error signing out existing session:', error);
+      }
+      
+      try {
+        const { data, error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: type as any,
+        });
           
           if (error) {
             console.error('Token verification failed:', error);
@@ -308,7 +320,8 @@ export default function CompleteAccount() {
         }
       }
 
-      // Update profile - use 'id' column not 'user_id'
+      // Update profile - use 'user_id' column to match profile record
+      console.log('Updating profile for user ID:', user?.id);
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -321,7 +334,7 @@ export default function CompleteAccount() {
           language_preference: form.language_preference,
           account_status: "approved",
         })
-        .eq("id", user?.id);
+        .eq("user_id", user?.id);
 
       if (error) throw error;
 

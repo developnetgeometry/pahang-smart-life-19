@@ -138,10 +138,18 @@ async function updateUserProfile(
   profileData: any,
   context: AdminContext
 ) {
+  // Ensure both id and user_id are set to the auth user ID for proper profile handling
+  const profileRecord = { 
+    id: userId, 
+    user_id: userId, 
+    ...profileData 
+  };
+  
   const { error: profileError } = await context.supabaseAdmin
     .from("profiles")
-    .upsert({ user_id: userId, ...profileData }, { onConflict: "user_id" });
+    .upsert(profileRecord, { onConflict: "user_id" });
   if (profileError) {
+    console.error('Profile creation error:', profileError);
     await context.supabaseAdmin.auth.admin.deleteUser(userId);
     throw new Error(`Failed to update profile: ${profileError.message}`);
   }
