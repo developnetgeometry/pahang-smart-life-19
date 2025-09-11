@@ -1291,6 +1291,19 @@ export default function Login() {
                         required
                         className="transition-smooth"
                       />
+
+                      {/* Account Status Alert */}
+                      {accountStatusError && (
+                        <AccountStatusAlert
+                          status={accountStatusError}
+                          language={language || "en"}
+                          onRetry={accountStatusError === "not_approved" ? () => setAccountStatusError(null) : undefined}
+                          onContactAdmin={() => {
+                            // Contact admin functionality
+                            window.open("mailto:admin@primapahang.com", "_blank");
+                          }}
+                        />
+                      )}
                     </div>
                     <Button
                       type="submit"

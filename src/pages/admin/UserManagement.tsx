@@ -50,6 +50,13 @@ import {
   ShieldCheck,
   Loader2,
   Home,
+  Mail,
+  Send,
+  Check,
+  X,
+  Clock,
+  UserCheck,
+  CheckCircle2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,6 +77,9 @@ interface User {
   joinDate: string;
   district_id: string;
   community_id: string;
+  emailConfirmed?: boolean;
+  lastSignIn?: string;
+  isActive?: boolean;
 }
 
 interface HouseholdAccount {
@@ -1045,6 +1055,33 @@ export default function UserManagement() {
       });
     } finally {
       setIsLoadingHousehold(false);
+    }
+  };
+
+  // Handle resend invitation
+  const handleResendInvitation = async (userId: string, userEmail: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('resend-invitation', {
+        body: {
+          user_id: userId
+        }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({
+        title: "Invitation Sent", 
+        description: `Invitation has been resent to ${userEmail}`
+      });
+      
+    } catch (error: any) {
+      console.error('Error resending invitation:', error);
+      toast({
+        title: "Resend Failed",
+        description: error.message || "Failed to resend invitation",
+        variant: "destructive"
+      });
     }
   };
 
@@ -2065,32 +2102,67 @@ export default function UserManagement() {
                       <Badge className={getStatusColor(user.status)}>
                         {getStatusText(user.status)}
                       </Badge>
+                      
+                      {/* Email Confirmation Status */}
+                      {user.emailConfirmed ? (
+                        <div className="flex items-center text-green-600 text-sm" title="Email Confirmed">
+                          <CheckCircle2 className="h-4 w-4 mr-1" />
+                          <span className="hidden sm:inline">Confirmed</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-yellow-600 text-sm" title="Email Not Confirmed">
+                          <Clock className="h-4 w-4 mr-1" />
+                          <span className="hidden sm:inline">Pending</span>
+                        </div>
+                      )}
+
                       <div
                         className="flex gap-1"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        {user.status === "pending" && (
+                        {/* Actions for pending users */}
+                        {user.status === "pending" && !user.emailConfirmed && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleResendInvitation(user.id, user.email)}
+                            className="text-blue-600"
+                            title="Resend Invitation"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
+                        {user.status === "pending" && user.emailConfirmed && (
                           <>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleApprove(user.id)}
                               className="text-green-600"
-                              title={t.approve}
+                              title="Approve"
                             >
-                              <ShieldCheck className="h-4 w-4" />
+                              <Check className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleReject(user.id)}
                               className="text-red-600"
-                              title={t.reject}
+                              title="Reject"
                             >
-                              <Shield className="h-4 w-4" />
+                              <X className="h-4 w-4" />
                             </Button>
                           </>
                         )}
+
+                        {user.status === "approved" && (
+                          <div className="flex items-center text-green-600 text-sm">
+                            <UserCheck className="h-4 w-4 mr-1" />
+                            <span className="hidden sm:inline">Active</span>
+                          </div>
+                        )}
+                        
                         <Button
                           variant="outline"
                           size="sm"
