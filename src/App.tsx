@@ -167,6 +167,10 @@ const App = () => (
               }
             />
             <Route
+              path="/login/complete-account"
+              element={<Navigate to="/complete-account" replace />}
+            />
+            <Route
               path="/"
               element={
                 <ProtectedRoute>
