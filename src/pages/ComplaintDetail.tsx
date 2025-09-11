@@ -215,25 +215,27 @@ export default function ComplaintDetail() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/my-complaints')}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          {language === 'en' ? 'Back to Complaints' : 'Kembali ke Aduan'}
-        </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/my-complaints')}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            {language === 'en' ? 'Back to Complaints' : 'Kembali ke Aduan'}
+          </Button>
+          
+          {canRespond && (
+            <ComplaintResponseDialog
+              complaintId={complaint.id}
+              currentStatus={complaint.status}
+              onResponseAdded={() => setRefreshKey(prev => prev + 1)}
+            />
+          )}
+        </div>
         
-        {canRespond && (
-          <ComplaintResponseDialog
-            complaintId={complaint.id}
-            currentStatus={complaint.status}
-            onResponseAdded={() => setRefreshKey(prev => prev + 1)}
-          />
-        )}
-        
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto justify-end">
           <Badge className={getStatusColor(complaint.status)}>
             {complaint.status.replace('_', ' ')}
           </Badge>
