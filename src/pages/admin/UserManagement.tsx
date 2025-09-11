@@ -133,10 +133,6 @@ export default function UserManagement() {
     district_id?: string;
     community_id?: string;
   }>({
-    community_id?: string;
-  }>({
-    community_id?: string;
-  }>({
     name: "",
     email: "",
     phone: "",
@@ -155,10 +151,6 @@ export default function UserManagement() {
     familySize: 1,
     specialization: "",
     access_expires_at: "",
-    district_id: "",
-    community_id: "",
-    district_id: "",
-    community_id: "",
     district_id: "",
     community_id: "",
   });
@@ -354,18 +346,37 @@ export default function UserManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data: profiles, error: profilesError } = await supabase.from(
-        "profiles"
-      ).select(`
-          id,
-          full_name,
-          email,
-          phone,
-          unit_number,
-          district_id,
-          account_status,
-          created_at
-        `);
+
+      // Get the current admin's profile to find their community_id
+      const { data: adminProfile, error: adminError } = await supabase
+        .from("profiles")
+        .select("community_id")
+        .eq("id", user.id)
+        .single();
+
+      if (adminError || !adminProfile) {
+        throw new Error("Could not fetch admin profile or community.");
+      }
+
+      // Base query for profiles
+      let query = supabase.from("profiles").select(`
+        id,
+        full_name,
+        email,
+        phone,
+        unit_number,
+        district_id,
+        account_status,
+        created_at,
+        community_id
+      `);
+
+      // Filter profiles by the admin's community_id
+      if (adminProfile.community_id) {
+        query = query.eq("community_id", adminProfile.community_id);
+      }
+
+      const { data: profiles, error: profilesError } = await query;
 
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
@@ -376,11 +387,14 @@ export default function UserManagement() {
         });
         return;
       }
+      
+      const userIds = profiles.map(p => p.id);
 
-      // Get user roles separately
+      // Get user roles separately for the fetched users
       const { data: userRoles, error: rolesError } = await supabase
         .from("enhanced_user_roles")
         .select("user_id, role")
+        .in("user_id", userIds)
         .eq("is_active", true);
 
       if (rolesError) {
@@ -1088,6 +1102,7 @@ export default function UserManagement() {
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="district">District *</Label>
                       <Select
@@ -1129,7 +1144,8 @@ export default function UserManagement() {
                         </SelectContent>
                       </Select>
                     </div>
-                </>
+                  </div>
+                </>>
               ) : form.role === "guest" ? (
                 <>
                   {/* Guest-specific form */}
@@ -1216,7 +1232,7 @@ export default function UserManagement() {
                       />
                     </div>
                   </div>
-                </>
+                </>>
               ) : (
                 <>
                   {/* Full form for staff roles */}
@@ -1415,7 +1431,7 @@ export default function UserManagement() {
                       </div>
                     )}
                   </div>
-                </>
+                </>>
               )}
 
               {/* Role-specific fields */}
