@@ -308,7 +308,7 @@ export default function CompleteAccount() {
         }
       }
 
-      // Update profile
+      // Update profile - use 'id' column not 'user_id'
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -321,7 +321,7 @@ export default function CompleteAccount() {
           language_preference: form.language_preference,
           account_status: "approved",
         })
-        .eq("user_id", user?.id);
+        .eq("id", user?.id);
 
       if (error) throw error;
 
@@ -331,10 +331,14 @@ export default function CompleteAccount() {
       });
 
       // Reload profile and roles to update auth context
+      console.log('Reloading profile and roles after account completion');
       await loadProfileAndRoles();
 
-      // Navigate to home page
-      navigate("/");
+      // Add a small delay to ensure context updates properly
+      setTimeout(() => {
+        console.log('Navigating to home page');
+        navigate("/");
+      }, 500);
     } catch (error) {
       console.error("Error completing account:", error);
       console.error("Error details:", JSON.stringify(error, null, 2));
