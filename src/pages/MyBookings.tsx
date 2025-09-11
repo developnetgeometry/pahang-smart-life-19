@@ -263,10 +263,10 @@ export default function MyBookings() {
           {bookings.map((booking) => (
           <Card key={booking.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-lg">{booking.facility_name}</CardTitle>
-                  <CardDescription className="flex items-center space-x-4 mt-2">
+              <div className="flex items-start gap-2 flex-wrap">
+                <div className="flex-1 min-w-0">
+                  <CardTitle className="text-lg leading-snug min-w-0 break-words">{booking.facility_name}</CardTitle>
+                  <CardDescription className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm min-w-0">
                     <span className="flex items-center">
                       <Calendar className="w-4 h-4 mr-1" />
                       {booking.date}
@@ -281,9 +281,11 @@ export default function MyBookings() {
                     </span>
                   </CardDescription>
                 </div>
-                <Badge className={`${getStatusColor(booking.status)} text-white`}>
-                  {getStatusText(booking.status)}
-                </Badge>
+                <div className="ml-auto shrink-0">
+                  <Badge className={`${getStatusColor(booking.status)} text-white`}>
+                    {getStatusText(booking.status)}
+                  </Badge>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
