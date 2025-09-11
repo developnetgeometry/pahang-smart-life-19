@@ -84,7 +84,7 @@ async function initializeAdminContext(req: Request): Promise<AdminContext> {
 }
 
 async function createAuthUser(
-  userData: { email: string; password?: string; full_name: string },
+  userData: { email: string; password?: string; full_name: string; district_id?: string; community_id?: string; signup_flow?: string },
   useInviteFlow: boolean,
   context: AdminContext,
   req: Request
@@ -101,7 +101,12 @@ async function createAuthUser(
       userData.email,
       {
         redirectTo: redirectUrl,
-        data: { full_name: userData.full_name },
+        data: { 
+          full_name: userData.full_name,
+          signup_flow: userData.signup_flow || 'resident_invite',
+          district_id: userData.district_id,
+          community_id: userData.community_id
+        },
       }
     );
 
@@ -143,6 +148,19 @@ async function updateUserProfile(
 }
 
 async function assignUserRole(userId: string, role: string, context: AdminContext) {
+  // Check if user already has this role (handle_new_user trigger may have assigned it)
+  const { data: existingRole } = await context.supabaseAdmin
+    .from("enhanced_user_roles")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("role", role)
+    .single();
+
+  if (existingRole) {
+    console.log(`User ${userId} already has role ${role}, skipping assignment`);
+    return;
+  }
+
   const { error: roleUpsertError } = await context.supabaseAdmin
     .from("enhanced_user_roles")
     .upsert({
@@ -152,9 +170,12 @@ async function assignUserRole(userId: string, role: string, context: AdminContex
       district_id: context.adminProfile?.district_id || null,
       is_active: true,
       assigned_at: new Date().toISOString(),
+    }, { 
+      onConflict: "user_id,role"
     });
 
   if (roleUpsertError) {
+    console.error("Role assignment error:", roleUpsertError);
     await context.supabaseAdmin.auth.admin.deleteUser(userId);
     await context.supabaseAdmin.from("profiles").delete().eq("user_id", userId);
     throw new Error(`Failed to assign role: ${roleUpsertError.message}`);
@@ -211,9 +232,15 @@ serve(async (req) => {
       admin_community: context.adminProfile?.community_id,
     });
 
-    // Create auth user using invite flow
+    // Create auth user using invite flow with enhanced metadata
     const authUser = await createAuthUser(
-      { email, full_name },
+      { 
+        email, 
+        full_name,
+        district_id: context.adminProfile?.district_id,
+        community_id: context.adminProfile?.community_id,
+        signup_flow: 'resident_invite'
+      },
       true, // Use invite flow for residents
       context,
       req

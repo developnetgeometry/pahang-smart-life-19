@@ -837,6 +837,12 @@ export default function UserManagement() {
             throw error;
           }
 
+          // Check for errors in response body even with 2xx status
+          if (data?.error || data?.success === false) {
+            console.error(`Error in response body from ${functionName}:`, data);
+            throw new Error(data.error || 'Function returned error response');
+          }
+
           console.log(`Successfully created ${form.role} user:`, data);
           toast({ 
             title: t.userCreated,
