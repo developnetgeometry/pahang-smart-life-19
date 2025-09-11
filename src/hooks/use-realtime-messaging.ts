@@ -227,7 +227,7 @@ export const useRealtimeMessaging = (roomId?: string) => {
                 ? `New message about your product` 
                 : `New message from ${senderName}`,
               body: `${senderName}: ${messagePreview}`,
-              url: `/communication-hub?room=${roomId}`,
+              url: `/communication-hub?roomId=${roomId}`,
               userIds: notificationOptions.recipientIds,
               notificationType: 'message'
             }

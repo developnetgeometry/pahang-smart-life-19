@@ -135,6 +135,10 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
     } else if (rooms.length > 0 && !selectedRoomId && !initialRoomId) {
       // Otherwise, select the first available room only if no initial room was specified
       setSelectedRoomId(rooms[0].id);
+    } else if (initialRoomId && rooms.length > 0 && !rooms.find(room => room.id === initialRoomId)) {
+      // If initial room ID was provided but not found after rooms loaded, fall back to first room
+      console.warn('Initial room ID not found, falling back to first available room:', initialRoomId);
+      setSelectedRoomId(rooms[0].id);
     }
   }, [rooms, initialRoomId]);
 
@@ -312,7 +316,7 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
 
   // Filter rooms based on search
   const filteredRooms = rooms.filter(room =>
-    room.name.toLowerCase().includes(searchQuery.toLowerCase())
+    (room.name || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const selectedRoom = rooms.find(room => room.id === selectedRoomId);
@@ -391,19 +395,20 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
                   <div className="relative">
                     <Avatar className="h-10 w-10 border-2 border-primary/20 shadow-lg hover-scale">
                       <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-primary-foreground font-semibold">
-                        {getUserInitials(selectedRoom.name)}
+                        {getUserInitials(selectedRoom?.name || 'Chat')}
                       </AvatarFallback>
                     </Avatar>
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-background rounded-full animate-pulse" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-foreground/90">{selectedRoom.name}</h4>
+                    <h4 className="font-semibold text-foreground/90">{selectedRoom?.name || 'Loading chat...'}</h4>
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-muted-foreground">
-                        {selectedRoom.room_type === 'group' && selectedRoom.member_count && (
+                        {selectedRoom?.room_type === 'group' && selectedRoom?.member_count && (
                           `${selectedRoom.member_count} members`
                         )}
-                        {selectedRoom.room_type === 'direct' && 'Direct message'}
+                        {selectedRoom?.room_type === 'direct' && 'Direct message'}
+                        {!selectedRoom && '...'}
                       </p>
                       <div className="flex items-center gap-1">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
