@@ -69,10 +69,10 @@ export function useModuleAccess() {
           .eq("community_id", profile.community_id)
           .eq("is_enabled", true);
 
-        console.log("Community modules query result:", { 
-          communityModules, 
-          error, 
-          community_id: profile.community_id 
+        console.log("Community modules query result:", {
+          communityModules,
+          error,
+          community_id: profile.community_id,
         });
 
         if (error) {
@@ -84,8 +84,14 @@ export function useModuleAccess() {
           communityModules?.map((m) => m.module_name) || [];
 
         // If no modules are enabled for the community, provide default modules for service providers
-        if (allModuleNames.length === 0 && hasRole && hasRole("service_provider")) {
-          console.log("No community modules found, adding default service provider modules");
+        if (
+          allModuleNames.length === 0 &&
+          hasRole &&
+          hasRole("service_provider")
+        ) {
+          console.log(
+            "No community modules found, adding default service provider modules"
+          );
           allModuleNames.push("marketplace", "announcements");
         }
 

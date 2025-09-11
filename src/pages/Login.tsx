@@ -38,11 +38,14 @@ import {
   Check,
   X,
   CheckCircle,
+  Mail,
+  Send,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { createTestUsers } from "@/utils/createTestUsers";
 import { DocumentUpload } from "@/components/ui/document-upload";
+import { AccountStatusAlert } from "@/components/ui/account-status-alert";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -79,6 +82,7 @@ export default function Login() {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [passwordResetSent, setPasswordResetSent] = useState(false);
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
@@ -86,6 +90,9 @@ export default function Login() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [accountStatusError, setAccountStatusError] = useState<
+    "inactive" | "pending" | "rejected" | "suspended" | "not_approved" | null
+  >(null);
   const { login, language, switchLanguage } = useAuth();
   const { t } = useTranslation(language || "en"); // Ensure we always have a language
   const { toast } = useToast();
@@ -687,6 +694,23 @@ export default function Login() {
   const getCurrentBusinessTypeConfig = () => {
     return businessTypeFieldMap[businessType] || businessTypeFieldMap.other;
   };
+
+  const handleContactAdmin = () => {
+    // You can implement this to open a contact modal or redirect to help
+    toast({
+      title: language === "en" ? "Contact Information" : "Maklumat Hubungan",
+      description:
+        language === "en"
+          ? "Please contact your community administrator for assistance."
+          : "Sila hubungi pentadbir komuniti anda untuk bantuan.",
+    });
+  };
+
+  const handleRetryLogin = () => {
+    setAccountStatusError(null);
+    setError("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -952,7 +976,36 @@ export default function Login() {
         }
       }
     } catch (err: any) {
-      setError(err?.message || "Something went wrong. Please try again.");
+      console.error("Login error:", err);
+
+      // Reset previous account status error
+      setAccountStatusError(null);
+
+      // Handle specific account status errors with better UX
+      if (err?.message === "ACCOUNT_INACTIVE") {
+        setAccountStatusError("inactive");
+        setError(""); // Clear generic error since we're showing status alert
+      } else if (err?.message === "ACCOUNT_PENDING") {
+        setAccountStatusError("pending");
+        setError("");
+      } else if (err?.message === "ACCOUNT_REJECTED") {
+        setAccountStatusError("rejected");
+        setError("");
+      } else if (err?.message === "ACCOUNT_SUSPENDED") {
+        setAccountStatusError("suspended");
+        setError("");
+      } else if (err?.message === "ACCOUNT_NOT_APPROVED") {
+        setAccountStatusError("not_approved");
+        setError("");
+      } else if (err?.message?.includes("Invalid login credentials")) {
+        setError(
+          language === "en"
+            ? "Invalid email or password. Please check your credentials and try again."
+            : "Emel atau kata laluan tidak sah. Sila semak bukti kelayakan anda dan cuba lagi."
+        );
+      } else {
+        setError(err?.message || "Something went wrong. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -1037,6 +1090,7 @@ export default function Login() {
     }
 
     setIsResettingPassword(true);
+    setPasswordResetSent(false);
     setError("");
 
     try {
@@ -1046,6 +1100,9 @@ export default function Login() {
 
       if (error) throw error;
 
+      // Show success animation
+      setPasswordResetSent(true);
+
       toast({
         title: language === "en" ? "Success" : "Berjaya",
         description:
@@ -1054,8 +1111,12 @@ export default function Login() {
             : "Arahan tetapan semula kata laluan telah dihantar ke emel anda",
       });
 
-      setShowForgotPassword(false);
-      setResetEmail("");
+      // Auto close dialog after animation
+      setTimeout(() => {
+        setShowForgotPassword(false);
+        setResetEmail("");
+        setPasswordResetSent(false);
+      }, 3000);
     } catch (error: any) {
       console.error("Password reset error:", error);
       setError(
@@ -1184,8 +1245,22 @@ export default function Login() {
             </CardHeader>
             <CardContent className="px-6 pb-6">
               <form onSubmit={handleSubmit} className="space-y-4">
-                {error && (
-                  <Alert variant="destructive">
+                {/* Account Status Alert */}
+                {accountStatusError && (
+                  <AccountStatusAlert
+                    status={accountStatusError}
+                    language={language || "en"}
+                    onRetry={handleRetryLogin}
+                    onContactAdmin={handleContactAdmin}
+                  />
+                )}
+
+                {/* General Error Alert */}
+                {error && !accountStatusError && (
+                  <Alert
+                    variant="destructive"
+                    className="animate-in slide-in-from-top-2 duration-300"
+                  >
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
@@ -1219,17 +1294,24 @@ export default function Login() {
                     </div>
                     <Button
                       type="submit"
-                      className="w-full gradient-primary"
+                      className="w-full gradient-primary transition-all duration-200 hover:scale-105 active:scale-95 relative overflow-hidden"
                       disabled={isLoading}
                     >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          {language === "en" ? "Signing In..." : "Log Masuk..."}
-                        </>
-                      ) : (
-                        t("signIn")
+                      {isLoading && (
+                        <div className="absolute inset-0 shimmer"></div>
                       )}
+                      <div className="relative z-10 flex items-center justify-center">
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {language === "en"
+                              ? "Signing In..."
+                              : "Log Masuk..."}
+                          </>
+                        ) : (
+                          t("signIn")
+                        )}
+                      </div>
                     </Button>
 
                     <div className="text-center">
@@ -1238,7 +1320,7 @@ export default function Login() {
                         variant="ghost"
                         size="sm"
                         onClick={() => setShowForgotPassword(true)}
-                        className="text-primary hover:text-primary/80"
+                        className="text-primary hover:text-primary/80 transition-all duration-200 hover:scale-105 hover:bg-primary/10"
                       >
                         {language === "en"
                           ? "Forgot Password?"
@@ -1249,22 +1331,59 @@ export default function Login() {
                     {/* Forgot Password Dialog */}
                     <Dialog
                       open={showForgotPassword}
-                      onOpenChange={setShowForgotPassword}
+                      onOpenChange={(open) => {
+                        setShowForgotPassword(open);
+                        if (!open) {
+                          setPasswordResetSent(false);
+                          setResetEmail("");
+                          setError("");
+                        }
+                      }}
                     >
-                      <DialogContent>
+                      <DialogContent className="sm:max-w-md">
                         <DialogHeader>
-                          <DialogTitle>
-                            {language === "en"
+                          <DialogTitle className="flex items-center gap-2">
+                            <div
+                              className={`transition-all duration-500 ${
+                                passwordResetSent ? "text-green-600" : ""
+                              }`}
+                            >
+                              {passwordResetSent ? (
+                                <CheckCircle className="h-5 w-5 animate-bounce" />
+                              ) : (
+                                <Mail className="h-5 w-5" />
+                              )}
+                            </div>
+                            {passwordResetSent
+                              ? language === "en"
+                                ? "Email Sent!"
+                                : "Emel Dihantar!"
+                              : language === "en"
                               ? "Reset Password"
                               : "Tetapan Semula Kata Laluan"}
                           </DialogTitle>
-                          <DialogDescription>
-                            {language === "en"
+                          <DialogDescription
+                            className={`transition-all duration-300 ${
+                              passwordResetSent ? "text-green-600" : ""
+                            }`}
+                          >
+                            {passwordResetSent
+                              ? language === "en"
+                                ? "Password reset instructions have been sent to your email address. Please check your inbox."
+                                : "Arahan tetapan semula kata laluan telah dihantar ke alamat emel anda. Sila semak peti masuk anda."
+                              : language === "en"
                               ? "Enter your email address and we'll send you instructions to reset your password."
                               : "Masukkan alamat emel anda dan kami akan menghantar arahan untuk menetapkan semula kata laluan anda."}
                           </DialogDescription>
                         </DialogHeader>
-                        <div className="space-y-4">
+
+                        <div
+                          className={`space-y-4 transition-all duration-500 ${
+                            passwordResetSent
+                              ? "opacity-0 pointer-events-none h-0 overflow-hidden"
+                              : "opacity-100"
+                          }`}
+                        >
                           <div className="space-y-2">
                             <Label htmlFor="resetEmail">
                               {language === "en"
@@ -1277,12 +1396,23 @@ export default function Login() {
                               value={resetEmail}
                               onChange={(e) => setResetEmail(e.target.value)}
                               placeholder={t("emailPlaceholder")}
+                              disabled={isResettingPassword}
                             />
                           </div>
+
+                          {error && (
+                            <Alert
+                              variant="destructive"
+                              className="animate-in slide-in-from-top-2 duration-300"
+                            >
+                              <AlertDescription>{error}</AlertDescription>
+                            </Alert>
+                          )}
+
                           <Button
                             onClick={handleForgotPassword}
-                            className="w-full"
-                            disabled={isResettingPassword}
+                            className="w-full transition-all duration-200 hover:scale-105"
+                            disabled={isResettingPassword || !resetEmail.trim()}
                           >
                             {isResettingPassword ? (
                               <>
@@ -1291,13 +1421,29 @@ export default function Login() {
                                   ? "Sending..."
                                   : "Menghantar..."}
                               </>
-                            ) : language === "en" ? (
-                              "Send Reset Instructions"
                             ) : (
-                              "Hantar Arahan Tetapan Semula"
+                              <>
+                                <Send className="mr-2 h-4 w-4" />
+                                {language === "en"
+                                  ? "Send Reset Instructions"
+                                  : "Hantar Arahan Tetapan Semula"}
+                              </>
                             )}
                           </Button>
                         </div>
+
+                        {passwordResetSent && (
+                          <div className="animate-in slide-in-from-bottom-4 duration-500 text-center py-6">
+                            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                              <Mail className="h-8 w-8 text-green-600 animate-pulse" />
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {language === "en"
+                                ? "This dialog will close automatically in a few seconds."
+                                : "Dialog ini akan ditutup secara automatik dalam beberapa saat."}
+                            </p>
+                          </div>
+                        )}
                       </DialogContent>
                     </Dialog>
                   </>
