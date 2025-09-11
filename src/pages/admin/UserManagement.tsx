@@ -65,6 +65,8 @@ import { useModuleAccess } from "@/hooks/use-module-access";
 import { useUserRoles } from "@/hooks/use-user-roles";
 import RoleCreationValidator from "@/components/admin/RoleCreationValidator";
 import RoleValidationTests from "@/components/admin/RoleValidationTests";
+import { AdminDiagnostics } from "@/components/admin/AdminDiagnostics";
+import { CreateUserValidator } from "@/components/admin/CreateUserValidator";
 
 interface User {
   id: string;
@@ -202,6 +204,10 @@ export default function UserManagement() {
       panic_button: true,
     },
   });
+
+  // Validation and diagnostics state
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [showValidator, setShowValidator] = useState(false);
 
   const text = {
     en: {
@@ -363,6 +369,13 @@ export default function UserManagement() {
   useEffect(() => {
     if (!rolesLoading && user?.id) {
       console.log('Fetching users with role filtering, user:', user);
+      console.log('User authentication state:', { 
+        userId: user?.id, 
+        email: user?.email,
+        activeCommunityId: user?.active_community_id,
+        district: user?.district,
+        roles: { hasRole }
+      });
       fetchUsers();
     }
   }, [rolesLoading, user?.id, user?.active_community_id]);
@@ -1162,12 +1175,28 @@ export default function UserManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
+          <h1 className="text-3xl font-bold">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowDiagnostics(!showDiagnostics)}
+          >
+            {showDiagnostics ? "Hide" : "Show"} Diagnostics
+          </Button>
+        </div>
+      </div>
+
+      {/* Diagnostics Panel */}
+      {showDiagnostics && (
+        <AdminDiagnostics onScopeFixed={() => setShowDiagnostics(false)} />
+      )}
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <Dialog
           open={isCreateOpen}
           onOpenChange={(open) => {
@@ -1208,6 +1237,22 @@ export default function UserManagement() {
               <DialogDescription>{t.createSubtitle}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              {/* Validation Panel */}
+              <CreateUserValidator
+                formData={{
+                  name: form.name,
+                  email: form.email,
+                  phone: form.phone,
+                  unit: form.unit,
+                  role: form.role,
+                  status: form.status,
+                  district_id: form.district_id,
+                  community_id: form.community_id,
+                }}
+                isVisible={showValidator}
+                onToggleVisibility={() => setShowValidator(!showValidator)}
+              />
+
               {/* Role Selection - Always shown first */}
               <div className="space-y-2">
                 <Label htmlFor="role">{t.role} *</Label>
