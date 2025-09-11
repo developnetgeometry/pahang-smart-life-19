@@ -1,5 +1,6 @@
 /**
  * Maps user roles to their corresponding Edge Function names
+ * Throws error for unsupported roles instead of fallback
  */
 export const getRoleSpecificFunction = (role: string): string => {
   const roleMap: Record<string, string> = {
@@ -13,5 +14,21 @@ export const getRoleSpecificFunction = (role: string): string => {
     'state_admin': 'admin-create-admin'
   };
   
-  return roleMap[role] || 'admin-create-user'; // fallback to legacy function
+  const functionName = roleMap[role];
+  if (!functionName) {
+    throw new Error(`No Edge Function configured for role: ${role}`);
+  }
+  
+  return functionName;
+};
+
+/**
+ * Validates if a role has a corresponding Edge Function
+ */
+export const isRoleSupported = (role: string): boolean => {
+  const supportedRoles = [
+    'resident', 'guest', 'security_officer', 'facility_manager', 
+    'maintenance_staff', 'community_admin', 'district_coordinator', 'state_admin'
+  ];
+  return supportedRoles.includes(role);
 };

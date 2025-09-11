@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getRoleSpecificFunction } from "@/lib/user-creation-utils";
+import { getRoleSpecificFunction, isRoleSupported } from "@/lib/user-creation-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -693,12 +693,21 @@ export default function UserManagement() {
 
         toast({ title: t.userUpdated });
       } else {
+        // Validate role before proceeding
+        if (!isRoleSupported(form.role)) {
+          toast({
+            title: "Error",
+            description: `Role "${form.role}" is not supported for user creation.`,
+            variant: "destructive",
+          });
+          return;
+        }
+
         // Create new user using edge function
         const requestBody: any = {
           email: form.email,
           full_name: form.name,
           phone: form.phone,
-          role: form.role,
         };
 
         // Only include password and status for non-residents and non-guests
