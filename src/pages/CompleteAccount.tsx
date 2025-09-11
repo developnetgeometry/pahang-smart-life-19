@@ -24,7 +24,8 @@ import { useNavigate } from "react-router-dom";
 import { Loader2, UserCheck, Eye, EyeOff } from "lucide-react";
 
 export default function CompleteAccount() {
-  const { user, language, loadProfileAndRoles } = useAuth();
+  const { user: authUser, language, loadProfileAndRoles } = useAuth();
+  const [user, setUser] = useState<any>(authUser);
   const { hasRole } = useUserRoles();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -103,24 +104,53 @@ export default function CompleteAccount() {
   // Check if user is a guest
   const isGuest = hasRole('guest');
 
-  // Check session validity on component mount
+  // Check session validity on component mount with auth state listener
   useEffect(() => {
+    let hasSetInitialSession = false;
+    
+    // Set up auth state listener FIRST to catch auth events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('Auth state change in CompleteAccount:', event, session ? 'session exists' : 'no session');
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          setSessionValid(!!session);
+          setUser(session?.user ?? null);
+        } else if (event === 'SIGNED_OUT') {
+          setSessionValid(false);
+          setUser(null);
+        }
+      }
+    );
+
+    // THEN check for existing session
     const checkSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error("Session check error:", error);
-          setSessionValid(false);
+          if (!hasSetInitialSession) {
+            setSessionValid(false);
+            hasSetInitialSession = true;
+          }
           return;
         }
-        setSessionValid(!!session);
+        if (!hasSetInitialSession) {
+          setSessionValid(!!session);
+          setUser(session?.user ?? null);
+          hasSetInitialSession = true;
+        }
       } catch (error) {
         console.error("Session validation error:", error);
-        setSessionValid(false);
+        if (!hasSetInitialSession) {
+          setSessionValid(false);
+          hasSetInitialSession = true;
+        }
       }
     };
     
     checkSession();
+    
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleSessionRecovery = () => {
@@ -244,6 +274,12 @@ export default function CompleteAccount() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle>Connecting your session...</CardTitle>
+            <CardDescription>
+              Please wait while we verify your authentication.
+            </CardDescription>
+          </CardHeader>
           <CardContent className="flex items-center justify-center p-8">
             <Loader2 className="h-8 w-8 animate-spin" />
           </CardContent>

@@ -1,82 +1,70 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.55.0";
-
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
-type AdminContext = {
+interface AdminContext {
   currentUser: any;
-  adminProfile: { community_id: string | null; district_id: string | null };
+  adminProfile: any;
   isStateAdmin: boolean;
   supabaseAdmin: any;
   supabase: any;
-};
+}
 
 async function initializeAdminContext(req: Request): Promise<AdminContext> {
-  const supabaseAdmin = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-  );
+  const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+  
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-      global: {
-        headers: {
-          Authorization: req.headers.get("Authorization") ?? "",
-        },
-      },
-    }
-  );
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-  const {
-    data: { user: currentUser },
-    error: userError,
-  } = await supabase.auth.getUser();
-  if (userError || !currentUser) {
-    throw new Error("Authentication required. Please log in again.");
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader) {
+    throw new Error('No authorization header');
   }
 
-  const { data: userRoles, error: roleError } = await supabase
-    .from("enhanced_user_roles")
-    .select("role")
-    .eq("user_id", currentUser.id)
-    .eq("is_active", true);
-  if (roleError) {
-    throw new Error("Error checking user roles");
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  
+  if (error || !user) {
+    throw new Error('Invalid authentication token');
   }
 
-  const hasAdminRole = userRoles?.some((r) =>
-    ["community_admin", "district_coordinator", "state_admin"].includes(r.role)
-  );
-  if (!hasAdminRole) {
-    throw new Error("Insufficient permissions. Admin role required.");
+  const { data: userRoles, error: rolesError } = await supabaseAdmin
+    .from('enhanced_user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('is_active', true);
+
+  if (rolesError) {
+    throw new Error(`Failed to fetch user roles: ${rolesError.message}`);
   }
 
-  const { data: adminProfile, error: adminProfileError } = await supabase
-    .from("profiles")
-    .select("community_id, district_id")
-    .eq("id", currentUser.id)
+  const roles = userRoles.map((r: any) => r.role);
+  const allowedRoles = ['community_admin', 'district_coordinator', 'state_admin'];
+  
+  if (!roles.some((role: string) => allowedRoles.includes(role))) {
+    throw new Error('Insufficient permissions to create guest users');
+  }
+
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .select('*')
+    .eq('user_id', user.id)
     .single();
 
-  const isStateAdmin = userRoles?.some((r) => r.role === "state_admin");
-  if (adminProfileError || (!adminProfile?.community_id && !isStateAdmin)) {
-    if (!isStateAdmin) {
-      throw new Error("Admin must be assigned to a community");
-    }
+  if (profileError) {
+    throw new Error(`Failed to fetch admin profile: ${profileError.message}`);
   }
 
+  const isStateAdmin = roles.includes('state_admin');
+  
   return {
-    currentUser,
-    adminProfile: adminProfile || { community_id: null, district_id: null },
+    currentUser: user,
+    adminProfile: profile,
     isStateAdmin,
     supabaseAdmin,
     supabase,
@@ -108,6 +96,8 @@ async function createAuthUser(
     authUser = inviteResult.data;
     authError = inviteResult.error;
   } else {
+    console.log(`Attempting to create user directly: ${userData.email}`);
+    
     const createResult = await context.supabaseAdmin.auth.admin.createUser({
       email: userData.email,
       password: userData.password,
@@ -119,30 +109,79 @@ async function createAuthUser(
     authError = createResult.error;
   }
 
-  if (authError) {
+  // Handle existing email error gracefully for guest users
+  if (authError && authError.message?.includes("already been registered")) {
+    console.log(`User with email ${userData.email} already exists, attempting to reuse account`);
+    
+    // Look up existing user by email
+    const { data: users, error: getUserError } = await context.supabaseAdmin.auth.admin.listUsers();
+    
+    if (getUserError) {
+      throw new Error(`Failed to lookup existing user: ${getUserError.message}`);
+    }
+    
+    const existingUser = users.users.find((u: any) => u.email === userData.email);
+    
+    if (!existingUser) {
+      throw new Error(`User exists but could not be found: ${userData.email}`);
+    }
+    
+    console.log(`Found existing user: ${existingUser.id}`);
+    authUser = { user: existingUser };
+    authError = null;
+  } else if (authError) {
     throw new Error(`Failed to create user: ${authError.message}`);
   }
+
   if (!authUser?.user) {
-    throw new Error("Failed to create user: No user returned");
+    throw new Error("Failed to create or retrieve user");
   }
-  return authUser;
+
+  console.log(`Auth user ${useInviteFlow ? 'invited' : 'created'}: ${authUser.user.id}`);
+  return authUser.user.id;
 }
 
-async function updateUserProfile(
-  userId: string,
-  profileData: any,
-  context: AdminContext
-) {
+async function updateUserProfile(userId: string, profileData: any, context: AdminContext) {
+  console.log("Updating guest profile for user:", userId);
+  
+  // Check if profile already exists
+  const { data: existingProfile } = await context.supabaseAdmin
+    .from("profiles")
+    .select("id, account_status")
+    .eq("user_id", userId)
+    .single();
+  
+  let profileUpdate = {
+    user_id: userId,
+    full_name: profileData.full_name,
+    district_id: profileData.district_id,
+    community_id: profileData.community_id,
+    account_status: profileData.account_status,
+    access_expires_at: profileData.access_expires_at,
+    updated_at: new Date().toISOString(),
+  };
+  
+  // If profile exists and has account_status, preserve it unless we're explicitly setting it
+  if (existingProfile && existingProfile.account_status && !profileData.account_status) {
+    profileUpdate.account_status = existingProfile.account_status;
+  }
+
   const { error: profileError } = await context.supabaseAdmin
     .from("profiles")
-    .upsert({ id: userId, user_id: userId, ...profileData }, { onConflict: "user_id" });
+    .upsert(profileUpdate, { onConflict: "user_id" });
+
   if (profileError) {
+    console.error("Profile update error:", profileError);
     await context.supabaseAdmin.auth.admin.deleteUser(userId);
     throw new Error(`Failed to update profile: ${profileError.message}`);
   }
+  
+  console.log("Guest profile updated successfully");
 }
 
 async function assignUserRole(userId: string, role: string, context: AdminContext) {
+  console.log(`Assigning ${role} role to user: ${userId}`);
+  
   const { error: roleUpsertError } = await context.supabaseAdmin
     .from("enhanced_user_roles")
     .upsert({
@@ -159,6 +198,8 @@ async function assignUserRole(userId: string, role: string, context: AdminContex
     await context.supabaseAdmin.from("profiles").delete().eq("user_id", userId);
     throw new Error(`Failed to assign role: ${roleUpsertError.message}`);
   }
+  
+  console.log("Guest role assigned successfully");
 }
 
 serve(async (req) => {
@@ -169,77 +210,67 @@ serve(async (req) => {
   try {
     const context = await initializeAdminContext(req);
 
-    const {
-      email,
-      password,
-      full_name,
-      phone,
-      access_expires_at,
-    } = await req.json();
-
-    // Enhanced input validation for guests
+    const { email, password, full_name, phone, access_expires_at } = await req.json();
+    
     console.log("Raw request data:", { email, password, full_name, phone, access_expires_at });
-    
-    if (!email || !full_name) {
-      throw new Error("Email and full name are required for guest users");
-    }
-    
-    if (!access_expires_at) {
-      throw new Error("Guest users require an expiration date");
+
+    if (!email || !full_name || !access_expires_at) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields: email, full_name, access_expires_at" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
+      );
     }
 
-    // Validate expiration date is in the future
+    // Validate expiration date
     const expirationDate = new Date(access_expires_at);
     if (expirationDate <= new Date()) {
-      throw new Error("Guest expiration date must be in the future");
+      return new Response(
+        JSON.stringify({ error: "Access expiration date must be in the future" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
+      );
     }
 
-    console.log("Creating guest with validated data:", {
+    const validatedData = {
       email,
       full_name,
       access_expires_at,
       expiration_date_parsed: expirationDate,
       admin_community: context.adminProfile?.community_id,
       admin_district: context.adminProfile?.district_id,
-      is_state_admin: context.isStateAdmin
-    });
+      is_state_admin: context.isStateAdmin,
+    };
 
-    const safePassword = typeof password === 'string' && password.length >= 8 ? password : 'TempPassword123!';
+    console.log("Creating guest with validated data:", validatedData);
 
-    // Create auth user with direct creation (guests get immediate access)
-    const authUser = await createAuthUser(
-      { email, password: safePassword, full_name },
-      false, // Direct creation for guests
+    // Create auth user directly (no invite flow for guests)
+    const userId = await createAuthUser(
+      { email, password, full_name },
+      false, // Use direct creation for guests
       context,
       req
     );
 
-    console.log("Auth user created:", authUser.user.id);
-
-    // Prepare guest profile data
-    const profileData: any = {
+    // Update profile with guest-specific data
+    await updateUserProfile(userId, {
       full_name,
-      phone: phone || null,
-      email,
-      district_id: context.adminProfile?.district_id || null,
-      community_id: context.adminProfile?.community_id || null,
+      district_id: context.adminProfile?.district_id,
+      community_id: context.adminProfile?.community_id,
       account_status: "approved", // Guests are auto-approved
-      access_expires_at,
-      access_level: "basic", // Default access level for guests
-    };
+      access_expires_at: expirationDate.toISOString(),
+    }, context);
 
-    // Update profile with guest data
-    await updateUserProfile(authUser.user.id, profileData, context);
-    console.log("Guest profile updated successfully");
-
-    // Assign guest role - this is required for the system to work properly
-    console.log("Assigning guest role to user:", authUser.user.id);
-    await assignUserRole(authUser.user.id, "guest", context);
-    console.log("Guest role assigned successfully");
+    // Assign guest role
+    await assignUserRole(userId, "guest", context);
 
     console.log("Guest creation completed successfully:", {
-      userId: authUser.user.id,
-      email: authUser.user.email,
+      userId: userId,
+      email: email,
       role: "guest"
     });
 
@@ -247,8 +278,8 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         user: {
-          id: authUser.user.id,
-          email: authUser.user.email,
+          id: userId,
+          email: email,
           full_name,
           role: "guest",
           access_expires_at,

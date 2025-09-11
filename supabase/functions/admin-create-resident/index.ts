@@ -171,7 +171,7 @@ async function assignUserRole(userId: string, role: string, context: AdminContex
       is_active: true,
       assigned_at: new Date().toISOString(),
     }, { 
-      onConflict: "user_id,role"
+      onConflict: "user_id,role,district_id"
     });
 
   if (roleUpsertError) {
