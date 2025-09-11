@@ -205,14 +205,14 @@ export default function NotificationBell() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80" align="end">
-        <DropdownMenuLabel className="flex items-center justify-between">
-          {t.notifications}
+        <DropdownMenuLabel className="flex items-center justify-between flex-wrap gap-2">
+          <span className="flex-1 min-w-0 truncate">{t.notifications}</span>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
               onClick={markAllAsRead}
-              className="h-auto p-0 text-xs"
+              className="h-auto p-0 text-xs shrink-0"
             >
               {t.markAllRead}
             </Button>
