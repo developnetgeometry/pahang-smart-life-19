@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
+import OptimizedNotificationBell from '@/components/communication/OptimizedNotificationBell';
 import EnhancedNotificationBell from '@/components/communication/EnhancedNotificationBell';
 import { useTranslation } from '@/lib/translations';
 import { useUserRoles } from '@/hooks/use-user-roles';
@@ -97,7 +98,7 @@ export const Header = React.memo(() => {
       <GuestIndicator />
 
       {/* Notifications */}
-      <EnhancedNotificationBell />
+      <OptimizedNotificationBell />
 
       {/* User Menu */}
       <DropdownMenu>

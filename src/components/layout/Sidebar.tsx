@@ -1,7 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/lib/translations";
 import { NavLink, useLocation } from "react-router-dom";
-import { useModuleAccess } from "@/hooks/use-module-access";
+import { useModuleAccessOptimized as useModuleAccess } from "@/hooks/use-module-access-optimized";
 import {
   Sidebar,
   SidebarContent,
