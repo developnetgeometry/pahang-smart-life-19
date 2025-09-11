@@ -113,8 +113,8 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      // Get household accounts for this user
-      const { data: householdAccounts, error: accountsError } = await supabase
+      // Get household accounts for this user using admin client to bypass RLS
+      const { data: householdAccounts, error: accountsError } = await supabaseAdmin
         .from("household_accounts")
         .select(
           `
@@ -123,13 +123,7 @@ const handler = async (req: Request): Promise<Response> => {
           relationship_type,
           permissions,
           is_active,
-          created_at,
-          profiles!household_accounts_linked_user_id_fkey (
-            id,
-            full_name,
-            email,
-            phone
-          )
+          created_at
         `
         )
         .eq("primary_user_id", hostUserId)
@@ -147,7 +141,30 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      return new Response(JSON.stringify({ data: householdAccounts }), {
+      // Get profile data for linked users separately
+      const linkedUserIds = householdAccounts?.map(account => account.linked_user_id) || [];
+      let linkedProfiles = [];
+      
+      if (linkedUserIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabaseAdmin
+          .from("profiles")
+          .select("id, full_name, email, phone")
+          .in("id", linkedUserIds);
+          
+        if (profilesError) {
+          console.error("Error fetching linked profiles:", profilesError);
+        } else {
+          linkedProfiles = profiles || [];
+        }
+      }
+
+      // Map profiles to household accounts
+      const enrichedAccounts = householdAccounts?.map(account => ({
+        ...account,
+        profiles: linkedProfiles.find(profile => profile.id === account.linked_user_id)
+      })) || [];
+
+      return new Response(JSON.stringify({ data: enrichedAccounts }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -182,10 +199,10 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       // Get host user info to inherit district and community
-      const { data: hostProfile, error: hostError } = await supabase
+      const { data: hostProfile, error: hostError } = await supabaseAdmin
         .from("profiles")
         .select("district_id, community_id")
-        .eq("user_id", body.host_user_id)
+        .eq("id", body.host_user_id)
         .single();
 
       if (hostError || !hostProfile) {
