@@ -9,6 +9,7 @@ import { Layout } from "@/components/layout/Layout";
 import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
 import ComplaintDetail from "./pages/ComplaintDetail";
 import MyComplaints from "./pages/MyComplaints";
 import MyProfile from "./pages/MyProfile";
@@ -169,6 +170,12 @@ const App = () => (
             <Route
               path="/login/complete-account"
               element={<Navigate to="/complete-account" replace />}
+            />
+            <Route
+              path="/reset-password"
+              element={
+                <ResetPassword />
+              }
             />
             <Route
               path="/"
