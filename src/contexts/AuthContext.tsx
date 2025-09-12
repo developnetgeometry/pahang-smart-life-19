@@ -230,36 +230,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userObj);
       setRoles(userObj.available_roles);
     } catch (e) {
-      console.error(`AuthContext: Failed to load profile/roles for user ${userId}:`, e);
+      console.error(`🔐 AuthContext: Failed to load profile/roles for user ${userId}:`, e);
       setUser(null);
       setRoles([]);
       setAccountStatus(null);
-    } finally {
-      setInitializing(false);
     }
   };
 
-  // Auth state listener + initial session with debouncing
+  // Auth state listener + initial session
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    let isProcessing = false;
+    console.log("🔐 AuthContext: Setting up auth listener...");
     
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Clear previous timeout to debounce rapid auth changes
-      if (timeoutId) clearTimeout(timeoutId);
-      
-      // Prevent multiple simultaneous processing
-      if (isProcessing) return;
-      
       const uid = session?.user?.id;
-      console.log(`AuthContext: Auth state change - Event: ${event}, User ID: ${uid}`);
+      console.log(`🔐 AuthContext: Auth state change - Event: ${event}, User ID: ${uid || 'none'}`);
+      
+      // Always set initializing to false after auth state change
+      setInitializing(false);
       
       if (uid) {
-        isProcessing = true;
+        console.log("🔐 AuthContext: User session found, loading profile...");
         
-        // Handle email confirmation asynchronously without blocking
+        // Handle email confirmation for new signups
         if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
           try {
             const { data: profile } = await supabase
@@ -275,50 +269,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 .eq("user_id", uid);
             }
           } catch (error) {
-            console.error("Error updating account status:", error);
+            console.error("🔐 AuthContext: Error updating account status:", error);
           }
         }
         
-        // Load profile and roles directly without debouncing
+        // Load profile and roles
         try {
           await loadProfileAndRoles(uid);
         } catch (error) {
-          console.error("❌ Failed to establish session from any token method", error);
-        } finally {
-          isProcessing = false;
+          console.error("🔐 AuthContext: Failed to load profile/roles:", error);
+          // Even if loading fails, ensure we clear the state
+          setUser(null);
+          setRoles([]);
+          setAccountStatus(null);
         }
       } else {
-        console.log(`AuthContext: No user session, clearing state`);
+        console.log("🔐 AuthContext: No user session, clearing state...");
         setUser(null);
         setRoles([]);
         setAccountStatus(null);
-        setInitializing(false);
-        isProcessing = false;
       }
     });
 
     // Initial session check
     supabase.auth.getSession().then(async ({ data }) => {
       const uid = data.session?.user?.id;
-      console.log(`AuthContext: Initial session check - User ID: ${uid}`);
+      console.log("🔐 AuthContext: Initial session check", { hasSession: !!data.session, userId: uid });
       
-      if (uid && !isProcessing) {
-        isProcessing = true;
+      if (uid) {
         try {
           await loadProfileAndRoles(uid);
         } catch (error) {
-          console.error("❌ Failed to establish session from initial check", error);
-        } finally {
-          isProcessing = false;
+          console.error("🔐 AuthContext: Failed initial profile load:", error);
+          setUser(null);
+          setRoles([]);
+          setAccountStatus(null);
         }
-      } else if (!uid) {
-        setInitializing(false);
       }
+      
+      // Always set initializing to false after initial check
+      setInitializing(false);
     });
 
     return () => {
       subscription.unsubscribe();
-      if (timeoutId) clearTimeout(timeoutId);
     };
   }, []);
 
