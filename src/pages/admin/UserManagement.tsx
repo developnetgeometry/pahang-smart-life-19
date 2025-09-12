@@ -67,6 +67,7 @@ import RoleCreationValidator from "@/components/admin/RoleCreationValidator";
 import RoleValidationTests from "@/components/admin/RoleValidationTests";
 import { AdminDiagnostics } from "@/components/admin/AdminDiagnostics";
 import { CreateUserValidator } from "@/components/admin/CreateUserValidator";
+import { adminDeleteUser } from "@/service/adminService";
 
 interface User {
   id: string;
@@ -960,21 +961,27 @@ export default function UserManagement() {
   const handleDelete = async (id: string) => {
     if (window.confirm("Delete this user? This action cannot be undone.")) {
       try {
-        // First delete user roles
-        const { error: roleError } = await supabase
+        // Delete user from Supabase auth (admin)
+        const result = await adminDeleteUser(id);
+        if (!result.success) throw new Error(result.message || "Failed to delete user from auth");
+
+        // Clean up user roles (optional, for DB consistency)
+        await supabase
           .from("user_roles")
           .delete()
           .eq("user_id", id);
 
-        if (roleError) throw roleError;
-
-        // Then delete profile
-        const { error: profileError } = await supabase
-          .from("profiles")
+        // Clean up enhanced_user_roles (optional, for DB consistency)
+        await supabase
+          .from("enhanced_user_roles")
           .delete()
           .eq("user_id", id);
 
-        if (profileError) throw profileError;
+        // Clean up profile (optional, for DB consistency)
+        await supabase
+          .from("profiles")
+          .delete()
+          .eq("user_id", id);
 
         toast({ title: t.userDeleted });
         fetchUsers(); // Refresh the list
