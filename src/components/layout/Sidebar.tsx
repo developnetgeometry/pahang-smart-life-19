@@ -288,7 +288,7 @@ export function AppSidebar() {
     if (hasRole("state_admin")) {
       adminItems.push({
         title: t("districtManagement"),
-        url: "/admin/district-management",
+        url: "/admin/districts",
         icon: Settings,
         requiredRoles: ["state_admin"],
       });

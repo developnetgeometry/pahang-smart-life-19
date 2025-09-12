@@ -70,7 +70,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = React.memo(({ children }: { children: React.ReactNode }) => {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [initializing, setInitializing] = useState(true);
   const [accountStatus, setAccountStatus] = useState<string | null>(null);
@@ -82,8 +82,7 @@ export const AuthProvider = React.memo(({ children }: { children: React.ReactNod
   const [roles, setRoles] = useState<UserRole[]>([]);
   const { toast } = useToast();
 
-  const isApproved = useMemo(() => accountStatus === "approved", [accountStatus]);
-  const isAuthenticated = useMemo(() => !!user, [user]);
+  const isApproved = accountStatus === "approved";
   
   console.log('🔐 AuthContext: Auth state -', { 
     user: user?.email || 'none', 
@@ -435,7 +434,7 @@ export const AuthProvider = React.memo(({ children }: { children: React.ReactNod
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-});
+}
 
 export function useAuth() {
   const context = useContext(AuthContext);

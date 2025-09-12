@@ -422,7 +422,7 @@ export default function DistrictManagement() {
                     variant="outline" 
                     size="sm" 
                     className="flex-1"
-                    onClick={() => navigate(`/admin/district/${district.id}`)}
+                    onClick={() => navigate(`/admin/districts/${district.id}`)}
                   >
                     <Eye className="h-4 w-4 mr-1" />
                     {t.view}
