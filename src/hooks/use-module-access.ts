@@ -11,6 +11,7 @@ export interface EnabledModule {
 export function useModuleAccess() {
   const { user, hasRole } = useAuth();
   const [enabledModules, setEnabledModules] = useState<EnabledModule[]>([]);
+  const [communityId, setCommunityId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   console.log(
@@ -26,6 +27,7 @@ export function useModuleAccess() {
         console.log("No user logged in - setting empty modules");
         setEnabledModules([]);
         setLoading(false);
+        setCommunityId(null);
         return;
       }
 
@@ -50,6 +52,7 @@ export function useModuleAccess() {
           console.error("Error fetching user profile:", profileError);
           setEnabledModules([]);
           setLoading(false);
+          setCommunityId(null);
           return;
         }
 
@@ -57,8 +60,11 @@ export function useModuleAccess() {
           console.log("User has no community assigned, profile data:", profile);
           setEnabledModules([]);
           setLoading(false);
+          setCommunityId(null);
           return;
         }
+        
+        setCommunityId(profile.community_id);
 
         console.log("User community_id:", profile.community_id);
 
@@ -162,6 +168,7 @@ export function useModuleAccess() {
     loading,
     isModuleEnabled,
     getModulesByCategory,
+    communityId,
   };
 }
 
