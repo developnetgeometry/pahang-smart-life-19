@@ -113,12 +113,10 @@ async function createAuthUser(
   context: AdminContext,
   req: Request
 ) {
-  // Always use direct creation - no more invite flow to avoid Supabase default emails
-  const finalPassword = userData.password || generateTemporaryPassword(12);
-  
+  // Always use direct creation with password123
   const createResult = await context.supabaseAdmin.auth.admin.createUser({
     email: userData.email,
-    password: finalPassword,
+    password: 'password123', // Use static password as requested
     email_confirm: true, // Skip email confirmation since we send custom emails
     user_metadata: { full_name: userData.full_name },
   });
@@ -130,7 +128,7 @@ async function createAuthUser(
     throw new Error("Failed to create user: No user returned");
   }
   
-  return { user: createResult.data.user, password: finalPassword };
+  return { user: createResult.data.user, password: 'password123' };
 }
 
 async function updateUserProfile(
@@ -255,10 +253,9 @@ serve(async (req) => {
       admin_community: context.adminProfile?.community_id,
     });
 
-    const finalPassword = password || generateTemporaryPassword(12);
-
+    // Create auth user with direct creation - using password123
     const { user: createdUser, password: tempPassword } = await createAuthUser(
-      { email, password: finalPassword, full_name },
+      { email, full_name },
       false,
       context,
       req

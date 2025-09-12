@@ -135,45 +135,24 @@ async function createAuthUser(
   context: AdminContext,
   req: Request
 ) {
-  let authUser: any;
-  let authError: any;
+  // Always use direct user creation with password123
+  const createResult = await context.supabaseAdmin.auth.admin.createUser({
+    email: userData.email,
+    password: 'password123', // Use static password as requested
+    email_confirm: true,
+    user_metadata: { full_name: userData.full_name },
+  });
 
-  if (useInviteFlow) {
-    // For guests, we'll create directly and send custom email
-    const finalPassword = userData.password || generateTemporaryPassword(12);
-    
-    const createResult = await context.supabaseAdmin.auth.admin.createUser({
-      email: userData.email,
-      password: finalPassword,
-      email_confirm: true,
-      user_metadata: { full_name: userData.full_name },
-    });
-
-    authUser = createResult.data;
-    authError = createResult.error;
-    userData.password = finalPassword; // Store for email
-  } else {
-    const createResult = await context.supabaseAdmin.auth.admin.createUser({
-      email: userData.email,
-      password: userData.password,
-      email_confirm: true,
-      user_metadata: { full_name: userData.full_name },
-    });
-
-    authUser = createResult.data;
-    authError = createResult.error;
+  if (createResult.error) {
+    throw new Error(`Failed to process user: ${createResult.error.message}`);
   }
 
-  if (authError) {
-    throw new Error(`Failed to process user: ${authError.message}`);
-  }
-
-  if (!authUser?.user) {
+  if (!createResult.data?.user) {
     throw new Error("Failed to create or retrieve user");
   }
 
-  console.log(`Auth user created: ${authUser.user.id}`);
-  return { userId: authUser.user.id, password: userData.password };
+  console.log(`Auth user created: ${createResult.data.user.id}`);
+  return { userId: createResult.data.user.id, password: 'password123' };
 }
 
 async function updateUserProfile(userId: string, profileData: any, context: AdminContext) {
@@ -283,10 +262,10 @@ serve(async (req) => {
 
     console.log("Creating guest with validated data:", validatedData);
 
-    // Create auth user for guests
+    // Create auth user for guests - using password123
     const { userId, password: finalPassword } = await createAuthUser(
-      { email, password, full_name },
-      true, // Generate password and create directly
+      { email, full_name },
+      true,
       context,
       req
     );
