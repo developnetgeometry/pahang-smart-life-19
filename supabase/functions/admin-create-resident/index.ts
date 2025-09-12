@@ -94,27 +94,30 @@ async function sendUserEmail({
   email,
   full_name,
   adminName,
-  req
+  req,
+  temporary_password
 }: {
   email: string;
   full_name: string;
   adminName: string;
   req: Request;
+  temporary_password?: string;
 }) {
   const frontendUrl =
     Deno.env.get("FRONTEND_URL") ||
     req.headers.get("origin") ||
     "https://www.primapahang.com";
 
-  const invitationUrl = `${frontendUrl}/complete-account`;
+  const loginUrl = `${frontendUrl}/login`; // Always redirect to login, not complete-account
   
   const emailHtml = await renderAsync(
     React.createElement(UserInvitationEmail, {
       full_name,
       email,
       role: "resident",
-      invitation_url: invitationUrl,
+      invitation_url: loginUrl,
       admin_name: adminName,
+      temporary_password, // Include the temporary password
     })
   );
 
@@ -283,21 +286,21 @@ serve(async (req) => {
       admin_community: context.adminProfile?.community_id,
     });
 
-    // Create auth user using invite flow with enhanced metadata
-    const authUser = await createAuthUser(
+    // Create auth user - no invite flow to avoid Supabase default emails
+    const { user: createdUser, password: tempPassword } = await createAuthUser(
       { 
         email, 
         full_name,
         district_id: context.adminProfile?.district_id,
         community_id: context.adminProfile?.community_id,
-        signup_flow: 'resident_invite'
+        signup_flow: 'resident_admin_created'
       },
-      true, // Use invite flow for residents
+      false, // Never use invite flow
       context,
       req
     );
 
-    console.log("Auth user invited:", authUser.user.id);
+    console.log("Auth user created:", createdUser.id);
 
     // Prepare resident profile data
     const profileData: any = {
@@ -316,11 +319,11 @@ serve(async (req) => {
     if (emergency_contact_phone) profileData.emergency_contact_phone = emergency_contact_phone;
 
     // Update profile with resident data
-    await updateUserProfile(authUser.user.id, profileData, context);
+    await updateUserProfile(createdUser.id, profileData, context);
     console.log("Resident profile updated successfully");
 
     // Assign resident role
-    await assignUserRole(authUser.user.id, "resident", context);
+    await assignUserRole(createdUser.id, "resident", context);
     console.log("Resident role assigned successfully");
 
     // Get admin's name for personalized emails
@@ -338,7 +341,8 @@ serve(async (req) => {
         email,
         full_name,
         adminName,
-        req
+        req,
+        temporary_password: tempPassword,
       });
       console.log(`Email sent successfully for resident: ${email}`);
     } catch (emailError) {
@@ -350,14 +354,15 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         user: {
-          id: authUser.user.id,
-          email: authUser.user.email,
+          id: createdUser.id,
+          email: createdUser.email,
           full_name,
           role: "resident",
           unit_number,
         },
-        invitation_sent: true,
-        message: "Resident invitation sent successfully. They will receive an email to complete their account setup.",
+        email_sent: true,
+        temporary_password: tempPassword,
+        message: "Resident account created successfully. They will receive login credentials via email.",
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

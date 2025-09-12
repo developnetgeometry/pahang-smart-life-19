@@ -113,43 +113,24 @@ async function createAuthUser(
   context: AdminContext,
   req: Request
 ) {
-  let authUser: any;
-  let authError: any;
+  // Always use direct creation - no more invite flow to avoid Supabase default emails
+  const finalPassword = userData.password || generateTemporaryPassword(12);
+  
+  const createResult = await context.supabaseAdmin.auth.admin.createUser({
+    email: userData.email,
+    password: finalPassword,
+    email_confirm: true, // Skip email confirmation since we send custom emails
+    user_metadata: { full_name: userData.full_name },
+  });
 
-  if (useInviteFlow) {
-    const frontendUrl =
-      Deno.env.get("FRONTEND_URL") || req.headers.get("origin") || "http://localhost:3000";
-    const redirectUrl = `${frontendUrl}/complete-account`;
-
-    const inviteResult = await context.supabaseAdmin.auth.admin.inviteUserByEmail(
-      userData.email,
-      {
-        redirectTo: redirectUrl,
-        data: { full_name: userData.full_name },
-      }
-    );
-
-    authUser = inviteResult.data;
-    authError = inviteResult.error;
-  } else {
-    const createResult = await context.supabaseAdmin.auth.admin.createUser({
-      email: userData.email,
-      password: userData.password,
-      email_confirm: true,
-      user_metadata: { full_name: userData.full_name },
-    });
-
-    authUser = createResult.data;
-    authError = createResult.error;
+  if (createResult.error) {
+    throw new Error(`Failed to create user: ${createResult.error.message}`);
   }
-
-  if (authError) {
-    throw new Error(`Failed to create user: ${authError.message}`);
-  }
-  if (!authUser?.user) {
+  if (!createResult.data?.user) {
     throw new Error("Failed to create user: No user returned");
   }
-  return authUser;
+  
+  return { user: createResult.data.user, password: finalPassword };
 }
 
 async function updateUserProfile(
@@ -271,14 +252,14 @@ serve(async (req) => {
     // Create auth user with direct creation
     const finalPassword = password || generateTemporaryPassword(12);
 
-    const authUser = await createAuthUser(
+    const { user: createdUser, password: tempPassword } = await createAuthUser(
       { email, password: finalPassword, full_name },
       false, // Direct creation for staff
       context,
       req
     );
 
-    console.log("Auth user created:", authUser.user.id);
+    console.log("Auth user created:", createdUser.id);
 
     // Prepare security officer profile data
     const profileData: any = {
@@ -296,11 +277,11 @@ serve(async (req) => {
     if (shift_type) profileData.shift_type = shift_type;
 
     // Update profile with security officer data
-    await updateUserProfile(authUser.user.id, profileData, context);
+    await updateUserProfile(createdUser.id, profileData, context);
     console.log("Security officer profile updated successfully");
 
     // Assign security officer role
-    await assignUserRole(authUser.user.id, "security_officer", context);
+    await assignUserRole(createdUser.id, "security_officer", context);
     console.log("Security officer role assigned successfully");
 
     // Get admin's name for personalized emails
@@ -317,7 +298,7 @@ serve(async (req) => {
       await sendUserEmail({
         email,
         full_name,
-        password: finalPassword,
+        password: tempPassword,
         adminName,
         req
       });
@@ -331,8 +312,8 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         user: {
-          id: authUser.user.id,
-          email: authUser.user.email,
+          id: createdUser.id,
+          email: createdUser.email,
           full_name,
           role: "security_officer",
           badge_id,
