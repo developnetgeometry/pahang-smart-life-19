@@ -408,6 +408,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Error during logout:", error);
     }
+
+      Object.keys(localStorage)
+    .filter((key) => key.startsWith("sb-"))
+    .forEach((key) => localStorage.removeItem(key));
+
+  window.location.reload();
   };
 
   const switchLanguage = async (lang: Language) => {
