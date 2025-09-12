@@ -53,16 +53,22 @@ export default function PanicAlertHistory({ language }: PanicAlertHistoryProps) 
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('panic_alerts')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      let query = supabase
+        .from("panic_alerts")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      // only filter by user_id if not a security officer
+      if (user.user_role !== "security_officer") {
+        query = query.eq("user_id", user.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setAlerts(data || []);
     } catch (error) {
-      console.error('Error fetching panic alerts:', error);
+      console.error("Error fetching panic alerts:", error);
     } finally {
       setLoading(false);
     }

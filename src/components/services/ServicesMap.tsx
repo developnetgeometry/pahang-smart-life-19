@@ -61,6 +61,7 @@ export function ServicesMap({
     null
   );
   const [loading, setLoading] = useState(true);
+  const [mapError, setMapError] = useState<string | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
 
   const text = {
@@ -77,6 +78,7 @@ export function ServicesMap({
       contactProvider: "Contact Provider",
       directions: "Get Directions",
       featured: "Featured",
+      mapError: "Failed to load map",
     },
     ms: {
       loading: "Memuatkan peta...",
@@ -91,6 +93,7 @@ export function ServicesMap({
       contactProvider: "Hubungi Penyedia",
       directions: "Dapatkan Arah",
       featured: "Pilihan",
+      mapError: "Gagal memuatkan peta",
     },
   };
 
@@ -111,23 +114,45 @@ export function ServicesMap({
         map.current = null;
       }
     };
-  }, [mapboxToken]);
+  }, [mapboxToken, userLocation]);
 
   useEffect(() => {
     if (map.current) {
       fetchServiceProviders();
     }
-  }, [selectedCategory, searchTerm, userLocation]);
+  }, [selectedCategory, searchTerm]);
 
   const fetchMapboxToken = async () => {
     try {
+      console.log("Fetching Mapbox token...");
       const { data, error } = await supabase.functions.invoke(
         "get-mapbox-token"
       );
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error from edge function:", error);
+        throw error;
+      }
+      
+      if (!data || !data.token) {
+        console.error("No token received from edge function");
+        throw new Error("No token received");
+      }
+      
+      console.log("Mapbox token received successfully");
       setMapboxToken(data.token);
     } catch (error) {
       console.error("Error fetching Mapbox token:", error);
+      setMapError("Failed to load map token");
+      setLoading(false);
+      
+      // Fallback: Try using environment variable if available
+      const envToken = import.meta.env.VITE_MAPBOX_TOKEN;
+      if (envToken) {
+        console.log("Using fallback token from environment");
+        setMapboxToken(envToken);
+        setMapError(null);
+      }
     }
   };
 
@@ -135,6 +160,7 @@ export function ServicesMap({
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          console.log("User location obtained:", position.coords);
           setUserLocation([
             position.coords.longitude,
             position.coords.latitude,
@@ -142,46 +168,76 @@ export function ServicesMap({
         },
         (error) => {
           console.warn("Geolocation error:", error);
-          // Default to Kuala Selangor
-          setUserLocation([101.4551, 3.2278]);
+          // Default to Kuala Lumpur
+          setUserLocation([101.6869, 3.1390]);
         }
       );
     } else {
-      setUserLocation([101.4551, 3.2278]);
+      console.log("Geolocation not supported, using default location");
+      // Default to Kuala Lumpur
+      setUserLocation([101.6869, 3.1390]);
     }
   };
 
   const initializeMap = () => {
-    if (!mapboxToken || !mapContainer.current || map.current) return;
-
-    mapboxgl.accessToken = mapboxToken;
-
-    const center = userLocation || [101.4551, 3.2278];
-
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v12",
-      center,
-      zoom: 12,
-    });
-
-    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-
-    // Add user location marker if available
-    if (userLocation) {
-      new mapboxgl.Marker({ color: "#3b82f6" })
-        .setLngLat(userLocation)
-        .setPopup(new mapboxgl.Popup().setHTML("<p>Your Location</p>"))
-        .addTo(map.current);
+    if (!mapboxToken || !mapContainer.current || map.current) {
+      console.log("Map initialization skipped:", { 
+        hasToken: !!mapboxToken, 
+        hasContainer: !!mapContainer.current, 
+        hasMap: !!map.current 
+      });
+      return;
     }
 
-    map.current.on("load", () => {
+    try {
+      console.log("Initializing Mapbox map...");
+      mapboxgl.accessToken = mapboxToken;
+
+      const center = userLocation || [101.6869, 3.1390];
+      console.log("Map center:", center);
+
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: "mapbox://styles/mapbox/streets-v12",
+        center,
+        zoom: 12,
+      });
+
+      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+      // Add user location marker if available
+      if (userLocation) {
+        new mapboxgl.Marker({ color: "#3b82f6" })
+          .setLngLat(userLocation)
+          .setPopup(new mapboxgl.Popup().setHTML("<p>Your Location</p>"))
+          .addTo(map.current);
+      }
+
+      map.current.on("load", () => {
+        console.log("Map loaded successfully");
+        setLoading(false);
+        setMapError(null);
+        fetchServiceProviders();
+      });
+
+      // Add error handler
+      map.current.on("error", (e) => {
+        console.error("Mapbox map error:", e);
+        setMapError("Failed to load map");
+        setLoading(false);
+      });
+
+    } catch (error) {
+      console.error("Error initializing map:", error);
+      setMapError("Failed to initialize map");
       setLoading(false);
-    });
+    }
   };
 
   const fetchServiceProviders = async () => {
     try {
+      console.log("Fetching service providers...");
+      
       // First get service provider businesses with location data
       const { data: businessesData, error: businessesError } = await supabase
         .from("service_provider_businesses")
@@ -189,7 +245,12 @@ export function ServicesMap({
         .not("location_latitude", "is", null)
         .not("location_longitude", "is", null);
 
-      if (businessesError) throw businessesError;
+      if (businessesError) {
+        console.error("Error fetching businesses:", businessesError);
+        throw businessesError;
+      }
+
+      console.log("Businesses found:", businessesData?.length || 0);
 
       if (!businessesData || businessesData.length === 0) {
         setProviders([]);
@@ -201,11 +262,11 @@ export function ServicesMap({
       const providerIds = businessesData.map((business) => business.user_id);
       const { data: profilesData } = await supabase
         .from("profiles")
-        .select("id, full_name, avatar_url")
+        .select("user_id, full_name, avatar_url")
         .in("user_id", providerIds);
 
       const profilesMap = (profilesData || []).reduce((acc, profile) => {
-        acc[profile.id] = profile;
+        acc[profile.user_id] = profile;
         return acc;
       }, {} as Record<string, any>);
 
@@ -222,7 +283,12 @@ export function ServicesMap({
       }
 
       const { data: adsData, error: adsError } = await adsQuery;
-      if (adsError) throw adsError;
+      if (adsError) {
+        console.error("Error fetching advertisements:", adsError);
+        throw adsError;
+      }
+
+      console.log("Advertisements found:", adsData?.length || 0);
 
       // Combine businesses with their advertisements and profiles
       let providersWithData = businessesData.map((business) => ({
@@ -270,6 +336,7 @@ export function ServicesMap({
           .sort((a: any, b: any) => (a.distance || 0) - (b.distance || 0));
       }
 
+      console.log("Final providers count:", providersWithData.length);
       setProviders(providersWithData as ServiceProvider[]);
       updateMapMarkers(providersWithData as ServiceProvider[]);
     } catch (error) {
@@ -305,7 +372,12 @@ export function ServicesMap({
   };
 
   const updateMapMarkers = (providersData: ServiceProvider[]) => {
-    if (!map.current) return;
+    if (!map.current) {
+      console.log("Map not ready for markers");
+      return;
+    }
+
+    console.log("Updating markers for", providersData.length, "providers");
 
     // Clear existing markers
     markers.current.forEach((marker) => marker.remove());
@@ -390,21 +462,33 @@ export function ServicesMap({
     }
   };
 
-  if (loading) {
-    return (
-      <div className="h-96 flex items-center justify-center bg-muted rounded-lg">
-        <div className="text-center">
-          <MapPin className="h-8 w-8 text-muted-foreground mx-auto mb-2 animate-pulse" />
-          <p className="text-muted-foreground">{t.loading}</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Always render the container - this is the key fix!
   return (
     <div className="h-96 relative rounded-lg overflow-hidden border">
       <div ref={mapContainer} className="w-full h-full" />
+      
+      {/* Loading overlay */}
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted/80 z-20">
+          <div className="text-center">
+            <MapPin className="h-8 w-8 text-muted-foreground mx-auto mb-2 animate-pulse" />
+            <p className="text-muted-foreground">{t.loading}</p>
+          </div>
+        </div>
+      )}
 
+      {/* Error overlay */}
+      {mapError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-20">
+          <div className="text-center">
+            <MapPin className="h-8 w-8 text-destructive mx-auto mb-2" />
+            <p className="text-destructive font-medium">{t.mapError}</p>
+            <p className="text-sm text-muted-foreground mt-1">{mapError}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Selected provider card */}
       {selectedProvider && (
         <Card className="absolute top-4 right-4 w-80 max-h-80 overflow-y-auto z-10">
           <CardHeader className="pb-3">
@@ -541,8 +625,9 @@ export function ServicesMap({
         </Card>
       )}
 
-      {providers.length === 0 && !loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+      {/* No providers overlay */}
+      {providers.length === 0 && !loading && !mapError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
           <div className="text-center">
             <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">{t.noProviders}</p>

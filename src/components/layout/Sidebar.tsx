@@ -122,7 +122,7 @@ export function AppSidebar() {
     ];
 
     // Add panic alerts if security module is enabled
-    if (isModuleEnabled("security")) {
+    if (isModuleEnabled("security") && !hasRole("security_officer")) {
       personalItems.push({
         title: t("panicAlerts"),
         url: "/panic-alerts",

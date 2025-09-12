@@ -6,11 +6,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/use-toast';
 import { Shield, AlertTriangle, MapPin, Clock } from 'lucide-react';
+import { useModuleAccess } from '@/hooks/use-module-access';
 
 interface Location {
   latitude: number;
   longitude: number;
   address?: string;
+  timestamp?: number; // Track when location was obtained
 }
 
 export default function PanicButton() {
@@ -23,52 +25,109 @@ export default function PanicButton() {
   const [progress, setProgress] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const progressRef = useRef<NodeJS.Timeout | null>(null);
+  const { communityId } = useModuleAccess();
+  const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN as string;
+  const TG_API = TELEGRAM_BOT_TOKEN ? `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}` : "";
 
   const HOLD_DURATION = 3000; // 3 seconds
+  const LOCATION_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes - use cached location if fresher than this
 
   useEffect(() => {
     // Get user's current location on component mount
-    if (navigator.geolocation) {
+    getCurrentLocation();
+  }, [language, toast]);
+
+  const getCurrentLocation = (forceRefresh = false) => {
+    return new Promise<Location | null>((resolve) => {
+      if (!navigator.geolocation) {
+        console.error('Geolocation not supported');
+        resolve(null);
+        return;
+      }
+
+      // Check if we have a recent cached location and don't need to force refresh
+      if (!forceRefresh && location && location.timestamp) {
+        const locationAge = Date.now() - location.timestamp;
+        if (locationAge < LOCATION_CACHE_DURATION) {
+          console.log('Using cached location');
+          resolve(location);
+          return;
+        }
+      }
+
+      console.log('Getting fresh location...');
+      
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setLocation({
+          const newLocation: Location = {
             latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          });
+            longitude: position.coords.longitude,
+            timestamp: Date.now()
+          };
           
-          // Reverse geocoding to get address
+          setLocation(newLocation);
+          
+          // Reverse geocoding to get address (don't wait for this)
           reverseGeocode(position.coords.latitude, position.coords.longitude);
+          
+          resolve(newLocation);
         },
         (error) => {
           console.error('Error getting location:', error);
+          
+          // Show user-friendly error message
+          const errorMessages = {
+            1: language === 'en' ? 'Location access denied' : 'Akses lokasi ditolak',
+            2: language === 'en' ? 'Location unavailable' : 'Lokasi tidak tersedia', 
+            3: language === 'en' ? 'Location request timed out' : 'Permintaan lokasi tamat tempoh'
+          };
+          
           toast({
             title: language === 'en' ? 'Location Error' : 'Ralat Lokasi',
-            description: language === 'en' 
-              ? 'Unable to get your location. Panic button will still work.' 
-              : 'Tidak dapat mendapatkan lokasi anda. Butang panik masih akan berfungsi.',
+            description: errorMessages[error.code as keyof typeof errorMessages] || 
+              (language === 'en' 
+                ? 'Unable to get location. Using last known location if available.' 
+                : 'Tidak dapat mendapatkan lokasi. Menggunakan lokasi terakhir jika tersedia.'),
             variant: 'destructive',
           });
+
+          // Return the cached location if available, otherwise null
+          resolve(location);
+        },
+        {
+          timeout: 15000, // Increased timeout to 15 seconds
+          enableHighAccuracy: false, // Use less accurate but faster location
+          maximumAge: 300000 // Accept locations up to 5 minutes old
         }
       );
-    }
-  }, [language, toast]);
+    });
+  };
 
   const reverseGeocode = async (lat: number, lng: number) => {
     try {
-      // Using a free geocoding service
       const response = await fetch(
-        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+        {
+          headers: {
+            "User-Agent": "PrimaPahang-PanicButton/1.0 (https://primapahang.com)"
+          }
+        }
       );
+
+      if (!response.ok) {
+        throw new Error(`Nominatim error! status: ${response.status}`);
+      }
+
       const data = await response.json();
       
-      if (data.display_name || data.locality) {
-        setLocation(prev => prev ? {
-          ...prev,
-          address: data.display_name || `${data.locality}, ${data.countryName}`
-        } : null);
+      if (data?.display_name) {
+        setLocation(prev => {
+          const base = prev ?? { latitude: lat, longitude: lng, timestamp: Date.now() };
+          return { ...base, address: data.display_name };
+        });
       }
     } catch (error) {
-      console.error('Error reverse geocoding:', error);
+      console.error("Error reverse geocoding with Nominatim:", error);
     }
   };
 
@@ -111,27 +170,73 @@ export default function PanicButton() {
     setProgress(0);
   };
 
+  const tgSendMessage = async (chatId: string | number, text: string) => {
+    if (!TELEGRAM_BOT_TOKEN) throw new Error("Missing TELEGRAM_BOT_TOKEN");
+    const res = await fetch(`${TG_API}/sendMessage`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.text().catch(() => "");
+      throw new Error(`sendMessage failed (${res.status}): ${err}`);
+    }
+    return await res.json();
+  }
+
+  const tgSendLocation = async (chatId: string | number, lat: number, lng: number) => {
+    if (!TELEGRAM_BOT_TOKEN) throw new Error("Missing TELEGRAM_BOT_TOKEN");
+    const res = await fetch(`${TG_API}/sendLocation`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, latitude: lat, longitude: lng }),
+    });
+    
+    if (!res.ok) {
+      const err = await res.text().catch(() => "");
+      throw new Error(`sendLocation failed (${res.status}): ${err}`);
+    }
+    return await res.json();
+  }
+
   const triggerPanicAlert = async () => {
     setIsTriggering(true);
     setIsPressed(false);
     setProgress(0);
 
     try {
-      // Get current location if not already available
+      // Try to get current location, but with fallback strategy
       let currentLocation = location;
-      if (!currentLocation && navigator.geolocation) {
-        try {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-          });
-          
-          currentLocation = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          };
-        } catch (error) {
-          console.error('Error getting current location:', error);
+      
+      try {
+        // Try to get fresh location but don't wait too long
+        const freshLocation = await Promise.race([
+          getCurrentLocation(false), // Don't force refresh, use cache if recent
+          new Promise<null>(resolve => setTimeout(() => resolve(null), 8000)) // 8 second timeout
+        ]);
+        
+        if (freshLocation) {
+          currentLocation = freshLocation;
         }
+      } catch (error) {
+        console.warn('Failed to get fresh location, using cached location:', error);
+        // currentLocation already set to the cached location
+      }
+
+      // If we still don't have any location, show warning but continue
+      if (!currentLocation) {
+        toast({
+          title: language === 'en' ? 'Warning' : 'Amaran',
+          description: language === 'en' 
+            ? 'Unable to determine location. Alert sent without location data.' 
+            : 'Tidak dapat menentukan lokasi. Amaran dihantar tanpa data lokasi.',
+          variant: 'destructive',
+        });
       }
 
       // Create panic alert in database
@@ -152,6 +257,57 @@ export default function PanicButton() {
         throw error;
       }
 
+      const { data: securityUsers, error: securityError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('community_id', communityId);
+
+      if (securityError) {
+        console.error('Error fetching security users:', securityError);
+        throw securityError;
+      }
+
+      if (!securityUsers || securityUsers.length === 0) {
+        console.warn('No security users found to notify');
+        return; // Exit early if no users to notify
+      }
+      
+      console.log('Current Location JSON:', JSON.stringify(currentLocation, null, 2));
+
+      // Send emergency alerts to all security users
+      for (const su of securityUsers) {
+        if (su.telegram_chat_id) {
+          try {
+            const locationText = currentLocation?.latitude && currentLocation?.longitude 
+              ? `${currentLocation.latitude}, ${currentLocation.longitude}`
+              : 'Location unavailable';
+
+            const message = `🚨 <b>EMERGENCY ALERT</b> 🚨
+
+<b>Alert Details:</b>
+👤 <b>Name:</b> ${user?.display_name || 'Unknown'}
+📱 <b>Phone:</b> ${user?.phone || 'Not provided'}
+🏠 <b>Address:</b> ${(user?.unit_number ? user.unit_number + " " : "") + (user?.address || 'Unknown')}
+
+<b>GPS Coordinates:</b>
+📍 ${locationText}
+
+⏰ <b>Time:</b> ${new Date().toLocaleString()}`;
+
+            await tgSendMessage(su.telegram_chat_id, message);
+
+            // Send location if available
+            if (currentLocation?.latitude && currentLocation?.longitude) {
+              await tgSendLocation(su.telegram_chat_id, currentLocation.latitude, currentLocation.longitude);
+            }
+
+          } catch (telegramError) {
+            console.error(`Failed to send Telegram notification to ${su.telegram_chat_id}:`, telegramError);
+            // Don't throw here unless you want one failed message to stop all others
+          }
+        }
+      }
+
       // Call edge function to notify security
       const { data: notifyData, error: notifyError } = await supabase.functions.invoke('notify-panic-alert', {
         body: {
@@ -163,7 +319,6 @@ export default function PanicButton() {
 
       if (notifyError) {
         console.error('Error notifying security:', notifyError);
-        // Don't throw error here - the alert was still created in database
         console.warn('Alert created but notification may have failed');
       }
 
@@ -252,6 +407,11 @@ export default function PanicButton() {
           <div className="absolute bottom-full right-0 mb-2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
             {language === 'en' ? 'Hold for 3 seconds' : 'Tahan selama 3 saat'}
           </div>
+
+          {/* Location status indicator */}
+          {location && (
+            <div className="absolute top-0 left-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+          )}
         </div>
       </div>
 
@@ -285,6 +445,11 @@ export default function PanicButton() {
                 <AlertDescription>
                   <strong>{language === 'en' ? 'Location:' : 'Lokasi:'}</strong>{' '}
                   {location.address || `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`}
+                  {location.timestamp && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {language === 'en' ? 'Location age:' : 'Umur lokasi:'} {Math.round((Date.now() - location.timestamp) / 60000)} min
+                    </div>
+                  )}
                 </AlertDescription>
               </Alert>
             )}
