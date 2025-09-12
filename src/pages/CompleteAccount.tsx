@@ -121,7 +121,7 @@ export default function CompleteAccount() {
   // Check if user is a guest
   const isGuest = hasRole('guest');
 
-  // Smart session initialization with timeout protection
+  // Enhanced session initialization with proper invitation handling
   useEffect(() => {
     let processed = false;
     let timeoutId: NodeJS.Timeout;
@@ -132,11 +132,30 @@ export default function CompleteAccount() {
       processed = true;
 
       console.log('=== STARTING COMPLETE ACCOUNT INITIALIZATION ===');
-      console.log('🕐 Starting 10-second timeout protection');
+      console.log('🕐 Starting 15-second timeout protection');
+      console.log('🌐 Current URL:', window.location.href);
       
       try {
-        // 1. CHECK FOR EXISTING SESSION FIRST
-        console.log('Step 1: Checking for existing valid session');
+        // 1. FIRST CHECK IF WE HAVE AUTH STATE CHANGE EVENT FROM INVITATION
+        console.log('Step 1: Setting up auth state change listener for invitation flow');
+        
+        // Set up auth state change listener to catch automatic login from invitation
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log('🔄 Auth state change event:', event, session?.user?.email);
+          
+          if (event === 'SIGNED_IN' && session?.user && mounted) {
+            console.log('✅ Auto sign-in detected from invitation link');
+            setUser(session.user);
+            setUserEmail(session.user.email || '');
+            setSessionValid(true);
+            
+            // Clean up URL after successful auth
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        });
+
+        // 2. CHECK FOR EXISTING SESSION
+        console.log('Step 2: Checking for existing valid session');
         const { data: { session: existingSession } } = await supabase.auth.getSession();
         
         if (!mounted) return;
@@ -146,17 +165,16 @@ export default function CompleteAccount() {
           setUser(existingSession.user);
           setUserEmail(existingSession.user.email || '');
           
-          // Check if this is a normal login flow (no tokens in URL)
+          // Check if this is a normal login flow (no invitation tokens in URL)
           const urlParams = new URLSearchParams(window.location.search);
           const hashParams = new URLSearchParams(window.location.hash.substring(1));
-          const hasTokens = urlParams.get('code') || urlParams.get('token_hash') || 
-                           hashParams.get('access_token') || hashParams.get('refresh_token');
+          const hasInviteTokens = urlParams.get('code') || urlParams.get('token_hash') || 
+                                 hashParams.get('access_token') || hashParams.get('refresh_token') ||
+                                 urlParams.get('token') || urlParams.get('type');
           
-          if (!hasTokens) {
-            console.log('✅ Normal login flow - user has valid session, no invitation tokens');
+          if (!hasInviteTokens) {
+            console.log('✅ Normal login flow - checking if profile completion is needed');
             
-            // For normal login flow, check if user actually needs to complete account
-            console.log('🔍 Checking if user profile needs completion...');
             try {
               const { data: profile, error: profileError } = await supabase
                 .from('profiles')
@@ -169,156 +187,203 @@ export default function CompleteAccount() {
               if (!profileError && profile) {
                 console.log('📋 Profile found:', profile);
                 
-                // Only redirect if profile was completed by user AND account is approved
                 if (profile?.profile_completed_by_user && profile?.account_status === 'approved') {
-                  console.log('✅ Profile completed by user and account approved - redirecting to dashboard');
+                  console.log('✅ Profile already completed - redirecting to dashboard');
                   setSessionValid(true);
                   navigate('/', { replace: true });
                   return;
-                } else {
-                  console.log('🔄 Profile needs completion by user or approval - staying on form');
                 }
               }
             } catch (error) {
               console.log('⚠️ Could not check profile status:', error);
             }
           } else {
-            console.log('✅ Invitation link flow - user has valid session with tokens');
-            // Clean up URL for invitation flows
+            console.log('✅ Session exists with invitation tokens - cleaning up URL');
             window.history.replaceState({}, document.title, window.location.pathname);
           }
           
           if (mounted) {
             setSessionValid(true);
+            subscription.unsubscribe();
           }
           return;
         }
 
-        // 2. PARSE TOKENS: Extract tokens from URL (for invitation links only)
-        console.log('Step 2: No existing session, parsing tokens from URL');
+        // 3. PARSE INVITATION TOKENS FROM URL
+        console.log('Step 3: No existing session, parsing invitation tokens from URL');
         const urlParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         
+        // Extract all possible token types
         const code = urlParams.get('code');
         const tokenHash = urlParams.get('token_hash');
         const type = urlParams.get('type');
+        const token = urlParams.get('token'); // Direct token from invitation links
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
         
-        console.log('Found tokens:', { 
+        console.log('📝 Parsed tokens:', { 
           code: !!code, 
-          tokenHash: !!tokenHash, 
+          tokenHash: !!tokenHash,
+          token: !!token,
           type, 
           accessToken: !!accessToken, 
           refreshToken: !!refreshToken 
         });
 
-        // If no tokens found and no session, redirect to login
-        if (!code && !tokenHash && !accessToken && !refreshToken) {
-          console.log('❌ No session and no tokens - redirecting to login');
+        // If no tokens found, redirect to login
+        if (!code && !tokenHash && !token && !accessToken && !refreshToken) {
+          console.log('❌ No session and no tokens found - redirecting to login');
           if (mounted) {
             setSessionValid(false);
-            setProcessingError('Please log in to access this page.');
-            // Redirect to login after a brief delay
-            setTimeout(() => navigate('/login'), 2000);
+            setProcessingError('No invitation tokens found. Please use the invitation link from your email.');
+            setTimeout(() => navigate('/login'), 3000);
           }
+          subscription.unsubscribe();
           return;
         }
 
-        // 3. PROCESS TOKENS: Try to establish session using tokens (invitation link flow)
+        // 4. PROCESS INVITATION TOKENS IN ORDER OF RELIABILITY
         let sessionEstablished = false;
+        console.log('Step 4: Processing invitation tokens to establish session');
         
-        console.log('Step 3: Processing invitation tokens to establish session');
-        
-        // Priority 1: Hash tokens (most reliable for invitations)
-        if (!sessionEstablished && accessToken && refreshToken) {
-          console.log('🔑 Trying access_token/refresh_token from hash');
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          });
+        // Method 1: Direct token with email (for invite type)
+        if (!sessionEstablished && token && type === 'invite') {
+          console.log('🔑 Method 1: Trying direct token verification with email (invite type)');
           
-          if (!mounted) return;
+          // For invite tokens, we need the email from the URL or user input
+          const email = urlParams.get('email') || userEmail;
           
-          if (data.session && data.user && !error) {
-            setUser(data.user);
-            setUserEmail(data.user.email || '');
-            setSessionValid(true);
-            sessionEstablished = true;
-            console.log('✅ Session established via hash tokens for:', data.user.email);
+          if (email) {
+            try {
+              const { data, error } = await supabase.auth.verifyOtp({
+                email: email,
+                token: token,
+                type: 'invite',
+              });
+              
+              if (!mounted) return;
+              
+              if (data.session && data.user && !error) {
+                setUser(data.user);
+                setUserEmail(data.user.email || '');
+                setSessionValid(true);
+                sessionEstablished = true;
+                console.log('✅ Session established via direct token with email for:', data.user.email);
+              } else {
+                console.log('❌ Direct token with email method failed:', error?.message);
+              }
+            } catch (err: any) {
+              console.log('❌ Direct token with email method error:', err.message);
+            }
           } else {
-            console.log('❌ Hash token method failed:', error?.message);
+            console.log('⚠️ Direct token verification skipped - no email available');
           }
         }
         
-        // Priority 2: Code exchange
-        if (!sessionEstablished && code) {
-          console.log('🔑 Trying code exchange');
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          
-          if (!mounted) return;
-          
-          if (data.session && data.user && !error) {
-            setUser(data.user);
-            setUserEmail(data.user.email || '');
-            setSessionValid(true);
-            sessionEstablished = true;
-            console.log('✅ Session established via code exchange for:', data.user.email);
-          } else {
-            console.log('❌ Code exchange method failed:', error?.message);
-          }
-        }
-        
-        // Priority 3: Token hash verification
+        // Method 2: Token hash verification
         if (!sessionEstablished && tokenHash && type) {
-          console.log('🔑 Trying token_hash verification');
-          const { data, error } = await supabase.auth.verifyOtp({
-            token_hash: tokenHash,
-            type: type as any,
-          });
-          
-          if (!mounted) return;
-          
-          if (data.session && data.user && !error) {
-            setUser(data.user);
-            setUserEmail(data.user.email || '');
-            setSessionValid(true);
-            sessionEstablished = true;
-            console.log('✅ Session established via token_hash for:', data.user.email);
-          } else {
-            console.log('❌ Token hash method failed:', error?.message);
+          console.log('🔑 Method 2: Trying token_hash verification');
+          try {
+            const { data, error } = await supabase.auth.verifyOtp({
+              token_hash: tokenHash,
+              type: type as any,
+            });
+            
+            if (!mounted) return;
+            
+            if (data.session && data.user && !error) {
+              setUser(data.user);
+              setUserEmail(data.user.email || '');
+              setSessionValid(true);
+              sessionEstablished = true;
+              console.log('✅ Session established via token_hash for:', data.user.email);
+            } else {
+              console.log('❌ Token hash method failed:', error?.message);
+            }
+          } catch (err: any) {
+            console.log('❌ Token hash method error:', err.message);
+          }
+        }
+
+        // Method 3: Hash tokens from URL fragments
+        if (!sessionEstablished && accessToken && refreshToken) {
+          console.log('🔑 Method 3: Trying access_token/refresh_token from hash');
+          try {
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken
+            });
+            
+            if (!mounted) return;
+            
+            if (data.session && data.user && !error) {
+              setUser(data.user);
+              setUserEmail(data.user.email || '');
+              setSessionValid(true);
+              sessionEstablished = true;
+              console.log('✅ Session established via hash tokens for:', data.user.email);
+            } else {
+              console.log('❌ Hash token method failed:', error?.message);
+            }
+          } catch (err: any) {
+            console.log('❌ Hash token method error:', err.message);
           }
         }
         
+        // Method 4: Code exchange (PKCE flow)
+        if (!sessionEstablished && code) {
+          console.log('🔑 Method 4: Trying code exchange (PKCE flow)');
+          try {
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            
+            if (!mounted) return;
+            
+            if (data.session && data.user && !error) {
+              setUser(data.user);
+              setUserEmail(data.user.email || '');
+              setSessionValid(true);
+              sessionEstablished = true;
+              console.log('✅ Session established via code exchange for:', data.user.email);
+            } else {
+              console.log('❌ Code exchange method failed:', error?.message);
+            }
+          } catch (err: any) {
+            console.log('❌ Code exchange method error:', err.message);
+          }
+        }
+        
+        // Handle results
         if (mounted) {
           if (sessionEstablished) {
-            // Clean up URL
+            // Clean up URL after successful authentication
             window.history.replaceState({}, document.title, window.location.pathname);
-            console.log('✅ URL cleaned up');
+            console.log('✅ Session established successfully, URL cleaned up');
           } else {
-            console.error('❌ All session establishment methods failed');
+            console.error('❌ All authentication methods failed');
             setSessionValid(false);
-            setProcessingError('Invalid or expired invitation link. All authentication methods failed.');
+            setProcessingError('Invalid or expired invitation link. Please request a new invitation or contact support.');
           }
+          subscription.unsubscribe();
         }
         
       } catch (error: any) {
         console.error('❌ Critical initialization error:', error);
         if (mounted) {
           setSessionValid(false);
-          setProcessingError(error.message || 'Failed to process invitation link');
+          setProcessingError(`Authentication error: ${error.message}`);
         }
       }
     };
 
-    // Set up 10-second timeout protection
+    // Set up 15-second timeout protection (increased from 10s)
     timeoutId = setTimeout(() => {
       if (mounted && sessionValid === null) {
-        console.error('⏰ TIMEOUT: Session initialization took longer than 10 seconds');
+        console.error('⏰ TIMEOUT: Session initialization took longer than 15 seconds');
         setSessionValid(false);
-        setProcessingError('Session initialization timed out. Please try again or contact support.');
+        setProcessingError('Connection timeout. Please check your internet connection and try again.');
       }
-    }, 10000);
+    }, 15000);
 
     // Start initialization
     initializeSession();
@@ -333,6 +398,12 @@ export default function CompleteAccount() {
       console.log('🧹 Component unmounted, cleaned up timers');
     };
   }, [navigate]);
+
+  const handleRetryLoading = () => {
+    setSessionValid(null);
+    setProcessingError(null);
+    window.location.reload(); // Simple reload to retry the entire flow
+  };
 
   const handleResendInvitation = () => {
     toast({
