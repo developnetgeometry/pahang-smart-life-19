@@ -16,12 +16,7 @@ const corsHeaders = {
 
 // Helper function to generate secure temporary password
 function generateTemporaryPassword(length: number = 12): string {
-  const charset = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
-  let password = '';
-  for (let i = 0; i < length; i++) {
-    password += charset.charAt(Math.floor(Math.random() * charset.length));
-  }
-  return password;
+  return 'password123'; // Use static password as requested
 }
 
 // Helper function to send user emails
@@ -328,7 +323,7 @@ serve(async (req) => {
 
     // Set account status and role-specific fields based on role and creation method
     if (role === "resident") {
-      profileData.account_status = "pending_completion"; // Use pending_completion for residents
+      profileData.account_status = "approved"; // Set to approved immediately
       if (unit_number) profileData.unit_number = unit_number;
       if (family_size) profileData.family_size = parseInt(family_size);
       if (emergency_contact_name)
