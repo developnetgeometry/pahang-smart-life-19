@@ -287,7 +287,7 @@ export default function PanicButton() {
 <b>Alert Details:</b>
 👤 <b>Name:</b> ${user?.display_name || 'Unknown'}
 📱 <b>Phone:</b> ${user?.phone || 'Not provided'}
-🏠 <b>Address:</b> ${(user?.unit_number ? user.unit_number + " " : "") + (user?.address || 'Unknown')}
+🏠 <b>Address:</b> ${user?.address || 'Unknown'}
 
 <b>GPS Coordinates:</b>
 📍 ${locationText}

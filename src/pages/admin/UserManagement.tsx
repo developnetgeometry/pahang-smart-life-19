@@ -851,12 +851,20 @@ export default function UserManagement() {
           const functionName = getRoleSpecificFunction(form.role);
           console.log(`Calling ${functionName} with payload:`, requestBody);
           
-          const { data, error } = await supabase.functions.invoke(
+          // Add timeout to prevent hanging
+          const timeoutPromise = new Promise<never>((_, reject) => 
+            setTimeout(() => reject(new Error('Request timed out after 30 seconds')), 30000)
+          );
+          
+          const functionPromise = supabase.functions.invoke(
             functionName,
             {
               body: requestBody,
             }
           );
+
+          const result = await Promise.race([functionPromise, timeoutPromise]);
+          const { data, error } = result;
 
           if (error) {
             console.error(`Error from ${functionName}:`, error);
