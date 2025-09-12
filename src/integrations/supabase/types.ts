@@ -6610,6 +6610,7 @@ export type Database = {
           phone: string | null
           primary_role: Database["public"]["Enums"]["app_role"] | null
           profile_bio: string | null
+          profile_completed_by_user: boolean | null
           race_id: string | null
           register_method: string | null
           registration_status: boolean | null
@@ -6688,6 +6689,7 @@ export type Database = {
           phone?: string | null
           primary_role?: Database["public"]["Enums"]["app_role"] | null
           profile_bio?: string | null
+          profile_completed_by_user?: boolean | null
           race_id?: string | null
           register_method?: string | null
           registration_status?: boolean | null
@@ -6766,6 +6768,7 @@ export type Database = {
           phone?: string | null
           primary_role?: Database["public"]["Enums"]["app_role"] | null
           profile_bio?: string | null
+          profile_completed_by_user?: boolean | null
           race_id?: string | null
           register_method?: string | null
           registration_status?: boolean | null

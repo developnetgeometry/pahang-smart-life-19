@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export interface District {
   id: string;
@@ -34,110 +34,63 @@ export const useDistricts = () => {
   const fetchDistricts = useCallback(async () => {
     try {
       setLoading(true);
-      
-      // Fetch districts with community count
-      const { data: districtsData, error: districtsError } = await supabase
-        .from('districts')
-        .select('*')
-        .order('name');
 
-      if (districtsError) {
-        console.error('Error fetching districts:', districtsError);
-        toast.error('Failed to fetch districts');
+      const { data, error } = await supabase.rpc("get_districts_with_stats");
+
+      if (error) {
+        console.error("Error fetching districts with stats:", error);
+        toast.error("Failed to fetch districts");
+        setDistricts([]); // Set to empty array on error
         return;
       }
 
-      // Fetch community counts per district
-      const { data: communitiesData, error: communitiesError } = await supabase
-        .from('communities')
-        .select('district_id');
-
-      if (communitiesError) {
-        console.error('Error fetching communities:', communitiesError);
-      }
-
-      // Fetch actual user population per district
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('district_id')
-        .eq('account_status', 'approved');
-
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-      }
-
-      // Calculate community counts and actual population per district
-      const districtStats: Record<string, { count: number; population: number }> = {};
-      
-      // Count communities per district
-      if (communitiesData) {
-        communitiesData.forEach(community => {
-          if (community.district_id) {
-            if (!districtStats[community.district_id]) {
-              districtStats[community.district_id] = { count: 0, population: 0 };
-            }
-            districtStats[community.district_id].count += 1;
-          }
-        });
-      }
-
-      // Count actual residents per district
-      if (profilesData) {
-        profilesData.forEach(profile => {
-          if (profile.district_id) {
-            if (!districtStats[profile.district_id]) {
-              districtStats[profile.district_id] = { count: 0, population: 0 };
-            }
-            districtStats[profile.district_id].population += 1;
-          }
-        });
-      }
-
-      // Merge district data with community counts and calculated population
-      const districtsWithCounts = (districtsData || []).map(district => ({
-        ...district,
-        communities_count: districtStats[district.id]?.count || 0,
-        population: districtStats[district.id]?.population || 0
+      // The RPC returns a slightly different structure, let's adapt it
+      const formattedData = data.map((d) => ({
+        ...d,
+        // Ensure population and communities_count are numbers
+        population: d.actual_population ?? 0,
+        communities_count: d.communities_count ?? 0,
       }));
 
-      setDistricts(districtsWithCounts);
+      setDistricts(formattedData as District[]);
     } catch (error) {
-      console.error('Error fetching districts:', error);
-      toast.error('Failed to fetch districts');
+      console.error("An unexpected error occurred:", error);
+      toast.error("An unexpected error occurred while fetching districts.");
+      setDistricts([]); // Set to empty array on error
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       fetchDistricts();
     }
-  }, [user, fetchDistricts]);
+  }, [user?.id, fetchDistricts]);
 
   const updateDistrict = async (id: string, updates: Partial<District>) => {
     try {
       const { data, error } = await supabase
-        .from('districts')
+        .from("districts")
         .update(updates)
-        .eq('id', id)
-        .select('*')
+        .eq("id", id)
+        .select("*")
         .single();
 
       if (error) {
-        console.error('Error updating district:', error);
-        toast.error('Failed to update district');
+        console.error("Error updating district:", error);
+        toast.error("Failed to update district");
         return false;
       }
 
-      setDistricts(prev => prev.map(district => 
-        district.id === id ? data : district
-      ));
-      toast.success('District updated successfully');
+      setDistricts((prev) =>
+        prev.map((district) => (district.id === id ? data : district))
+      );
+      toast.success("District updated successfully");
       return true;
     } catch (error) {
-      console.error('Error updating district:', error);
-      toast.error('Failed to update district');
+      console.error("Error updating district:", error);
+      toast.error("Failed to update district");
       return false;
     }
   };
@@ -146,6 +99,6 @@ export const useDistricts = () => {
     districts,
     loading,
     updateDistrict,
-    refetchDistricts: fetchDistricts
+    refetchDistricts: fetchDistricts,
   };
 };
