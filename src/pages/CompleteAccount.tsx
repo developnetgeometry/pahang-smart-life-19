@@ -155,23 +155,20 @@ export default function CompleteAccount() {
         try {
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select('phone, unit_number, emergency_contact_name, account_status')
+            .select('phone, unit_number, emergency_contact_name, account_status, profile_completed_by_user')
             .eq('user_id', existingSession.user.id)
-            .single();
+            .single() as any;
             
           if (!profileError && profile) {
             console.log('📋 Profile found:', profile);
             
-            // If user has essential profile data, they might not need to complete
-            if (profile.phone && profile.unit_number && profile.emergency_contact_name) {
-              console.log('✅ Profile appears complete - checking if redirect needed');
-              
-              // If account is already approved, redirect to dashboard
-              if (profile.account_status === 'approved') {
-                console.log('✅ Account already approved - redirecting to dashboard');
-                navigate('/', { replace: true });
-                return;
-              }
+            // Only redirect if profile was completed by user AND account is approved
+            if (profile?.profile_completed_by_user && profile?.account_status === 'approved') {
+              console.log('✅ Profile completed by user and account approved - redirecting to dashboard');
+              navigate('/', { replace: true });
+              return;
+            } else {
+              console.log('🔄 Profile needs completion by user or approval - staying on form');
             }
           }
         } catch (error) {
@@ -349,6 +346,7 @@ export default function CompleteAccount() {
           vehicle_plate_number: form.vehicle_number || null,
           language_preference: form.language_preference,
           account_status: "approved",
+          profile_completed_by_user: true,
           is_active: true,
         })
         .eq("user_id", currentUser.id);
