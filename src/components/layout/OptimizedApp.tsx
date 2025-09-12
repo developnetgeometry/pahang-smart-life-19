@@ -1,16 +1,15 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import React, { Suspense, lazy } from "react";
-import { Layout } from "@/components/layout/Layout";
-import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
-import RequireRoles from "@/components/routing/RequireRoles";
-import RequireNotRoles from "@/components/routing/RequireNotRoles";
-import AuthOnlyRoute from "@/components/routing/AuthOnlyRoute";
-import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import React, { Suspense, lazy, useMemo } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { OptimizedAuthProvider, useOptimizedAuth } from './OptimizedAuthProvider';
+import { createOptimizedQueryClient } from '@/components/performance/OptimizedQueryClient';
+import { Toaster } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import RequireRoles from '@/components/routing/RequireRoles';
+import RequireNotRoles from '@/components/routing/RequireNotRoles';
+import AuthOnlyRoute from '@/components/routing/AuthOnlyRoute';
+import { Layout } from '@/components/layout/Layout';
 
 // Lazy load all pages for optimal performance
 const Index = lazy(() => import("@/pages/Index"));
@@ -87,16 +86,8 @@ const ModuleManagement = lazy(() => import("@/pages/admin/ModuleManagement"));
 const GuestManagement = lazy(() => import("@/pages/admin/GuestManagement"));
 
 // Enhanced query client for better performance
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
-    },
-  },
-});
+// Create optimized QueryClient instance
+const queryClient = createOptimizedQueryClient();
 
 // Optimized loading component
 const LoadingScreen = React.memo(() => (
@@ -105,15 +96,18 @@ const LoadingScreen = React.memo(() => (
   </div>
 ));
 
-// Memoized route wrapper
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  allowedAccountStatuses?: string[];
+}
 const LazyRoute = React.memo(({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<DashboardSkeleton />}>
     {children}
   </Suspense>
 ));
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, initializing, isApproved, accountStatus } = useAuth();
+function ProtectedRoute({ children, allowedAccountStatuses = ['approved'] }: ProtectedRouteProps) {
+  const { isAuthenticated, initializing, isApproved, accountStatus } = useOptimizedAuth();
   
   if (initializing) {
     return <LoadingScreen />;
@@ -135,7 +129,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, initializing, isApproved, accountStatus } = useAuth();
+  const { isAuthenticated, initializing, isApproved, accountStatus } = useOptimizedAuth();
   
   if (initializing) {
     return <>{children}</>;
@@ -156,15 +150,15 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-const OptimizedApp = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <PWAInstallPrompt />
-        <BrowserRouter>
-          <Routes>
+const OptimizedApp = () => {
+  const memoizedQueryClient = useMemo(() => queryClient, []);
+
+  return (
+    <QueryClientProvider client={memoizedQueryClient}>
+      <OptimizedAuthProvider>
+        <TooltipProvider>
+          <BrowserRouter>
+            <Routes>
             <Route
               path="/login"
               element={
@@ -960,9 +954,11 @@ const OptimizedApp = () => (
             />
           </Routes>
         </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      </TooltipProvider>
+      <Toaster />
+      </OptimizedAuthProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default OptimizedApp;

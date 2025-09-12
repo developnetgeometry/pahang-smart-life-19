@@ -24,16 +24,23 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Vendor chunks
+          // Core vendor chunks
           vendor: ['react', 'react-dom'],
           router: ['react-router-dom'],
           query: ['@tanstack/react-query'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-popover'],
+          // UI libraries (split for better caching)
+          'ui-core': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-popover', '@radix-ui/react-select'],
+          'ui-extended': ['@radix-ui/react-tabs', '@radix-ui/react-accordion', '@radix-ui/react-toast', '@radix-ui/react-alert-dialog'],
+          // Backend and data
           supabase: ['@supabase/supabase-js'],
-          // Heavy libraries
+          // Heavy feature libraries (lazy loaded)
           charts: ['recharts'],
           maps: ['mapbox-gl'],
           video: ['hls.js'],
+          // Form and validation
+          forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
+          // Date and time
+          dates: ['date-fns', 'react-day-picker'],
         },
       },
     },
@@ -54,7 +61,8 @@ export default defineConfig(({ mode }) => ({
   },
   // Performance improvements
   esbuild: {
-    // Drop console logs in production
-    drop: mode === 'production' ? ['console', 'debugger'] : [],
+    // Drop console logs in production, keep essential logs in development
+    drop: mode === 'production' ? ['console', 'debugger'] : ['debugger'],
+    pure: mode === 'production' ? ['console.log', 'console.info', 'console.debug'] : [],
   },
 }));
