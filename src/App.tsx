@@ -95,7 +95,15 @@ const queryClient = new QueryClient({
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, initializing, isApproved, accountStatus } = useAuth();
   
+  console.log('🔒 ProtectedRoute - Auth State:', { 
+    isAuthenticated, 
+    initializing, 
+    isApproved, 
+    accountStatus 
+  });
+  
   if (initializing) {
+    console.log('🔒 ProtectedRoute: Still initializing...');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -104,39 +112,56 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
   
   if (!isAuthenticated) {
+    console.log('🔒 ProtectedRoute: Not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
   
   if (isAuthenticated && accountStatus === 'pending_completion') {
+    console.log('🔒 ProtectedRoute: Account pending completion, redirecting');
     return <Navigate to="/complete-account" replace />;
   }
   
   if (isAuthenticated && !isApproved && accountStatus !== 'pending_completion') {
+    console.log('🔒 ProtectedRoute: Account not approved, redirecting to pending approval');
     return <Navigate to="/pending-approval" replace />;
   }
   
+  console.log('🔒 ProtectedRoute: Access granted to protected content');
   return <>{children}</>;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, initializing, isApproved, accountStatus } = useAuth();
   
+  console.log('🌐 PublicRoute - Auth State:', { 
+    isAuthenticated, 
+    initializing, 
+    isApproved, 
+    accountStatus 
+  });
+  
   if (initializing) {
+    console.log('🌐 PublicRoute: Still initializing, showing content...');
     return <>{children}</>;
   }
   
+  // KEY LOGIC: Redirect authenticated & approved users to dashboard
   if (isAuthenticated && isApproved) {
+    console.log('🌐 PublicRoute: User authenticated & approved - redirecting to dashboard');
     return <Navigate to="/" replace />;
   }
   
   if (isAuthenticated && accountStatus === 'pending_completion') {
+    console.log('🌐 PublicRoute: Account pending completion, redirecting');
     return <Navigate to="/complete-account" replace />;
   }
   
   if (isAuthenticated && !isApproved && accountStatus !== 'pending_completion') {
+    console.log('🌐 PublicRoute: Account not approved, redirecting to pending approval');
     return <Navigate to="/pending-approval" replace />;
   }
   
+  console.log('🌐 PublicRoute: Showing public content');
   return <>{children}</>;
 }
 
