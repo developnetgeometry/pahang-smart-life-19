@@ -1,11 +1,93 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.55.0";
+import { Resend } from 'npm:resend@4.0.0';
+import { renderAsync } from 'npm:@react-email/components@0.0.22';
+import React from 'npm:react@18.3.1';
+import { UserInvitationEmail } from './_templates/user-invitation.tsx';
+import { AccountCreatedEmail } from './_templates/account-created.tsx';
+
+const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
+
+// Helper function to generate secure temporary password
+function generateTemporaryPassword(length: number = 12): string {
+  const charset = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  return password;
+}
+
+// Helper function to send user emails
+async function sendUserEmail({
+  role,
+  email,
+  full_name,
+  password,
+  adminName,
+  req
+}: {
+  role: string;
+  email: string;
+  full_name: string;
+  password?: string;
+  adminName: string;
+  req: Request;
+}) {
+  const frontendUrl =
+    Deno.env.get("FRONTEND_URL") ||
+    req.headers.get("origin") ||
+    "https://www.primapahang.com";
+
+  if (role === "resident") {
+    // For residents, send invitation email to complete account
+    const invitationUrl = `${frontendUrl}/complete-account`;
+    
+    const emailHtml = await renderAsync(
+      React.createElement(UserInvitationEmail, {
+        full_name,
+        email,
+        role,
+        invitation_url: invitationUrl,
+        admin_name: adminName,
+      })
+    );
+
+    await resend.emails.send({
+      from: 'Prima Pahang <noreply@primapahang.com>',
+      to: [email],
+      subject: 'Jemputan Menyertai Prima Pahang / Invitation to Join Prima Pahang',
+      html: emailHtml,
+    });
+  } else {
+    // For staff and guests, send account created email with credentials
+    const loginUrl = `${frontendUrl}/login`;
+    
+    const emailHtml = await renderAsync(
+      React.createElement(AccountCreatedEmail, {
+        full_name,
+        email,
+        role,
+        temporary_password: password,
+        login_url: loginUrl,
+        admin_name: adminName,
+      })
+    );
+
+    await resend.emails.send({
+      from: 'Prima Pahang <noreply@primapahang.com>',
+      to: [email],
+      subject: 'Akaun Baharu Prima Pahang / New Prima Pahang Account',
+      html: emailHtml,
+    });
+  }
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -204,9 +286,12 @@ serve(async (req) => {
       }
     } else {
       // For guests and staff, use direct creation with password
+      // Generate secure temporary password if not provided
+      const finalPassword = password || generateTemporaryPassword(12);
+      
       const createResult = await supabaseAdmin.auth.admin.createUser({
         email,
-        password,
+        password: finalPassword,
         email_confirm: true,
         user_metadata: {
           full_name,
@@ -215,6 +300,7 @@ serve(async (req) => {
 
       authUser = createResult.data;
       authError = createResult.error;
+      password = finalPassword; // Store the password for email sending
 
       if (authError) {
         console.error("Auth creation error:", authError);
@@ -326,6 +412,31 @@ serve(async (req) => {
 
     console.log("Role assigned successfully");
 
+    // Get admin's name for personalized emails
+    const { data: adminProfile2, error: adminProfileError2 } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", currentUser.id)
+      .single();
+    
+    const adminName = adminProfile2?.full_name || "Administrator";
+
+    // Send appropriate email based on role and creation method
+    try {
+      await sendUserEmail({
+        role,
+        email,
+        full_name,
+        password: role !== "resident" ? password : undefined,
+        adminName,
+        req
+      });
+      console.log(`Email sent successfully for ${role}: ${email}`);
+    } catch (emailError) {
+      console.error("Email sending failed:", emailError);
+      // Don't fail the entire operation for email issues, just log it
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -336,7 +447,8 @@ serve(async (req) => {
           role,
         },
         invitation_sent: role === "resident",
-        credentials_created: role === "guest",
+        credentials_created: role !== "resident",
+        email_sent: true,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
