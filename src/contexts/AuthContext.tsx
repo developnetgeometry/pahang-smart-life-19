@@ -76,7 +76,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [accountStatus, setAccountStatus] = useState<string | null>(null);
   const [language, setLanguage] = useState<Language>(() => {
     const saved = localStorage.getItem("language_preference");
-    return (saved as Language) || "ms";
+    // Validate language preference - only allow "en" or "ms"
+    if (saved === "en" || saved === "ms") {
+      return saved;
+    }
+    // If invalid or null, default to "ms" and clean up localStorage
+    if (saved && saved !== "en" && saved !== "ms") {
+      localStorage.setItem("language_preference", "ms");
+    }
+    return "ms";
   });
   const [theme, setTheme] = useState<Theme>("light");
   const [roles, setRoles] = useState<UserRole[]>([]);
@@ -200,7 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Update language from profile if available
       const profileLanguage = profileData?.language_preference as Language;
-      if (profileLanguage && profileLanguage !== language) {
+      if (profileLanguage && (profileLanguage === "en" || profileLanguage === "ms") && profileLanguage !== language) {
         setLanguage(profileLanguage);
         localStorage.setItem("language_preference", profileLanguage);
       }
@@ -389,6 +397,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const switchLanguage = async (lang: Language) => {
+    // Validate language input
+    if (lang !== "en" && lang !== "ms") {
+      console.warn("Invalid language provided:", lang, "defaulting to 'ms'");
+      lang = "ms";
+    }
+    
     setLanguage(lang);
     if (user) {
       setUser({ ...user, language_preference: lang });
