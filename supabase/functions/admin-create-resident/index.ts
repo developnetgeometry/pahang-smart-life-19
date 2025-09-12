@@ -135,48 +135,21 @@ async function createAuthUser(
   context: AdminContext,
   req: Request
 ) {
-  let authUser: any;
-  let authError: any;
+  // Always use direct user creation with password123
+  const createResult = await context.supabaseAdmin.auth.admin.createUser({
+    email: userData.email,
+    password: 'password123', // Use static password as requested
+    email_confirm: true,
+    user_metadata: { full_name: userData.full_name },
+  });
 
-  if (useInviteFlow) {
-    const frontendUrl =
-      Deno.env.get("FRONTEND_URL") || req.headers.get("origin") || "http://localhost:3000";
-    const redirectUrl = `${frontendUrl}/complete-account`;
-
-    const inviteResult = await context.supabaseAdmin.auth.admin.inviteUserByEmail(
-      userData.email,
-      {
-        redirectTo: redirectUrl,
-        data: { 
-          full_name: userData.full_name,
-          signup_flow: userData.signup_flow || 'resident_invite',
-          district_id: userData.district_id,
-          community_id: userData.community_id
-        },
-      }
-    );
-
-    authUser = inviteResult.data;
-    authError = inviteResult.error;
-  } else {
-    const createResult = await context.supabaseAdmin.auth.admin.createUser({
-      email: userData.email,
-      password: userData.password,
-      email_confirm: true,
-      user_metadata: { full_name: userData.full_name },
-    });
-
-    authUser = createResult.data;
-    authError = createResult.error;
+  if (createResult.error) {
+    throw new Error(`Failed to create user: ${createResult.error.message}`);
   }
-
-  if (authError) {
-    throw new Error(`Failed to create user: ${authError.message}`);
-  }
-  if (!authUser?.user) {
+  if (!createResult.data?.user) {
     throw new Error("Failed to create user: No user returned");
   }
-  return authUser;
+  return { user: createResult.data.user, password: 'password123' };
 }
 
 async function updateUserProfile(
@@ -309,7 +282,7 @@ serve(async (req) => {
       email,
       district_id: context.adminProfile?.district_id || null,
       community_id: context.adminProfile?.community_id || null,
-      account_status: "pending", // Residents need approval
+      account_status: "approved", // Set to approved immediately as requested
     };
 
     // Add resident-specific fields
