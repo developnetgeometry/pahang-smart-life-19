@@ -310,218 +310,73 @@ export default function CompleteAccount() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log('🔥 FORM SUBMIT TRIGGERED - Event:', e.type, 'Target:', e.target);
     e.preventDefault();
-    e.stopPropagation();
-
-    // Prevent auto-submission during initialization
-    if (sessionValid === null) {
-      console.log('❌ Blocked form submission during initialization');
-      return;
-    }
-
-    if (
-      !form.phone ||
-      !form.unit_number ||
-      !form.emergency_contact_name ||
-      !form.emergency_contact_phone
-    ) {
-      toast({
-        title: "Error",
-        description: t.required,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate password if provided
-    if (form.password) {
-      if (form.password.length < 6) {
-        setPasswordError(t.passwordTooShort);
-        return;
-      }
-      if (form.password !== form.confirmPassword) {
-        setPasswordError(t.passwordsDoNotMatch);
-        return;
-      }
-    }
-
     setLoading(true);
-    setPasswordError("");
 
     try {
-      console.log('🚀 STARTING FORM SUBMISSION PROCESS');
-      
-      // 4. SESSION VERIFICATION: Get current user from session
-      console.log('Step 4: Verifying session and user identity');
-      const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !currentUser) {
-        console.error("❌ No valid session for account completion:", userError);
+      // Basic validation
+      if (!form.phone || !form.unit_number || !form.emergency_contact_name || !form.emergency_contact_phone) {
         toast({
-          title: "Session Expired",
-          description: "Please use your invitation link again to complete your account.",
+          title: "Error",
+          description: t.required,
           variant: "destructive",
         });
-        setSessionValid(false);
         return;
       }
 
-      // Verify we're completing the correct user's account
-      if (currentUser.id !== user?.id) {
-        console.error("❌ Session user mismatch - expected:", user?.id, "got:", currentUser.id);
+      // Get current user
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
         toast({
-          title: "Account Mismatch",
-          description: "Session belongs to different user. Please sign out and use the correct invitation link.",
+          title: "Error",
+          description: "Not logged in",
           variant: "destructive",
         });
-        await supabase.auth.signOut();
-        setSessionValid(false);
         return;
       }
 
-      console.log('✅ VERIFIED: Completing account for user:', currentUser.email);
+      console.log("🚀 Updating profile for user:", currentUser.email);
 
-      // Update password if provided
-      if (form.password) {
-        try {
-          console.log('🔐 Updating password...');
-          const { error: passwordError } = await supabase.auth.updateUser({
-            password: form.password
-          });
-          
-          if (passwordError) {
-            if (passwordError.message?.includes("session") || passwordError.message?.includes("auth")) {
-              console.warn("⚠️ Password update failed due to session issue, continuing with profile update");
-              toast({
-                title: "Password Update Failed",
-                description: "Your profile will be updated, but password change failed due to session expiry.",
-                variant: "destructive",
-              });
-            } else {
-              throw passwordError;
-            }
-          } else {
-            console.log('✅ Password updated successfully');
-          }
-        } catch (pwdError) {
-          console.error('❌ Password update error:', pwdError);
-          // Continue with profile update even if password fails
-        }
+      // Direct profile update - WORKAROUND
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          phone: form.phone,
+          unit_number: form.unit_number,
+          family_size: form.family_size,
+          emergency_contact_name: form.emergency_contact_name,
+          emergency_contact_phone: form.emergency_contact_phone,
+          vehicle_plate_number: form.vehicle_number || null,
+          language_preference: form.language_preference,
+          account_status: "approved",
+          is_active: true,
+        })
+        .eq("user_id", currentUser.id);
+
+      if (error) {
+        console.error("❌ Update error:", error);
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
       }
 
-      // 5. STATUS MANAGEMENT: Set correct account status
-      console.log('Step 5: Setting account status');
-      const signupFlow = currentUser?.user_metadata?.signup_flow || 'unknown';
-      console.log('📝 User signup flow:', signupFlow);
+      console.log("✅ Profile updated successfully");
       
-      // Set account status based on signup flow
-      let accountStatus = "approved"; // Default to approved for account completion
-      let isActive = true; // Default active
-      
-      // For any user completing their account, they should be approved
-      // This covers resident_invite, guest_invite, and any other flows
-      if (signupFlow === 'resident_invite') {
-        accountStatus = "approved";
-        isActive = true;
-        console.log('✅ Setting resident to approved and active status');
-      } else if (signupFlow === 'guest_invite') {
-        accountStatus = "approved";
-        isActive = true;
-        console.log('✅ Setting guest to approved and active status');
-      } else {
-        // For any other signup flow or unknown, still approve when completing account
-        accountStatus = "approved";
-        isActive = true;
-        console.log('✅ Setting user to approved and active status (unknown/other flow)');
-      }
-      
-      console.log('📋 Final status settings - account_status:', accountStatus, 'is_active:', isActive);
-      
-      // DATABASE UPDATE with comprehensive error handling
-      console.log('💾 Starting database update...');
-      try {
-        const updateResult = await supabase
-          .from("profiles")
-          .update({
-            phone: form.phone,
-            unit_number: form.unit_number,
-            family_size: form.family_size,
-            emergency_contact_name: form.emergency_contact_name,
-            emergency_contact_phone: form.emergency_contact_phone,
-            vehicle_plate_number: form.vehicle_number || null,
-            language_preference: form.language_preference,
-            account_status: accountStatus,
-            is_active: isActive,
-          })
-          .eq("user_id", currentUser.id);
-
-        console.log('💾 Database update result:', updateResult);
-
-        if (updateResult.error) {
-          console.error('❌ Profile update error:', updateResult.error);
-          throw updateResult.error;
-        }
-
-        console.log('✅ Profile updated successfully with status:', accountStatus);
-      } catch (dbError) {
-        console.error('❌ Database update failed:', dbError);
-        throw new Error(`Failed to update profile: ${dbError.message}`);
-      }
-      
-      // Verify the update was successful by checking the database
-      console.log('🔍 Verifying profile update in database...');
-      try {
-        const { data: updatedProfile, error: verifyError } = await supabase
-          .from('profiles')
-          .select('account_status, is_active, phone, unit_number')
-          .eq('user_id', currentUser.id)
-          .single();
-          
-        if (verifyError) {
-          console.error('❌ Error verifying profile update:', verifyError);
-        } else {
-          console.log('📋 Database verification - Profile after update:', updatedProfile);
-        }
-      } catch (verifyErr) {
-        console.warn('⚠️ Database verification failed but continuing:', verifyErr);
-      }
-
-      // Show success message
-      console.log('🎉 Showing success toast...');
       toast({
         title: t.success,
-        description: "Welcome to the community management system!",
+        description: "Account completed successfully!",
       });
 
-      console.log('🚀 Account completion successful - attempting navigation');
-      
-      // Multiple navigation attempts to ensure it works
-      try {
-        console.log('🔄 Navigation attempt 1: Immediate');
-        navigate("/", { replace: true });
-        
-        // Backup navigation after delay
-        setTimeout(() => {
-          console.log('🔄 Navigation attempt 2: Delayed fallback');
-          window.location.href = '/';
-        }, 1000);
-        
-        // Force page reload as last resort
-        setTimeout(() => {
-          console.log('🔄 Navigation attempt 3: Force reload fallback');
-          window.location.replace('/');
-        }, 2000);
-        
-      } catch (navError) {
-        console.error('❌ Navigation error:', navError);
-        // Force redirect using window.location as ultimate fallback
-        console.log('🔄 Emergency navigation: Using window.location');
-        window.location.href = '/';
-      }
-      
+      // Simple redirect
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
+
     } catch (error) {
-      console.error("❌ Error completing account:", error);
+      console.error("❌ Error:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : t.error,
