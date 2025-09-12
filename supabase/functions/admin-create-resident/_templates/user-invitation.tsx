@@ -18,6 +18,7 @@ interface UserInvitationEmailProps {
   role: string
   invitation_url: string
   admin_name?: string
+  temporary_password?: string
 }
 
 export const UserInvitationEmail = ({
@@ -26,6 +27,7 @@ export const UserInvitationEmail = ({
   role,
   invitation_url,
   admin_name = 'Pentadbir',
+  temporary_password,
 }: UserInvitationEmailProps) => {
   const roleDisplayName = {
     'resident': 'Penduduk / Resident',
@@ -70,11 +72,19 @@ export const UserInvitationEmail = ({
               </Link>
             </Text>
             
+            {temporary_password && (
+              <Text style={{...steps, marginBottom: '16px'}}>
+                <strong>Maklumat Log Masuk / Login Information:</strong><br/>
+                Email: {email}<br/>
+                Kata laluan sementara / Temporary Password: <strong>{temporary_password}</strong>
+              </Text>
+            )}
+            
             <Text style={steps}>
               <strong>Langkah seterusnya:</strong><br/>
               1. Klik pautan di atas<br/>
-              2. Lengkapkan maklumat profil anda<br/>
-              3. Tetapkan kata laluan selamat<br/>
+              2. Log masuk dengan email dan kata laluan sementara<br/>
+              3. Lengkapkan maklumat profil anda<br/>
               4. Mula menggunakan platform
             </Text>
 
@@ -101,11 +111,19 @@ export const UserInvitationEmail = ({
               </Link>
             </Text>
             
+            {temporary_password && (
+              <Text style={{...steps, marginBottom: '16px'}}>
+                <strong>Login Information:</strong><br/>
+                Email: {email}<br/>
+                Temporary Password: <strong>{temporary_password}</strong>
+              </Text>
+            )}
+            
             <Text style={steps}>
               <strong>Next steps:</strong><br/>
               1. Click the link above<br/>
-              2. Complete your profile information<br/>
-              3. Set a secure password<br/>
+              2. Login with your email and temporary password<br/>
+              3. Complete your profile information<br/>
               4. Start using the platform
             </Text>
 
