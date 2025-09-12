@@ -272,28 +272,58 @@ export default function MyComplaints() {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "low":
-        return "bg-green-500";
+        return "bg-green-500 text-white";
       case "medium":
-        return "bg-yellow-500";
+        return "bg-yellow-500 text-white";
       case "high":
-        return "bg-red-500";
+        return "bg-red-500 text-white";
       default:
-        return "bg-gray-500";
+        return "bg-gray-500 text-white";
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-blue-500";
+        return "bg-blue-500 text-white";
       case "in_progress":
-        return "bg-yellow-500";
+        return "bg-yellow-500 text-white";
       case "resolved":
-        return "bg-green-500";
+        return "bg-green-500 text-white";
       case "closed":
-        return "bg-gray-500";
+        return "bg-gray-500 text-white";
       default:
-        return "bg-gray-500";
+        return "bg-gray-500 text-white";
+    }
+  };
+
+  const prettyStatus = (status: string) => {
+    switch (status) {
+      case "pending":
+        return language === "en" ? "Pending" : "Menunggu";
+      case "in_progress":
+        return language === "en" ? "In Progress" : "Dalam Proses";
+      case "resolved":
+        return language === "en" ? "Resolved" : "Diselesaikan";
+      case "closed":
+        return language === "en" ? "Closed" : "Ditutup";
+      default:
+        return status;
+    }
+  };
+
+  const prettyPriority = (priority: string) => {
+    switch (priority) {
+      case "low":
+        return language === "en" ? "Low" : "Rendah";
+      case "medium":
+        return language === "en" ? "Medium" : "Sederhana";
+      case "high":
+        return language === "en" ? "High" : "Tinggi";
+      case "urgent":
+        return language === "en" ? "Urgent" : "Kecemasan";
+      default:
+        return priority;
     }
   };
 
@@ -338,7 +368,7 @@ export default function MyComplaints() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
             {language === "en" ? "My Complaints" : "Aduan Saya"}
@@ -676,9 +706,9 @@ export default function MyComplaints() {
                     <AlertTriangle className="w-6 h-6 text-red-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm text-muted-foreground">
-                      {language === "en" ? "Escalated" : "Dinaikraf"}
-                    </p>
+                     <p className="text-sm text-muted-foreground">
+                       {language === "en" ? "Escalated" : "Dinaik taraf"}
+                     </p>
                     <p className="text-2xl font-bold">
                       {complaints.filter((c) => c.escalation_level > 0).length}
                     </p>
@@ -737,42 +767,33 @@ export default function MyComplaints() {
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold">{complaint.title}</h3>
-                          <div className="flex items-center space-x-2">
-                            {getEscalationBadge(complaint)}
-                            <Badge
-                              className={`text-white ${getPriorityColor(
-                                complaint.priority
-                              )}`}
-                            >
-                              {complaint.priority}
-                            </Badge>
-                          </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                          {complaint.description}
-                        </p>
-                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                          <span className="flex items-center">
-                            <Clock className="w-4 h-4 mr-1" />
-                            {new Date(
-                              complaint.created_at
-                            ).toLocaleDateString()}
-                          </span>
-                          <Badge
-                            variant="outline"
-                            className={`text-white ${getStatusColor(
-                              complaint.status
-                            )}`}
-                          >
-                            {complaint.status}
-                          </Badge>
-                          <span>{complaint.category}</span>
-                          {complaint.location && (
-                            <span>📍 {complaint.location}</span>
-                          )}
-                        </div>
+                         <div className="flex items-start justify-between mb-2 flex-wrap gap-2">
+                           <h3 className="font-semibold flex-1 min-w-0 break-words">{complaint.title}</h3>
+                           <div className="flex items-center gap-2 flex-wrap">
+                             {getEscalationBadge(complaint)}
+                             <Badge className={getPriorityColor(complaint.priority)}>
+                               {prettyPriority(complaint.priority)}
+                             </Badge>
+                             <Badge className={getStatusColor(complaint.status)}>
+                               {prettyStatus(complaint.status)}
+                             </Badge>
+                           </div>
+                         </div>
+                         <p className="text-sm text-muted-foreground mb-3 break-words">
+                           {complaint.description}
+                         </p>
+                         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                           <span className="flex items-center">
+                             <Clock className="w-4 h-4 mr-1" />
+                             {new Date(
+                               complaint.created_at
+                             ).toLocaleDateString()}
+                           </span>
+                           <span>{complaint.category}</span>
+                           {complaint.location && (
+                             <span className="break-words">📍 {complaint.location}</span>
+                           )}
+                         </div>
                       </div>
                     </div>
                   </CardContent>

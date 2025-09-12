@@ -1,16 +1,66 @@
+import React, { Suspense, lazy } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { StateAdminDashboard } from "@/components/dashboard/StateAdminDashboard";
-import { DistrictCoordinatorDashboard } from "@/components/dashboard/DistrictCoordinatorDashboard";
-import { CommunityAdminDashboard } from "@/components/dashboard/CommunityAdminDashboard";
-import { FacilityManagerDashboard } from "@/components/dashboard/FacilityManagerDashboard";
-import { SecurityOfficerDashboard } from "@/components/dashboard/SecurityOfficerDashboard";
-import { MaintenanceStaffDashboard } from "@/components/dashboard/MaintenanceStaffDashboard";
-import ServiceProviderEnhancedDashboard from "@/components/dashboard/ServiceProviderEnhancedDashboard";
-import { CommunityLeaderDashboard } from "@/components/dashboard/CommunityLeaderDashboard";
-import { StateServiceManagerDashboard } from "@/components/dashboard/StateServiceManagerDashboard";
-import { ResidentDashboard } from "@/components/dashboard/ResidentDashboard";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { Loader2, Sparkles } from "lucide-react";
+
+// Lazy load dashboard components for better performance
+const StateAdminDashboard = lazy(() => 
+  import("@/components/dashboard/StateAdminDashboard").then(module => ({
+    default: module.StateAdminDashboard
+  }))
+);
+
+const DistrictCoordinatorDashboard = lazy(() => 
+  import("@/components/dashboard/DistrictCoordinatorDashboard").then(module => ({
+    default: module.DistrictCoordinatorDashboard
+  }))
+);
+
+const CommunityAdminDashboard = lazy(() => 
+  import("@/components/dashboard/CommunityAdminDashboard").then(module => ({
+    default: module.CommunityAdminDashboard
+  }))
+);
+
+const FacilityManagerDashboard = lazy(() => 
+  import("@/components/dashboard/FacilityManagerDashboard").then(module => ({
+    default: module.FacilityManagerDashboard
+  }))
+);
+
+const SecurityOfficerDashboard = lazy(() => 
+  import("@/components/dashboard/SecurityOfficerDashboard").then(module => ({
+    default: module.SecurityOfficerDashboard
+  }))
+);
+
+const MaintenanceStaffDashboard = lazy(() => 
+  import("@/components/dashboard/MaintenanceStaffDashboard").then(module => ({
+    default: module.MaintenanceStaffDashboard
+  }))
+);
+
+const ServiceProviderEnhancedDashboard = lazy(() => 
+  import("@/components/dashboard/ServiceProviderEnhancedDashboard")
+);
+
+const CommunityLeaderDashboard = lazy(() => 
+  import("@/components/dashboard/CommunityLeaderDashboard").then(module => ({
+    default: module.CommunityLeaderDashboard
+  }))
+);
+
+const StateServiceManagerDashboard = lazy(() => 
+  import("@/components/dashboard/StateServiceManagerDashboard").then(module => ({
+    default: module.StateServiceManagerDashboard
+  }))
+);
+
+const ResidentDashboard = lazy(() => 
+  import("@/components/dashboard/ResidentDashboard").then(module => ({
+    default: module.ResidentDashboard
+  }))
+);
 
 const Index = () => {
   const { hasRole, roles, initializing, user } = useAuth();
@@ -55,8 +105,10 @@ const Index = () => {
   }
 
   const DashboardWrapper = ({ children }: { children: React.ReactNode }) => (
-    <div className="animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
-      {children}
+    <div className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+      <Suspense fallback={<DashboardSkeleton />}>
+        {children}
+      </Suspense>
     </div>
   );
 
@@ -117,8 +169,8 @@ const Index = () => {
       </DashboardWrapper>
     );
 
-  // Only show resident dashboard if user actually has resident role
-  if (hasRole("resident"))
+  // Show resident dashboard for both residents and guests
+  if (hasRole("resident") || hasRole("guest"))
     return (
       <DashboardWrapper>
         <ResidentDashboard />

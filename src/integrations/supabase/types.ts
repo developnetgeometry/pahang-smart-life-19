@@ -4125,6 +4125,36 @@ export type Database = {
         }
         Relationships: []
       }
+      guest_permissions: {
+        Row: {
+          community_id: string
+          created_at: string
+          created_by: string | null
+          feature_name: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          created_by?: string | null
+          feature_name: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          created_by?: string | null
+          feature_name?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       household_accounts: {
         Row: {
           created_at: string | null
@@ -5898,6 +5928,36 @@ export type Database = {
           updated_at?: string | null
           vehicle_plate?: string | null
           zone?: string
+        }
+        Relationships: []
+      }
+      password_reset_tokens: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          token: string
+          used: boolean
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          token: string
+          used?: boolean
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used?: boolean
+          used_at?: string | null
         }
         Relationships: []
       }
@@ -10170,6 +10230,10 @@ export type Database = {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
       }
+      cleanup_expired_reset_tokens: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_old_typing_indicators: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -10285,6 +10349,13 @@ export type Database = {
           module_name: string
         }[]
       }
+      get_guest_permissions_for_community: {
+        Args: { p_community_id: string }
+        Returns: {
+          feature_name: string
+          is_enabled: boolean
+        }[]
+      }
       get_image_url: {
         Args: { bucket_name: string; file_path: string }
         Returns: string
@@ -10374,6 +10445,10 @@ export type Database = {
         Args: { check_user_id?: string }
         Returns: number
       }
+      guest_has_feature_permission: {
+        Args: { p_feature_name: string; p_user_id: string }
+        Returns: boolean
+      }
       has_enhanced_role: {
         Args: {
           check_role: Database["public"]["Enums"]["enhanced_user_role"]
@@ -10406,6 +10481,10 @@ export type Database = {
       }
       has_role_level_or_higher: {
         Args: { check_user_id?: string; min_level: number }
+        Returns: boolean
+      }
+      is_guest_access_expired: {
+        Args: { user_id: string }
         Returns: boolean
       }
       is_module_enabled_for_community: {

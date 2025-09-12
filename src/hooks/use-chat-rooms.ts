@@ -185,6 +185,26 @@ export const useChatRooms = () => {
     try {
       console.log('Creating default general room');
       
+      // First check if user is already in a "General" room
+      const { data: existingGeneralRooms, error: checkError } = await supabase
+        .from('chat_rooms')
+        .select(`
+          id,
+          name,
+          members:chat_room_members!chat_room_members_room_id_fkey!inner(user_id)
+        `)
+        .eq('name', 'General')
+        .eq('is_active', true)
+        .eq('members.user_id', user?.id);
+
+      if (checkError) {
+        console.error('Error checking for existing General room:', checkError);
+      } else if (existingGeneralRooms && existingGeneralRooms.length > 0) {
+        console.log('User already belongs to a General room, skipping creation');
+        setTimeout(() => fetchRooms(), 500);
+        return;
+      }
+      
       // Create a general community room
       const { data: roomData, error: roomError } = await supabase
         .from('chat_rooms')

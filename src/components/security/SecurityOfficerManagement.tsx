@@ -147,13 +147,12 @@ export default function SecurityOfficerManagement() {
 
     setCreating(true);
     try {
-      const { error } = await supabase.functions.invoke("admin-create-user", {
+      const { error } = await supabase.functions.invoke("admin-create-security", {
         body: {
           email: formData.email,
           password: formData.password,
           full_name: formData.full_name,
           phone: formData.phone,
-          role: "security_officer",
         },
       });
 

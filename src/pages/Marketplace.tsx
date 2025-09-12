@@ -80,7 +80,7 @@ export default function Marketplace() {
   const { addToCart } = useShoppingCart();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { createGroupChat } = useChatRooms();
+  const { createGroupChat, createDirectChat } = useChatRooms();
 
   const [showCart, setShowCart] = useState(false);
 
@@ -590,36 +590,39 @@ export default function Marketplace() {
 
   const handleContactSeller = async (item: MarketplaceItem) => {
     try {
-      // Create a chat room for the marketplace item
-      const chatName = `${item.seller} - ${item.title}`;
-      const chatDescription =
-        language === "en"
-          ? `Marketplace chat about "${
-              item.title
-            }" (RM${item.price.toLocaleString()})`
-          : `Chat marketplace tentang "${
-              item.title
-            }" (RM${item.price.toLocaleString()})`;
+      // Get seller ID from database
+      const { data: sellerData } = await supabase
+        .from('marketplace_items')
+        .select('seller_id')
+        .eq('id', item.id)
+        .single();
+        
+      if (!sellerData?.seller_id) {
+        throw new Error('Seller not found');
+      }
 
-      const roomId = await createGroupChat(chatName, chatDescription, []);
+      // Create direct chat with the seller
+      const roomId = await createDirectChat(sellerData.seller_id);
 
-      // Navigate to communication hub with the created room
-      navigate("/communication", {
+      // Navigate to communication-hub with proper state and URL parameters
+      navigate(`/communication-hub?roomId=${roomId}`, {
         state: {
-          roomId,
-          chatWith: item.seller,
-          presetMessage:
-            language === "en"
-              ? `Hi, is this item still available? - ${
-                  item.title
-                } (RM${item.price.toLocaleString()})`
-              : `Hai, adakah item ini masih tersedia? - ${
-                  item.title
-                } (RM${item.price.toLocaleString()})`,
-          itemInfo: {
-            title: item.title,
-            price: item.price,
-            id: item.id,
+          initialRoomId: roomId,
+          marketplaceChat: {
+            chatWith: item.seller,
+            presetMessage:
+              language === "en"
+                ? `Hi, is this item still available? - ${
+                    item.title
+                  } (RM${item.price.toLocaleString()})`
+                : `Hai, adakah item ini masih tersedia? - ${
+                    item.title
+                  } (RM${item.price.toLocaleString()})`,
+            itemInfo: {
+              title: item.title,
+              price: item.price,
+              id: item.id,
+            },
           },
         },
       });

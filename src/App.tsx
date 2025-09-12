@@ -9,6 +9,7 @@ import { Layout } from "@/components/layout/Layout";
 import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
 import ComplaintDetail from "./pages/ComplaintDetail";
 import MyComplaints from "./pages/MyComplaints";
 import MyProfile from "./pages/MyProfile";
@@ -80,6 +81,7 @@ import PatrolInterfacePage from "./pages/PatrolInterface";
 import FacilityComplaintCenterPage from "./pages/FacilityComplaintCenter";
 import PendingApproval from "./pages/PendingApproval";
 import CompleteAccount from "./pages/CompleteAccount";
+import GuestManagement from "./pages/admin/GuestManagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -166,6 +168,16 @@ const App = () => (
               }
             />
             <Route
+              path="/login/complete-account"
+              element={<Navigate to="/complete-account" replace />}
+            />
+            <Route
+              path="/reset-password"
+              element={
+                <ResetPassword />
+              }
+            />
+            <Route
               path="/"
               element={
                 <ProtectedRoute>
@@ -235,16 +247,6 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <MyProfile />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/role-management"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <RoleManagement />
                   </Layout>
                 </ProtectedRoute>
               }
@@ -524,6 +526,18 @@ const App = () => (
                   <Layout>
                     <UserManagement />
                   </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/guest-management"
+              element={
+                <ProtectedRoute>
+                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
+                    <Layout>
+                      <GuestManagement />
+                    </Layout>
+                  </RequireRoles>
                 </ProtectedRoute>
               }
             />

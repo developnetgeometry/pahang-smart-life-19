@@ -1,6 +1,8 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -28,10 +30,79 @@ import {
 } from "lucide-react";
 import { AnnouncementSlideshow } from "./AnnouncementSlideshow";
 
+interface CCTVCamera {
+  id: string;
+  name: string;
+  location: string;
+  is_active: boolean;
+  stream_url?: string;
+}
+
 export function SecurityOfficerDashboard() {
-  const { language } = useAuth();
+  const { language, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [cameras, setCameras] = useState<CCTVCamera[]>([]);
+  const [loadingCameras, setLoadingCameras] = useState(true);
+
+  // Fetch CCTV cameras data
+  useEffect(() => {
+    const fetchCameras = async () => {
+      try {
+        let query = supabase
+          .from("cctv_cameras")
+          .select("id, name, location, is_active, stream_url");
+
+        // Filter by user's community if available
+        if (user?.active_community_id) {
+          query = query.eq("community_id", user.active_community_id);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error("Error fetching cameras:", error);
+          toast({
+            title: language === "en" ? "Error" : "Ralat",
+            description:
+              language === "en"
+                ? "Failed to load camera data"
+                : "Gagal memuatkan data kamera",
+            variant: "destructive",
+          });
+        } else {
+          setCameras(data || []);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setLoadingCameras(false);
+      }
+    };
+
+    fetchCameras();
+
+    // Set up realtime subscription for camera updates
+    const channel = supabase
+      .channel("cctv-cameras-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "cctv_cameras",
+        },
+        () => {
+          // Refetch data when changes occur
+          fetchCameras();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.active_community_id, language, toast]);
 
   const handleQuickAction = (action: string) => {
     switch (action) {
@@ -41,29 +112,15 @@ export function SecurityOfficerDashboard() {
       case "visitors":
         navigate("/visitor-security");
         break;
-      case "incident":
-        navigate("/my-complaints");
-        break;
       case "complaints_center":
         navigate("/admin/complaints");
-        break;
-      case "system":
-        toast({
-          title: language === "en" ? "System Check" : "Semak Sistem",
-          description:
-            language === "en"
-              ? "All systems operational. Last check: " +
-                new Date().toLocaleTimeString()
-              : "Semua sistem beroperasi. Pemeriksaan terakhir: " +
-                new Date().toLocaleTimeString(),
-        });
         break;
       default:
         break;
     }
   };
 
-  const handleCameraView = (cameraName: string) => {
+  const handleCameraView = (cameraId: string, cameraName: string) => {
     toast({
       title: language === "en" ? "Camera View" : "Paparan Kamera",
       description:
@@ -71,7 +128,7 @@ export function SecurityOfficerDashboard() {
           ? `Opening ${cameraName} camera feed...`
           : `Membuka paparan kamera ${cameraName}...`,
     });
-    navigate("/cctv-live");
+    navigate(`/cctv-live?cameraId=${cameraId}`);
   };
 
   const handleIncidentReview = (incidentType: string) => {
@@ -95,13 +152,21 @@ export function SecurityOfficerDashboard() {
     });
   };
 
+  // Calculate camera metrics from live data
+  const totalCameras = cameras.length;
+  const onlineCameras = cameras.filter(camera => camera.is_active).length;
+  const offlineCameras = totalCameras - onlineCameras;
+  const cameraUptime = totalCameras > 0 ? Math.round((onlineCameras / totalCameras) * 100) : 0;
+
   const securityMetrics = [
     {
       title: language === "en" ? "CCTV Cameras" : "Kamera CCTV",
-      value: "24",
+      value: loadingCameras ? "—" : totalCameras.toString(),
       icon: Camera,
-      trend: "23 online",
-      status: 96,
+      trend: loadingCameras 
+        ? (language === "en" ? "Loading..." : "Memuatkan...") 
+        : `${onlineCameras} ${language === "en" ? "online" : "dalam talian"}`,
+      status: cameraUptime,
     },
     {
       title: language === "en" ? "Access Points" : "Titik Akses",
@@ -122,17 +187,6 @@ export function SecurityOfficerDashboard() {
       icon: AlertTriangle,
       trend: "Medium priority",
     },
-  ];
-
-  const cctvFeeds = [
-    { name: "Main Gate", status: "online", location: "Entrance" },
-    { name: "Parking Area", status: "online", location: "Level 1" },
-    { name: "Pool Area", status: "online", location: "Recreation" },
-    { name: "Playground", status: "online", location: "Ground Floor" },
-    { name: "Gym", status: "online", location: "Level 2" },
-    { name: "Community Hall", status: "online", location: "Level 3" },
-    { name: "Lobby", status: "offline", location: "Ground Floor" },
-    { name: "Back Gate", status: "online", location: "Service Entrance" },
   ];
 
   const recentIncidents = [
@@ -263,9 +317,16 @@ export function SecurityOfficerDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-sm text-muted-foreground">
-                {language === "en"
-                  ? "24 CCTV cameras active. 2 active alerts requiring attention."
-                  : "24 kamera CCTV aktif. 2 amaran aktif memerlukan perhatian."}
+                {loadingCameras
+                  ? (language === "en" ? "Loading system status..." : "Memuatkan status sistem...")
+                  : totalCameras === 0
+                  ? (language === "en" 
+                      ? "No CCTV cameras configured. Contact administrator to set up security monitoring."
+                      : "Tiada kamera CCTV dikonfigurasikan. Hubungi pentadbir untuk menyediakan pemantauan keselamatan.")
+                  : (language === "en"
+                      ? `${totalCameras} CCTV cameras configured. ${onlineCameras} active, ${offlineCameras} offline. System uptime: ${cameraUptime}%.`
+                      : `${totalCameras} kamera CCTV dikonfigurasikan. ${onlineCameras} aktif, ${offlineCameras} luar talian. Masa operasi sistem: ${cameraUptime}%.`)
+                }
               </div>
             </CardContent>
           </Card>
@@ -283,38 +344,51 @@ export function SecurityOfficerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {cctvFeeds.map((camera, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg space-y-2 sm:space-y-0"
-                >
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{camera.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {camera.location}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className={getStatusColor(camera.status)}>
-                      {camera.status}
-                    </Badge>
-                    {camera.status === "online" && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleCameraView(camera.name)}
-                        title={
-                          language === "en"
-                            ? "View Camera Feed"
-                            : "Lihat Paparan Kamera"
-                        }
-                      >
-                        <Eye className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
+              {loadingCameras ? (
+                <div className="col-span-full text-center py-4 text-muted-foreground">
+                  {language === "en" ? "Loading cameras..." : "Memuatkan kamera..."}
                 </div>
-              ))}
+              ) : cameras.length === 0 ? (
+                <div className="col-span-full text-center py-4 text-muted-foreground">
+                  {language === "en" ? "No cameras configured" : "Tiada kamera dikonfigurasikan"}
+                </div>
+              ) : (
+                cameras.map((camera) => (
+                  <div
+                    key={camera.id}
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg space-y-2 sm:space-y-0"
+                  >
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{camera.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {camera.location}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className={getStatusColor(camera.is_active ? "online" : "offline")}>
+                        {camera.is_active 
+                          ? (language === "en" ? "online" : "dalam talian")
+                          : (language === "en" ? "offline" : "luar talian")
+                        }
+                      </Badge>
+                      {camera.is_active && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleCameraView(camera.id, camera.name)}
+                          title={
+                            language === "en"
+                              ? "View Camera Feed"
+                              : "Lihat Paparan Kamera"
+                          }
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -371,7 +445,7 @@ export function SecurityOfficerDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button
               className="flex items-center gap-2 h-12"
               onClick={() => handleQuickAction("cameras")}
@@ -394,22 +468,6 @@ export function SecurityOfficerDashboard() {
             >
               <AlertTriangle className="h-4 w-4" />
               {language === "en" ? "Complaints Center" : "Pusat Aduan"}
-            </Button>
-            <Button
-              className="flex items-center gap-2 h-12"
-              variant="outline"
-              onClick={() => handleQuickAction("incident")}
-            >
-              <FileText className="h-4 w-4" />
-              {language === "en" ? "Incident Report" : "Laporan Insiden"}
-            </Button>
-            <Button
-              className="flex items-center gap-2 h-12"
-              variant="outline"
-              onClick={() => handleQuickAction("system")}
-            >
-              <Activity className="h-4 w-4" />
-              {language === "en" ? "System Check" : "Semak Sistem"}
             </Button>
           </div>
         </CardContent>

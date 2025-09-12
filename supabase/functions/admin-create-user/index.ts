@@ -228,8 +228,7 @@ serve(async (req) => {
 
     console.log("Auth user created/invited:", authUser.user.id);
 
-    // Wait a moment for the trigger to create the initial profile
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // No need to wait - we'll use upsert for role assignment
 
     // Update the profile created by the trigger with admin data and role-specific fields
     const profileData: any = {
@@ -294,25 +293,35 @@ serve(async (req) => {
 
     console.log("Profile created successfully");
 
-    // Update the role created by the trigger with the correct role and admin context
-    const { error: roleUpdateError } = await supabaseAdmin
+    // Upsert the role (insert or update if exists) to handle both trigger and direct creation scenarios
+    const { error: roleUpsertError } = await supabaseAdmin
       .from("enhanced_user_roles")
-      .update({
+      .insert({
+        user_id: authUser.user.id,
         role: role,
         assigned_by: currentUser.id,
         district_id: adminProfile?.district_id || null,
+        is_active: true,
+        assigned_at: new Date().toISOString(),
       })
-      .eq("user_id", authUser.user.id);
+      .onConflict("user_id,role")
+      .select();
 
-    if (roleUpdateError) {
-      console.error("Role update error:", roleUpdateError);
-      // Clean up user and profile if role update fails
+    if (roleUpsertError) {
+      console.error("Role upsert error:", roleUpsertError);
+      console.error("Role upsert details:", {
+        user_id: authUser.user.id,
+        role: role,
+        assigned_by: currentUser.id,
+        district_id: adminProfile?.district_id || null,
+      });
+      // Clean up user and profile if role assignment fails
       await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
       await supabaseAdmin
         .from("profiles")
         .delete()
         .eq("user_id", authUser.user.id);
-      throw new Error(`Failed to update role: ${roleUpdateError.message}`);
+      throw new Error(`Failed to assign role: ${roleUpsertError.message}`);
     }
 
     console.log("Role assigned successfully");

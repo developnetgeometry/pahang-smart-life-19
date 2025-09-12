@@ -1,7 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/lib/translations";
 import { NavLink, useLocation } from "react-router-dom";
-import { useModuleAccess } from "@/hooks/use-module-access";
+import { useModuleAccessOptimized as useModuleAccess } from "@/hooks/use-module-access-optimized";
 import {
   Sidebar,
   SidebarContent,
@@ -171,8 +171,8 @@ export function AppSidebar() {
     // Services & Facilities - available to all users
     const servicesItems = [];
 
-    // Add marketplace if module is enabled
-    if (isModuleEnabled("marketplace")) {
+    // Add marketplace if module is enabled (exclude security officers)
+    if (isModuleEnabled("marketplace") && !hasRole("security_officer")) {
       servicesItems.push({
         title: t("marketplace"),
         url: "/marketplace",
@@ -193,8 +193,8 @@ export function AppSidebar() {
       });
     }
 
-    // Add facilities if module is enabled
-    if (isModuleEnabled("facilities")) {
+    // Add facilities if module is enabled (exclude security officers)
+    if (isModuleEnabled("facilities") && !hasRole("security_officer")) {
       servicesItems.push({
         title: t("facilities"),
         url: "/facilities",
@@ -202,8 +202,8 @@ export function AppSidebar() {
       });
     }
 
-    // Add bookings if module is enabled (exclude facility managers - they manage facilities, don't book them)
-    if (isModuleEnabled("bookings") && !hasRole("facility_manager")) {
+    // Add bookings if module is enabled (exclude facility managers and security officers)
+    if (isModuleEnabled("bookings") && !hasRole("facility_manager") && !hasRole("security_officer")) {
       servicesItems.push({
         title: t("myBookings"),
         url: "/my-bookings",
@@ -236,34 +236,15 @@ export function AppSidebar() {
       });
     }
 
-    // Role Management & Services - for approval and service provider management roles
-    const roleManagementItems = [];
-
-    // Role Approval Authority - for approval management roles
-    if (
-      hasRole("community_admin") ||
-      hasRole("district_coordinator") ||
-      hasRole("state_admin")
-    ) {
-      roleManagementItems.push({
-        title: t("roleApprovalAuthority"),
-        url: "/role-management",
-        icon: UserCheck,
-        requiredRoles: [
-          "community_admin",
-          "district_coordinator",
-          "state_admin",
-        ],
-      });
-    }
-
     // Service Provider Management - for community admins and above
+    const serviceProviderItems = [];
+    
     if (
       hasRole("community_admin") ||
       hasRole("district_coordinator") ||
       hasRole("state_admin")
     ) {
-      roleManagementItems.push({
+      serviceProviderItems.push({
         title: t("serviceProviders"),
         url: "/admin/service-providers",
         icon: Building,
@@ -275,10 +256,10 @@ export function AppSidebar() {
       });
     }
 
-    if (roleManagementItems.length > 0) {
+    if (serviceProviderItems.length > 0) {
       nav.push({
-        label: t("roleManagement"),
-        items: roleManagementItems,
+        label: t("serviceProviders"),
+        items: serviceProviderItems,
       });
     }
 
@@ -373,21 +354,9 @@ export function AppSidebar() {
     ) {
       operationsItems.push(
         {
-          title: t("facilitiesManagement"),
-          url: "/admin/facilities",
-          icon: Building,
-          requiredRoles: ["facility_manager", "state_admin", "community_admin"],
-        },
-        {
           title: t("floorPlanManagement"),
           url: "/admin/floor-plans",
           icon: Monitor,
-          requiredRoles: ["facility_manager", "state_admin", "community_admin"],
-        },
-        {
-          title: t("maintenanceManagement"),
-          url: "/admin/maintenance",
-          icon: Wrench,
           requiredRoles: ["facility_manager", "state_admin", "community_admin"],
         }
       );
@@ -395,65 +364,9 @@ export function AppSidebar() {
 
     // Admin and Facility Manager items - removed complaints center from here
 
-    // Asset Management - for facility managers and above
-    if (
-      hasRole("facility_manager") ||
-      hasRole("community_admin") ||
-      hasRole("district_coordinator") ||
-      hasRole("state_admin")
-    ) {
-      operationsItems.push({
-        title: t("assetManagement"),
-        url: "/asset-management",
-        icon: Package,
-        requiredRoles: [
-          "facility_manager",
-          "community_admin",
-          "district_coordinator",
-          "state_admin",
-        ],
-      });
-    }
+    // Asset Management and Inventory Management modules are hidden
 
-    // Inventory Management - for facility managers and above
-    if (
-      hasRole("facility_manager") ||
-      hasRole("maintenance_staff") ||
-      hasRole("community_admin") ||
-      hasRole("district_coordinator") ||
-      hasRole("state_admin")
-    ) {
-      operationsItems.push({
-        title: t("inventoryManagement"),
-        url: "/inventory-management",
-        icon: BarChart3,
-        requiredRoles: [
-          "facility_manager",
-          "maintenance_staff",
-          "community_admin",
-          "district_coordinator",
-          "state_admin",
-        ],
-      });
-    }
-
-    // Financial Management - for community admins and above
-    if (
-      hasRole("community_admin") ||
-      hasRole("district_coordinator") ||
-      hasRole("state_admin")
-    ) {
-      operationsItems.push({
-        title: t("financialManagement"),
-        url: "/financial-management",
-        icon: DollarSign,
-        requiredRoles: [
-          "community_admin",
-          "district_coordinator",
-          "state_admin",
-        ],
-      });
-    }
+    // Financial Management module is hidden
 
     if (operationsItems.length > 0) {
       nav.push({
@@ -511,14 +424,7 @@ export function AppSidebar() {
       }
     }
 
-    if (hasRole("state_admin") || hasRole("community_admin")) {
-      securityItems.push({
-        title: t("visitorAnalytics"),
-        url: "/visitor-analytics",
-        icon: Activity,
-        requiredRoles: ["state_admin", "community_admin"],
-      });
-    }
+    // Visitor Analytics module is hidden
 
     if (securityItems.length > 0) {
       nav.push({

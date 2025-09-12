@@ -7,6 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getRoleSpecificFunction, isRoleSupported } from "@/lib/user-creation-utils";
+import { validateUserDataForRole, getRoleDefaults, canCreateRole } from "@/lib/role-validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -48,11 +50,23 @@ import {
   ShieldCheck,
   Loader2,
   Home,
+  Mail,
+  Send,
+  Check,
+  X,
+  Clock,
+  UserCheck,
+  CheckCircle2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useModuleAccess } from "@/hooks/use-module-access";
+import { useUserRoles } from "@/hooks/use-user-roles";
+import RoleCreationValidator from "@/components/admin/RoleCreationValidator";
+import RoleValidationTests from "@/components/admin/RoleValidationTests";
+import { AdminDiagnostics } from "@/components/admin/AdminDiagnostics";
+import { CreateUserValidator } from "@/components/admin/CreateUserValidator";
 
 interface User {
   id: string;
@@ -64,6 +78,10 @@ interface User {
   status: "active" | "inactive" | "pending" | "approved" | "rejected";
   joinDate: string;
   district_id: string;
+  community_id: string;
+  emailConfirmed?: boolean;
+  lastSignIn?: string;
+  isActive?: boolean;
 }
 
 interface HouseholdAccount {
@@ -91,6 +109,7 @@ interface TenantFormData {
   tenant_name: string;
   tenant_email: string;
   tenant_phone: string;
+  access_expires_at: string;
   permissions: {
     marketplace: boolean;
     bookings: boolean;
@@ -106,6 +125,7 @@ export default function UserManagement() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isModuleEnabled } = useModuleAccess();
+  const { hasRole, loading: rolesLoading } = useUserRoles();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -130,6 +150,8 @@ export default function UserManagement() {
     familySize?: number;
     specialization?: string;
     access_expires_at?: string; // For guest users
+    district_id?: string;
+    community_id?: string;
   }>({
     name: "",
     email: "",
@@ -149,6 +171,8 @@ export default function UserManagement() {
     familySize: 1,
     specialization: "",
     access_expires_at: "",
+    district_id: "",
+    community_id: "",
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -166,10 +190,13 @@ export default function UserManagement() {
   // Add tenant states
   const [isAddTenantOpen, setIsAddTenantOpen] = useState(false);
   const [isCreatingTenant, setIsCreatingTenant] = useState(false);
+  const [districts, setDistricts] = useState<any[]>([]);
+  const [communities, setCommunities] = useState<any[]>([]);
   const [tenantForm, setTenantForm] = useState<TenantFormData>({
     tenant_name: "",
     tenant_email: "",
     tenant_phone: "",
+    access_expires_at: "",
     permissions: {
       marketplace: true,
       bookings: true,
@@ -179,6 +206,10 @@ export default function UserManagement() {
       panic_button: true,
     },
   });
+
+  // Validation and diagnostics state
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [showValidator, setShowValidator] = useState(false);
 
   const text = {
     en: {
@@ -229,7 +260,7 @@ export default function UserManagement() {
       // User details and tenant management
       userDetails: "User Details",
       householdMembers: "Household Members",
-      addTenant: "Add Tenant",
+      addTenant: "Add Guest",
       tenantName: "Tenant Name",
       tenantEmail: "Tenant Email",
       tenantPhone: "Tenant Phone",
@@ -241,7 +272,7 @@ export default function UserManagement() {
       discussions: "Discussions",
       createTenant: "Create Tenant",
       tenantCreated: "Tenant account created successfully!",
-      noHouseholdMembers: "No household members found.",
+      noHouseholdMembers: "No guest registered",
       // Role-specific fields
       familySize: "Family Size",
       vehicleNumber: "Vehicle Number",
@@ -302,7 +333,7 @@ export default function UserManagement() {
       // User details and tenant management
       userDetails: "Butiran Pengguna",
       householdMembers: "Ahli Rumah",
-      addTenant: "Tambah Penyewa",
+      addTenant: "Tambah Tetamu",
       tenantName: "Nama Penyewa",
       tenantEmail: "E-mel Penyewa",
       tenantPhone: "Telefon Penyewa",
@@ -333,24 +364,75 @@ export default function UserManagement() {
 
   // Fetch users from database
   useEffect(() => {
-    fetchUsers();
+    fetchDistricts();
   }, []);
+  
+  // Fetch users after roles are loaded
+  useEffect(() => {
+    if (!rolesLoading && user?.id) {
+      console.log('Fetching users with role filtering, user:', user);
+      console.log('User authentication state:', { 
+        userId: user?.id, 
+        email: user?.email,
+        activeCommunityId: user?.active_community_id,
+        district: user?.district,
+        roles: { hasRole }
+      });
+      fetchUsers();
+    }
+  }, [rolesLoading, user?.id, user?.active_community_id]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data: profiles, error: profilesError } = await supabase.from(
-        "profiles"
-      ).select(`
+      
+      // Build query with role-based filtering
+      let query = supabase.from("profiles").select(`
           id,
           full_name,
           email,
           phone,
           unit_number,
           district_id,
+          community_id,
           account_status,
           created_at
         `);
+
+      console.log('User roles check:', {
+        isCommunityAdmin: hasRole('community_admin'),
+        isDistrictCoordinator: hasRole('district_coordinator'), 
+        isStateAdmin: hasRole('state_admin'),
+        userActiveCommunityId: user?.active_community_id
+      });
+
+      // Apply filtering based on user role
+      if (hasRole('community_admin') && !hasRole('district_coordinator') && !hasRole('state_admin')) {
+        // Community Admin: only see users from their community
+        if (user?.active_community_id) {
+          console.log('Filtering by community_id:', user.active_community_id);
+          query = query.eq('community_id', user.active_community_id);
+        } else {
+          console.log('Community admin but no active_community_id, showing no users');
+          // If no community_id, show no users
+          query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+        }
+      } else if (hasRole('district_coordinator') && !hasRole('state_admin')) {
+        // District Coordinator: see all users in their district
+        if (user?.district) {
+          console.log('Filtering by district for coordinator:', user.district);
+          // Use the district field from user object
+          query = query.eq('district_id', user.district);
+        } else {
+          console.log('District coordinator but no district info, showing no users');
+          // If no district info, show no users
+          query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+        }
+      }
+      // State Admins see all users (no additional filtering)
+      console.log('Final query will be executed');
+
+      const { data: profiles, error: profilesError } = await query;
 
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
@@ -393,6 +475,7 @@ export default function UserManagement() {
           ? new Date(profile.created_at).toISOString().slice(0, 10)
           : "",
         district_id: profile.district_id || "",
+        community_id: profile.community_id || "",
       }));
 
       setUsers(formattedUsers);
@@ -407,6 +490,29 @@ export default function UserManagement() {
       setLoading(false);
     }
   };
+
+  const fetchDistricts = async () => {
+    const { data, error } = await supabase.from("districts").select("id, name");
+    if (data) {
+      setDistricts(data);
+    }
+  };
+
+  const fetchCommunities = async (districtId: string) => {
+    const { data, error } = await supabase
+      .from("communities")
+      .select("id, name")
+      .eq("district_id", districtId);
+    if (data) {
+      setCommunities(data);
+    }
+  };
+
+  useEffect(() => {
+    if (form.district_id) {
+      fetchCommunities(form.district_id);
+    }
+  }, [form.district_id]);
 
   const roles = [
     { value: "all", label: t.allRoles },
@@ -662,17 +768,63 @@ export default function UserManagement() {
 
         toast({ title: t.userUpdated });
       } else {
+        // Validate role before proceeding
+        if (!isRoleSupported(form.role)) {
+          toast({
+            title: "Error",
+            description: `Role "${form.role}" is not supported for user creation.`,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Validate user data for the specific role
+        const validationErrors = validateUserDataForRole(form.role, {
+          email: form.email,
+          full_name: form.name,
+          phone: form.phone,
+          password: form.password,
+          unit_number: form.unit,
+          access_expires_at: form.access_expires_at,
+          district_id: form.district_id,
+          community_id: form.community_id,
+          status: form.status
+        });
+
+        if (validationErrors.length > 0) {
+          const errorMessages = validationErrors.map(err => err.message).join(', ');
+          toast({
+            title: "Validation Error",
+            description: errorMessages,
+            variant: "destructive",
+          });
+          console.error('Role validation errors:', validationErrors);
+          return;
+        }
+
+        console.log(`Creating ${form.role} user:`, {
+          email: form.email,
+          full_name: form.name,
+          role: form.role
+        });
+
+        // Apply role defaults
+        const roleDefaults = getRoleDefaults(form.role);
+        
         // Create new user using edge function
         const requestBody: any = {
           email: form.email,
           full_name: form.name,
           phone: form.phone,
           role: form.role,
+          ...roleDefaults // Apply role-specific defaults
         };
 
         // Only include password and status for non-residents and non-guests
         if (form.role !== "resident" && form.role !== "guest") {
-          requestBody.password = form.password;
+          if (form.password && form.password.length >= 8) {
+            requestBody.password = form.password;
+          }
           requestBody.status = form.status;
         }
 
@@ -686,16 +838,64 @@ export default function UserManagement() {
           requestBody.access_expires_at = form.access_expires_at;
         }
 
-        const { data, error } = await supabase.functions.invoke(
-          "admin-create-user",
-          {
-            body: requestBody,
+        // Add district and community IDs
+        if (form.district_id) {
+          requestBody.district_id = form.district_id;
+        }
+        if (form.community_id) {
+          requestBody.community_id = form.community_id;
+        }
+
+        try {
+          const functionName = getRoleSpecificFunction(form.role);
+          console.log(`Calling ${functionName} with payload:`, requestBody);
+          
+          const { data, error } = await supabase.functions.invoke(
+            functionName,
+            {
+              body: requestBody,
+            }
+          );
+
+          if (error) {
+            console.error(`Error from ${functionName}:`, error);
+            throw error;
           }
-        );
 
-        if (error) throw error;
+          // Check for errors in response body even with 2xx status
+          if (data?.error || data?.success === false) {
+            console.error(`Error in response body from ${functionName}:`, data);
+            throw new Error(data.error || 'Function returned error response');
+          }
 
-        toast({ title: t.userCreated });
+          console.log(`Successfully created ${form.role} user:`, data);
+          toast({ 
+            title: t.userCreated,
+            description: `${form.role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} account created successfully.`
+          });
+        } catch (error: any) {
+          console.error('User creation error:', error);
+          
+          // Provide specific error messages based on common issues
+          let errorMessage = "Failed to create user account";
+          
+          if (error.message?.includes('already exists')) {
+            errorMessage = "A user with this email already exists";
+          } else if (error.message?.includes('permission')) {
+            errorMessage = "You don't have permission to create this type of account";
+          } else if (error.message?.includes('module')) {
+            errorMessage = "Required module is not enabled for this community";
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+          
+          toast({
+            title: "Account Creation Failed",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          throw error;
+        }
       }
 
       setIsCreateOpen(false);
@@ -789,6 +989,48 @@ export default function UserManagement() {
     }
   };
 
+  const handleApprove = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ account_status: "approved" })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({ title: t.userApproved });
+      fetchUsers(); // Refresh the list
+    } catch (error) {
+      console.error("Error approving user:", error);
+      toast({
+        title: "Error",
+        description: "Failed to approve user",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ account_status: "rejected" })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({ title: t.userRejected });
+      fetchUsers(); // Refresh the list
+    } catch (error) {
+      console.error("Error rejecting user:", error);
+      toast({
+        title: "Error",
+        description: "Failed to reject user",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Fetch household accounts for a user
   const fetchHouseholdAccounts = async (userId: string) => {
     try {
@@ -831,6 +1073,33 @@ export default function UserManagement() {
     }
   };
 
+  // Handle resend invitation
+  const handleResendInvitation = async (userId: string, userEmail: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('resend-invitation', {
+        body: {
+          user_id: userId
+        }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({
+        title: "Invitation Sent", 
+        description: `Invitation has been resent to ${userEmail}`
+      });
+      
+    } catch (error: any) {
+      console.error('Error resending invitation:', error);
+      toast({
+        title: "Resend Failed",
+        description: error.message || "Failed to resend invitation",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Handle user row click
   const handleUserClick = (user: User) => {
     setSelectedUser(user);
@@ -838,12 +1107,12 @@ export default function UserManagement() {
     fetchHouseholdAccounts(user.id);
   };
 
-  // Handle create tenant
+  // Handle create tenant (guest)
   const handleCreateTenant = async () => {
-    if (!selectedUser || !tenantForm.tenant_name || !tenantForm.tenant_email) {
+    if (!selectedUser || !tenantForm.tenant_name || !tenantForm.tenant_email || !tenantForm.access_expires_at) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields including expiration date",
         variant: "destructive",
       });
       return;
@@ -852,27 +1121,36 @@ export default function UserManagement() {
     try {
       setIsCreatingTenant(true);
 
+      // Call admin-create-guest instead of admin-household
       const { data, error } = await supabase.functions.invoke(
-        "admin-household",
+        "admin-create-guest",
         {
           body: {
-            host_user_id: selectedUser.id,
-            tenant_name: tenantForm.tenant_name,
-            tenant_email: tenantForm.tenant_email,
-            tenant_phone: tenantForm.tenant_phone,
-            permissions: tenantForm.permissions,
+            email: tenantForm.tenant_email,
+            full_name: tenantForm.tenant_name,
+            phone: tenantForm.tenant_phone,
+            access_expires_at: tenantForm.access_expires_at,
+            // Use the selected user's district and community info
+            district_id: selectedUser.district_id,
+            community_id: selectedUser.community_id,
           },
         }
       );
 
       if (error) throw error;
 
+      // Check for errors in response body even with 2xx status
+      if (data?.error || data?.success === false) {
+        console.error('Error in response body from admin-create-guest:', data);
+        throw new Error(data.error || 'Function returned error response');
+      }
+
       toast({
-        title: t.tenantCreated,
+        title: "Guest Created Successfully",
         description:
           language === "en"
-            ? "Tenant invitation email has been sent."
-            : "E-mel jemputan penyewa telah dihantar.",
+            ? "Guest account created with temporary credentials."
+            : "Akaun tetamu dicipta dengan kelayakan sementara.",
       });
 
       // Reset form and close modal
@@ -880,6 +1158,7 @@ export default function UserManagement() {
         tenant_name: "",
         tenant_email: "",
         tenant_phone: "",
+        access_expires_at: "",
         permissions: {
           marketplace: true,
           bookings: true,
@@ -896,10 +1175,10 @@ export default function UserManagement() {
         fetchHouseholdAccounts(selectedUser.id);
       }
     } catch (error) {
-      console.error("Error creating tenant:", error);
+      console.error("Error creating guest:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create tenant account",
+        description: error.message || "Failed to create guest account",
         variant: "destructive",
       });
     } finally {
@@ -908,12 +1187,28 @@ export default function UserManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
+          <h1 className="text-3xl font-bold">{t.title}</h1>
           <p className="text-muted-foreground">{t.subtitle}</p>
         </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowDiagnostics(!showDiagnostics)}
+          >
+            {showDiagnostics ? "Hide" : "Show"} Diagnostics
+          </Button>
+        </div>
+      </div>
+
+      {/* Diagnostics Panel */}
+      {showDiagnostics && (
+        <AdminDiagnostics onScopeFixed={() => setShowDiagnostics(false)} />
+      )}
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <Dialog
           open={isCreateOpen}
           onOpenChange={(open) => {
@@ -954,6 +1249,22 @@ export default function UserManagement() {
               <DialogDescription>{t.createSubtitle}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              {/* Validation Panel */}
+              <CreateUserValidator
+                formData={{
+                  name: form.name,
+                  email: form.email,
+                  phone: form.phone,
+                  unit: form.unit,
+                  role: form.role,
+                  status: form.status,
+                  district_id: form.district_id,
+                  community_id: form.community_id,
+                }}
+                isVisible={showValidator}
+                onToggleVisibility={() => setShowValidator(!showValidator)}
+              />
+
               {/* Role Selection - Always shown first */}
               <div className="space-y-2">
                 <Label htmlFor="role">{t.role} *</Label>
@@ -1236,18 +1547,45 @@ export default function UserManagement() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="phone">{t.phone}</Label>
-                      <Input
-                        id="phone"
-                        placeholder={t.phone}
-                        value={form.phone}
-                        onChange={(e) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            phone: e.target.value,
-                          }))
+                      <Label htmlFor="district">District *</Label>
+                      <Select
+                        value={form.district_id}
+                        onValueChange={(value) =>
+                          setForm((prev) => ({ ...prev, district_id: value, community_id: "" }))
                         }
-                      />
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select district" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {districts.map((district) => (
+                            <SelectItem key={district.id} value={district.id}>
+                              {district.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="community">Community *</Label>
+                      <Select
+                        value={form.community_id}
+                        onValueChange={(value) =>
+                          setForm((prev) => ({ ...prev, community_id: value }))
+                        }
+                        disabled={!form.district_id}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select community" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {communities.map((community) => (
+                            <SelectItem key={community.id} value={community.id}>
+                              {community.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     {form.role === "resident" && (
                       <div className="space-y-2">
@@ -1787,11 +2125,11 @@ export default function UserManagement() {
                 filteredUsers.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center justify-between p-4 border rounded-lg cursor-pointer"
+                    className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg cursor-pointer"
                     onClick={() => handleUserClick(user)}
                   >
-                    <div className="flex items-center gap-4">
-                      <Avatar>
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <Avatar className="flex-shrink-0">
                         <AvatarImage src="" />
                         <AvatarFallback>
                           {user.name
@@ -1800,10 +2138,10 @@ export default function UserManagement() {
                             .join("")}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
-                        <h4 className="font-medium">{user.name}</h4>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-medium truncate">{user.name}</h4>
                         <div className="text-sm text-muted-foreground space-y-1">
-                          <p>{user.email}</p>
+                          <p className="truncate">{user.email}</p>
                           <p>{user.phone}</p>
                           <p>
                             {t.unit}: {user.unit}
@@ -1814,17 +2152,74 @@ export default function UserManagement() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 flex-shrink-0">
                       <Badge className={getRoleColor(user.role)}>
                         {getRoleText(user.role)}
                       </Badge>
                       <Badge className={getStatusColor(user.status)}>
                         {getStatusText(user.status)}
                       </Badge>
+                      
+                      {/* Email Confirmation Status */}
+                      {user.emailConfirmed ? (
+                        <div className="flex items-center text-green-600 text-sm" title="Email Confirmed">
+                          <CheckCircle2 className="h-4 w-4 mr-1" />
+                          <span className="hidden sm:inline">Confirmed</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-yellow-600 text-sm" title="Email Not Confirmed">
+                          <Clock className="h-4 w-4 mr-1" />
+                          <span className="hidden sm:inline">Pending</span>
+                        </div>
+                      )}
+
                       <div
                         className="flex gap-1"
                         onClick={(e) => e.stopPropagation()}
                       >
+                        {/* Actions for pending users */}
+                        {user.status === "pending" && !user.emailConfirmed && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleResendInvitation(user.id, user.email)}
+                            className="text-blue-600"
+                            title="Resend Invitation"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
+                        {user.status === "pending" && user.emailConfirmed && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleApprove(user.id)}
+                              className="text-green-600"
+                              title="Approve"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleReject(user.id)}
+                              className="text-red-600"
+                              title="Reject"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+
+                        {user.status === "approved" && (
+                          <div className="flex items-center text-green-600 text-sm">
+                            <UserCheck className="h-4 w-4 mr-1" />
+                            <span className="hidden sm:inline">Active</span>
+                          </div>
+                        )}
+                        
                         <Button
                           variant="outline"
                           size="sm"
@@ -1987,6 +2382,29 @@ export default function UserManagement() {
                           />
                         </div>
 
+                        <div className="space-y-2">
+                          <Label htmlFor="tenantExpiresAt">
+                            {language === "en" ? "Access Expires At *" : "Akses Tamat Pada *"}
+                          </Label>
+                          <Input
+                            id="tenantExpiresAt"
+                            type="date"
+                            value={tenantForm.access_expires_at}
+                            onChange={(e) =>
+                              setTenantForm((prev) => ({
+                                ...prev,
+                                access_expires_at: e.target.value,
+                              }))
+                            }
+                            placeholder={
+                              language === "en"
+                                ? "Select expiration date"
+                                : "Pilih tarikh tamat tempoh"
+                            }
+                            min={new Date().toISOString().slice(0, 10)}
+                          />
+                        </div>
+
                         {/* Permissions */}
                         <div className="space-y-3">
                           <Label>{t.tenantPermissions}</Label>
@@ -2105,6 +2523,12 @@ export default function UserManagement() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Role Creation Validation Suite - Only shown in development/admin mode */}
+      <RoleCreationValidator />
+      
+      {/* Comprehensive Role Testing Suite */}
+      <RoleValidationTests />
     </div>
   );
 }

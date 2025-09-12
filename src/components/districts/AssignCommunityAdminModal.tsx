@@ -182,7 +182,7 @@ export default function AssignCommunityAdminModal({
       }
 
       const { data, error } = await supabase.functions.invoke(
-        "admin-create-user",
+        "admin-create-admin",
         {
           body: {
             email: createData.email,

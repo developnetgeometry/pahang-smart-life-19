@@ -85,7 +85,19 @@ verify_jwt = true
 [functions.proxy-mjpeg]
 verify_jwt = false
 
-[functions.admin-create-user]
+[functions.admin-create-resident]
+verify_jwt = true
+
+[functions.admin-create-guest]
+verify_jwt = true
+
+[functions.admin-create-security]
+verify_jwt = true
+
+[functions.admin-create-facility-staff]
+verify_jwt = true
+
+[functions.admin-create-admin]
 verify_jwt = true
 
 [functions.assign-community-admin]
@@ -99,6 +111,12 @@ verify_jwt = false
 
 [functions.admin-household]
 verify_jwt = true
+
+[functions.send-reset-email]
+verify_jwt = false
+
+[functions.reset-password-with-token]
+verify_jwt = false
 
 [edge_runtime]
 policy = "per_worker"

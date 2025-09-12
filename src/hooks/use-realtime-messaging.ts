@@ -227,7 +227,7 @@ export const useRealtimeMessaging = (roomId?: string) => {
                 ? `New message about your product` 
                 : `New message from ${senderName}`,
               body: `${senderName}: ${messagePreview}`,
-              url: `/communication-hub?room=${roomId}`,
+              url: `/communication-hub?roomId=${roomId}`,
               userIds: notificationOptions.recipientIds,
               notificationType: 'message'
             }
@@ -400,8 +400,39 @@ export const useRealtimeMessaging = (roomId?: string) => {
           filter: `room_id=eq.${roomId}`,
         },
         async (payload) => {
-          // For demo, simulate typing users
-          setTypingUsers([]);
+          if (payload.eventType === 'INSERT') {
+            // Fetch user profile for the typing user
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('user_id', payload.new.user_id)
+              .single();
+            
+            const typingUser = {
+              ...payload.new,
+              user_name: profile?.full_name || 'Anonymous User'
+            } as TypingUser;
+            
+            // Exclude current user from typing indicators
+            if (payload.new.user_id !== user?.id) {
+              setTypingUsers(prev => {
+                const existingIndex = prev.findIndex(u => u.user_id === payload.new.user_id);
+                if (existingIndex >= 0) {
+                  // Update existing typing indicator
+                  const updated = [...prev];
+                  updated[existingIndex] = typingUser;
+                  return updated;
+                } else {
+                  // Add new typing indicator
+                  return [...prev, typingUser];
+                }
+              });
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setTypingUsers(prev => 
+              prev.filter(u => u.user_id !== payload.old.user_id)
+            );
+          }
         }
       )
       .subscribe();

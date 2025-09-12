@@ -1094,11 +1094,17 @@ export default function Login() {
     setError("");
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      // Call our custom reset email edge function
+      const { error } = await supabase.functions.invoke('send-reset-email', {
+        body: {
+          email: resetEmail
+        }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Custom reset email error:', error);
+        throw new Error(error.message || 'Failed to send reset email');
+      }
 
       // Show success animation
       setPasswordResetSent(true);
@@ -1291,6 +1297,19 @@ export default function Login() {
                         required
                         className="transition-smooth"
                       />
+
+                      {/* Account Status Alert */}
+                      {accountStatusError && (
+                        <AccountStatusAlert
+                          status={accountStatusError}
+                          language={language || "en"}
+                          onRetry={accountStatusError === "not_approved" ? () => setAccountStatusError(null) : undefined}
+                          onContactAdmin={() => {
+                            // Contact admin functionality
+                            window.open("mailto:admin@primapahang.com", "_blank");
+                          }}
+                        />
+                      )}
                     </div>
                     <Button
                       type="submit"
@@ -2356,10 +2375,6 @@ export default function Login() {
                       password123
                     </p>
                     <p>
-                      <strong>District Coordinator:</strong>{" "}
-                      districtcoord@test.com / password123
-                    </p>
-                    <p>
                       <strong>Community Admin:</strong> communityadmin@test.com
                       / password123
                     </p>
@@ -2381,14 +2396,6 @@ export default function Login() {
                     <p>
                       <strong>Service Provider:</strong>{" "}
                       serviceprovider@test.com / password123
-                    </p>
-                    <p>
-                      <strong>Community Leader:</strong>{" "}
-                      communityleader@test.com / password123
-                    </p>
-                    <p>
-                      <strong>State Service Manager:</strong>{" "}
-                      stateservicemgr@test.com / password123
                     </p>
                   </div>
                 </div>

@@ -70,6 +70,20 @@ export function AnnouncementSlideshow() {
     return announcement.content_en || announcement.content_ms || announcement.content;
   };
 
+  // Helper function to truncate text at word boundaries
+  const truncateAtWord = (text: string, maxLength: number): string => {
+    if (text.length <= maxLength) return text;
+    
+    const truncated = text.substring(0, maxLength);
+    const lastSpace = truncated.lastIndexOf(' ');
+    
+    if (lastSpace > 0) {
+      return truncated.substring(0, lastSpace);
+    }
+    
+    return truncated;
+  };
+
   // Fetch only pinned announcements
   useEffect(() => {
     const fetchAnnouncements = async () => {
@@ -207,7 +221,7 @@ export function AnnouncementSlideshow() {
           )}
 
           {/* Content Overlay */}
-          <div className="relative h-full flex flex-col justify-between p-6 md:p-8 text-white">
+          <div className="relative h-full flex flex-col justify-between p-6 md:p-8 pl-12 pr-12 sm:pl-14 sm:pr-14 pb-14 sm:pb-16 text-white">
             {/* Top Badges */}
             <div className="flex items-center gap-2 flex-wrap">
               <Badge 
@@ -241,19 +255,16 @@ export function AnnouncementSlideshow() {
             </div>
 
             {/* Main Content */}
-            <div className="space-y-4 flex-1 flex flex-col justify-center">
+            <div className="space-y-2 md:space-y-4 flex-1 flex flex-col justify-center">
               <h2 className="text-2xl md:text-4xl font-bold leading-tight">
                 {getLocalizedTitle(currentAnnouncement)}
               </h2>
-              <p className="text-lg md:text-xl text-white/90 leading-relaxed max-w-3xl">
-                {getLocalizedContent(currentAnnouncement).substring(0, 200)}
-                {getLocalizedContent(currentAnnouncement).length > 200 && '...'}
-              </p>
+              <p className="sr-only">{getLocalizedContent(currentAnnouncement)}</p>
             </div>
 
             {/* Bottom Info */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 text-white/80">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-white/80">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   <span>{new Date(currentAnnouncement.created_at).toLocaleDateString()}</span>
@@ -266,7 +277,7 @@ export function AnnouncementSlideshow() {
               <Button
                 variant="secondary"
                 onClick={() => setShowDetailsModal(true)}
-                className="bg-white/20 text-white border-white/30 backdrop-blur-sm hover:bg-white/30"
+                className="bg-white/20 text-white border-white/30 backdrop-blur-sm hover:bg-white/30 w-full sm:w-auto sm:ml-auto"
               >
                 <Eye className="h-4 w-4 mr-2" />
                 {language === 'en' ? 'View Details' : 'Lihat Butiran'}
@@ -281,24 +292,24 @@ export function AnnouncementSlideshow() {
                 variant="ghost"
                 size="sm"
                 onClick={prevSlide}
-                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 text-white hover:bg-black/50 border border-white/20 backdrop-blur-sm"
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 text-white hover:bg-black/50 border border-white/20 backdrop-blur-sm rounded-full w-9 h-9 sm:w-10 sm:h-10 p-0"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={nextSlide}
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 text-white hover:bg-black/50 border border-white/20 backdrop-blur-sm"
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 text-white hover:bg-black/50 border border-white/20 backdrop-blur-sm rounded-full w-9 h-9 sm:w-10 sm:h-10 p-0"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </>
           )}
 
           {/* Slide Indicators */}
           {announcements.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2">
               {announcements.map((_, index) => (
                 <button
                   key={index}
@@ -319,7 +330,7 @@ export function AnnouncementSlideshow() {
               variant="ghost"
               size="sm"
               onClick={() => setIsAutoPlay(!isAutoPlay)}
-              className="absolute top-4 right-4 bg-black/30 text-white hover:bg-black/50 border border-white/20 backdrop-blur-sm w-10 h-10 p-0"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-black/30 text-white hover:bg-black/50 border border-white/20 backdrop-blur-sm w-10 h-10 p-0"
             >
               {isAutoPlay ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             </Button>

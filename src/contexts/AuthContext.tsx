@@ -21,7 +21,8 @@ export type UserRole =
   | "state_admin"
   | "state_service_manager"
   | "spouse"
-  | "tenant";
+  | "tenant"
+  | "guest";
 
 // ViewRole removed - using role-based navigation instead
 export type Language = "en" | "ms";
@@ -34,6 +35,7 @@ export interface User {
   associated_community_ids: string[];
   active_community_id: string;
   district: string;
+  community: string;
   user_role: UserRole; // primary role for display
   available_roles: UserRole[];
   // current_view_role removed - using role-based navigation
@@ -111,75 +113,85 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const hasRole = useMemo(
     () => (role: UserRole) => {
-      const hasIt = roles.includes(role);
-      console.log("hasRole check:", role, "in roles:", roles, "result:", hasIt);
-      return hasIt;
+      return roles.includes(role);
     },
     [roles]
   );
 
-  // Load profile + roles for a given user id
+  // Load profile + roles for a given user id with optimized queries
   const loadProfileAndRoles = async (userId: string) => {
     try {
-      console.log("loadProfileAndRoles called for userId:", userId);
-      const [{ data: profile }, { data: roleRows }, { data: primaryRoleData }] =
-        await Promise.all([
-          supabase
-            .from("profiles")
-            .select(
-              "full_name, email, district_id, community_id, language_preference, account_status"
-            )
-            .eq("user_id", userId)
-            .maybeSingle(),
-          supabase
-            .from("enhanced_user_roles")
-            .select("role")
-            .eq("user_id", userId)
-            .eq("is_active", true),
-          supabase.rpc("get_user_highest_role", { check_user_id: userId }),
-        ]);
+      console.log(`AuthContext: Loading profile for user ${userId}`);
+      
+      // Optimized query for profile data
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("full_name, email, district_id, community_id, language_preference, account_status")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      console.log(`AuthContext: Profile query result:`, { profileData, profileError });
+        
+      // Get district and community names in parallel if needed
+      const [districtResult, communityResult] = await Promise.all([
+        profileData?.district_id 
+          ? supabase.from("districts").select("name").eq("id", profileData.district_id).single()
+          : Promise.resolve({ data: null }),
+        profileData?.community_id 
+          ? supabase.from("communities").select("name").eq("id", profileData.community_id).single()
+          : Promise.resolve({ data: null })
+      ]);
+
+      if (profileError) {
+        console.error(`AuthContext: Profile error for user ${userId}:`, profileError);
+        throw profileError;
+      }
+
+      if (!profileData) {
+        console.log(`AuthContext: No profile found for user ${userId}`);
+        setUser(null);
+        setRoles([]);
+        setAccountStatus(null);
+        return;
+      }
+
+      console.log(`AuthContext: Getting roles for user ${userId}`);
+      
+      // Get roles and primary role in parallel
+      const [{ data: roleRows, error: rolesError }, { data: primaryRoleData, error: primaryRoleError }] = await Promise.all([
+        supabase
+          .from("enhanced_user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .eq("is_active", true),
+        supabase.rpc("get_user_highest_role", { check_user_id: userId }),
+      ]);
+
+      console.log(`AuthContext: Roles query result:`, { roleRows, rolesError, primaryRoleData, primaryRoleError });
 
       // Set account status regardless of approval state
-      setAccountStatus(profile?.account_status || "pending");
+      setAccountStatus(profileData.account_status || "pending");
+
+      console.log(`AuthContext: Account status for user ${userId}:`, profileData.account_status);
 
       // Check if account is approved or pending completion
       if (
-        profile?.account_status !== "approved" &&
-        profile?.account_status !== "pending_completion"
+        profileData.account_status !== "approved" &&
+        profileData.account_status !== "pending_completion"
       ) {
-        console.log(
-          "User account not approved, account_status:",
-          profile?.account_status
-        );
-        // Don't sign out, just set user to null and clear roles
+        console.log(`AuthContext: User ${userId} account not approved, status: ${profileData.account_status}`);
         setUser(null);
         setRoles([]);
         return;
       }
 
-      let districtName = "";
-      if (profile?.district_id) {
-        const { data: district } = await supabase
-          .from("districts")
-          .select("name")
-          .eq("id", profile.district_id)
-          .single();
-        districtName = district?.name || "";
-      }
-
-      const roleList: UserRole[] = (roleRows || []).map(
-        (r) => r.role as UserRole
-      );
-      const primaryRole: UserRole =
-        (primaryRoleData as UserRole) || roleList[0] || "resident";
-
-      console.log("Profile data:", profile);
-      console.log("Role rows from database:", roleRows);
-      console.log("Loaded roles for user:", userId, "roles:", roleList);
-      console.log("Primary role:", primaryRole);
+      const roleList: UserRole[] = (roleRows || []).map(r => r.role as UserRole);
+      const primaryRole: UserRole = (primaryRoleData as UserRole) || roleList[0] || "resident";
+      
+      console.log(`AuthContext: Processed roles for user ${userId}:`, { roleList, primaryRole });
 
       // Update language from profile if available
-      const profileLanguage = profile?.language_preference as Language;
+      const profileLanguage = profileData?.language_preference as Language;
       if (profileLanguage && profileLanguage !== language) {
         setLanguage(profileLanguage);
         localStorage.setItem("language_preference", profileLanguage);
@@ -187,11 +199,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const userObj: User = {
         id: userId,
-        display_name: profile?.full_name || profile?.email || "",
-        email: profile?.email || "",
+        display_name: profileData?.full_name || profileData?.email || "",
+        email: profileData?.email || "",
         associated_community_ids: [],
-        active_community_id: profile?.community_id || "",
-        district: districtName,
+        active_community_id: profileData?.community_id || "",
+        district: districtResult.data?.name || "",
+        community: communityResult.data?.name || "",
         user_role: primaryRole,
         available_roles: roleList.length ? roleList : ["resident"],
         phone: "",
@@ -205,12 +218,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         emergency_contact_phone: undefined,
       };
 
+      console.log(`AuthContext: User ${userId} loaded with roles:`, roleList, 'primary role:', primaryRole);
       setUser(userObj);
       setRoles(userObj.available_roles);
-      console.log("Final user object:", userObj);
-      console.log("Final roles set:", userObj.available_roles);
     } catch (e) {
-      console.error("Failed to load profile/roles", e);
+      console.error(`AuthContext: Failed to load profile/roles for user ${userId}:`, e);
       setUser(null);
       setRoles([]);
       setAccountStatus(null);
@@ -219,33 +231,87 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Auth state listener + initial session
+  // Auth state listener + initial session with debouncing
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    let isProcessing = false;
+    
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Clear previous timeout to debounce rapid auth changes
+      if (timeoutId) clearTimeout(timeoutId);
+      
+      // Prevent multiple simultaneous processing
+      if (isProcessing) return;
+      
       const uid = session?.user?.id;
+      console.log(`AuthContext: Auth state change - Event: ${event}, User ID: ${uid}`);
+      
       if (uid) {
-        // Defer Supabase calls to avoid deadlocks
-        setTimeout(() => loadProfileAndRoles(uid), 0);
+        isProcessing = true;
+        
+        // Handle email confirmation asynchronously without blocking
+        if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
+          try {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("account_status")
+              .eq("user_id", uid)
+              .maybeSingle();
+              
+            if (profile?.account_status === "pending") {
+              await supabase
+                .from("profiles")
+                .update({ account_status: "pending_completion" })
+                .eq("user_id", uid);
+            }
+          } catch (error) {
+            console.error("Error updating account status:", error);
+          }
+        }
+        
+        // Load profile and roles directly without debouncing
+        try {
+          await loadProfileAndRoles(uid);
+        } catch (error) {
+          console.error("❌ Failed to establish session from any token method", error);
+        } finally {
+          isProcessing = false;
+        }
       } else {
+        console.log(`AuthContext: No user session, clearing state`);
         setUser(null);
         setRoles([]);
         setAccountStatus(null);
         setInitializing(false);
+        isProcessing = false;
       }
     });
 
-    supabase.auth.getSession().then(({ data }) => {
+    // Initial session check
+    supabase.auth.getSession().then(async ({ data }) => {
       const uid = data.session?.user?.id;
-      if (uid) {
-        setTimeout(() => loadProfileAndRoles(uid), 0);
-      } else {
+      console.log(`AuthContext: Initial session check - User ID: ${uid}`);
+      
+      if (uid && !isProcessing) {
+        isProcessing = true;
+        try {
+          await loadProfileAndRoles(uid);
+        } catch (error) {
+          console.error("❌ Failed to establish session from initial check", error);
+        } finally {
+          isProcessing = false;
+        }
+      } else if (!uid) {
         setInitializing(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -271,7 +337,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           throw new Error("ACCOUNT_INACTIVE");
         }
 
-        // Check account status
+        // Check account status - only block pure "pending" (email not confirmed)
+        // Allow "pending_completion" (email confirmed, needs to complete profile)
         if (profile.account_status === "pending") {
           await supabase.auth.signOut();
           throw new Error("ACCOUNT_PENDING");
@@ -299,13 +366,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    console.log("Logging out user:", user?.id);
-    console.log(setUser);
-    console.log(setRoles);
-    await supabase.auth.signOut();
+    // Clear state immediately for faster UI response
     setUser(null);
     setRoles([]);
+    setAccountStatus(null);
     sessionStorage.removeItem("loginToastShown");
+    
+    // Sign out in background
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
   };
 
   const switchLanguage = async (lang: Language) => {
@@ -351,14 +423,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     switchLanguage,
     switchTheme,
     updateProfile,
-    loadProfileAndRoles: () => {
-      const session = supabase.auth.getSession();
-      return session.then(({ data }) => {
-        if (data.session?.user?.id) {
-          return loadProfileAndRoles(data.session.user.id);
-        }
-        return Promise.resolve();
-      });
+    loadProfileAndRoles: async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user?.id) {
+        return loadProfileAndRoles(data.session.user.id);
+      }
+      return Promise.resolve();
     },
   };
 
