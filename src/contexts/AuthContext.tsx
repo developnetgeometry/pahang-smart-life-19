@@ -413,7 +413,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     .filter((key) => key.startsWith("sb-"))
     .forEach((key) => localStorage.removeItem(key));
 
-  window.location.reload();
+  console.log("Clearing localStorage...")
   };
 
   const switchLanguage = async (lang: Language) => {
