@@ -1,3 +1,4 @@
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from './Header';
 import { AppSidebar } from './Sidebar';
@@ -8,12 +9,14 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
-export function Layout({ children }: LayoutProps) {
+export const Layout = React.memo(({ children }: LayoutProps) => {
   const { isAuthenticated } = useAuth();
   const isMobile = useIsMobile();
 
+  const memoizedChildren = React.useMemo(() => children, [children]);
+
   if (!isAuthenticated) {
-    return <>{children}</>;
+    return <>{memoizedChildren}</>;
   }
 
   return (
@@ -28,11 +31,11 @@ export function Layout({ children }: LayoutProps) {
           </header>
           <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 bg-transparent">
             <div className="animate-fade-in">
-              {children}
+              {memoizedChildren}
             </div>
           </main>
         </div>
       </div>
     </SidebarProvider>
   );
-}
+});
