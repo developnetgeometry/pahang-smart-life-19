@@ -247,9 +247,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const uid = session?.user?.id;
       console.log(`🔐 AuthContext: Auth state change - Event: ${event}, User ID: ${uid || 'none'}`);
       
-      // Always set initializing to false after auth state change
-      setInitializing(false);
-      
       if (uid) {
         console.log("🔐 AuthContext: User session found, loading profile...");
         
@@ -278,7 +275,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await loadProfileAndRoles(uid);
         } catch (error) {
           console.error("🔐 AuthContext: Failed to load profile/roles:", error);
-          // Even if loading fails, ensure we clear the state
           setUser(null);
           setRoles([]);
           setAccountStatus(null);
@@ -289,6 +285,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setRoles([]);
         setAccountStatus(null);
       }
+      
+      // Always set initializing to false after processing
+      setInitializing(false);
     });
 
     // Initial session check
