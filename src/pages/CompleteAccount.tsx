@@ -473,28 +473,14 @@ export default function CompleteAccount() {
         description: "Welcome to the community management system!",
       });
 
-      // Reload profile and roles with detailed logging
-      console.log('🔄 Reloading profile and roles...');
-      try {
-        await loadProfileAndRoles();
-        console.log('✅ Profile and roles reloaded successfully');
-        
-        // Force a small delay to ensure state updates
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        console.log('🚀 Initiating navigation to dashboard...');
-        navigate("/", { replace: true });
-        
-      } catch (reloadError) {
-        console.error('❌ Failed to reload profile/roles:', reloadError);
-        
-        // Still try to navigate even if reload fails
-        console.log('⚠️ Proceeding with navigation despite reload error');
-        setTimeout(() => {
-          console.log('🚀 Navigating to dashboard (fallback)');
-          navigate("/", { replace: true });
-        }, 1000);
-      }
+      console.log('🚀 Account completion successful - navigating immediately');
+      
+      // Small delay to ensure database transaction is committed
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Navigate directly without heavy profile reload
+      // The AuthContext will automatically detect the user is now approved
+      navigate("/", { replace: true });
       
     } catch (error) {
       console.error("❌ Error completing account:", error);
