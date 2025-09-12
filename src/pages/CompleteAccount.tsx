@@ -141,19 +141,47 @@ export default function CompleteAccount() {
         setUserEmail(existingSession.user.email || '');
         setSessionValid(true);
         
-        // Check if this is a normal login flow (no tokens in URL)
-        const urlParams = new URLSearchParams(window.location.search);
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const hasTokens = urlParams.get('code') || urlParams.get('token_hash') || 
-                         hashParams.get('access_token') || hashParams.get('refresh_token');
+      // Check if this is a normal login flow (no tokens in URL)
+      const urlParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const hasTokens = urlParams.get('code') || urlParams.get('token_hash') || 
+                       hashParams.get('access_token') || hashParams.get('refresh_token');
+      
+      if (!hasTokens) {
+        console.log('✅ Normal login flow - user has valid session, no invitation tokens');
         
-        if (!hasTokens) {
-          console.log('✅ Normal login flow - user has valid session, no invitation tokens');
-        } else {
-          console.log('✅ Invitation link flow - user has valid session with tokens');
-          // Clean up URL for invitation flows
-          window.history.replaceState({}, document.title, window.location.pathname);
+        // For normal login flow, check if user actually needs to complete account
+        console.log('🔍 Checking if user profile needs completion...');
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('phone, unit_number, emergency_contact_name, account_status')
+            .eq('user_id', existingSession.user.id)
+            .single();
+            
+          if (!profileError && profile) {
+            console.log('📋 Profile found:', profile);
+            
+            // If user has essential profile data, they might not need to complete
+            if (profile.phone && profile.unit_number && profile.emergency_contact_name) {
+              console.log('✅ Profile appears complete - checking if redirect needed');
+              
+              // If account is already approved, redirect to dashboard
+              if (profile.account_status === 'approved') {
+                console.log('✅ Account already approved - redirecting to dashboard');
+                navigate('/', { replace: true });
+                return;
+              }
+            }
+          }
+        } catch (error) {
+          console.log('⚠️ Could not check profile status:', error);
         }
+      } else {
+        console.log('✅ Invitation link flow - user has valid session with tokens');
+        // Clean up URL for invitation flows
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
         
         return; // Use existing session
       }
@@ -282,7 +310,15 @@ export default function CompleteAccount() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('🔥 FORM SUBMIT TRIGGERED - Event:', e.type, 'Target:', e.target);
     e.preventDefault();
+    e.stopPropagation();
+
+    // Prevent auto-submission during initialization
+    if (sessionValid === null) {
+      console.log('❌ Blocked form submission during initialization');
+      return;
+    }
 
     if (
       !form.phone ||
