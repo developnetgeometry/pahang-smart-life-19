@@ -1,5 +1,11 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.55.0";
+import { Resend } from 'npm:resend@4.0.0';
+import { renderAsync } from 'npm:@react-email/components@0.0.22';
+import React from 'npm:react@18.3.1';
+import { AccountCreatedEmail } from '../admin-create-user/_templates/account-created.tsx';
+
+const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -160,6 +166,56 @@ async function updateUserProfile(
   console.log('Profile updated successfully for user:', userId);
 }
 
+// Helper function to generate secure temporary password
+function generateTemporaryPassword(length: number = 12): string {
+  const charset = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  return password;
+}
+
+// Helper function to send user emails
+async function sendUserEmail({
+  email,
+  full_name,
+  password,
+  adminName,
+  req
+}: {
+  email: string;
+  full_name: string;
+  password: string;
+  adminName: string;
+  req: Request;
+}) {
+  const frontendUrl =
+    Deno.env.get("FRONTEND_URL") ||
+    req.headers.get("origin") ||
+    "https://www.primapahang.com";
+
+  const loginUrl = `${frontendUrl}/login`;
+  
+  const emailHtml = await renderAsync(
+    React.createElement(AccountCreatedEmail, {
+      full_name,
+      email,
+      role: "admin",
+      temporary_password: password,
+      login_url: loginUrl,
+      admin_name: adminName,
+    })
+  );
+
+  await resend.emails.send({
+    from: 'Prima Pahang <noreply@primapahang.com>',
+    to: [email],
+    subject: 'Akaun Baharu Prima Pahang / New Prima Pahang Account',
+    html: emailHtml,
+  });
+}
+
 async function assignUserRole(userId: string, role: string, context: AdminContext) {
   console.log('Assigning role:', role, 'to user:', userId);
   
@@ -255,9 +311,9 @@ serve(async (req) => {
     });
 
     // Create auth user with direct creation
-    const safePassword = typeof password === 'string' && password.length >= 8 ? password : 'TempPassword123!';
+    const finalPassword = password || generateTemporaryPassword(12);
     const authUser = await createAuthUser(
-      { email, password: safePassword, full_name },
+      { email, password: finalPassword, full_name },
       false, // Direct creation for admin staff
       context,
       req
@@ -295,6 +351,30 @@ serve(async (req) => {
     // Assign admin role
     await assignUserRole(authUser.user.id, role, context);
     console.log(`${role} role assigned successfully`);
+
+    // Get admin's name for personalized emails
+    const { data: adminProfile2, error: adminProfileError2 } = await context.supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", context.currentUser.id)
+      .single();
+    
+    const adminName = adminProfile2?.full_name || "Administrator";
+
+    // Send email with credentials
+    try {
+      await sendUserEmail({
+        email,
+        full_name,
+        password: finalPassword,
+        adminName,
+        req
+      });
+      console.log(`Email sent successfully for ${role}: ${email}`);
+    } catch (emailError) {
+      console.error("Email sending failed:", emailError);
+      // Don't fail the entire operation for email issues, just log it
+    }
 
     return new Response(
       JSON.stringify({

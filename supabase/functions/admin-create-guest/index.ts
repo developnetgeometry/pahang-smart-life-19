@@ -1,4 +1,10 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Resend } from 'npm:resend@4.0.0';
+import { renderAsync } from 'npm:@react-email/components@0.0.22';
+import React from 'npm:react@18.3.1';
+import { AccountCreatedEmail } from '../admin-create-user/_templates/account-created.tsx';
+
+const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,76 +79,80 @@ async function initializeAdminContext(req: Request): Promise<AdminContext> {
   };
 }
 
+// Helper function to generate secure temporary password
+function generateTemporaryPassword(length: number = 12): string {
+  const charset = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  return password;
+}
+
+// Helper function to send user emails
+async function sendUserEmail({
+  email,
+  full_name,
+  password,
+  adminName,
+  req
+}: {
+  email: string;
+  full_name: string;
+  password: string;
+  adminName: string;
+  req: Request;
+}) {
+  const frontendUrl =
+    Deno.env.get("FRONTEND_URL") ||
+    req.headers.get("origin") ||
+    "https://www.primapahang.com";
+
+  const loginUrl = `${frontendUrl}/login`;
+  
+  const emailHtml = await renderAsync(
+    React.createElement(AccountCreatedEmail, {
+      full_name,
+      email,
+      role: "guest",
+      temporary_password: password,
+      login_url: loginUrl,
+      admin_name: adminName,
+    })
+  );
+
+  await resend.emails.send({
+    from: 'Prima Pahang <noreply@primapahang.com>',
+    to: [email],
+    subject: 'Akaun Baharu Prima Pahang / New Prima Pahang Account',
+    html: emailHtml,
+  });
+}
+
 async function createAuthUser(
   userData: { email: string; password?: string; full_name: string },
   useInviteFlow: boolean,
   context: AdminContext,
   req: Request
 ) {
-  const frontendUrl =
-    Deno.env.get("FRONTEND_URL") || req.headers.get("origin") || "http://localhost:3000";
-  const redirectUrl = `${frontendUrl}/complete-account`;
-
   let authUser: any;
   let authError: any;
-  let emailSentType: 'invite' | 'reset' | 'none' = 'none';
 
   if (useInviteFlow) {
-    console.log(`Attempting to invite user: ${userData.email}`);
+    // For guests, we'll create directly and send custom email
+    const finalPassword = userData.password || generateTemporaryPassword(12);
     
-    const inviteResult = await context.supabaseAdmin.auth.admin.inviteUserByEmail(
-      userData.email,
-      {
-        redirectTo: redirectUrl,
-        data: { 
-          full_name: userData.full_name,
-          signup_flow: 'guest_invite'
-        },
-      }
-    );
+    const createResult = await context.supabaseAdmin.auth.admin.createUser({
+      email: userData.email,
+      password: finalPassword,
+      email_confirm: true,
+      user_metadata: { full_name: userData.full_name },
+    });
 
-    authUser = inviteResult.data;
-    authError = inviteResult.error;
-    
-    // If invite failed due to existing user, try password reset instead
-    if (authError && (authError.status === 422 || authError.message?.includes("already been registered"))) {
-      console.log(`User with email ${userData.email} already exists, sending password reset email`);
-      
-      // First, look up existing user
-      const { data: users, error: getUserError } = await context.supabaseAdmin.auth.admin.listUsers();
-      
-      if (getUserError) {
-        throw new Error(`Failed to lookup existing user: ${getUserError.message}`);
-      }
-      
-      const existingUser = users.users.find((u: any) => u.email === userData.email);
-      
-      if (!existingUser) {
-        throw new Error(`User exists but could not be found: ${userData.email}`);
-      }
-      
-      // Send password reset email with redirect to complete-account
-      const { error: resetError } = await context.supabase.auth.resetPasswordForEmail(
-        userData.email,
-        {
-          redirectTo: redirectUrl,
-        }
-      );
-      
-      if (resetError) {
-        throw new Error(`Failed to send password reset email: ${resetError.message}`);
-      }
-      
-      console.log(`Password reset email sent for existing user: ${existingUser.id}`);
-      authUser = { user: existingUser };
-      authError = null;
-      emailSentType = 'reset';
-    } else if (!authError) {
-      emailSentType = 'invite';
-    }
+    authUser = createResult.data;
+    authError = createResult.error;
+    userData.password = finalPassword; // Store for email
   } else {
-    console.log(`Attempting to create user directly: ${userData.email}`);
-    
     const createResult = await context.supabaseAdmin.auth.admin.createUser({
       email: userData.email,
       password: userData.password,
@@ -162,8 +172,8 @@ async function createAuthUser(
     throw new Error("Failed to create or retrieve user");
   }
 
-  console.log(`Auth user ${useInviteFlow ? 'processed' : 'created'}: ${authUser.user.id}, email type: ${emailSentType}`);
-  return { userId: authUser.user.id, emailSentType };
+  console.log(`Auth user created: ${authUser.user.id}`);
+  return { userId: authUser.user.id, password: userData.password };
 }
 
 async function updateUserProfile(userId: string, profileData: any, context: AdminContext) {
@@ -273,10 +283,10 @@ serve(async (req) => {
 
     console.log("Creating guest with validated data:", validatedData);
 
-    // Create auth user using invite flow for guests to send email
-    const { userId, emailSentType } = await createAuthUser(
+    // Create auth user for guests
+    const { userId, password: finalPassword } = await createAuthUser(
       { email, password, full_name },
-      true, // Use invite flow for guests to send email
+      true, // Generate password and create directly
       context,
       req
     );
@@ -293,18 +303,35 @@ serve(async (req) => {
     // Assign guest role
     await assignUserRole(userId, "guest", context);
 
+    // Get admin's name for personalized emails
+    const { data: adminProfile2, error: adminProfileError2 } = await context.supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", context.currentUser.id)
+      .single();
+    
+    const adminName = adminProfile2?.full_name || "Administrator";
+
+    // Send email with credentials
+    try {
+      await sendUserEmail({
+        email,
+        full_name,
+        password: finalPassword,
+        adminName,
+        req
+      });
+      console.log(`Email sent successfully for guest: ${email}`);
+    } catch (emailError) {
+      console.error("Email sending failed:", emailError);
+      // Don't fail the entire operation for email issues, just log it
+    }
+
     console.log("Guest creation completed successfully:", {
       userId: userId,
       email: email,
-      role: "guest",
-      emailSentType: emailSentType
+      role: "guest"
     });
-
-    const message = emailSentType === 'invite' 
-      ? "Guest account created successfully. Invitation email sent."
-      : emailSentType === 'reset'
-      ? "Guest account created successfully. Password reset email sent for existing user."
-      : "Guest account created successfully with temporary access.";
 
     return new Response(
       JSON.stringify({
@@ -316,9 +343,8 @@ serve(async (req) => {
           role: "guest",
           access_expires_at,
         },
-        email_sent: emailSentType !== 'none',
-        email_type: emailSentType,
-        message: message,
+        email_sent: true,
+        message: "Guest account created successfully. Login credentials sent via email.",
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
