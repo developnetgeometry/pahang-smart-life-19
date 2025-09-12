@@ -18,6 +18,7 @@ interface UserInvitationEmailProps {
   role: string
   invitation_url: string
   admin_name?: string
+  temporary_password?: string
 }
 
 export const UserInvitationEmail = ({
@@ -26,6 +27,7 @@ export const UserInvitationEmail = ({
   role,
   invitation_url,
   admin_name = 'Pentadbir',
+  temporary_password,
 }: UserInvitationEmailProps) => {
   const roleDisplayName = {
     'resident': 'Penduduk / Resident',
@@ -53,13 +55,14 @@ export const UserInvitationEmail = ({
             <Heading style={title}>Selamat Datang ke Prima Pahang!</Heading>
             <Text style={greeting}>Assalamualaikum {full_name},</Text>
             <Text style={lead}>
-              Anda telah dijemput untuk menyertai platform Prima Pahang sebagai <strong>{roleDisplayName}</strong>.
-              {admin_name && ` Pentadbir ${admin_name} telah menghantar jemputan ini kepada anda.`}
+              Akaun anda telah dibuat sebagai <strong>{roleDisplayName}</strong>.
+              {admin_name && ` Pentadbir ${admin_name} telah membuat akaun ini untuk anda.`}
+              Sila log masuk untuk melengkapkan profil anda.
             </Text>
             
             <Section style={buttonSection}>
               <Link href={invitation_url} style={button}>
-                Terima Jemputan / Accept Invitation
+                Log Masuk / Login
               </Link>
             </Section>
             
@@ -72,10 +75,18 @@ export const UserInvitationEmail = ({
             
             <Text style={steps}>
               <strong>Langkah seterusnya:</strong><br/>
-              1. Klik pautan di atas<br/>
-              2. Lengkapkan maklumat profil anda<br/>
-              3. Tetapkan kata laluan selamat<br/>
-              4. Mula menggunakan platform
+              1. Klik pautan "Log Masuk" di atas<br/>
+              2. Gunakan emel ini: {email}<br/>
+              {temporary_password && (
+                <>3. Gunakan kata laluan sementara: <strong>{temporary_password}</strong><br/>
+                4. Lengkapkan maklumat profil anda<br/>
+                5. Tukar kata laluan kepada kata laluan pilihan anda</>
+              )}
+              {!temporary_password && (
+                <>3. Kata laluan sementara akan diberikan secara berasingan<br/>
+                4. Lengkapkan maklumat profil anda<br/>
+                5. Tukar kata laluan kepada kata laluan pilihan anda</>
+              )}
             </Text>
 
             <Hr style={divider} />
@@ -84,13 +95,14 @@ export const UserInvitationEmail = ({
             <Heading style={{...title, marginTop: '0'}}>Welcome to Prima Pahang!</Heading>
             <Text style={greeting}>Hello {full_name},</Text>
             <Text style={lead}>
-              You have been invited to join the Prima Pahang platform as <strong>{roleDisplayName}</strong>.
-              {admin_name && ` Administrator ${admin_name} has sent this invitation to you.`}
+              Your account has been created as <strong>{roleDisplayName}</strong>.
+              {admin_name && ` Administrator ${admin_name} has created this account for you.`}
+              Please login to complete your profile.
             </Text>
             
             <Section style={buttonSection}>
               <Link href={invitation_url} style={button}>
-                Accept Invitation
+                Login
               </Link>
             </Section>
             
@@ -103,10 +115,18 @@ export const UserInvitationEmail = ({
             
             <Text style={steps}>
               <strong>Next steps:</strong><br/>
-              1. Click the link above<br/>
-              2. Complete your profile information<br/>
-              3. Set a secure password<br/>
-              4. Start using the platform
+              1. Click the "Login" link above<br/>
+              2. Use this email: {email}<br/>
+              {temporary_password && (
+                <>3. Use temporary password: <strong>{temporary_password}</strong><br/>
+                4. Complete your profile information<br/>
+                5. Change password to your preferred password</>
+              )}
+              {!temporary_password && (
+                <>3. A temporary password will be provided separately<br/>
+                4. Complete your profile information<br/>
+                5. Change password to your preferred password</>
+              )}
             </Text>
 
             <Text style={note}>

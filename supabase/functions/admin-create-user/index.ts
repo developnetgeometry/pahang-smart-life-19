@@ -31,7 +31,7 @@ async function sendUserEmail({
   full_name,
   password,
   adminName,
-  req
+  req,
 }: {
   role: string;
   email: string;
@@ -46,16 +46,17 @@ async function sendUserEmail({
     "https://www.primapahang.com";
 
   if (role === "resident") {
-    // For residents, send invitation email to complete account
-    const invitationUrl = `${frontendUrl}/complete-account`;
+    // For residents, send invitation email with temporary password
+    const loginUrl = `${frontendUrl}/login`;
     
     const emailHtml = await renderAsync(
       React.createElement(UserInvitationEmail, {
         full_name,
         email,
         role,
-        invitation_url: invitationUrl,
+        invitation_url: loginUrl,
         admin_name: adminName,
+        temporary_password: password, // Include temporary password in resident emails
       })
     );
 
@@ -258,31 +259,29 @@ serve(async (req) => {
 
     let authUser;
     let authError;
+    let tempPassword; // Declare tempPassword variable
 
-    // For residents, use invite flow instead of direct creation
+    // For residents, create user with temporary password (no auto email)
     if (role === "resident") {
-      const frontendUrl =
-        Deno.env.get("FRONTEND_URL") ||
-        req.headers.get("origin") ||
-        "http://localhost:3000";
-      const redirectUrl = `${frontendUrl}/complete-account`;
-
-      const inviteResult = await supabaseAdmin.auth.admin.inviteUserByEmail(
+      // Generate secure temporary password for residents
+      tempPassword = generateTemporaryPassword(12);
+      
+      const createResult = await supabaseAdmin.auth.admin.createUser({
         email,
-        {
-          redirectTo: redirectUrl,
-          data: {
-            full_name,
-          },
-        }
-      );
+        password: tempPassword,
+        email_confirm: true, // Skip email confirmation for invitation flow
+        user_metadata: {
+          full_name,
+          invitation_pending: true, // Mark as invitation pending
+        },
+      });
 
-      authUser = inviteResult.data;
-      authError = inviteResult.error;
-
+      authUser = createResult.data;
+      authError = createResult.error;
+      
       if (authError) {
-        console.error("Auth invitation error:", authError);
-        throw new Error(`Failed to invite user: ${authError.message}`);
+        console.error("Auth creation error:", authError);
+        throw new Error(`Failed to create user: ${authError.message}`);
       }
     } else {
       // For guests and staff, use direct creation with password
@@ -329,7 +328,7 @@ serve(async (req) => {
 
     // Set account status and role-specific fields based on role and creation method
     if (role === "resident") {
-      profileData.account_status = "pending";
+      profileData.account_status = "pending_completion"; // Use pending_completion for residents
       if (unit_number) profileData.unit_number = unit_number;
       if (family_size) profileData.family_size = parseInt(family_size);
       if (emergency_contact_name)
@@ -427,9 +426,9 @@ serve(async (req) => {
         role,
         email,
         full_name,
-        password: role !== "resident" ? password : undefined,
+        password: role === "resident" ? tempPassword : password,
         adminName,
-        req
+        req,
       });
       console.log(`Email sent successfully for ${role}: ${email}`);
     } catch (emailError) {
