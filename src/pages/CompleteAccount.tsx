@@ -403,20 +403,33 @@ export default function CompleteAccount() {
         }
       }
 
-      // 5. STATUS MANAGEMENT: Set correct account status for residents
+      // 5. STATUS MANAGEMENT: Set correct account status
       console.log('Step 5: Setting account status');
       const signupFlow = currentUser?.user_metadata?.signup_flow || 'unknown';
-      let accountStatus = "approved"; // Default for all
+      console.log('📝 User signup flow:', signupFlow);
+      
+      // Set account status based on signup flow
+      let accountStatus = "approved"; // Default to approved for account completion
       let isActive = true; // Default active
       
+      // For any user completing their account, they should be approved
+      // This covers resident_invite, guest_invite, and any other flows
       if (signupFlow === 'resident_invite') {
-        // Residents should be approved and active after completing profile
         accountStatus = "approved";
         isActive = true;
         console.log('✅ Setting resident to approved and active status');
+      } else if (signupFlow === 'guest_invite') {
+        accountStatus = "approved";
+        isActive = true;
+        console.log('✅ Setting guest to approved and active status');
+      } else {
+        // For any other signup flow or unknown, still approve when completing account
+        accountStatus = "approved";
+        isActive = true;
+        console.log('✅ Setting user to approved and active status (unknown/other flow)');
       }
       
-      console.log('Setting account_status to:', accountStatus, 'and is_active to:', isActive);
+      console.log('📋 Final status settings - account_status:', accountStatus, 'is_active:', isActive);
       
       const { error } = await supabase
         .from("profiles")
@@ -439,22 +452,49 @@ export default function CompleteAccount() {
       }
 
       console.log('✅ Profile updated successfully with status:', accountStatus);
+      
+      // Verify the update was successful by checking the database
+      console.log('🔍 Verifying profile update in database...');
+      const { data: updatedProfile, error: verifyError } = await supabase
+        .from('profiles')
+        .select('account_status, is_active, phone, unit_number')
+        .eq('user_id', currentUser.id)
+        .single();
+        
+      if (verifyError) {
+        console.error('❌ Error verifying profile update:', verifyError);
+      } else {
+        console.log('📋 Database verification - Profile after update:', updatedProfile);
+      }
 
+      // Show success message
       toast({
         title: t.success,
         description: "Welcome to the community management system!",
       });
 
-      // Reload profile and roles and wait for completion
-      console.log('Reloading profile and roles...');
-      await loadProfileAndRoles();
-      console.log('✅ Profile and roles reloaded successfully');
-
-      // Navigate to dashboard with sufficient time for role loading
-      setTimeout(() => {
-        console.log('✅ Navigating to dashboard');
+      // Reload profile and roles with detailed logging
+      console.log('🔄 Reloading profile and roles...');
+      try {
+        await loadProfileAndRoles();
+        console.log('✅ Profile and roles reloaded successfully');
+        
+        // Force a small delay to ensure state updates
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        console.log('🚀 Initiating navigation to dashboard...');
         navigate("/", { replace: true });
-      }, 1000);
+        
+      } catch (reloadError) {
+        console.error('❌ Failed to reload profile/roles:', reloadError);
+        
+        // Still try to navigate even if reload fails
+        console.log('⚠️ Proceeding with navigation despite reload error');
+        setTimeout(() => {
+          console.log('🚀 Navigating to dashboard (fallback)');
+          navigate("/", { replace: true });
+        }, 1000);
+      }
       
     } catch (error) {
       console.error("❌ Error completing account:", error);
