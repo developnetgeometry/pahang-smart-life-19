@@ -121,110 +121,124 @@ export default function CompleteAccount() {
   // Check if user is a guest
   const isGuest = hasRole('guest');
 
-  // Smart session initialization - handle both invitation links and regular login flow
+  // Smart session initialization with timeout protection
   useEffect(() => {
     let processed = false;
+    let timeoutId: NodeJS.Timeout;
+    let mounted = true;
 
     const initializeSession = async () => {
-      if (processed) return;
+      if (processed || !mounted) return;
       processed = true;
 
       console.log('=== STARTING COMPLETE ACCOUNT INITIALIZATION ===');
-      
-      // 1. CHECK FOR EXISTING SESSION FIRST
-      console.log('Step 1: Checking for existing valid session');
-      const { data: { session: existingSession } } = await supabase.auth.getSession();
-      
-      if (existingSession?.user) {
-        console.log('✅ Found existing valid session for:', existingSession.user.email);
-        setUser(existingSession.user);
-        setUserEmail(existingSession.user.email || '');
-        setSessionValid(true);
-        
-      // Check if this is a normal login flow (no tokens in URL)
-      const urlParams = new URLSearchParams(window.location.search);
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const hasTokens = urlParams.get('code') || urlParams.get('token_hash') || 
-                       hashParams.get('access_token') || hashParams.get('refresh_token');
-      
-      if (!hasTokens) {
-        console.log('✅ Normal login flow - user has valid session, no invitation tokens');
-        
-        // For normal login flow, check if user actually needs to complete account
-        console.log('🔍 Checking if user profile needs completion...');
-        try {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('phone, unit_number, emergency_contact_name, account_status, profile_completed_by_user')
-            .eq('user_id', existingSession.user.id)
-            .single() as any;
-            
-          if (!profileError && profile) {
-            console.log('📋 Profile found:', profile);
-            
-            // Only redirect if profile was completed by user AND account is approved
-            if (profile?.profile_completed_by_user && profile?.account_status === 'approved') {
-              console.log('✅ Profile completed by user and account approved - redirecting to dashboard');
-              navigate('/', { replace: true });
-              return;
-            } else {
-              console.log('🔄 Profile needs completion by user or approval - staying on form');
-            }
-          }
-        } catch (error) {
-          console.log('⚠️ Could not check profile status:', error);
-        }
-      } else {
-        console.log('✅ Invitation link flow - user has valid session with tokens');
-        // Clean up URL for invitation flows
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-        
-        return; // Use existing session
-      }
-
-      // 2. PARSE TOKENS: Extract tokens from URL (for invitation links only)
-      console.log('Step 2: No existing session, parsing tokens from URL');
-      const urlParams = new URLSearchParams(window.location.search);
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      
-      const code = urlParams.get('code');
-      const tokenHash = urlParams.get('token_hash');
-      const type = urlParams.get('type');
-      const accessToken = hashParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token');
-      
-      console.log('Found tokens:', { 
-        code: !!code, 
-        tokenHash: !!tokenHash, 
-        type, 
-        accessToken: !!accessToken, 
-        refreshToken: !!refreshToken 
-      });
-
-      // If no tokens found and no session, redirect to login
-      if (!code && !tokenHash && !accessToken && !refreshToken) {
-        console.log('❌ No session and no tokens - redirecting to login');
-        setSessionValid(false);
-        setProcessingError('Please log in to access this page.');
-        // Redirect to login after a brief delay
-        setTimeout(() => navigate('/login'), 2000);
-        return;
-      }
-
-      // 3. PROCESS TOKENS: Try to establish session using tokens (invitation link flow)
-      let sessionEstablished = false;
+      console.log('🕐 Starting 10-second timeout protection');
       
       try {
+        // 1. CHECK FOR EXISTING SESSION FIRST
+        console.log('Step 1: Checking for existing valid session');
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        if (existingSession?.user) {
+          console.log('✅ Found existing valid session for:', existingSession.user.email);
+          setUser(existingSession.user);
+          setUserEmail(existingSession.user.email || '');
+          
+          // Check if this is a normal login flow (no tokens in URL)
+          const urlParams = new URLSearchParams(window.location.search);
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const hasTokens = urlParams.get('code') || urlParams.get('token_hash') || 
+                           hashParams.get('access_token') || hashParams.get('refresh_token');
+          
+          if (!hasTokens) {
+            console.log('✅ Normal login flow - user has valid session, no invitation tokens');
+            
+            // For normal login flow, check if user actually needs to complete account
+            console.log('🔍 Checking if user profile needs completion...');
+            try {
+              const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('phone, unit_number, emergency_contact_name, account_status, profile_completed_by_user')
+                .eq('user_id', existingSession.user.id)
+                .single() as any;
+                
+              if (!mounted) return;
+                
+              if (!profileError && profile) {
+                console.log('📋 Profile found:', profile);
+                
+                // Only redirect if profile was completed by user AND account is approved
+                if (profile?.profile_completed_by_user && profile?.account_status === 'approved') {
+                  console.log('✅ Profile completed by user and account approved - redirecting to dashboard');
+                  setSessionValid(true);
+                  navigate('/', { replace: true });
+                  return;
+                } else {
+                  console.log('🔄 Profile needs completion by user or approval - staying on form');
+                }
+              }
+            } catch (error) {
+              console.log('⚠️ Could not check profile status:', error);
+            }
+          } else {
+            console.log('✅ Invitation link flow - user has valid session with tokens');
+            // Clean up URL for invitation flows
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+          
+          if (mounted) {
+            setSessionValid(true);
+          }
+          return;
+        }
+
+        // 2. PARSE TOKENS: Extract tokens from URL (for invitation links only)
+        console.log('Step 2: No existing session, parsing tokens from URL');
+        const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        
+        const code = urlParams.get('code');
+        const tokenHash = urlParams.get('token_hash');
+        const type = urlParams.get('type');
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        
+        console.log('Found tokens:', { 
+          code: !!code, 
+          tokenHash: !!tokenHash, 
+          type, 
+          accessToken: !!accessToken, 
+          refreshToken: !!refreshToken 
+        });
+
+        // If no tokens found and no session, redirect to login
+        if (!code && !tokenHash && !accessToken && !refreshToken) {
+          console.log('❌ No session and no tokens - redirecting to login');
+          if (mounted) {
+            setSessionValid(false);
+            setProcessingError('Please log in to access this page.');
+            // Redirect to login after a brief delay
+            setTimeout(() => navigate('/login'), 2000);
+          }
+          return;
+        }
+
+        // 3. PROCESS TOKENS: Try to establish session using tokens (invitation link flow)
+        let sessionEstablished = false;
+        
         console.log('Step 3: Processing invitation tokens to establish session');
         
         // Priority 1: Hash tokens (most reliable for invitations)
-        if (accessToken && refreshToken) {
-          console.log('Using access_token/refresh_token from hash');
+        if (!sessionEstablished && accessToken && refreshToken) {
+          console.log('🔑 Trying access_token/refresh_token from hash');
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
           });
+          
+          if (!mounted) return;
           
           if (data.session && data.user && !error) {
             setUser(data.user);
@@ -232,13 +246,17 @@ export default function CompleteAccount() {
             setSessionValid(true);
             sessionEstablished = true;
             console.log('✅ Session established via hash tokens for:', data.user.email);
+          } else {
+            console.log('❌ Hash token method failed:', error?.message);
           }
         }
         
         // Priority 2: Code exchange
         if (!sessionEstablished && code) {
-          console.log('Using code exchange');
+          console.log('🔑 Trying code exchange');
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (!mounted) return;
           
           if (data.session && data.user && !error) {
             setUser(data.user);
@@ -246,16 +264,20 @@ export default function CompleteAccount() {
             setSessionValid(true);
             sessionEstablished = true;
             console.log('✅ Session established via code exchange for:', data.user.email);
+          } else {
+            console.log('❌ Code exchange method failed:', error?.message);
           }
         }
         
         // Priority 3: Token hash verification
         if (!sessionEstablished && tokenHash && type) {
-          console.log('Using token_hash verification');
+          console.log('🔑 Trying token_hash verification');
           const { data, error } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
             type: type as any,
           });
+          
+          if (!mounted) return;
           
           if (data.session && data.user && !error) {
             setUser(data.user);
@@ -263,27 +285,53 @@ export default function CompleteAccount() {
             setSessionValid(true);
             sessionEstablished = true;
             console.log('✅ Session established via token_hash for:', data.user.email);
+          } else {
+            console.log('❌ Token hash method failed:', error?.message);
           }
         }
         
-        if (sessionEstablished) {
-          // Clean up URL
-          window.history.replaceState({}, document.title, window.location.pathname);
-          console.log('✅ URL cleaned up');
-        } else {
-          console.error('❌ Failed to establish session from invitation tokens');
-          setSessionValid(false);
-          setProcessingError('Invalid or expired invitation link');
+        if (mounted) {
+          if (sessionEstablished) {
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            console.log('✅ URL cleaned up');
+          } else {
+            console.error('❌ All session establishment methods failed');
+            setSessionValid(false);
+            setProcessingError('Invalid or expired invitation link. All authentication methods failed.');
+          }
         }
         
       } catch (error: any) {
-        console.error('❌ Token processing error:', error);
-        setSessionValid(false);
-        setProcessingError(error.message || 'Failed to process invitation link');
+        console.error('❌ Critical initialization error:', error);
+        if (mounted) {
+          setSessionValid(false);
+          setProcessingError(error.message || 'Failed to process invitation link');
+        }
       }
     };
 
+    // Set up 10-second timeout protection
+    timeoutId = setTimeout(() => {
+      if (mounted && sessionValid === null) {
+        console.error('⏰ TIMEOUT: Session initialization took longer than 10 seconds');
+        setSessionValid(false);
+        setProcessingError('Session initialization timed out. Please try again or contact support.');
+      }
+    }, 10000);
+
+    // Start initialization
     initializeSession();
+
+    // Cleanup function
+    return () => {
+      mounted = false;
+      processed = true;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      console.log('🧹 Component unmounted, cleaned up timers');
+    };
   }, [navigate]);
 
   const handleResendInvitation = () => {
@@ -406,30 +454,37 @@ export default function CompleteAccount() {
 
   // Show error recovery UI if session setup failed
   if (sessionValid === false) {
+    const isTimeout = processingError?.includes('timed out');
+    const isLoginRequired = processingError?.includes('Please log in');
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
             <CardTitle>
-              {processingError?.includes('Please log in') ? 'Login Required' : t.linkExpired}
+              {isLoginRequired ? 'Login Required' : 
+               isTimeout ? 'Connection Timeout' :
+               t.linkExpired}
             </CardTitle>
             <CardDescription>
               {processingError || t.linkExpiredDesc}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {!processingError?.includes('Please log in') && (
+            {!isLoginRequired && (
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  {t.sessionExpiredDesc}
+                  {isTimeout ? 
+                    'The page took too long to load. This might be due to network issues or server problems.' :
+                    t.sessionExpiredDesc}
                 </AlertDescription>
               </Alert>
             )}
             
             <div className="space-y-2">
-              {processingError?.includes('Please log in') ? (
+              {isLoginRequired ? (
                 <Button 
                   onClick={() => navigate('/login')} 
                   className="w-full"
@@ -438,6 +493,16 @@ export default function CompleteAccount() {
                 </Button>
               ) : (
                 <>
+                  {isTimeout && (
+                    <Button 
+                      onClick={() => window.location.reload()} 
+                      className="w-full"
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Retry Loading
+                    </Button>
+                  )}
+                  
                   <Button 
                     onClick={handleResendInvitation} 
                     className="w-full"
