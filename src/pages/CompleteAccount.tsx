@@ -409,15 +409,16 @@ export default function CompleteAccount() {
         description: "Welcome to the community management system!",
       });
 
-      // Reload profile and roles
+      // Reload profile and roles and wait for completion
       console.log('Reloading profile and roles...');
       await loadProfileAndRoles();
+      console.log('✅ Profile and roles reloaded successfully');
 
-      // Navigate to home
+      // Navigate to dashboard with sufficient time for role loading
       setTimeout(() => {
-        console.log('✅ Navigating to home page');
-        navigate("/");
-      }, 500);
+        console.log('✅ Navigating to dashboard');
+        navigate("/", { replace: true });
+      }, 1000);
       
     } catch (error) {
       console.error("❌ Error completing account:", error);
