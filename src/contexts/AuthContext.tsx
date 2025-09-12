@@ -83,6 +83,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   const isApproved = accountStatus === "approved";
+  
+  console.log('🔐 AuthContext: Auth state -', { 
+    user: user?.email || 'none', 
+    isAuthenticated: !!user, 
+    accountStatus, 
+    isApproved,
+    initializing 
+  });
 
   // Apply theme
   useEffect(() => {
@@ -171,7 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Set account status regardless of approval state
       setAccountStatus(profileData.account_status || "pending");
-
+      
       console.log(`AuthContext: Account status for user ${userId}:`, profileData.account_status);
 
       // Check if account is approved or pending completion
