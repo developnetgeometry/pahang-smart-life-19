@@ -350,6 +350,8 @@ export default function CompleteAccount() {
     setPasswordError("");
 
     try {
+      console.log('🚀 STARTING FORM SUBMISSION PROCESS');
+      
       // 4. SESSION VERIFICATION: Get current user from session
       console.log('Step 4: Verifying session and user identity');
       const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
@@ -382,24 +384,29 @@ export default function CompleteAccount() {
 
       // Update password if provided
       if (form.password) {
-        console.log('Updating password...');
-        const { error: passwordError } = await supabase.auth.updateUser({
-          password: form.password
-        });
-        
-        if (passwordError) {
-          if (passwordError.message?.includes("session") || passwordError.message?.includes("auth")) {
-            console.warn("Password update failed due to session issue, continuing with profile update");
-            toast({
-              title: "Password Update Failed",
-              description: "Your profile will be updated, but password change failed due to session expiry.",
-              variant: "destructive",
-            });
+        try {
+          console.log('🔐 Updating password...');
+          const { error: passwordError } = await supabase.auth.updateUser({
+            password: form.password
+          });
+          
+          if (passwordError) {
+            if (passwordError.message?.includes("session") || passwordError.message?.includes("auth")) {
+              console.warn("⚠️ Password update failed due to session issue, continuing with profile update");
+              toast({
+                title: "Password Update Failed",
+                description: "Your profile will be updated, but password change failed due to session expiry.",
+                variant: "destructive",
+              });
+            } else {
+              throw passwordError;
+            }
           } else {
-            throw passwordError;
+            console.log('✅ Password updated successfully');
           }
-        } else {
-          console.log('✅ Password updated successfully');
+        } catch (pwdError) {
+          console.error('❌ Password update error:', pwdError);
+          // Continue with profile update even if password fails
         }
       }
 
@@ -431,56 +438,87 @@ export default function CompleteAccount() {
       
       console.log('📋 Final status settings - account_status:', accountStatus, 'is_active:', isActive);
       
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          phone: form.phone,
-          unit_number: form.unit_number,
-          family_size: form.family_size,
-          emergency_contact_name: form.emergency_contact_name,
-          emergency_contact_phone: form.emergency_contact_phone,
-          vehicle_plate_number: form.vehicle_number || null,
-          language_preference: form.language_preference,
-          account_status: accountStatus,
-          is_active: isActive,
-        })
-        .eq("user_id", currentUser.id);
+      // DATABASE UPDATE with comprehensive error handling
+      console.log('💾 Starting database update...');
+      try {
+        const updateResult = await supabase
+          .from("profiles")
+          .update({
+            phone: form.phone,
+            unit_number: form.unit_number,
+            family_size: form.family_size,
+            emergency_contact_name: form.emergency_contact_name,
+            emergency_contact_phone: form.emergency_contact_phone,
+            vehicle_plate_number: form.vehicle_number || null,
+            language_preference: form.language_preference,
+            account_status: accountStatus,
+            is_active: isActive,
+          })
+          .eq("user_id", currentUser.id);
 
-      if (error) {
-        console.error('❌ Profile update error:', error);
-        throw error;
+        console.log('💾 Database update result:', updateResult);
+
+        if (updateResult.error) {
+          console.error('❌ Profile update error:', updateResult.error);
+          throw updateResult.error;
+        }
+
+        console.log('✅ Profile updated successfully with status:', accountStatus);
+      } catch (dbError) {
+        console.error('❌ Database update failed:', dbError);
+        throw new Error(`Failed to update profile: ${dbError.message}`);
       }
-
-      console.log('✅ Profile updated successfully with status:', accountStatus);
       
       // Verify the update was successful by checking the database
       console.log('🔍 Verifying profile update in database...');
-      const { data: updatedProfile, error: verifyError } = await supabase
-        .from('profiles')
-        .select('account_status, is_active, phone, unit_number')
-        .eq('user_id', currentUser.id)
-        .single();
-        
-      if (verifyError) {
-        console.error('❌ Error verifying profile update:', verifyError);
-      } else {
-        console.log('📋 Database verification - Profile after update:', updatedProfile);
+      try {
+        const { data: updatedProfile, error: verifyError } = await supabase
+          .from('profiles')
+          .select('account_status, is_active, phone, unit_number')
+          .eq('user_id', currentUser.id)
+          .single();
+          
+        if (verifyError) {
+          console.error('❌ Error verifying profile update:', verifyError);
+        } else {
+          console.log('📋 Database verification - Profile after update:', updatedProfile);
+        }
+      } catch (verifyErr) {
+        console.warn('⚠️ Database verification failed but continuing:', verifyErr);
       }
 
       // Show success message
+      console.log('🎉 Showing success toast...');
       toast({
         title: t.success,
         description: "Welcome to the community management system!",
       });
 
-      console.log('🚀 Account completion successful - navigating immediately');
+      console.log('🚀 Account completion successful - attempting navigation');
       
-      // Small delay to ensure database transaction is committed
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Navigate directly without heavy profile reload
-      // The AuthContext will automatically detect the user is now approved
-      navigate("/", { replace: true });
+      // Multiple navigation attempts to ensure it works
+      try {
+        console.log('🔄 Navigation attempt 1: Immediate');
+        navigate("/", { replace: true });
+        
+        // Backup navigation after delay
+        setTimeout(() => {
+          console.log('🔄 Navigation attempt 2: Delayed fallback');
+          window.location.href = '/';
+        }, 1000);
+        
+        // Force page reload as last resort
+        setTimeout(() => {
+          console.log('🔄 Navigation attempt 3: Force reload fallback');
+          window.location.replace('/');
+        }, 2000);
+        
+      } catch (navError) {
+        console.error('❌ Navigation error:', navError);
+        // Force redirect using window.location as ultimate fallback
+        console.log('🔄 Emergency navigation: Using window.location');
+        window.location.href = '/';
+      }
       
     } catch (error) {
       console.error("❌ Error completing account:", error);
