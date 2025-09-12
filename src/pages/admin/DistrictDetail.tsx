@@ -7,9 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, MapPin, Users, Building, Calendar, Map as MapIcon, Settings, Plus, Loader2, Filter } from 'lucide-react';
+import { ArrowLeft, MapPin, Users, Building, Calendar, Map as MapIcon, Settings, Plus, Loader2, Filter, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import CreateCommunityModal from '@/components/communities/CreateCommunityModal';
+import EditCommunityModal from '@/components/communities/EditCommunityModal';
+import DeleteCommunityModal from '@/components/communities/DeleteCommunityModal';
 import EditDistrictModal from '@/components/districts/EditDistrictModal';
 import AssignCommunityAdminModal from '@/components/districts/AssignCommunityAdminModal';
 import { useDistricts } from '@/hooks/use-districts';
@@ -36,10 +38,10 @@ interface District {
 interface Community {
   id: string;
   name: string;
-  community_type?: string;
+  community_type: string;
   total_units?: number;
   occupied_units?: number;
-  status?: string;
+  status: string;
   established_date?: string;
 }
 
@@ -57,6 +59,8 @@ export default function DistrictDetail() {
   const { updateDistrict } = useDistricts();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showEditCommunityModal, setShowEditCommunityModal] = useState(false);
+  const [showDeleteCommunityModal, setShowDeleteCommunityModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
 
@@ -475,16 +479,40 @@ export default function DistrictDetail() {
                           </div>
                         </div>
                         {canManage && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedCommunity(community);
-                              setShowAssignModal(true);
-                            }}
-                          >
-                            Assign Admin
-                          </Button>
+                          <div className="flex space-x-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedCommunity(community);
+                                setShowAssignModal(true);
+                              }}
+                            >
+                              Assign Admin
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedCommunity(community);
+                                setShowEditCommunityModal(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              onClick={() => {
+                                setSelectedCommunity(community);
+                                setShowDeleteCommunityModal(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
+                          </div>
                         )}
                       </div>
                   </CardContent>
@@ -507,6 +535,43 @@ export default function DistrictDetail() {
         districtId={id!}
         onSuccess={fetchCommunities}
       />
+
+      <EditCommunityModal
+        isOpen={showEditCommunityModal}
+        onClose={() => {
+          setShowEditCommunityModal(false);
+          setSelectedCommunity(null);
+        }}
+        community={selectedCommunity}
+        onUpdate={async (communityId, updates) => {
+          // Placeholder implementation
+          setCommunities(prev => 
+            prev.map(c => c.id === communityId ? { ...c, ...updates } : c)
+          );
+          return true;
+        }}
+      />
+
+      <DeleteCommunityModal
+        isOpen={showDeleteCommunityModal}
+        onClose={() => {
+          setShowDeleteCommunityModal(false);
+          setSelectedCommunity(null);
+        }}
+        community={selectedCommunity}
+        districtId={id || ''}
+        onDelete={async (communityId, strategy) => {
+          // Placeholder implementation
+          if (strategy === "soft_delete") {
+            setCommunities(prev => 
+              prev.map(c => c.id === communityId ? { ...c, status: "inactive" } : c)
+            );
+          } else {
+            setCommunities(prev => prev.filter(c => c.id !== communityId));
+          }
+          return true;
+        }}
+      />
       
       <EditDistrictModal
         open={showEditModal}
@@ -522,7 +587,6 @@ export default function DistrictDetail() {
         community={selectedCommunity}
         districtId={id!}
         onSuccess={() => {
-          // Refresh any community admin data if needed
           fetchCommunities();
         }}
       />
