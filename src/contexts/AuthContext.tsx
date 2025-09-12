@@ -1,8 +1,10 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -90,6 +92,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [roles, setRoles] = useState<UserRole[]>([]);
   const { toast } = useToast();
 
+  // Move isProcessing outside useEffect to persist across renders
+  const isProcessingRef = useRef(false);
+
   const isApproved = accountStatus === "approved";
   
   console.log('🔐 AuthContext: Auth state -', { 
@@ -135,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   // Load profile + roles for a given user id with optimized queries
-  const loadProfileAndRoles = async (userId: string) => {
+  const loadProfileAndRoles = useCallback(async (userId: string) => {
     try {
       console.log(`AuthContext: Loading profile for user ${userId}`);
       
@@ -206,9 +211,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log(`AuthContext: Processed roles for user ${userId}:`, { roleList, primaryRole });
 
-      // Update language from profile if available
+      // Update language from profile if available - but avoid triggering cycles
       const profileLanguage = profileData?.language_preference as Language;
-      if (profileLanguage && (profileLanguage === "en" || profileLanguage === "ms") && profileLanguage !== language) {
+      const currentLanguage = localStorage.getItem("language_preference");
+      
+      // Only update language if it's different from what's stored locally
+      // This prevents cycles where profile language differs from local state
+      if (profileLanguage && 
+          (profileLanguage === "en" || profileLanguage === "ms") && 
+          profileLanguage !== currentLanguage) {
+        console.log(`AuthContext: Updating language from ${currentLanguage} to ${profileLanguage}`);
         setLanguage(profileLanguage);
         localStorage.setItem("language_preference", profileLanguage);
       }
@@ -225,7 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         available_roles: roleList.length ? roleList : ["resident"],
         phone: "",
         address: "",
-        language_preference: profileLanguage || language,
+        language_preference: profileLanguage || (currentLanguage as Language) || "ms",
         theme_preference: theme,
         unit_type: undefined,
         ownership_status: undefined,
@@ -245,12 +257,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setInitializing(false);
     }
-  };
+  }, [theme]); // Only depend on theme, not language to avoid cycles
 
   // Auth state listener + initial session with debouncing
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
-    let isProcessing = false;
     
     const {
       data: { subscription },
@@ -258,14 +269,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Clear previous timeout to debounce rapid auth changes
       if (timeoutId) clearTimeout(timeoutId);
       
-      // Prevent multiple simultaneous processing
-      if (isProcessing) return;
+      // Prevent multiple simultaneous processing using persistent ref
+      if (isProcessingRef.current) {
+        console.log('AuthContext: Already processing, skipping auth state change');
+        return;
+      }
       
       const uid = session?.user?.id;
       console.log(`AuthContext: Auth state change - Event: ${event}, User ID: ${uid}`);
       
       if (uid) {
-        isProcessing = true;
+        isProcessingRef.current = true;
         
         // Handle email confirmation asynchronously without blocking
         if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
@@ -293,7 +307,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
           console.error("❌ Failed to establish session from any token method", error);
         } finally {
-          isProcessing = false;
+          isProcessingRef.current = false;
         }
       } else {
         console.log(`AuthContext: No user session, clearing state`);
@@ -301,7 +315,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setRoles([]);
         setAccountStatus(null);
         setInitializing(false);
-        isProcessing = false;
+        isProcessingRef.current = false;
       }
     });
 
@@ -310,14 +324,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const uid = data.session?.user?.id;
       console.log(`AuthContext: Initial session check - User ID: ${uid}`);
       
-      if (uid && !isProcessing) {
-        isProcessing = true;
+      if (uid && !isProcessingRef.current) {
+        isProcessingRef.current = true;
         try {
           await loadProfileAndRoles(uid);
         } catch (error) {
           console.error("❌ Failed to establish session from initial check", error);
         } finally {
-          isProcessing = false;
+          isProcessingRef.current = false;
         }
       } else if (!uid) {
         setInitializing(false);
@@ -328,7 +342,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe();
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, []);
+  }, [loadProfileAndRoles]); // Add loadProfileAndRoles as dependency
 
   const login = async (email: string, password: string) => {
     const { data: authData, error } = await supabase.auth.signInWithPassword({
@@ -445,13 +459,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     switchLanguage,
     switchTheme,
     updateProfile,
-    loadProfileAndRoles: async () => {
+    loadProfileAndRoles: useCallback(async () => {
       const { data } = await supabase.auth.getSession();
-      if (data.session?.user?.id) {
+      if (data.session?.user?.id && !isProcessingRef.current) {
         return loadProfileAndRoles(data.session.user.id);
       }
       return Promise.resolve();
-    },
+    }, [loadProfileAndRoles]),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
