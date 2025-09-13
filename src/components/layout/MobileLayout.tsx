@@ -19,7 +19,7 @@ export function MobileLayout({ children }: MobileLayoutProps) {
       <MobileHeader />
       
       <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 bg-transparent">
-        <div className="animate-fade-in p-4">
+        <div className="animate-fade-in p-4 pt-6">
           {children}
         </div>
       </main>
