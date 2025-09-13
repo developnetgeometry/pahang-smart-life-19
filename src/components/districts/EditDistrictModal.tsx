@@ -37,9 +37,11 @@ export default function EditDistrictModal({
     area_km2: '',
     population: '',
     address: '',
+    postal_code: '',
     description: '',
     city: '',
     country: '',
+    state: 'Pahang',
     latitude: '',
     longitude: '',
     established_date: null as Date | null,
@@ -58,12 +60,15 @@ export default function EditDistrictModal({
       population: 'Population',
       city: 'City',
       country: 'Country',
+      state: 'State',
       latitude: 'Latitude',
       longitude: 'Longitude',
       establishedDate: 'Established Date',
       selectDate: 'Select date',
       address: 'Address',
+      postalCode: 'Postal Code',
       description: 'Description',
+      areaOverwriteNote: 'Note: This value may be overwritten by the "Update Areas from OSM" action.',
       active: 'Active',
       planning: 'Planning',
       development: 'Development',
@@ -85,12 +90,15 @@ export default function EditDistrictModal({
       population: 'Penduduk',
       city: 'Bandar',
       country: 'Negara',
+      state: 'Negeri',
       latitude: 'Latitud',
       longitude: 'Longitud',
       establishedDate: 'Tarikh Ditubuhkan',
       selectDate: 'Pilih tarikh',
       address: 'Alamat',
+      postalCode: 'Poskod',
       description: 'Penerangan',
+      areaOverwriteNote: 'Nota: Nilai ini mungkin ditulis ganti oleh tindakan "Kemaskini Keluasan dari OSM".',
       active: 'Aktif',
       planning: 'Perancangan',
       development: 'Pembangunan',
@@ -114,9 +122,11 @@ export default function EditDistrictModal({
         area_km2: district.area_km2?.toString() || district.area?.toString() || '',
         population: district.population?.toString() || '',
         address: district.address || '',
+        postal_code: district.postal_code || '',
         description: district.description || '',
         city: district.city || '',
         country: district.country || '',
+        state: district.state || 'Pahang',
         latitude: district.latitude?.toString() || '',
         longitude: district.longitude?.toString() || '',
         established_date: district.established_date ? new Date(district.established_date) : null,
@@ -136,9 +146,11 @@ export default function EditDistrictModal({
         district_type: formData.district_type,
         area_km2: formData.area_km2 ? parseFloat(formData.area_km2) : undefined,
         address: formData.address || undefined,
+        postal_code: formData.postal_code || undefined,
         description: formData.description || undefined,
         city: formData.city || undefined,
         country: formData.country || undefined,
+        state: 'Pahang',
         latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
         longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
         established_date: formData.established_date ? formData.established_date.toISOString().split('T')[0] : undefined,
@@ -232,6 +244,7 @@ export default function EditDistrictModal({
                 value={formData.area_km2}
                 onChange={(e) => setFormData(prev => ({ ...prev, area_km2: e.target.value }))}
               />
+              <p className="text-xs text-muted-foreground">{t.areaOverwriteNote}</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-population">{t.population}</Label>
@@ -261,6 +274,26 @@ export default function EditDistrictModal({
                 id="edit-country" 
                 value={formData.country}
                 onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-state">{t.state}</Label>
+              <Input 
+                id="edit-state" 
+                value={formData.state}
+                readOnly
+                className="bg-muted"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-postal">{t.postalCode}</Label>
+              <Input 
+                id="edit-postal" 
+                value={formData.postal_code}
+                onChange={(e) => setFormData(prev => ({ ...prev, postal_code: e.target.value }))}
               />
             </div>
           </div>

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, MapPin, Users, Building, Calendar, Map as MapIcon, Settings, Plus, Loader2, Filter } from 'lucide-react';
+import { ArrowLeft, MapPin, Users, Building, Calendar, Map as MapIcon, Settings, Plus, Loader2, Filter, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import CreateCommunityModal from '@/components/communities/CreateCommunityModal';
 import EditDistrictModal from '@/components/districts/EditDistrictModal';
@@ -41,6 +41,9 @@ interface Community {
   occupied_units?: number;
   status?: string;
   established_date?: string;
+  // Derived fields for admin assignment indicator
+  has_admin?: boolean;
+  admin_name?: string;
 }
 
 export default function DistrictDetail() {
@@ -95,7 +98,9 @@ export default function DistrictDetail() {
       districtNotFound: 'District not found',
       loadingError: 'Error loading district details',
       noCommunities: 'No communities found in this district',
-      unassigned: 'Unassigned'
+      unassigned: 'Unassigned',
+      adminAssigned: 'Admin Assigned',
+      adminLabel: 'Admin'
     },
     ms: {
       backToDistricts: 'Kembali ke Daerah',
@@ -131,7 +136,9 @@ export default function DistrictDetail() {
       districtNotFound: 'Daerah tidak dijumpai',
       loadingError: 'Ralat memuatkan butiran daerah',
       noCommunities: 'Tiada komuniti dijumpai dalam daerah ini',
-      unassigned: 'Belum Ditetapkan'
+      unassigned: 'Belum Ditetapkan',
+      adminAssigned: 'Pentadbir Ditugaskan',
+      adminLabel: 'Pentadbir'
     }
   };
 
@@ -195,8 +202,39 @@ export default function DistrictDetail() {
         return;
       }
 
-      setCommunities(data || []);
-      setFilteredCommunities(data || []);
+      const communitiesData = data || [];
+
+      // Fetch profiles linked to these communities to detect assigned admins
+      if (communitiesData.length > 0) {
+        const communityIds = communitiesData.map((c) => c.id);
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, community_id')
+          .in('community_id', communityIds);
+
+        if (profilesError) {
+          console.error('Error fetching community admins:', profilesError);
+        }
+
+        const adminByCommunity = new Map<string, { id: string; full_name: string }>();
+        (profiles || []).forEach((p: any) => {
+          if (p.community_id && !adminByCommunity.has(p.community_id)) {
+            adminByCommunity.set(p.community_id, { id: p.id, full_name: p.full_name });
+          }
+        });
+
+        const withAdmin = communitiesData.map((c) => ({
+          ...c,
+          has_admin: adminByCommunity.has(c.id),
+          admin_name: adminByCommunity.get(c.id)?.full_name,
+        }));
+
+        setCommunities(withAdmin as Community[]);
+        setFilteredCommunities(withAdmin as Community[]);
+      } else {
+        setCommunities([]);
+        setFilteredCommunities([]);
+      }
     } catch (error) {
       console.error('Error fetching communities:', error);
     } finally {
@@ -443,9 +481,16 @@ export default function DistrictDetail() {
                           {getTypeText(community.community_type)}
                         </CardDescription>
                       </div>
-                      <Badge className={getStatusColor(community.status || 'active')} variant="secondary">
-                        {getStatusText(community.status)}
-                      </Badge>
+                      <div className="flex gap-2 items-center">
+                        {community.has_admin && (
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <UserCheck className="h-3 w-3" /> {t.adminAssigned}
+                          </Badge>
+                        )}
+                        <Badge className={getStatusColor(community.status || 'active')} variant="secondary">
+                          {getStatusText(community.status)}
+                        </Badge>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-2">
@@ -464,6 +509,12 @@ export default function DistrictDetail() {
                               }
                             </span>
                           </div>
+                          {community.has_admin && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">{t.adminLabel}:</span>
+                              <span className="font-medium">{community.admin_name || '-'}</span>
+                            </div>
+                          )}
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">{t.established}:</span>
                             <span className="font-medium">
@@ -474,7 +525,7 @@ export default function DistrictDetail() {
                             </span>
                           </div>
                         </div>
-                        {canManage && (
+                        {canManage && !community.has_admin && (
                           <Button 
                             size="sm" 
                             variant="outline"
