@@ -196,7 +196,7 @@ export function getRoleDefaults(role: string): Partial<UserCreationData> {
 export function getRoleDescription(role: string): string {
   const descriptions = {
     resident: 'Community residents with basic access to facilities and services',
-    guest: 'Temporary visitors with limited access and expiration date',
+    guest: 'Tenant users with limited access and expiration date',
     security_officer: 'Security personnel responsible for community safety and monitoring',
     facility_manager: 'Staff managing community facilities, bookings, and maintenance',
     maintenance_staff: 'Technical staff handling repairs and facility upkeep',

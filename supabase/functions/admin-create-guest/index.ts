@@ -193,7 +193,12 @@ async function updateUserProfile(userId: string, profileData: any, context: Admi
   console.log("Guest profile updated successfully");
 }
 
-async function assignUserRole(userId: string, role: string, context: AdminContext) {
+async function assignUserRole(
+  userId: string,
+  role: string,
+  context: AdminContext,
+  options: { cleanupOnError?: boolean } = {}
+) {
   console.log(`Assigning ${role} role to user: ${userId}`);
   
   const { error: roleUpsertError } = await context.supabaseAdmin
@@ -208,8 +213,10 @@ async function assignUserRole(userId: string, role: string, context: AdminContex
     }, { onConflict: "user_id,role,district_id" });
 
   if (roleUpsertError) {
-    await context.supabaseAdmin.auth.admin.deleteUser(userId);
-    await context.supabaseAdmin.from("profiles").delete().eq("user_id", userId);
+    if (options.cleanupOnError) {
+      await context.supabaseAdmin.auth.admin.deleteUser(userId);
+      await context.supabaseAdmin.from("profiles").delete().eq("user_id", userId);
+    }
     throw new Error(`Failed to assign role: ${roleUpsertError.message}`);
   }
   
@@ -262,15 +269,54 @@ serve(async (req) => {
 
     console.log("Creating guest with validated data:", validatedData);
 
-    // Create auth user for guests - using password123
-    const { userId, password: finalPassword } = await createAuthUser(
-      { email, full_name },
-      true,
-      context,
-      req
-    );
+    // Check if a user with this email already exists
+    const { data: existingProfile } = await context.supabaseAdmin
+      .from('profiles')
+      .select('id, user_id, full_name, district_id, community_id')
+      .eq('email', email)
+      .maybeSingle();
 
-    // Update profile with guest-specific data
+    let userId: string;
+    let finalPassword = '';
+    let isNewUser = false;
+
+    if (existingProfile?.user_id) {
+      // Reuse existing auth user
+      userId = existingProfile.user_id;
+      console.log('Existing user found for email, user_id:', userId);
+
+      // If user currently has resident role active, deactivate it to avoid constraint errors
+      const roleUserKey = existingProfile.id || existingProfile.user_id;
+      const { data: currentRoles } = await context.supabaseAdmin
+        .from('enhanced_user_roles')
+        .select('role, is_active')
+        .eq('user_id', roleUserKey)
+        .eq('is_active', true);
+
+      const hasResident = !!currentRoles?.some((r: any) => r.role === 'resident');
+      if (hasResident) {
+        console.log('Deactivating resident role before assigning guest');
+        const deactivate = await context.supabaseAdmin
+          .from('enhanced_user_roles')
+          .update({ is_active: false })
+          .eq('user_id', roleUserKey)
+          .eq('role', 'resident');
+        console.log('Deactivated resident role rows:', deactivate?.count ?? 'n/a');
+      }
+    } else {
+      // Create auth user for guests - using password123
+      const created = await createAuthUser(
+        { email, full_name },
+        true,
+        context,
+        req
+      );
+      userId = created.userId;
+      finalPassword = created.password;
+      isNewUser = true;
+    }
+
+    // Update profile with guest-specific data (creates profile if missing)
     await updateUserProfile(userId, {
       full_name,
       district_id: context.adminProfile?.district_id,
@@ -280,7 +326,35 @@ serve(async (req) => {
     }, context);
 
     // Assign guest role
-    await assignUserRole(userId, "guest", context);
+    // Always use profiles.id for enhanced_user_roles.user_id
+    let roleUserId = existingProfile?.id as string | undefined;
+    if (!roleUserId) {
+      const { data: profRow } = await context.supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+      roleUserId = profRow?.id;
+    }
+    if (!roleUserId) {
+      throw new Error('Profile row not found after upsert; cannot assign tenant role');
+    }
+
+    // Safety: Some projects auto-assign 'resident' on signup via trigger.
+    // Deactivate resident for this profile id before assigning guest.
+    const { data: rolesBefore } = await context.supabaseAdmin
+      .from('enhanced_user_roles')
+      .select('role,is_active')
+      .eq('user_id', roleUserId)
+      .eq('is_active', true);
+    if (rolesBefore?.some((r: any) => r.role === 'resident')) {
+      await context.supabaseAdmin
+        .from('enhanced_user_roles')
+        .update({ is_active: false })
+        .eq('user_id', roleUserId)
+        .eq('role', 'resident');
+    }
+    await assignUserRole(roleUserId, "guest", context, { cleanupOnError: isNewUser });
 
     // Get admin's name for personalized emails
     const { data: adminProfile2, error: adminProfileError2 } = await context.supabase
@@ -292,18 +366,21 @@ serve(async (req) => {
     const adminName = adminProfile2?.full_name || "Administrator";
 
     // Send email with credentials
-    try {
-      await sendUserEmail({
-        email,
-        full_name,
-        password: finalPassword,
-        adminName,
-        req
-      });
-      console.log(`Email sent successfully for guest: ${email}`);
-    } catch (emailError) {
-      console.error("Email sending failed:", emailError);
-      // Don't fail the entire operation for email issues, just log it
+    if (isNewUser) {
+      // Only send credentials when a new account was created
+      try {
+        await sendUserEmail({
+          email,
+          full_name,
+          password: finalPassword,
+          adminName,
+          req
+        });
+        console.log(`Email sent successfully for new tenant: ${email}`);
+      } catch (emailError) {
+        console.error("Email sending failed:", emailError);
+        // Don't fail the entire operation for email issues, just log it
+      }
     }
 
     console.log("Guest creation completed successfully:", {
@@ -322,8 +399,10 @@ serve(async (req) => {
           role: "guest",
           access_expires_at,
         },
-        email_sent: true,
-        message: "Guest account created successfully. Login credentials sent via email.",
+        email_sent: isNewUser,
+        message: isNewUser
+          ? "Tenant account created successfully. Login credentials sent via email."
+          : "Existing user converted/assigned as tenant successfully.",
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
