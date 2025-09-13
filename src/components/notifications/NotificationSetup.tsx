@@ -9,6 +9,13 @@ import { useNotificationIntegration } from '@/hooks/use-notification-integration
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Database } from '@/integrations/supabase/types';
+
+// Extended type to include the new columns that may not be in the generated types yet
+type ExtendedNotificationPreferences = Database['public']['Tables']['notification_preferences']['Row'] & {
+  push_enabled?: boolean | null;
+  email_enabled?: boolean | null;
+};
 
 interface NotificationPreferences {
   announcements: boolean;
@@ -79,19 +86,20 @@ export function NotificationSetup() {
       }
 
       if (data) {
+        const extendedData = data as ExtendedNotificationPreferences;
         setPreferences({
-          announcements: data.announcements,
-          complaints: data.complaints,
-          bookings: data.bookings,
-          marketplace: data.marketplace,
-          security: data.security,
-          emergencies: data.emergencies,
-          events: data.events,
-          maintenance: data.maintenance,
-          messages: data.messages || true,
-          mentions: data.mentions || true,
-          push_enabled: data.push_enabled ?? true,
-          email_enabled: data.email_enabled ?? true,
+          announcements: extendedData.announcements ?? true,
+          complaints: extendedData.complaints ?? true,
+          bookings: extendedData.bookings ?? true,
+          marketplace: extendedData.marketplace ?? true,
+          security: extendedData.security ?? true,
+          emergencies: extendedData.emergencies ?? true,
+          events: extendedData.events ?? true,
+          maintenance: extendedData.maintenance ?? true,
+          messages: extendedData.messages ?? true,
+          mentions: extendedData.mentions ?? true,
+          push_enabled: extendedData.push_enabled ?? true,
+          email_enabled: extendedData.email_enabled ?? true,
         });
       }
     } catch (error) {
