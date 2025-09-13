@@ -660,10 +660,10 @@ export default function MyComplaints() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
         <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <FileText className="w-8 h-8" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
+            <FileText className="w-6 h-6 sm:w-8 sm:h-8" />
             {language === "en" ? "My Complaints" : "Aduan Saya"}
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -673,7 +673,7 @@ export default function MyComplaints() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Button
             variant="outline"
             size="sm"
@@ -686,7 +686,7 @@ export default function MyComplaints() {
 
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button size="sm">
                 <Plus className="w-4 h-4 mr-2" />
                 {language === "en" ? "Submit Complaint" : "Hantar Aduan"}
               </Button>
