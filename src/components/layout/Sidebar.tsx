@@ -40,14 +40,14 @@ import {
   QrCode,
 } from "lucide-react";
 
-interface NavigationItem {
+export interface NavigationItem {
   title: string;
   url: string;
   icon: React.ComponentType<{ className?: string }>;
   requiredRoles?: string[];
 }
 
-interface NavigationGroup {
+export interface NavigationGroup {
   label: string;
   items: NavigationItem[];
 }
