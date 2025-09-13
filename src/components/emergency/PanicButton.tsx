@@ -405,7 +405,7 @@ export default function PanicButton() {
 
           {/* Instructions */}
           <div className="absolute bottom-full right-0 mb-2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-            {language === 'en' ? 'Hold for 3 seconds' : 'Tahan selama 3 saat'}
+            {language === 'en' ? 'Panic Button : Hold 3 Seconds' : 'Butang Panik : Tahan 3 Saat'}
           </div>
 
           {/* Location status indicator */}
