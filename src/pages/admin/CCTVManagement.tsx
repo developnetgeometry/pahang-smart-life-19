@@ -116,13 +116,26 @@ export default function CCTVManagement() {
     location: string;
     type: CCTVCamera["type"] | "";
     streamUrl: string;
-  }>({ name: "", location: "", type: "", streamUrl: "" });
+    districtId: string;
+    communityId: string;
+  }>({
+    name: "",
+    location: "",
+    type: "",
+    streamUrl: "",
+    districtId: "",
+    communityId: "",
+  });
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [selectedDistrict, setSelectedDistrict] = useState("all");
   const [selectedCommunity, setSelectedCommunity] = useState("all");
-  const [districts, setDistricts] = useState<{id: string, name: string}[]>([]);
-  const [communities, setCommunities] = useState<{id: string, name: string}[]>([]);
+  const [districts, setDistricts] = useState<{ id: string; name: string }[]>(
+    []
+  );
+  const [communities, setCommunities] = useState<
+    { id: string; name: string; district_id: string }[]
+  >([]);
   const [isAddCameraOpen, setIsAddCameraOpen] = useState(false);
   const [isEditCameraOpen, setIsEditCameraOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -144,9 +157,13 @@ export default function CCTVManagement() {
     type: CCTVCamera["type"];
     streamUrl: string;
     isActive: boolean;
+    districtId: string;
+    communityId: string;
   } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CCTVCamera | null>(null);
   const [isTesting, setIsTesting] = useState(false);
+  const [selectedCameras, setSelectedCameras] = useState<string[]>([]);
+  const [isSelectMode, setIsSelectMode] = useState(false);
 
   const text = {
     en: {
@@ -415,20 +432,24 @@ export default function CCTVManagement() {
       }));
       setCameras(mapped);
     };
-    
+
     load();
 
     // Set up real-time subscription
     const channel = supabase
-      .channel('cctv-cameras-changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'cctv_cameras'
-      }, () => {
-        // Reload cameras when any change occurs
-        load();
-      })
+      .channel("cctv-cameras-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "cctv_cameras",
+        },
+        () => {
+          // Reload cameras when any change occurs
+          load();
+        }
+      )
       .subscribe();
 
     return () => {
@@ -736,28 +757,87 @@ export default function CCTVManagement() {
       canViewFilters: false,
       canViewRecordings: false,
       canViewTabs: false,
-      scope: 'none' as 'state' | 'district' | 'community' | 'none'
+      canAssignCommunities: false,
+      scope: "none" as "state" | "district" | "community" | "none",
     };
 
-    if (hasUserRole('state_admin')) {
-      return { ...permissions, canViewAllCameras: true, canManageCameras: true, canViewFilters: true, canViewRecordings: true, canViewTabs: true, scope: 'state' as const };
+    if (hasUserRole("state_admin")) {
+      return {
+        ...permissions,
+        canViewAllCameras: true,
+        canManageCameras: true,
+        canViewFilters: true,
+        canViewRecordings: true,
+        canViewTabs: true,
+        canAssignCommunities: true,
+        scope: "state" as const,
+      };
     }
-    if (hasUserRole('district_coordinator')) {
-      return { ...permissions, canViewAllCameras: true, canManageCameras: true, canViewFilters: true, canViewRecordings: true, canViewTabs: true, scope: 'district' as const };
+    if (hasUserRole("district_coordinator")) {
+      return {
+        ...permissions,
+        canViewAllCameras: true,
+        canManageCameras: true,
+        canViewFilters: true,
+        canViewRecordings: true,
+        canViewTabs: true,
+        canAssignCommunities: true,
+        scope: "district" as const,
+      };
     }
-    if (hasUserRole('community_admin')) {
-      return { ...permissions, canViewAllCameras: true, canManageCameras: true, canViewFilters: true, canViewRecordings: true, canViewTabs: true, scope: 'community' as const };
+    if (hasUserRole("community_admin")) {
+      return {
+        ...permissions,
+        canViewAllCameras: true,
+        canManageCameras: true,
+        canViewFilters: true,
+        canViewRecordings: true,
+        canViewTabs: true,
+        canAssignCommunities: false,
+        scope: "community" as const,
+      };
     }
-    if (hasUserRole('security_officer')) {
-      return { ...permissions, canViewAllCameras: true, canManageCameras: true, canViewFilters: true, canViewRecordings: true, canViewTabs: true, scope: 'district' as const };
+    if (hasUserRole("security_officer")) {
+      return {
+        ...permissions,
+        canViewAllCameras: true,
+        canManageCameras: true,
+        canViewFilters: true,
+        canViewRecordings: true,
+        canViewTabs: true,
+        canAssignCommunities: false,
+        scope: "district" as const,
+      };
     }
-    if (hasUserRole('community_leader')) {
-      return { ...permissions, canViewAllCameras: true, canManageCameras: false, canViewFilters: false, canViewRecordings: false, canViewTabs: false, scope: 'community' as const };
+    if (hasUserRole("community_leader")) {
+      return {
+        ...permissions,
+        canViewAllCameras: true,
+        canManageCameras: false,
+        canViewFilters: false,
+        canViewRecordings: false,
+        canViewTabs: false,
+        canAssignCommunities: false,
+        scope: "community" as const,
+      };
     }
-    if (hasUserRole('resident')) {
-      return { ...permissions, canViewAllCameras: true, canManageCameras: false, canViewFilters: false, canViewRecordings: false, canViewTabs: false, scope: 'district' as const };
+    if (
+      hasUserRole("resident") ||
+      hasUserRole("spouse") ||
+      hasUserRole("guest")
+    ) {
+      return {
+        ...permissions,
+        canViewAllCameras: false,
+        canManageCameras: false,
+        canViewFilters: false,
+        canViewRecordings: false,
+        canViewTabs: false,
+        canAssignCommunities: false,
+        scope: "community" as const,
+      };
     }
-    
+
     return permissions;
   };
 
@@ -768,20 +848,20 @@ export default function CCTVManagement() {
     const loadFiltersData = async () => {
       // Load districts
       const { data: districtsData } = await supabase
-        .from('districts')
-        .select('id, name')
-        .order('name');
-      
+        .from("districts")
+        .select("id, name")
+        .order("name");
+
       if (districtsData) {
         setDistricts(districtsData);
       }
 
       // Load communities
       const { data: communitiesData } = await supabase
-        .from('communities')
-        .select('id, name')
-        .order('name');
-      
+        .from("communities")
+        .select("id, name, district_id")
+        .order("name");
+
       if (communitiesData) {
         setCommunities(communitiesData);
       }
@@ -794,25 +874,65 @@ export default function CCTVManagement() {
 
   // Role-based camera filtering with search and status filters
   const searchFilteredCameras = cameras.filter((camera) => {
+    // Role-based visibility control
+    const { user } = useAuth();
+    const userCommunityId = user?.active_community_id;
+
+    // For residents, spouses, and guests - only show cameras assigned to their community
+    if (
+      hasUserRole("resident") ||
+      hasUserRole("spouse") ||
+      hasUserRole("guest")
+    ) {
+      const cameraInUserCommunity =
+        (camera as any).community_id === userCommunityId;
+      if (!cameraInUserCommunity) return false;
+    }
+
+    // For community leaders and community admins - only show cameras in their community
+    if (hasUserRole("community_leader") || hasUserRole("community_admin")) {
+      const cameraInUserCommunity =
+        (camera as any).community_id === userCommunityId;
+      if (!cameraInUserCommunity) return false;
+    }
+
+    // Security officers, district coordinators, and state admins can see all cameras
+    // (but still respect the filter controls if they choose to use them)
+
     // Basic search and filter matching
-    const matchesSearch = !rolePermissions.canViewFilters || 
+    const matchesSearch =
+      !rolePermissions.canViewFilters ||
       camera.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       camera.location.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = !rolePermissions.canViewFilters ||
-      selectedStatus === "all" || camera.status === selectedStatus;
-    
-    const matchesLocation = !rolePermissions.canViewFilters ||
-      selectedLocation === "all" || camera.type === selectedLocation;
+
+    const matchesStatus =
+      !rolePermissions.canViewFilters ||
+      selectedStatus === "all" ||
+      camera.status === selectedStatus;
+
+    const matchesLocation =
+      !rolePermissions.canViewFilters ||
+      selectedLocation === "all" ||
+      camera.type === selectedLocation;
 
     // District and community filtering based on camera data
-    const matchesDistrict = !rolePermissions.canViewFilters ||
-      selectedDistrict === "all" || selectedDistrict === (camera as any).district_id;
-    
-    const matchesCommunity = !rolePermissions.canViewFilters ||
-      selectedCommunity === "all" || selectedCommunity === (camera as any).community_id;
+    const matchesDistrict =
+      !rolePermissions.canViewFilters ||
+      selectedDistrict === "all" ||
+      selectedDistrict === (camera as any).district_id;
 
-    return matchesSearch && matchesStatus && matchesLocation && matchesDistrict && matchesCommunity;
+    const matchesCommunity =
+      !rolePermissions.canViewFilters ||
+      selectedCommunity === "all" ||
+      selectedCommunity === (camera as any).community_id;
+
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesLocation &&
+      matchesDistrict &&
+      matchesCommunity
+    );
   });
 
   const handleAddCamera = async () => {
@@ -820,6 +940,22 @@ export default function CCTVManagement() {
       toast({ title: t.addCameraTitle, description: "Please fill all fields" });
       return;
     }
+
+    // For state admin and district coordinator, require community assignment
+    if (
+      rolePermissions.canAssignCommunities &&
+      (!newCam.districtId || !newCam.communityId)
+    ) {
+      toast({
+        title: t.addCameraTitle,
+        description:
+          language === "en"
+            ? "Please select district and community"
+            : "Sila pilih daerah dan komuniti",
+      });
+      return;
+    }
+
     try {
       setIsTesting(true);
       await validateStream(newCam.streamUrl);
@@ -833,6 +969,7 @@ export default function CCTVManagement() {
     } finally {
       setIsTesting(false);
     }
+
     const { data, error } = await supabase
       .from("cctv_cameras")
       .insert({
@@ -843,9 +980,11 @@ export default function CCTVManagement() {
         stream_url: newCam.streamUrl,
         is_active: true,
         pan_tilt_zoom: false,
+        district_id: newCam.districtId || null,
+        community_id: newCam.communityId || null,
       })
       .select(
-        "id, name, location, camera_type, resolution, stream_url, is_active, pan_tilt_zoom, created_at"
+        "id, name, location, camera_type, resolution, stream_url, is_active, pan_tilt_zoom, created_at, district_id, community_id"
       )
       .single();
     if (error) {
@@ -873,7 +1012,14 @@ export default function CCTVManagement() {
     };
     setCameras((prev) => [nowCam, ...prev]);
     setIsAddCameraOpen(false);
-    setNewCam({ name: "", location: "", type: "", streamUrl: "" });
+    setNewCam({
+      name: "",
+      location: "",
+      type: "",
+      streamUrl: "",
+      districtId: "",
+      communityId: "",
+    });
     toast({ title: t.cameraAddedSuccess });
   };
 
@@ -1006,6 +1152,8 @@ export default function CCTVManagement() {
                     location: "",
                     type: "",
                     streamUrl: "",
+                    districtId: "",
+                    communityId: "",
                   });
               }}
             >
@@ -1070,6 +1218,87 @@ export default function CCTVManagement() {
                       </Select>
                     </div>
                   </div>
+
+                  {/* Community Assignment Fields - Only for state admin and district coordinator */}
+                  {rolePermissions.canAssignCommunities && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="district">
+                          {language === "en" ? "District" : "Daerah"} *
+                        </Label>
+                        <Select
+                          value={newCam.districtId}
+                          onValueChange={(v) => {
+                            setNewCam((prev) => ({
+                              ...prev,
+                              districtId: v,
+                              communityId: "", // Reset community when district changes
+                            }));
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                language === "en"
+                                  ? "Select District"
+                                  : "Pilih Daerah"
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {districts.map((district) => (
+                              <SelectItem key={district.id} value={district.id}>
+                                {district.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="community">
+                          {language === "en" ? "Community" : "Komuniti"} *
+                        </Label>
+                        <Select
+                          value={newCam.communityId}
+                          onValueChange={(v) =>
+                            setNewCam((prev) => ({
+                              ...prev,
+                              communityId: v,
+                            }))
+                          }
+                          disabled={!newCam.districtId}
+                        >
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                language === "en"
+                                  ? "Select Community"
+                                  : "Pilih Komuniti"
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {communities
+                              .filter(
+                                (community) =>
+                                  !newCam.districtId ||
+                                  (community as any).district_id ===
+                                    newCam.districtId
+                              )
+                              .map((community) => (
+                                <SelectItem
+                                  key={community.id}
+                                  value={community.id}
+                                >
+                                  {community.name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label htmlFor="streamUrl">
                       {t.streamUrl} (HLS .m3u8, MJPEG, MP4/WebM or RTSP via
@@ -1104,6 +1333,38 @@ export default function CCTVManagement() {
           </div>
         )}
       </div>
+
+      {/* User Role Information */}
+      {(hasUserRole("resident") ||
+        hasUserRole("spouse") ||
+        hasUserRole("guest") ||
+        hasUserRole("community_leader") ||
+        hasUserRole("community_admin")) && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-blue-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-blue-700">
+                {language === "en"
+                  ? "You can only view CCTV cameras assigned to your community. Contact your administrator for access to other cameras."
+                  : "Anda hanya boleh melihat kamera CCTV yang ditetapkan kepada komuniti anda. Hubungi pentadbir untuk akses kepada kamera lain."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Inline Live Feed for Selected or First Camera */}
       <div className="w-full">
@@ -1157,75 +1418,203 @@ export default function CCTVManagement() {
           {/* Filters */}
           {rolePermissions.canViewFilters && (
             <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder={t.search}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder={t.search}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder={t.status} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t.allStatuses}</SelectItem>
+                  <SelectItem value="online">{t.online}</SelectItem>
+                  <SelectItem value="offline">{t.offline}</SelectItem>
+                  <SelectItem value="maintenance">{t.maintenance}</SelectItem>
+                  <SelectItem value="error">{t.error}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={selectedLocation}
+                onValueChange={setSelectedLocation}
+              >
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder={t.location} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t.allLocations}</SelectItem>
+                  <SelectItem value="indoor">{t.indoor}</SelectItem>
+                  <SelectItem value="outdoor">{t.outdoor}</SelectItem>
+                  <SelectItem value="entrance">{t.entrance}</SelectItem>
+                  <SelectItem value="parking">{t.parking}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={selectedDistrict}
+                onValueChange={setSelectedDistrict}
+              >
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder={t.district} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t.allDistricts}</SelectItem>
+                  {districts.map((district) => (
+                    <SelectItem key={district.id} value={district.id}>
+                      {district.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={selectedCommunity}
+                onValueChange={setSelectedCommunity}
+              >
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder={t.community} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t.allCommunities}</SelectItem>
+                  {communities.map((community) => (
+                    <SelectItem key={community.id} value={community.id}>
+                      {community.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder={t.status} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t.allStatuses}</SelectItem>
-                <SelectItem value="online">{t.online}</SelectItem>
-                <SelectItem value="offline">{t.offline}</SelectItem>
-                <SelectItem value="maintenance">{t.maintenance}</SelectItem>
-                <SelectItem value="error">{t.error}</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={selectedLocation}
-              onValueChange={setSelectedLocation}
-            >
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder={t.location} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t.allLocations}</SelectItem>
-                <SelectItem value="indoor">{t.indoor}</SelectItem>
-                <SelectItem value="outdoor">{t.outdoor}</SelectItem>
-                <SelectItem value="entrance">{t.entrance}</SelectItem>
-                <SelectItem value="parking">{t.parking}</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder={t.district} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t.allDistricts}</SelectItem>
-                {districts.map((district) => (
-                  <SelectItem key={district.id} value={district.id}>
-                    {district.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedCommunity} onValueChange={setSelectedCommunity}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder={t.community} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t.allCommunities}</SelectItem>
-                {communities.map((community) => (
-                  <SelectItem key={community.id} value={community.id}>
-                    {community.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          )}
+
+          {/* Bulk Operations */}
+          {rolePermissions.canManageCameras && (
+            <div className="flex items-center justify-between bg-muted/50 p-4 rounded-lg">
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsSelectMode(!isSelectMode);
+                    setSelectedCameras([]);
+                  }}
+                >
+                  {isSelectMode ? "Exit Select" : "Select Multiple"}
+                </Button>
+                {isSelectMode && (
+                  <>
+                    <span className="text-sm text-muted-foreground">
+                      {selectedCameras.length} selected
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const visibleCameraIds = searchFilteredCameras.map(
+                          (c) => c.id
+                        );
+                        if (
+                          selectedCameras.length === visibleCameraIds.length
+                        ) {
+                          setSelectedCameras([]);
+                        } else {
+                          setSelectedCameras(visibleCameraIds);
+                        }
+                      }}
+                    >
+                      {selectedCameras.length === searchFilteredCameras.length
+                        ? "Deselect All"
+                        : "Select All"}
+                    </Button>
+                  </>
+                )}
+              </div>
+              {isSelectMode && selectedCameras.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Selected ({selectedCameras.length})
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Delete Multiple Cameras
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete{" "}
+                          {selectedCameras.length} selected cameras? This action
+                          cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          onClick={async () => {
+                            const { error } = await supabase
+                              .from("cctv_cameras")
+                              .delete()
+                              .in("id", selectedCameras);
+
+                            if (error) {
+                              toast({
+                                title: "Error",
+                                description: "Failed to delete some cameras",
+                              });
+                              return;
+                            }
+
+                            setCameras((prev) =>
+                              prev.filter(
+                                (c) => !selectedCameras.includes(c.id)
+                              )
+                            );
+                            setSelectedCameras([]);
+                            setIsSelectMode(false);
+                            toast({
+                              title: "Success",
+                              description: `${selectedCameras.length} cameras deleted successfully`,
+                            });
+                          }}
+                        >
+                          Delete All
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Camera Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {searchFilteredCameras.map((camera) => (
-              <Card key={camera.id} className="overflow-hidden">
+              <Card key={camera.id} className="overflow-hidden relative">
+                {/* Selection Checkbox */}
+                {isSelectMode && rolePermissions.canManageCameras && (
+                  <div className="absolute top-2 left-2 z-10">
+                    <input
+                      type="checkbox"
+                      checked={selectedCameras.includes(camera.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedCameras((prev) => [...prev, camera.id]);
+                        } else {
+                          setSelectedCameras((prev) =>
+                            prev.filter((id) => id !== camera.id)
+                          );
+                        }
+                      }}
+                      className="w-4 h-4 bg-white border-2 border-primary rounded"
+                    />
+                  </div>
+                )}
                 <div className="aspect-video bg-black flex items-center justify-center">
                   {camera.status === "online" && camera.streamUrl ? (
                     <StreamPlayer
@@ -1249,7 +1638,7 @@ export default function CCTVManagement() {
                       <Badge className={getStatusColor(camera.status)}>
                         {t[camera.status as keyof typeof t] || camera.status}
                       </Badge>
-                       {rolePermissions.canManageCameras && (
+                      {rolePermissions.canManageCameras && (
                         <Button
                           size="icon"
                           variant="ghost"
@@ -1261,6 +1650,8 @@ export default function CCTVManagement() {
                               type: camera.type,
                               streamUrl: camera.streamUrl,
                               isActive: camera.status === "online",
+                              districtId: (camera as any).district_id || "",
+                              communityId: (camera as any).community_id || "",
                             });
                             setIsEditCameraOpen(true);
                           }}
@@ -1269,7 +1660,7 @@ export default function CCTVManagement() {
                           <Settings className="h-4 w-4" />
                         </Button>
                       )}
-                       {rolePermissions.canManageCameras && (
+                      {rolePermissions.canManageCameras && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
@@ -1367,7 +1758,7 @@ export default function CCTVManagement() {
                       <Eye className="h-4 w-4 mr-1" />
                       {t.liveView}
                     </Button>
-                     {(hasRole("security_officer") ||
+                    {(hasRole("security_officer") ||
                       hasRole("community_admin") ||
                       hasRole("district_coordinator") ||
                       hasRole("state_admin") ||
@@ -1383,6 +1774,8 @@ export default function CCTVManagement() {
                             type: camera.type,
                             streamUrl: camera.streamUrl,
                             isActive: camera.status === "online",
+                            districtId: (camera as any).district_id || "",
+                            communityId: (camera as any).community_id || "",
                           });
                           setIsEditCameraOpen(true);
                         }}
@@ -1824,6 +2217,91 @@ export default function CCTVManagement() {
                   </Select>
                 </div>
               </div>
+
+              {/* Community Assignment Fields - Only for state admin and district coordinator */}
+              {rolePermissions.canAssignCommunities && editCam && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-district">
+                      {language === "en" ? "District" : "Daerah"}
+                    </Label>
+                    <Select
+                      value={editCam.districtId}
+                      onValueChange={(v) => {
+                        setEditCam({
+                          ...editCam,
+                          districtId: v,
+                          communityId: "", // Reset community when district changes
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={
+                            language === "en"
+                              ? "Select District"
+                              : "Pilih Daerah"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">
+                          {language === "en" ? "No District" : "Tiada Daerah"}
+                        </SelectItem>
+                        {districts.map((district) => (
+                          <SelectItem key={district.id} value={district.id}>
+                            {district.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-community">
+                      {language === "en" ? "Community" : "Komuniti"}
+                    </Label>
+                    <Select
+                      value={editCam.communityId}
+                      onValueChange={(v) =>
+                        setEditCam({
+                          ...editCam,
+                          communityId: v,
+                        })
+                      }
+                      disabled={!editCam.districtId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={
+                            language === "en"
+                              ? "Select Community"
+                              : "Pilih Komuniti"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">
+                          {language === "en"
+                            ? "No Community"
+                            : "Tiada Komuniti"}
+                        </SelectItem>
+                        {communities
+                          .filter(
+                            (community) =>
+                              !editCam.districtId ||
+                              community.district_id === editCam.districtId
+                          )
+                          .map((community) => (
+                            <SelectItem key={community.id} value={community.id}>
+                              {community.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="edit-stream">
                   {t.streamUrl} (HLS .m3u8, MJPEG, MP4/WebM or RTSP via gateway)
@@ -1877,6 +2355,8 @@ export default function CCTVManagement() {
                         camera_type: editCam.type,
                         stream_url: editCam.streamUrl,
                         is_active: editCam.isActive,
+                        district_id: editCam.districtId || null,
+                        community_id: editCam.communityId || null,
                       })
                       .eq("id", editCam.id);
                     if (error) {
