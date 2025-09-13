@@ -95,6 +95,7 @@ interface Comment {
 }
 
 export default function Discussions() {
+  // ALL HOOKS MUST BE CALLED FIRST - NO CONDITIONS BEFORE THIS
   const { language, user } = useAuth();
   const { isModuleEnabled, enabledModules } = useModuleAccess();
   const { toast } = useToast();
@@ -129,114 +130,32 @@ export default function Discussions() {
     tags: "",
   });
 
-  const text = {
-    en: {
-      title: "Community Discussions",
-      subtitle: "Connect with your neighbors and discuss community topics",
-      newDiscussion: "New Discussion",
-      search: "Search discussions...",
-      category: "Category",
-      allCategories: "All Categories",
-      sortBy: "Sort By",
-      latest: "Latest",
-      oldest: "Oldest",
-      mostReplies: "Most Replies",
-      mostViews: "Most Views",
-      general: "General",
-      maintenance: "Maintenance",
-      events: "Events",
-      safety: "Safety",
-      suggestions: "Suggestions",
-      pinned: "Pinned",
-      replies: "replies",
-      views: "views",
-      lastActivity: "Last activity",
-      createTitle: "Create New Discussion",
-      createSubtitle: "Start a conversation with your community",
-      discussionTitle: "Discussion Title",
-      discussionContent: "Content",
-      selectCategory: "Select Category",
-      tags: "Tags (comma separated)",
-      create: "Create Discussion",
-      cancel: "Cancel",
-      createSuccess: "Discussion created successfully!",
-      backToDiscussions: "Back to Discussions",
-      comments: "Comments",
-      addComment: "Add Comment",
-      postComment: "Post Comment",
-      writeComment: "Write your comment...",
-      like: "Like",
-      reply: "Reply",
-      showingResults: "Showing",
-      of: "of",
-      results: "discussions",
-      noResults: "No discussions found",
-      noResultsDesc: "Try adjusting your search or filter criteria",
-      page: "Page",
-      previous: "Previous",
-      next: "Next",
-      refresh: "Refresh"
-    },
-    ms: {
-      title: "Perbincangan Komuniti",
-      subtitle: "Berhubung dengan jiran dan bincangkan topik komuniti",
-      newDiscussion: "Perbincangan Baru",
-      search: "Cari perbincangan...",
-      category: "Kategori",
-      allCategories: "Semua Kategori",
-      sortBy: "Susun Mengikut",
-      latest: "Terkini",
-      oldest: "Terlama",
-      mostReplies: "Paling Banyak Balasan",
-      mostViews: "Paling Banyak Tontonan",
-      general: "Umum",
-      maintenance: "Penyelenggaraan",
-      events: "Acara",
-      safety: "Keselamatan",
-      suggestions: "Cadangan",
-      pinned: "Disematkan",
-      replies: "balasan",
-      views: "tontonan",
-      lastActivity: "Aktiviti terakhir",
-      createTitle: "Cipta Perbincangan Baru",
-      createSubtitle: "Mulakan perbualan dengan komuniti anda",
-      discussionTitle: "Tajuk Perbincangan",
-      discussionContent: "Kandungan",
-      selectCategory: "Pilih Kategori",
-      tags: "Tag (dipisahkan koma)",
-      create: "Cipta Perbincangan",
-      cancel: "Batal",
-      createSuccess: "Perbincangan berjaya dicipta!",
-      backToDiscussions: "Kembali ke Perbincangan",
-      comments: "Komen",
-      addComment: "Tambah Komen",
-      postComment: "Hantar Komen",
-      writeComment: "Tulis komen anda...",
-      like: "Suka",
-      reply: "Balas",
-      showingResults: "Menunjukkan",
-      of: "daripada",
-      results: "perbincangan",
-      noResults: "Tiada perbincangan dijumpai",
-      noResultsDesc: "Cuba laraskan kriteria carian atau penapis anda",
-      page: "Halaman",
-      previous: "Sebelumnya",
-      next: "Seterusnya",
-      refresh: "Muat Semula"
-    },
-  };
+  // Enhanced search and filter handlers - ALL HOOKS FIRST
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  }, []);
 
-  const t = text[language];
+  const handleCategoryChange = useCallback((value: string) => {
+    setSelectedCategory(value);
+    setCurrentPage(1);
+  }, []);
 
-  // Compute stable discussionsEnabled boolean
-  const discussionsEnabled = enabledModules.some(module => module.module_name === 'discussions');
+  const handleSortChange = useCallback((value: string) => {
+    setSelectedSortBy(value);
+    setCurrentPage(1);
+  }, []);
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
 
   // Enhanced fetch function with server-side pagination and filtering
   const fetchDiscussions = useCallback(async (page = 1, search = '', category = 'all', sortBy = 'latest') => {
-    console.log('fetchDiscussions called with:', { page, search, category, sortBy });
+    // Check inside the callback instead of in dependencies
+    const discussionsEnabled = enabledModules.some(module => module.module_name === 'discussions');
     
     if (!discussionsEnabled) {
-      console.log('Discussions module not enabled, skipping fetch');
       setLoading(false);
       return;
     }
@@ -443,27 +362,7 @@ export default function Discussions() {
         window.scrollTo({ top: scrollPosition, behavior: 'smooth' });
       }, 100);
     }
-  }, [discussionsEnabled, language, toast, scrollPosition]);
-
-  // Enhanced search and filter handlers - MOVED BEFORE CONDITIONAL LOGIC
-  const handleSearchChange = useCallback((value: string) => {
-    setSearchTerm(value);
-    setCurrentPage(1);
-  }, []);
-
-  const handleCategoryChange = useCallback((value: string) => {
-    setSelectedCategory(value);
-    setCurrentPage(1);
-  }, []);
-
-  const handleSortChange = useCallback((value: string) => {
-    setSelectedSortBy(value);
-    setCurrentPage(1);
-  }, []);
-
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-  }, []);
+  }, [enabledModules, language, toast, scrollPosition]);
 
   const handleRefresh = useCallback(() => {
     setCurrentPage(1);
@@ -477,6 +376,107 @@ export default function Discussions() {
   useEffect(() => {
     fetchDiscussions(currentPage, debouncedSearchTerm, selectedCategory, selectedSortBy);
   }, [fetchDiscussions, currentPage, debouncedSearchTerm, selectedCategory, selectedSortBy]);
+
+  // NOW define all computed values AFTER all hooks
+  const text = {
+    en: {
+      title: "Community Discussions",
+      subtitle: "Connect with your neighbors and discuss community topics",
+      newDiscussion: "New Discussion",
+      search: "Search discussions...",
+      category: "Category",
+      allCategories: "All Categories",
+      sortBy: "Sort By",
+      latest: "Latest",
+      oldest: "Oldest",
+      mostReplies: "Most Replies",
+      mostViews: "Most Views",
+      general: "General",
+      maintenance: "Maintenance",
+      events: "Events",
+      safety: "Safety",
+      suggestions: "Suggestions",
+      pinned: "Pinned",
+      replies: "replies",
+      views: "views",
+      lastActivity: "Last activity",
+      createTitle: "Create New Discussion",
+      createSubtitle: "Start a conversation with your community",
+      discussionTitle: "Discussion Title",
+      discussionContent: "Content",
+      selectCategory: "Select Category",
+      tags: "Tags (comma separated)",
+      create: "Create Discussion",
+      cancel: "Cancel",
+      createSuccess: "Discussion created successfully!",
+      backToDiscussions: "Back to Discussions",
+      comments: "Comments",
+      addComment: "Add Comment",
+      postComment: "Post Comment",
+      writeComment: "Write your comment...",
+      like: "Like",
+      reply: "Reply",
+      showingResults: "Showing",
+      of: "of",
+      results: "discussions",
+      noResults: "No discussions found",
+      noResultsDesc: "Try adjusting your search or filter criteria",
+      page: "Page",
+      previous: "Previous",
+      next: "Next",
+      refresh: "Refresh"
+    },
+    ms: {
+      title: "Perbincangan Komuniti",
+      subtitle: "Berhubung dengan jiran dan bincangkan topik komuniti",
+      newDiscussion: "Perbincangan Baru",
+      search: "Cari perbincangan...",
+      category: "Kategori",
+      allCategories: "Semua Kategori",
+      sortBy: "Susun Mengikut",
+      latest: "Terkini",
+      oldest: "Terlama",
+      mostReplies: "Paling Banyak Balasan",
+      mostViews: "Paling Banyak Tontonan",
+      general: "Umum",
+      maintenance: "Penyelenggaraan",
+      events: "Acara",
+      safety: "Keselamatan",
+      suggestions: "Cadangan",
+      pinned: "Disematkan",
+      replies: "balasan",
+      views: "tontonan",
+      lastActivity: "Aktiviti terakhir",
+      createTitle: "Cipta Perbincangan Baru",
+      createSubtitle: "Mulakan perbualan dengan komuniti anda",
+      discussionTitle: "Tajuk Perbincangan",
+      discussionContent: "Kandungan",
+      selectCategory: "Pilih Kategori",
+      tags: "Tag (dipisahkan koma)",
+      create: "Cipta Perbincangan",
+      cancel: "Batal",
+      createSuccess: "Perbincangan berjaya dicipta!",
+      backToDiscussions: "Kembali ke Perbincangan",
+      comments: "Komen",
+      addComment: "Tambah Komen",
+      postComment: "Hantar Komen",
+      writeComment: "Tulis komen anda...",
+      like: "Suka",
+      reply: "Balas",
+      showingResults: "Menunjukkan",
+      of: "daripada",
+      results: "perbincangan",
+      noResults: "Tiada perbincangan dijumpai",
+      noResultsDesc: "Cuba laraskan kriteria carian atau penapis anda",
+      page: "Halaman",
+      previous: "Sebelumnya",
+      next: "Seterusnya",
+      refresh: "Muat Semula"
+    },
+  };
+
+  const t = text[language];
+  const discussionsEnabled = enabledModules.some(module => module.module_name === 'discussions');
 
   const categories = [
     { value: 'all', label: t.allCategories },
