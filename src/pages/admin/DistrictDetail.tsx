@@ -7,12 +7,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, MapPin, Users, Building, Calendar, Map as MapIcon, Settings, Plus, Loader2, Filter, UserCheck } from 'lucide-react';
+import { ArrowLeft, MapPin, Users, Building, Calendar, Map as MapIcon, Settings, Plus, Loader2, Filter, UserCheck, Pencil, Trash2, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import CreateCommunityModal from '@/components/communities/CreateCommunityModal';
+import EditCommunityModal from '@/components/communities/EditCommunityModal';
 import EditDistrictModal from '@/components/districts/EditDistrictModal';
 import AssignCommunityAdminModal from '@/components/districts/AssignCommunityAdminModal';
 import { useDistricts } from '@/hooks/use-districts';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from '@/components/ui/alert-dialog';
 
 interface District {
   id: string;
@@ -62,6 +74,8 @@ export default function DistrictDetail() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
+  const [editCommunityId, setEditCommunityId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Community | null>(null);
 
   const text = {
     en: {
@@ -195,6 +209,7 @@ export default function DistrictDetail() {
         .from('communities')
         .select('id, name, community_type, total_units, occupied_units, status, established_date')
         .eq('district_id', id)
+        .eq('is_active', true)
         .order('name');
 
       if (error) {
@@ -490,6 +505,60 @@ export default function DistrictDetail() {
                         <Badge className={getStatusColor(community.status || 'active')} variant="secondary">
                           {getStatusText(community.status)}
                         </Badge>
+                        {canManage && !community.has_admin && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedCommunity(community);
+                              setShowAssignModal(true);
+                            }}
+                          >
+                            <UserPlus className="h-4 w-4 mr-1" /> Assign Admin
+                          </Button>
+                        )}
+                        {canManage && (
+                          <>
+                            <Button size="icon" variant="ghost" aria-label="Edit community"
+                              onClick={() => setEditCommunityId(community.id)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="icon" variant="ghost" aria-label="Delete community" onClick={() => setDeleteTarget(community)}>
+                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete community?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action will deactivate the community "{deleteTarget?.name}". You can re-create it later if needed.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel onClick={() => setDeleteTarget(null)}>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={async () => {
+                                    if (!deleteTarget) return;
+                                    const { error } = await supabase
+                                      .from('communities')
+                                      .update({ is_active: false })
+                                      .eq('id', deleteTarget.id);
+                                    if (error) {
+                                      toast.error('Failed to delete community');
+                                      return;
+                                    }
+                                    setCommunities(prev => prev.filter(c => c.id !== deleteTarget.id));
+                                    setFilteredCommunities(prev => prev.filter(c => c.id !== deleteTarget.id));
+                                    setDeleteTarget(null);
+                                    toast.success('Community deleted');
+                                  }}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
+                        )}
                       </div>
                     </div>
                   </CardHeader>
@@ -525,18 +594,7 @@ export default function DistrictDetail() {
                             </span>
                           </div>
                         </div>
-                        {canManage && !community.has_admin && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedCommunity(community);
-                              setShowAssignModal(true);
-                            }}
-                          >
-                            Assign Admin
-                          </Button>
-                        )}
+                        
                       </div>
                   </CardContent>
                 </Card>
@@ -556,6 +614,13 @@ export default function DistrictDetail() {
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
         districtId={id!}
+        onSuccess={fetchCommunities}
+      />
+
+      <EditCommunityModal
+        open={!!editCommunityId}
+        onOpenChange={(open) => !open && setEditCommunityId(null)}
+        communityId={editCommunityId}
         onSuccess={fetchCommunities}
       />
       
