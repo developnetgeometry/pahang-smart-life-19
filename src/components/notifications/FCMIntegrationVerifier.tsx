@@ -33,7 +33,7 @@ export function FCMIntegrationVerifier() {
   const {
     isInitialized,
     isSupported,
-    hasPermission,
+    permissionStatus,
     isSubscribed,
     requestPermission,
     subscribe,
@@ -413,13 +413,13 @@ export function FCMIntegrationVerifier() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            {!hasPermission && (
+            {permissionStatus !== 'granted' && (
               <Button onClick={requestPermission} variant="outline" size="sm">
                 <Shield className="w-4 h-4 mr-2" />
                 {language === 'en' ? 'Request Permission' : 'Minta Kebenaran'}
               </Button>
             )}
-            {hasPermission && !isSubscribed && (
+            {permissionStatus === 'granted' && !isSubscribed && (
               <Button onClick={subscribe} variant="outline" size="sm">
                 <Bell className="w-4 h-4 mr-2" />
                 {language === 'en' ? 'Subscribe' : 'Langgan'}

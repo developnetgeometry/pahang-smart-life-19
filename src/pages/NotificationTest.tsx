@@ -17,7 +17,7 @@ export default function NotificationTest() {
   const {
     isInitialized,
     isSupported,
-    hasPermission,
+    permissionStatus,
     isSubscribed,
     error,
     requestPermission,
@@ -46,8 +46,8 @@ export default function NotificationTest() {
 
       // Test 3: Check permission
       results.permission = {
-        status: hasPermission ? 'pass' : 'warning',
-        message: hasPermission ? 'Permission granted' : 'Permission not granted'
+        status: permissionStatus === 'granted' ? 'pass' : 'warning',
+        message: permissionStatus === 'granted' ? 'Permission granted' : 'Permission not granted'
       };
 
       // Test 4: Check subscription
@@ -125,7 +125,7 @@ export default function NotificationTest() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${hasPermission ? 'bg-green-500' : 'bg-yellow-500'}`} />
+              <div className={`w-3 h-3 rounded-full ${permissionStatus === 'granted' ? 'bg-green-500' : 'bg-yellow-500'}`} />
               <span className="text-sm">
                 {language === 'en' ? 'Permission' : 'Kebenaran'}
               </span>
@@ -149,12 +149,12 @@ export default function NotificationTest() {
               <TestTube className="w-4 h-4" />
               {language === 'en' ? 'Run Full Test Suite' : 'Jalankan Suite Ujian Penuh'}
             </Button>
-            {!hasPermission && (
+            {permissionStatus !== 'granted' && (
               <Button onClick={requestPermission} variant="outline">
                 {language === 'en' ? 'Request Permission' : 'Minta Kebenaran'}
               </Button>
             )}
-            {hasPermission && !isSubscribed && (
+            {permissionStatus === 'granted' && !isSubscribed && (
               <Button onClick={subscribe} variant="outline">
                 {language === 'en' ? 'Subscribe' : 'Langgan'}
               </Button>

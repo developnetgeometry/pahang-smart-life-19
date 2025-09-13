@@ -28,7 +28,7 @@ export function NotificationTest() {
   const {
     isInitialized,
     isSupported,
-    hasPermission,
+    permissionStatus,
     isSubscribed,
     error,
     requestPermission,
@@ -141,13 +141,13 @@ export function NotificationTest() {
             </div>
             
             <div className="flex items-center gap-2">
-              {getStatusIcon(hasPermission)}
+              {getStatusIcon(permissionStatus === 'granted')}
               <div>
                 <div className="text-sm font-medium">
                   {language === 'en' ? 'Permission' : 'Kebenaran'}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {hasPermission ? 'Granted' : 'Not Granted'}
+                  {permissionStatus === 'granted' ? 'Granted' : 'Not Granted'}
                 </div>
               </div>
             </div>
@@ -172,12 +172,12 @@ export function NotificationTest() {
           )}
 
           <div className="flex gap-2 mt-4">
-            {!hasPermission && (
+            {permissionStatus !== 'granted' && (
               <Button onClick={requestPermission} size="sm">
                 {language === 'en' ? 'Request Permission' : 'Minta Kebenaran'}
               </Button>
             )}
-            {hasPermission && !isSubscribed && (
+            {permissionStatus === 'granted' && !isSubscribed && (
               <Button onClick={subscribe} size="sm">
                 {language === 'en' ? 'Subscribe' : 'Langgan'}
               </Button>

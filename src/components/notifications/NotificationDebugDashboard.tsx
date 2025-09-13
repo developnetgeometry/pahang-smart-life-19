@@ -55,7 +55,14 @@ interface DebugInfo {
 
 export function NotificationDebugDashboard() {
   const { user, language } = useAuth();
-  const { isInitialized, isSupported, hasPermission, isSubscribed } = useNotificationIntegration();
+  const { 
+    isInitialized, 
+    isSupported, 
+    permissionStatus, 
+    isSubscribed, 
+    error,
+    notificationService 
+  } = useNotificationIntegration();
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
