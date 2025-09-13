@@ -1,4 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications, PushNotificationSchema, ActionPerformed, PushNotificationToken } from '@capacitor/push-notifications';
 
 // Base64 URL encode function
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -20,8 +22,12 @@ export class NotificationService {
   private static instance: NotificationService;
   private registration: ServiceWorkerRegistration | null = null;
   private subscription: PushSubscription | null = null;
+  private nativeToken: string | null = null;
+  private isNative: boolean = false;
 
-  private constructor() {}
+  private constructor() {
+    this.isNative = Capacitor.isNativePlatform();
+  }
 
   static getInstance(): NotificationService {
     if (!NotificationService.instance) {
@@ -32,6 +38,60 @@ export class NotificationService {
 
   // Initialize the service worker and push notifications
   async initialize(): Promise<boolean> {
+    try {
+      if (this.isNative) {
+        return await this.initializeNative();
+      } else {
+        return await this.initializeWeb();
+      }
+    } catch (error) {
+      console.error('Failed to initialize notification service:', error);
+      return false;
+    }
+  }
+
+  private async initializeNative(): Promise<boolean> {
+    try {
+      // Request permissions for native notifications
+      const permStatus = await PushNotifications.requestPermissions();
+      
+      if (permStatus.receive === 'granted') {
+        // Register for push notifications
+        await PushNotifications.register();
+
+        // Listen for registration token
+        PushNotifications.addListener('registration', (token: PushNotificationToken) => {
+          console.log('Push registration success, token: ' + token.value);
+          this.nativeToken = token.value;
+          this.saveNativeSubscription(token.value);
+        });
+
+        // Listen for push notifications received
+        PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
+          console.log('Push notification received: ', notification);
+        });
+
+        // Listen for push notification action performed
+        PushNotifications.addListener('pushNotificationActionPerformed', (notification: ActionPerformed) => {
+          console.log('Push notification action performed', notification);
+          // Handle notification tap - navigate to URL if provided
+          if (notification.notification.data?.url) {
+            window.location.href = notification.notification.data.url;
+          }
+        });
+
+        return true;
+      } else {
+        console.warn('Push notification permissions not granted');
+        return false;
+      }
+    } catch (error) {
+      console.error('Failed to initialize native notifications:', error);
+      return false;
+    }
+  }
+
+  private async initializeWeb(): Promise<boolean> {
     try {
       // Check if service workers are supported
       if (!('serviceWorker' in navigator)) {
@@ -54,27 +114,63 @@ export class NotificationService {
 
       return true;
     } catch (error) {
-      console.error('Failed to initialize notification service:', error);
+      console.error('Failed to initialize web notifications:', error);
       return false;
     }
   }
 
   // Request notification permission
-  async requestPermission(): Promise<NotificationPermission> {
-    if (!('Notification' in window)) {
-      console.warn('Notifications not supported');
-      return 'denied';
-    }
+  async requestPermission(): Promise<NotificationPermission | 'granted' | 'denied'> {
+    if (this.isNative) {
+      const permStatus = await PushNotifications.requestPermissions();
+      return permStatus.receive === 'granted' ? 'granted' : 'denied';
+    } else {
+      if (!('Notification' in window)) {
+        console.warn('Notifications not supported');
+        return 'denied';
+      }
 
-    if (Notification.permission === 'default') {
-      return await Notification.requestPermission();
-    }
+      if (Notification.permission === 'default') {
+        return await Notification.requestPermission();
+      }
 
-    return Notification.permission;
+      return Notification.permission;
+    }
   }
 
   // Subscribe to push notifications
   async subscribe(): Promise<boolean> {
+    try {
+      if (this.isNative) {
+        return await this.subscribeNative();
+      } else {
+        return await this.subscribeWeb();
+      }
+    } catch (error) {
+      console.error('Failed to subscribe to push notifications:', error);
+      return false;
+    }
+  }
+
+  private async subscribeNative(): Promise<boolean> {
+    try {
+      // Check permission
+      const permission = await this.requestPermission();
+      if (permission !== 'granted') {
+        console.warn('Notification permission not granted');
+        return false;
+      }
+
+      // Register for push notifications (this will trigger the registration listener)
+      await PushNotifications.register();
+      return true;
+    } catch (error) {
+      console.error('Failed to subscribe to native notifications:', error);
+      return false;
+    }
+  }
+
+  private async subscribeWeb(): Promise<boolean> {
     try {
       if (!this.registration) {
         await this.initialize();
@@ -110,7 +206,7 @@ export class NotificationService {
 
       return true;
     } catch (error) {
-      console.error('Failed to subscribe to push notifications:', error);
+      console.error('Failed to subscribe to web notifications:', error);
       return false;
     }
   }
@@ -135,12 +231,16 @@ export class NotificationService {
   // Check if user is subscribed
   async isSubscribed(): Promise<boolean> {
     try {
-      if (!this.registration) {
-        return false;
-      }
+      if (this.isNative) {
+        return !!this.nativeToken;
+      } else {
+        if (!this.registration) {
+          return false;
+        }
 
-      this.subscription = await this.registration.pushManager.getSubscription();
-      return !!this.subscription;
+        this.subscription = await this.registration.pushManager.getSubscription();
+        return !!this.subscription;
+      }
     } catch (error) {
       console.error('Failed to check subscription status:', error);
       return false;
@@ -182,6 +282,41 @@ export class NotificationService {
       console.log('Subscription saved to database');
     } catch (error) {
       console.error('Failed to save subscription:', error);
+      throw error;
+    }
+  }
+
+  // Save native subscription to Supabase
+  private async saveNativeSubscription(token: string): Promise<void> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const platform = Capacitor.getPlatform();
+      
+      const { error } = await supabase
+        .from('push_subscriptions')
+        .upsert({
+          user_id: user.id,
+          endpoint: token,
+          p256dh_key: null,
+          auth_key: null,
+          device_type: platform, // 'ios' or 'android'
+          is_active: true,
+          native_token: token
+        }, {
+          onConflict: 'user_id,endpoint'
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('Native subscription saved to database');
+    } catch (error) {
+      console.error('Failed to save native subscription:', error);
       throw error;
     }
   }
