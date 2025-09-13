@@ -464,8 +464,8 @@ export function ServicesMap({
 
   // Always render the container - this is the key fix!
   return (
-    <div className="relative w-full min-h-[500px] lg:h-[600px] rounded-lg overflow-hidden border">
-      <div ref={mapContainer} className="w-full h-full" />
+    <div className="relative w-full min-h-[500px] lg:h-[600px] border rounded-lg">
+      <div ref={mapContainer} className="w-full h-full rounded-lg overflow-hidden" />
       
       {/* Loading overlay */}
       {loading && (
