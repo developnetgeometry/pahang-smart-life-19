@@ -418,6 +418,16 @@ export default function DistrictManagement() {
                 </div>
                 
                 <div className="flex gap-2 pt-2">
+                  {/* Quick Edit disabled; use Detailed Edit on District page
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => openEditModal(district)}
+                  >
+                    {t.edit}
+                  </Button>
+                  */}
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -440,76 +450,18 @@ export default function DistrictManagement() {
         </div>
       )}
       
-      {/* Edit District Modal */}
+      {/* Quick Edit Modal disabled; use Detailed Edit on District page
       <Dialog open={!!editingDistrict} onOpenChange={(open) => !open && setEditingDistrict(null)}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Edit District - {editingDistrict?.name}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="latitude">Latitude</Label>
-                <Input
-                  id="latitude"
-                  type="number"
-                  step="any"
-                  placeholder="3.1390"
-                  value={editForm.latitude}
-                  onChange={(e) => setEditForm({ ...editForm, latitude: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="longitude">Longitude</Label>
-                <Input
-                  id="longitude"
-                  type="number"
-                  step="any"
-                  placeholder="101.6869"
-                  value={editForm.longitude}
-                  onChange={(e) => setEditForm({ ...editForm, longitude: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Textarea
-                id="address"
-                placeholder="District address..."
-                value={editForm.address}
-                onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="postal_code">Postal Code</Label>
-              <Input
-                id="postal_code"
-                placeholder="25000"
-                value={editForm.postal_code}
-                onChange={(e) => setEditForm({ ...editForm, postal_code: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="District description..."
-                value={editForm.description}
-                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={() => setEditingDistrict(null)}>
-                Cancel
-              </Button>
-              <Button onClick={handleUpdateDistrict} disabled={isUpdating}>
-                {isUpdating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Update District
-              </Button>
-            </div>
+            ...
           </div>
         </DialogContent>
       </Dialog>
+      */}
     </div>
   );
 }

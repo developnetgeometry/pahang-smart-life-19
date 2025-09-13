@@ -39,12 +39,10 @@ export default function CreateCommunityModal({
     address: '',
     description: '',
     total_units: '',
+    occupied_units: '',
     postal_code: '',
     established_date: new Date(),
-    latitude: '',
-    longitude: '',
-    city: '',
-    country: 'Malaysia'
+    status: 'active'
   });
 
   const text = {
@@ -58,8 +56,10 @@ export default function CreateCommunityModal({
       addressPlaceholder: 'Enter community address',
       description: 'Description',
       descriptionPlaceholder: 'Enter community description',
-      totalUnits: 'Total Units',
+      totalUnits: 'Total Units (No. of Houses)',
       totalUnitsPlaceholder: 'Number of units',
+      occupiedUnits: 'Occupied Units',
+      occupiedUnitsPlaceholder: 'Number of occupied units',
       postalCode: 'Postal Code',
       postalCodePlaceholder: 'Enter postal code',
       establishedDate: 'Established Date',
@@ -72,6 +72,10 @@ export default function CreateCommunityModal({
       cityPlaceholder: 'Enter city',
       country: 'Country',
       countryPlaceholder: 'Enter country',
+      status: 'Status',
+      active: 'Active',
+      planning: 'Planning',
+      development: 'Development',
       residential: 'Residential',
       commercial: 'Commercial',
       mixed: 'Mixed Use',
@@ -97,8 +101,10 @@ export default function CreateCommunityModal({
       addressPlaceholder: 'Masukkan alamat komuniti',
       description: 'Penerangan',
       descriptionPlaceholder: 'Masukkan penerangan komuniti',
-      totalUnits: 'Jumlah Unit',
+      totalUnits: 'Jumlah Unit (Bilangan Rumah)',
       totalUnitsPlaceholder: 'Bilangan unit',
+      occupiedUnits: 'Unit Diduduki',
+      occupiedUnitsPlaceholder: 'Bilangan unit diduduki',
       postalCode: 'Poskod',
       postalCodePlaceholder: 'Masukkan poskod',
       establishedDate: 'Tarikh Ditubuhkan',
@@ -111,6 +117,10 @@ export default function CreateCommunityModal({
       cityPlaceholder: 'Masukkan bandar',
       country: 'Negara',
       countryPlaceholder: 'Masukkan negara',
+      status: 'Status',
+      active: 'Aktif',
+      planning: 'Perancangan',
+      development: 'Pembangunan',
       residential: 'Kediaman',
       commercial: 'Komersial',
       mixed: 'Penggunaan Campuran',
@@ -196,6 +206,14 @@ export default function CreateCommunityModal({
       return;
     }
 
+    // Basic validation: occupied cannot exceed total
+    const total = formData.total_units ? parseInt(formData.total_units) : 0;
+    const occupied = formData.occupied_units ? parseInt(formData.occupied_units) : 0;
+    if (occupied > total) {
+      toast.error('Occupied units cannot exceed total units');
+      return;
+    }
+
     setLoading(true);
     
     try {
@@ -208,12 +226,11 @@ export default function CreateCommunityModal({
           address: formData.address.trim() || null,
           description: formData.description.trim() || null,
           total_units: formData.total_units ? parseInt(formData.total_units) : 0,
+          occupied_units: formData.occupied_units ? parseInt(formData.occupied_units) : 0,
           postal_code: formData.postal_code.trim() || null,
           established_date: formData.established_date.toISOString().split('T')[0],
-          latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-          longitude: formData.longitude ? parseFloat(formData.longitude) : null,
           district_id: districtId,
-          status: 'active',
+          status: formData.status,
           is_active: true
         });
 
@@ -237,12 +254,10 @@ export default function CreateCommunityModal({
         address: '',
         description: '',
         total_units: '',
+        occupied_units: '',
         postal_code: '',
         established_date: new Date(),
-        latitude: '',
-        longitude: '',
-        city: '',
-        country: 'Malaysia'
+        status: 'active'
       });
     } catch (error) {
       console.error('Error creating community:', error);
@@ -357,6 +372,20 @@ export default function CreateCommunityModal({
                   />
                 </div>
 
+                {/* Occupied Units */}
+                <div>
+                  <Label htmlFor="occupiedUnits">{t.occupiedUnits}</Label>
+                  <Input
+                    id="occupiedUnits"
+                    type="number"
+                    min="0"
+                    value={formData.occupied_units}
+                    onChange={(e) => setFormData(prev => ({ ...prev, occupied_units: e.target.value }))}
+                    placeholder={t.occupiedUnitsPlaceholder}
+                    disabled={loading}
+                  />
+                </div>
+
                 {/* Postal Code */}
                 <div>
                   <Label htmlFor="postalCode">{t.postalCode}</Label>
@@ -402,57 +431,28 @@ export default function CreateCommunityModal({
                   </Popover>
                 </div>
 
-                {/* City */}
+                {/* Status */}
                 <div>
-                  <Label htmlFor="city">{t.city}</Label>
-                  <Input
-                    id="city"
-                    value={formData.city}
-                    onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                    placeholder={t.cityPlaceholder}
+                  <Label htmlFor="status">{t.status}</Label>
+                  <Select 
+                    value={formData.status}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
                     disabled={loading}
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">{t.active}</SelectItem>
+                      <SelectItem value="planning">{t.planning}</SelectItem>
+                      <SelectItem value="development">{t.development}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {/* Country */}
-                <div>
-                  <Label htmlFor="country">{t.country}</Label>
-                  <Input
-                    id="country"
-                    value={formData.country}
-                    onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
-                    placeholder={t.countryPlaceholder}
-                    disabled={loading}
-                  />
-                </div>
+                
 
-                {/* Latitude */}
-                <div>
-                  <Label htmlFor="latitude">{t.latitude}</Label>
-                  <Input
-                    id="latitude"
-                    type="number"
-                    step="any"
-                    value={formData.latitude}
-                    onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value }))}
-                    placeholder={t.latitudePlaceholder}
-                    disabled={loading}
-                  />
-                </div>
-
-                {/* Longitude */}
-                <div>
-                  <Label htmlFor="longitude">{t.longitude}</Label>
-                  <Input
-                    id="longitude"
-                    type="number"
-                    step="any"
-                    value={formData.longitude}
-                    onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value }))}
-                    placeholder={t.longitudePlaceholder}
-                    disabled={loading}
-                  />
-                </div>
+                
               </div>
             </CollapsibleContent>
           </Collapsible>

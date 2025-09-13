@@ -11,6 +11,7 @@ export interface District {
   area_km2?: number;
   city?: string;
   country?: string;
+  state?: string;
   description?: string;
   latitude?: number;
   longitude?: number;
@@ -22,6 +23,7 @@ export interface District {
   status?: string;
   district_type?: string;
   address?: string;
+  postal_code?: string;
   created_at?: string;
   updated_at?: string;
 }
