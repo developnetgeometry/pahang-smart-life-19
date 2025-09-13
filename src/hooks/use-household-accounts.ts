@@ -29,8 +29,13 @@ export function useHouseholdAccounts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Check if user is a resident (only residents can manage household accounts)
+  const isResident =
+    user?.user_role === "resident" ||
+    user?.available_roles?.includes("resident");
+
   const fetchAccounts = async () => {
-    if (!user) {
+    if (!user || !isResident) {
       setAccounts([]);
       setLoading(false);
       return;
@@ -87,6 +92,13 @@ export function useHouseholdAccounts() {
     mobile_no?: string;
   }) => {
     if (!user) throw new Error("Please log in to create a spouse account");
+
+    // Validate that user is a resident
+    if (!isResident) {
+      throw new Error(
+        "Only residents can create spouse accounts. Please contact your community admin for assistance."
+      );
+    }
 
     try {
       console.log("Starting spouse account creation for:", spouseData.email);
@@ -403,13 +415,16 @@ export function useHouseholdAccounts() {
   };
 
   const canAddSpouse = () => {
-    return !accounts.some((acc) => acc.relationship_type === "spouse");
+    return (
+      isResident && !accounts.some((acc) => acc.relationship_type === "spouse")
+    );
   };
 
   return {
     accounts,
     loading,
     error,
+    isResident,
     createSpouseAccount,
     createTenantAccount,
     removeAccount,

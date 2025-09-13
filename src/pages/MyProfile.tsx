@@ -454,8 +454,56 @@ export default function MyProfile() {
 
         {/* Right Column - Profile Details */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Household Account Management */}
-          <HouseholdAccountManager />
+          {/* Household Account Management - Only for residents */}
+          {user.user_role === "resident" ? (
+            <HouseholdAccountManager
+              isEditing={isEditing}
+              onFormDataChange={(householdData) => {
+                // Update spouse data in main form when household changes
+                if (householdData.spouse) {
+                  setFormData((prev) => ({
+                    ...prev,
+                    spouse_full_name:
+                      householdData.spouse.full_name || prev.spouse_full_name,
+                    spouse_identity_no:
+                      householdData.spouse.identity_no ||
+                      prev.spouse_identity_no,
+                    spouse_mobile_no:
+                      householdData.spouse.mobile_no || prev.spouse_mobile_no,
+                    marital_status: householdData.spouse.full_name
+                      ? "berkahwin"
+                      : prev.marital_status,
+                  }));
+                }
+              }}
+              spouseData={{
+                full_name: formData.spouse_full_name,
+                identity_no: formData.spouse_identity_no,
+                mobile_no: formData.spouse_mobile_no,
+                email: "", // Will be populated from household accounts
+              }}
+            />
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">
+                  Pengurusan Akaun Isi Rumah
+                </h3>
+                <p className="text-muted-foreground">
+                  Ciri ini hanya tersedia untuk pengguna berjenis "Penduduk".
+                  Peranan anda:{" "}
+                  <span className="font-medium">
+                    {user.user_role.replace("_", " ")}
+                  </span>
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Untuk mengurus akaun isi rumah, sila hubungi pentadbir
+                  komuniti anda.
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Maklumat Peribadi */}
           <Card>
@@ -491,7 +539,10 @@ export default function MyProfile() {
                       id="identity_no"
                       value={formData.identity_no}
                       onChange={(e) =>
-                        setFormData({ ...formData, identity_no: e.target.value })
+                        setFormData({
+                          ...formData,
+                          identity_no: e.target.value,
+                        })
                       }
                       required
                     />
@@ -553,9 +604,7 @@ export default function MyProfile() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dob">
-                    Tarikh Lahir *
-                  </Label>
+                  <Label htmlFor="dob">Tarikh Lahir *</Label>
                   {isEditing ? (
                     <Input
                       id="dob"
@@ -676,15 +725,16 @@ export default function MyProfile() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="nationality_id">
-                    Warganegara *
-                  </Label>
+                  <Label htmlFor="nationality_id">Warganegara *</Label>
                   {isEditing ? (
                     <Input
                       id="nationality_id"
                       value={formData.nationality_id}
                       onChange={(e) =>
-                        setFormData({ ...formData, nationality_id: e.target.value })
+                        setFormData({
+                          ...formData,
+                          nationality_id: e.target.value,
+                        })
                       }
                       required
                     />
@@ -758,6 +808,14 @@ export default function MyProfile() {
                   <Heart className="w-5 h-5" />
                   <span>Maklumat Pasangan</span>
                 </CardTitle>
+                {user.user_role === "resident" && (
+                  <CardDescription>
+                    Sebagai penduduk, maklumat pasangan ini akan disegerakkan
+                    dengan Pengurusan Akaun Isi Rumah di atas. Anda boleh
+                    mengurus akaun pasangan secara terperinci melalui seksyen
+                    tersebut.
+                  </CardDescription>
+                )}
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1143,9 +1201,7 @@ export default function MyProfile() {
                   <Label htmlFor="status_entrepreneur">Status Usahawan</Label>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="register_method">
-                    Kaedah Pendaftaran
-                  </Label>
+                  <Label htmlFor="register_method">Kaedah Pendaftaran</Label>
                   {isEditing ? (
                     <Select
                       value={formData.register_method}
@@ -1178,7 +1234,10 @@ export default function MyProfile() {
                         id="registration_status"
                         checked={formData.registration_status}
                         onCheckedChange={(checked) =>
-                          setFormData({ ...formData, registration_status: checked })
+                          setFormData({
+                            ...formData,
+                            registration_status: checked,
+                          })
                         }
                       />
                       <Label htmlFor="registration_status">
@@ -1192,9 +1251,7 @@ export default function MyProfile() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="supervision">
-                    Penyeliaan
-                  </Label>
+                  <Label htmlFor="supervision">Penyeliaan</Label>
                   {isEditing ? (
                     <Select
                       value={formData.supervision}
@@ -1207,7 +1264,9 @@ export default function MyProfile() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="supervised">Diselia</SelectItem>
-                        <SelectItem value="unsupervised">Tidak Diselia</SelectItem>
+                        <SelectItem value="unsupervised">
+                          Tidak Diselia
+                        </SelectItem>
                         <SelectItem value="pending">Menunggu</SelectItem>
                       </SelectContent>
                     </Select>
@@ -1218,15 +1277,16 @@ export default function MyProfile() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="membership_id">
-                    Membership ID
-                  </Label>
+                  <Label htmlFor="membership_id">Membership ID</Label>
                   {isEditing ? (
                     <Input
                       id="membership_id"
                       value={formData.membership_id}
                       onChange={(e) =>
-                        setFormData({ ...formData, membership_id: e.target.value })
+                        setFormData({
+                          ...formData,
+                          membership_id: e.target.value,
+                        })
                       }
                     />
                   ) : (

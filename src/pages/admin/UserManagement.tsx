@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Card,
@@ -7,8 +7,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getRoleSpecificFunction, isRoleSupported } from "@/lib/user-creation-utils";
-import { validateUserDataForRole, getRoleDefaults, canCreateRole } from "@/lib/role-validation";
+import {
+  getRoleSpecificFunction,
+  isRoleSupported,
+} from "@/lib/user-creation-utils";
+import {
+  validateUserDataForRole,
+  getRoleDefaults,
+  canCreateRole,
+} from "@/lib/role-validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -121,6 +128,175 @@ interface TenantFormData {
   };
 }
 
+// Memoized UserCard component for better performance
+const UserCard = memo(
+  ({
+    user,
+    onUserClick,
+    onEdit,
+    onDelete,
+    onSendInvite,
+    onApprove,
+    onReject,
+    getRoleColor,
+    getStatusColor,
+    getRoleText,
+    getStatusText,
+    t,
+    language,
+  }: {
+    user: User;
+    onUserClick: (user: User) => void;
+    onEdit: (user: User) => void;
+    onDelete: (id: string) => void;
+    onSendInvite: (user: User) => void;
+    onApprove: (user: User) => void;
+    onReject: (user: User) => void;
+    getRoleColor: (role: string) => string;
+    getStatusColor: (status: string) => string;
+    getRoleText: (role: string) => string;
+    getStatusText: (status: string) => string;
+    t: any;
+    language: string;
+  }) => (
+    <div
+      key={user.id}
+      className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+      onClick={() => onUserClick(user)}
+    >
+      <div className="flex items-center gap-4 flex-1 min-w-0">
+        <Avatar className="flex-shrink-0">
+          <AvatarImage src="" />
+          <AvatarFallback>
+            {user.name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <h4 className="font-medium truncate">{user.name}</h4>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p className="truncate">{user.email}</p>
+            <p>{user.phone}</p>
+            <p>
+              {t.unit}: {user.unit}
+            </p>
+            <p>
+              {t.joinDate}: {user.joinDate}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 flex-shrink-0">
+        <Badge className={getRoleColor(user.role)}>
+          {getRoleText(user.role)}
+        </Badge>
+        <Badge className={getStatusColor(user.status)}>
+          {getStatusText(user.status)}
+        </Badge>
+
+        {/* Email Confirmation Status */}
+        {user.emailConfirmed ? (
+          <div
+            className="flex items-center text-green-600 text-sm"
+            title="Email Confirmed"
+          >
+            <CheckCircle2 className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Confirmed</span>
+          </div>
+        ) : (
+          <div
+            className="flex items-center text-yellow-600 text-sm"
+            title="Email Not Confirmed"
+          >
+            <Clock className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Pending</span>
+          </div>
+        )}
+
+        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+          {/* Actions for pending users */}
+          {user.status === "pending" && !user.emailConfirmed && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onSendInvite(user)}
+              className="text-blue-600"
+              title={language === "en" ? "Send Invitation" : "Hantar Jemputan"}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          )}
+
+          {user.status === "pending" && user.emailConfirmed && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onApprove(user)}
+                className="text-green-600"
+                title={t.approve}
+              >
+                <Check className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onReject(user)}
+                className="text-red-600"
+                title={t.reject}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+
+          {user.status === "active" && (
+            <div
+              className="flex items-center text-green-600 text-sm"
+              title="Active User"
+            >
+              <UserCheck className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">Active</span>
+            </div>
+          )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onEdit(user)}
+            title={t.edit}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onDelete(user.id)}
+            className="text-red-600"
+            title={t.delete}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+);
+
+/**
+ * User Management Component with Performance Optimizations
+ *
+ * Features:
+ * - Server-side pagination (15 records per page)
+ * - Debounced search (300ms delay to reduce API calls)
+ * - Memoized components and functions to prevent unnecessary re-renders
+ * - Loading states for better UX
+ * - Client-side role and status filtering
+ * - Responsive pagination controls
+ */
+
 export default function UserManagement() {
   const { language, user } = useAuth();
   const { toast } = useToast();
@@ -128,8 +304,13 @@ export default function UserManagement() {
   const { isModuleEnabled } = useModuleAccess();
   const { hasRole, loading: rolesLoading } = useUserRoles();
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [form, setForm] = useState<{
     name: string;
@@ -177,8 +358,11 @@ export default function UserManagement() {
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
+  const [totalUsers, setTotalUsers] = useState(0);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [isModalOperation, setIsModalOperation] = useState(false); // Flag to prevent unnecessary refetch
+  const [scrollPosition, setScrollPosition] = useState(0); // Track scroll position
 
   // User details sheet states
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -363,32 +547,92 @@ export default function UserManagement() {
 
   const t = text[language];
 
+  // Debounce search term for better performance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1); // Reset to first page when search changes
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedRole, selectedStatus]);
+
   // Fetch users from database
   useEffect(() => {
     fetchDistricts();
   }, []);
-  
-  // Fetch users after roles are loaded
-  useEffect(() => {
+
+  // Load users function
+  const loadUsers = useCallback(async () => {
     if (!rolesLoading && user?.id) {
-      console.log('Fetching users with role filtering, user:', user);
-      console.log('User authentication state:', { 
-        userId: user?.id, 
+      setLoading(true);
+      try {
+        const { users: fetchedUsers, totalCount } = await fetchUsers(
+          currentPage,
+          itemsPerPage,
+          debouncedSearchTerm,
+          selectedRole,
+          selectedStatus
+        );
+        setUsers(fetchedUsers);
+        setTotalUsers(totalCount);
+      } catch (error) {
+        console.error("Error loading users:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }, [
+    rolesLoading,
+    user?.id,
+    currentPage,
+    itemsPerPage,
+    debouncedSearchTerm,
+    selectedRole,
+    selectedStatus,
+  ]);
+
+  // Fetch users after roles are loaded - only on initial load and when dependencies change
+  useEffect(() => {
+    if (!rolesLoading && user?.id && !isModalOperation) {
+      console.log("Fetching users with role filtering, user:", user);
+      console.log("User authentication state:", {
+        userId: user?.id,
         email: user?.email,
         activeCommunityId: user?.active_community_id,
         district: user?.district,
-        roles: { hasRole }
+        roles: { hasRole },
       });
-      fetchUsers();
+      loadUsers();
     }
-  }, [rolesLoading, user?.id, user?.active_community_id]);
+  }, [
+    rolesLoading,
+    user?.id,
+    currentPage,
+    debouncedSearchTerm,
+    selectedRole,
+    selectedStatus,
+    isModalOperation,
+  ]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (
+    page = 1,
+    limit = itemsPerPage,
+    searchQuery = "",
+    roleFilter = "all",
+    statusFilter = "all"
+  ) => {
     try {
       setLoading(true);
-      
-      // Build query with role-based filtering
-      let query = supabase.from("profiles").select(`
+
+      // Build query with role-based filtering and pagination
+      let query = supabase.from("profiles").select(
+        `
           id,
           full_name,
           email,
@@ -398,42 +642,67 @@ export default function UserManagement() {
           community_id,
           account_status,
           created_at
-        `);
+        `,
+        { count: "exact" }
+      );
 
-      console.log('User roles check:', {
-        isCommunityAdmin: hasRole('community_admin'),
-        isDistrictCoordinator: hasRole('district_coordinator'), 
-        isStateAdmin: hasRole('state_admin'),
-        userActiveCommunityId: user?.active_community_id
+      console.log("User roles check:", {
+        isCommunityAdmin: hasRole("community_admin"),
+        isDistrictCoordinator: hasRole("district_coordinator"),
+        isStateAdmin: hasRole("state_admin"),
+        userActiveCommunityId: user?.active_community_id,
       });
 
-      // Apply filtering based on user role
-      if (hasRole('community_admin') && !hasRole('district_coordinator') && !hasRole('state_admin')) {
-        // Community Admin: only see users from their community
+      // Apply role-based filtering
+      if (
+        hasRole("community_admin") &&
+        !hasRole("district_coordinator") &&
+        !hasRole("state_admin")
+      ) {
         if (user?.active_community_id) {
-          console.log('Filtering by community_id:', user.active_community_id);
-          query = query.eq('community_id', user.active_community_id);
+          console.log("Filtering by community_id:", user.active_community_id);
+          query = query.eq("community_id", user.active_community_id);
         } else {
-          console.log('Community admin but no active_community_id, showing no users');
-          // If no community_id, show no users
-          query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+          console.log(
+            "Community admin but no active_community_id, showing no users"
+          );
+          query = query.eq("id", "00000000-0000-0000-0000-000000000000");
         }
-      } else if (hasRole('district_coordinator') && !hasRole('state_admin')) {
-        // District Coordinator: see all users in their district
+      } else if (hasRole("district_coordinator") && !hasRole("state_admin")) {
         if (user?.district) {
-          console.log('Filtering by district for coordinator:', user.district);
-          // Use the district field from user object
-          query = query.eq('district_id', user.district);
+          console.log("Filtering by district for coordinator:", user.district);
+          query = query.eq("district_id", user.district);
         } else {
-          console.log('District coordinator but no district info, showing no users');
-          // If no district info, show no users
-          query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+          console.log(
+            "District coordinator but no district info, showing no users"
+          );
+          query = query.eq("id", "00000000-0000-0000-0000-000000000000");
         }
       }
-      // State Admins see all users (no additional filtering)
-      console.log('Final query will be executed');
 
-      const { data: profiles, error: profilesError } = await query;
+      // Apply search filter on server-side if provided
+      if (searchQuery.trim()) {
+        query = query.or(
+          `full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%,unit_number.ilike.%${searchQuery}%`
+        );
+      }
+
+      // Apply status filter if not "all"
+      if (statusFilter !== "all") {
+        query = query.eq("account_status", statusFilter);
+      }
+
+      // Apply pagination
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
+      query = query.range(from, to);
+
+      // Order by created_at for consistent results
+      query = query.order("created_at", { ascending: false });
+
+      console.log("Final query will be executed");
+
+      const { data: profiles, error: profilesError, count } = await query;
 
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
@@ -442,27 +711,29 @@ export default function UserManagement() {
           description: "Failed to fetch users",
           variant: "destructive",
         });
-        return;
+        return { users: [], totalCount: 0 };
       }
 
-      // Get user roles separately
-      const { data: userRoles, error: rolesError } = await supabase
-        .from("enhanced_user_roles")
-        .select("user_id, role")
-        .eq("is_active", true);
+      // Get user roles separately for the current page users
+      const userIds = profiles?.map((p) => p.id) || [];
+      let roleMap = new Map();
 
-      if (rolesError) {
-        console.error("Error fetching roles:", rolesError);
-      }
+      if (userIds.length > 0) {
+        const { data: userRoles, error: rolesError } = await supabase
+          .from("enhanced_user_roles")
+          .select("user_id, role")
+          .eq("is_active", true)
+          .in("user_id", userIds);
 
-      // Create a map of user roles for quick lookup
-      const roleMap = new Map();
-      userRoles?.forEach((ur) => {
-        if (!roleMap.has(ur.user_id)) {
-          roleMap.set(ur.user_id, []);
+        if (!rolesError && userRoles) {
+          userRoles.forEach((ur) => {
+            if (!roleMap.has(ur.user_id)) {
+              roleMap.set(ur.user_id, []);
+            }
+            roleMap.get(ur.user_id).push(ur.role);
+          });
         }
-        roleMap.get(ur.user_id).push(ur.role);
-      });
+      }
 
       const formattedUsers: User[] = (profiles || []).map((profile) => ({
         id: profile.id,
@@ -479,7 +750,13 @@ export default function UserManagement() {
         community_id: profile.community_id || "",
       }));
 
-      setUsers(formattedUsers);
+      // Apply role filter client-side since it's complex to do server-side
+      const finalUsers =
+        roleFilter === "all"
+          ? formattedUsers
+          : formattedUsers.filter((user) => user.role === roleFilter);
+
+      return { users: finalUsers, totalCount: count || 0 };
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -487,6 +764,7 @@ export default function UserManagement() {
         description: "Failed to fetch users",
         variant: "destructive",
       });
+      return { users: [], totalCount: 0 };
     } finally {
       setLoading(false);
     }
@@ -515,31 +793,37 @@ export default function UserManagement() {
     }
   }, [form.district_id]);
 
-  const roles = [
-    { value: "all", label: t.allRoles },
-    { value: "resident", label: t.resident },
-    { value: "guest", label: "Guest" },
-    ...(isModuleEnabled("security")
-      ? [{ value: "security_officer", label: t.security }]
-      : []),
-    ...(isModuleEnabled("facilities")
-      ? [
-          { value: "facility_manager", label: "Facility Manager" },
-          { value: "maintenance_staff", label: t.maintenance },
-        ]
-      : []),
-  ];
+  const roles = useMemo(
+    () => [
+      { value: "all", label: t.allRoles },
+      { value: "resident", label: t.resident },
+      { value: "guest", label: "Guest" },
+      ...(isModuleEnabled("security")
+        ? [{ value: "security_officer", label: t.security }]
+        : []),
+      ...(isModuleEnabled("facilities")
+        ? [
+            { value: "facility_manager", label: "Facility Manager" },
+            { value: "maintenance_staff", label: t.maintenance },
+          ]
+        : []),
+    ],
+    [t, isModuleEnabled]
+  );
 
-  const statuses = [
-    { value: "all", label: t.allStatus },
-    { value: "pending", label: t.pending },
-    { value: "approved", label: t.approved },
-    { value: "rejected", label: t.rejected },
-    { value: "active", label: t.active },
-    { value: "inactive", label: t.inactive },
-  ];
+  const statuses = useMemo(
+    () => [
+      { value: "all", label: t.allStatus },
+      { value: "pending", label: t.pending },
+      { value: "approved", label: t.approved },
+      { value: "rejected", label: t.rejected },
+      { value: "active", label: t.active },
+      { value: "inactive", label: t.inactive },
+    ],
+    [t]
+  );
 
-  const getRoleColor = (role: string) => {
+  const getRoleColor = useCallback((role: string) => {
     switch (role) {
       case "state_admin":
         return "bg-purple-100 text-purple-800";
@@ -562,9 +846,9 @@ export default function UserManagement() {
       default:
         return "bg-gray-100 text-gray-800";
     }
-  };
+  }, []);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = useCallback((status: string) => {
     switch (status) {
       case "approved":
       case "active":
@@ -577,59 +861,102 @@ export default function UserManagement() {
       default:
         return "bg-gray-100 text-gray-800";
     }
-  };
+  }, []);
 
-  const getRoleText = (role: string) => {
-    switch (role) {
-      case "state_admin":
-        return t.admin;
-      case "community_admin":
-        return "Community Admin";
-      case "district_coordinator":
-        return "District Coordinator";
-      case "security_officer":
-        return t.security;
-      case "maintenance_staff":
-        return t.maintenance;
-      case "service_provider":
-        return "Service Provider";
-      case "community_leader":
-        return "Community Leader";
-      case "resident":
-        return t.resident;
-      case "guest":
-        return "Guest";
-      default:
-        return role.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  const getRoleText = useCallback(
+    (role: string) => {
+      switch (role) {
+        case "state_admin":
+          return t.admin;
+        case "community_admin":
+          return "Community Admin";
+        case "district_coordinator":
+          return "District Coordinator";
+        case "security_officer":
+          return t.security;
+        case "maintenance_staff":
+          return t.maintenance;
+        case "service_provider":
+          return "Service Provider";
+        case "community_leader":
+          return "Community Leader";
+        case "resident":
+          return t.resident;
+        case "guest":
+          return "Guest";
+        default:
+          return role
+            .replace("_", " ")
+            .replace(/\b\w/g, (l) => l.toUpperCase());
+      }
+    },
+    [t]
+  );
+
+  const getStatusText = useCallback(
+    (status: string) => {
+      switch (status) {
+        case "active":
+          return t.active;
+        case "inactive":
+          return t.inactive;
+        case "pending":
+          return t.pending;
+        case "approved":
+          return t.approved;
+        case "rejected":
+          return t.rejected;
+        default:
+          return status;
+      }
+    },
+    [t]
+  );
+
+  // Since we're using server-side pagination, we work directly with users
+  const filteredUsers = users; // All filtering is done server-side now
+  const totalPages = Math.ceil(totalUsers / itemsPerPage);
+  const paginatedUsers = users; // Users are already paginated from server
+
+  // Display info
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, totalUsers);
+
+  // Pagination handlers
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of user list
+    const userListElement = document.getElementById("user-list");
+    if (userListElement) {
+      userListElement.scrollIntoView({ behavior: "smooth" });
     }
-  };
+  }, []);
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "active":
-        return t.active;
-      case "inactive":
-        return t.inactive;
-      case "pending":
-        return t.pending;
-      case "approved":
-        return t.approved;
-      case "rejected":
-        return t.rejected;
-      default:
-        return status;
+  const handlePreviousPage = useCallback(() => {
+    if (currentPage > 1) {
+      handlePageChange(currentPage - 1);
     }
-  };
+  }, [currentPage, handlePageChange]);
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = selectedRole === "all" || user.role === selectedRole;
-    const matchesStatus =
-      selectedStatus === "all" || user.status === selectedStatus;
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+  const handleNextPage = useCallback(() => {
+    if (currentPage < totalPages) {
+      handlePageChange(currentPage + 1);
+    }
+  }, [currentPage, totalPages, handlePageChange]);
+
+  // Optimized search handler to prevent excessive API calls
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value);
+  }, []);
+
+  // Optimized filter handlers
+  const handleRoleFilterChange = useCallback((value: string) => {
+    setSelectedRole(value);
+  }, []);
+
+  const handleStatusFilterChange = useCallback((value: string) => {
+    setSelectedStatus(value);
+  }, []);
 
   // Reset role-specific fields when role changes
   const handleRoleChange = (newRole: string) => {
@@ -789,36 +1116,38 @@ export default function UserManagement() {
           access_expires_at: form.access_expires_at,
           district_id: form.district_id,
           community_id: form.community_id,
-          status: form.status
+          status: form.status,
         });
 
         if (validationErrors.length > 0) {
-          const errorMessages = validationErrors.map(err => err.message).join(', ');
+          const errorMessages = validationErrors
+            .map((err) => err.message)
+            .join(", ");
           toast({
             title: "Validation Error",
             description: errorMessages,
             variant: "destructive",
           });
-          console.error('Role validation errors:', validationErrors);
+          console.error("Role validation errors:", validationErrors);
           return;
         }
 
         console.log(`Creating ${form.role} user:`, {
           email: form.email,
           full_name: form.name,
-          role: form.role
+          role: form.role,
         });
 
         // Apply role defaults
         const roleDefaults = getRoleDefaults(form.role);
-        
+
         // Create new user using edge function
         const requestBody: any = {
           email: form.email,
           full_name: form.name,
           phone: form.phone,
           role: form.role,
-          ...roleDefaults // Apply role-specific defaults
+          ...roleDefaults, // Apply role-specific defaults
         };
 
         // Only include password and status for non-residents and non-guests
@@ -850,18 +1179,18 @@ export default function UserManagement() {
         try {
           const functionName = getRoleSpecificFunction(form.role);
           console.log(`Calling ${functionName} with payload:`, requestBody);
-          
+
           // Add timeout to prevent hanging
-          const timeoutPromise = new Promise<never>((_, reject) => 
-            setTimeout(() => reject(new Error('Request timed out after 30 seconds')), 30000)
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(
+              () => reject(new Error("Request timed out after 30 seconds")),
+              30000
+            )
           );
-          
-          const functionPromise = supabase.functions.invoke(
-            functionName,
-            {
-              body: requestBody,
-            }
-          );
+
+          const functionPromise = supabase.functions.invoke(functionName, {
+            body: requestBody,
+          });
 
           const result = await Promise.race([functionPromise, timeoutPromise]);
           const { data, error } = result;
@@ -874,30 +1203,35 @@ export default function UserManagement() {
           // Check for errors in response body even with 2xx status
           if (data?.error || data?.success === false) {
             console.error(`Error in response body from ${functionName}:`, data);
-            throw new Error(data.error || 'Function returned error response');
+            throw new Error(data.error || "Function returned error response");
           }
 
           console.log(`Successfully created ${form.role} user:`, data);
-          toast({ 
+          toast({
             title: t.userCreated,
-            description: `${form.role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} account created successfully.`
+            description: `${form.role
+              .replace("_", " ")
+              .replace(/\b\w/g, (l) =>
+                l.toUpperCase()
+              )} account created successfully.`,
           });
         } catch (error: any) {
-          console.error('User creation error:', error);
-          
+          console.error("User creation error:", error);
+
           // Provide specific error messages based on common issues
           let errorMessage = "Failed to create user account";
-          
-          if (error.message?.includes('already exists')) {
+
+          if (error.message?.includes("already exists")) {
             errorMessage = "A user with this email already exists";
-          } else if (error.message?.includes('permission')) {
-            errorMessage = "You don't have permission to create this type of account";
-          } else if (error.message?.includes('module')) {
+          } else if (error.message?.includes("permission")) {
+            errorMessage =
+              "You don't have permission to create this type of account";
+          } else if (error.message?.includes("module")) {
             errorMessage = "Required module is not enabled for this community";
           } else if (error.message) {
             errorMessage = error.message;
           }
-          
+
           toast({
             title: "Account Creation Failed",
             description: errorMessage,
@@ -929,7 +1263,10 @@ export default function UserManagement() {
         specialization: "",
         access_expires_at: "",
       });
-      fetchUsers(); // Refresh the user list
+
+      // Reload users after successful operation
+      setIsModalOperation(false); // Allow refetch
+      await loadUsers(); // Refresh the user list
     } catch (error) {
       console.error("Error saving user:", error);
       toast({
@@ -943,6 +1280,9 @@ export default function UserManagement() {
   };
 
   const handleEdit = (user: User) => {
+    // Save current scroll position
+    setScrollPosition(window.scrollY);
+    setIsModalOperation(true); // Prevent refetch during modal operations
     setEditingId(user.id);
     setForm({
       name: user.name,
@@ -964,6 +1304,8 @@ export default function UserManagement() {
       specialization: "",
     });
     setIsCreateOpen(true);
+    // Reset flag after a short delay to allow modal to open
+    setTimeout(() => setIsModalOperation(false), 100);
   };
 
   const handleDelete = async (id: string) => {
@@ -971,28 +1313,20 @@ export default function UserManagement() {
       try {
         // Delete user from Supabase auth (admin)
         const result = await adminDeleteUser(id);
-        if (!result.success) throw new Error(result.message || "Failed to delete user from auth");
+        if (!result.success)
+          throw new Error(result.message || "Failed to delete user from auth");
 
         // Clean up user roles (optional, for DB consistency)
-        await supabase
-          .from("user_roles")
-          .delete()
-          .eq("user_id", id);
+        await supabase.from("user_roles").delete().eq("user_id", id);
 
         // Clean up enhanced_user_roles (optional, for DB consistency)
-        await supabase
-          .from("enhanced_user_roles")
-          .delete()
-          .eq("user_id", id);
+        await supabase.from("enhanced_user_roles").delete().eq("user_id", id);
 
         // Clean up profile (optional, for DB consistency)
-        await supabase
-          .from("profiles")
-          .delete()
-          .eq("user_id", id);
+        await supabase.from("profiles").delete().eq("user_id", id);
 
         toast({ title: t.userDeleted });
-        fetchUsers(); // Refresh the list
+        await loadUsers(); // Refresh the list
       } catch (error) {
         console.error("Error deleting user:", error);
         toast({
@@ -1014,7 +1348,7 @@ export default function UserManagement() {
       if (error) throw error;
 
       toast({ title: t.userApproved });
-      fetchUsers(); // Refresh the list
+      await loadUsers(); // Refresh the list
     } catch (error) {
       console.error("Error approving user:", error);
       toast({
@@ -1035,7 +1369,7 @@ export default function UserManagement() {
       if (error) throw error;
 
       toast({ title: t.userRejected });
-      fetchUsers(); // Refresh the list
+      await loadUsers(); // Refresh the list
     } catch (error) {
       console.error("Error rejecting user:", error);
       toast({
@@ -1091,26 +1425,28 @@ export default function UserManagement() {
   // Handle resend invitation
   const handleResendInvitation = async (userId: string, userEmail: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('resend-invitation', {
-        body: {
-          user_id: userId
+      const { data, error } = await supabase.functions.invoke(
+        "resend-invitation",
+        {
+          body: {
+            user_id: userId,
+          },
         }
-      });
+      );
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
       toast({
-        title: "Invitation Sent", 
-        description: `Invitation has been resent to ${userEmail}`
+        title: "Invitation Sent",
+        description: `Invitation has been resent to ${userEmail}`,
       });
-      
     } catch (error: any) {
-      console.error('Error resending invitation:', error);
+      console.error("Error resending invitation:", error);
       toast({
         title: "Resend Failed",
         description: error.message || "Failed to resend invitation",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -1124,10 +1460,16 @@ export default function UserManagement() {
 
   // Handle create tenant (guest)
   const handleCreateTenant = async () => {
-    if (!selectedUser || !tenantForm.tenant_name || !tenantForm.tenant_email || !tenantForm.access_expires_at) {
+    if (
+      !selectedUser ||
+      !tenantForm.tenant_name ||
+      !tenantForm.tenant_email ||
+      !tenantForm.access_expires_at
+    ) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields including expiration date",
+        description:
+          "Please fill in all required fields including expiration date",
         variant: "destructive",
       });
       return;
@@ -1156,8 +1498,8 @@ export default function UserManagement() {
 
       // Check for errors in response body even with 2xx status
       if (data?.error || data?.success === false) {
-        console.error('Error in response body from admin-create-guest:', data);
-        throw new Error(data.error || 'Function returned error response');
+        console.error("Error in response body from admin-create-guest:", data);
+        throw new Error(data.error || "Function returned error response");
       }
 
       toast({
@@ -1227,6 +1569,14 @@ export default function UserManagement() {
         <Dialog
           open={isCreateOpen}
           onOpenChange={(open) => {
+            if (!open) {
+              setIsModalOperation(true); // Prevent refetch during modal close
+              // Restore scroll position after modal closes
+              setTimeout(() => {
+                window.scrollTo(0, scrollPosition);
+                setIsModalOperation(false);
+              }, 100);
+            }
             setIsCreateOpen(open);
             if (!open) {
               setEditingId(null);
@@ -1569,7 +1919,11 @@ export default function UserManagement() {
                       <Select
                         value={form.district_id}
                         onValueChange={(value) =>
-                          setForm((prev) => ({ ...prev, district_id: value, community_id: "" }))
+                          setForm((prev) => ({
+                            ...prev,
+                            district_id: value,
+                            community_id: "",
+                          }))
                         }
                       >
                         <SelectTrigger>
@@ -2090,11 +2444,11 @@ export default function UserManagement() {
           <Input
             placeholder={t.search}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-10"
           />
         </div>
-        <Select value={selectedRole} onValueChange={setSelectedRole}>
+        <Select value={selectedRole} onValueChange={handleRoleFilterChange}>
           <SelectTrigger className="w-full sm:w-[150px]">
             <SelectValue />
           </SelectTrigger>
@@ -2106,7 +2460,7 @@ export default function UserManagement() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+        <Select value={selectedStatus} onValueChange={handleStatusFilterChange}>
           <SelectTrigger className="w-full sm:w-[150px]">
             <SelectValue />
           </SelectTrigger>
@@ -2134,131 +2488,112 @@ export default function UserManagement() {
               <span className="ml-2">Loading users...</span>
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredUsers.length === 0 ? (
+            <div id="user-list" className="space-y-4">
+              {/* User count and pagination info */}
+              <div className="flex justify-between items-center text-sm text-muted-foreground">
+                <div>
+                  Showing {Math.min(startIndex + 1, totalUsers)}-{endIndex} of{" "}
+                  {totalUsers} users
+                </div>
+                <div>
+                  Page {currentPage} of {totalPages}
+                </div>
+              </div>
+
+              {paginatedUsers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No users found
                 </div>
               ) : (
-                filteredUsers.map((user) => (
-                  <div
+                paginatedUsers.map((user) => (
+                  <UserCard
                     key={user.id}
-                    className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg cursor-pointer"
-                    onClick={() => handleUserClick(user)}
-                  >
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <Avatar className="flex-shrink-0">
-                        <AvatarImage src="" />
-                        <AvatarFallback>
-                          {user.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <h4 className="font-medium truncate">{user.name}</h4>
-                        <div className="text-sm text-muted-foreground space-y-1">
-                          <p className="truncate">{user.email}</p>
-                          <p>{user.phone}</p>
-                          <p>
-                            {t.unit}: {user.unit}
-                          </p>
-                          <p>
-                            {t.joinDate}: {user.joinDate}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 flex-shrink-0">
-                      <Badge className={getRoleColor(user.role)}>
-                        {getRoleText(user.role)}
-                      </Badge>
-                      <Badge className={getStatusColor(user.status)}>
-                        {getStatusText(user.status)}
-                      </Badge>
-                      
-                      {/* Email Confirmation Status */}
-                      {user.emailConfirmed ? (
-                        <div className="flex items-center text-green-600 text-sm" title="Email Confirmed">
-                          <CheckCircle2 className="h-4 w-4 mr-1" />
-                          <span className="hidden sm:inline">Confirmed</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center text-yellow-600 text-sm" title="Email Not Confirmed">
-                          <Clock className="h-4 w-4 mr-1" />
-                          <span className="hidden sm:inline">Pending</span>
-                        </div>
-                      )}
-
-                      <div
-                        className="flex gap-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {/* Actions for pending users */}
-                        {user.status === "pending" && !user.emailConfirmed && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleResendInvitation(user.id, user.email)}
-                            className="text-blue-600"
-                            title="Resend Invitation"
-                          >
-                            <Send className="h-4 w-4" />
-                          </Button>
-                        )}
-                        
-                        {user.status === "pending" && user.emailConfirmed && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleApprove(user.id)}
-                              className="text-green-600"
-                              title="Approve"
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleReject(user.id)}
-                              className="text-red-600"
-                              title="Reject"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-
-                        {user.status === "approved" && (
-                          <div className="flex items-center text-green-600 text-sm">
-                            <UserCheck className="h-4 w-4 mr-1" />
-                            <span className="hidden sm:inline">Active</span>
-                          </div>
-                        )}
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(user)}
-                          title={t.edit}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(user.id)}
-                          className="text-red-600"
-                          title={t.delete}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                    user={user}
+                    onUserClick={handleUserClick}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onSendInvite={(user) =>
+                      handleResendInvitation(user.id, user.email)
+                    }
+                    onApprove={(user) => handleApprove(user.id)}
+                    onReject={(user) => handleReject(user.id)}
+                    getRoleColor={getRoleColor}
+                    getStatusColor={getStatusColor}
+                    getRoleText={getRoleText}
+                    getStatusText={getStatusText}
+                    t={t}
+                    language={language}
+                  />
                 ))
+              )}
+
+              {/* Pagination Controls */}
+              {totalUsers > itemsPerPage && (
+                <div className="flex items-center justify-between border-t pt-4">
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1 || loading}
+                    >
+                      {loading && currentPage > 1 ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : null}
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages || loading}
+                    >
+                      {loading && currentPage < totalPages ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : null}
+                      Next
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center space-x-1">
+                    {/* Page numbers */}
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNumber;
+                      if (totalPages <= 5) {
+                        pageNumber = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNumber = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNumber = totalPages - 4 + i;
+                      } else {
+                        pageNumber = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <Button
+                          key={pageNumber}
+                          variant={
+                            currentPage === pageNumber ? "default" : "outline"
+                          }
+                          size="sm"
+                          onClick={() => handlePageChange(pageNumber)}
+                          className="w-8 h-8 p-0"
+                          disabled={loading}
+                        >
+                          {loading && currentPage === pageNumber ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            pageNumber
+                          )}
+                        </Button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="text-sm text-muted-foreground">
+                    {totalUsers} total users
+                  </div>
+                </div>
               )}
             </div>
           )}
@@ -2402,7 +2737,9 @@ export default function UserManagement() {
 
                         <div className="space-y-2">
                           <Label htmlFor="tenantExpiresAt">
-                            {language === "en" ? "Access Expires At *" : "Akses Tamat Pada *"}
+                            {language === "en"
+                              ? "Access Expires At *"
+                              : "Akses Tamat Pada *"}
                           </Label>
                           <Input
                             id="tenantExpiresAt"
@@ -2544,7 +2881,7 @@ export default function UserManagement() {
 
       {/* Role Creation Validation Suite - Only shown in development/admin mode */}
       <RoleCreationValidator />
-      
+
       {/* Comprehensive Role Testing Suite */}
       <RoleValidationTests />
     </div>
