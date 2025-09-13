@@ -86,6 +86,7 @@ import PendingApproval from "./pages/PendingApproval";
 import CompleteAccount from "./pages/CompleteAccount";
 import GuestManagement from "./pages/admin/GuestManagement";
 import NotificationTest from "./pages/NotificationTest";
+import DevNotificationTest from "./pages/DevNotificationTest";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -318,6 +319,16 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <NotificationTest />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dev/notification-test"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <DevNotificationTest />
                   </Layout>
                 </ProtectedRoute>
               }

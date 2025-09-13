@@ -44,7 +44,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useModuleAccess } from "@/hooks/use-module-access";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import TimeSlotPicker from "@/components/facilities/TimeSlotPicker";
+import { TimeSlotPicker } from "@/components/facilities/TimeSlotPicker";
 
 // Import facility images
 import communityGymImage from "@/assets/community-gym.jpg";
