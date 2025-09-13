@@ -1275,6 +1275,9 @@ export default function UserManagement() {
                   status: form.status,
                   district_id: form.district_id,
                   community_id: form.community_id,
+                  password: form.password,
+                  confirmPassword: form.confirmPassword,
+                  access_expires_at: form.access_expires_at,
                 }}
                 isVisible={showValidator}
                 onToggleVisibility={() => setShowValidator(!showValidator)}
