@@ -464,40 +464,51 @@ export function ServicesMap({
 
   // Always render the container - this is the key fix!
   return (
-    <div className="h-96 relative rounded-lg overflow-hidden border">
+    <div className="relative w-full min-h-[500px] lg:h-[600px] rounded-lg overflow-hidden border">
       <div ref={mapContainer} className="w-full h-full" />
       
       {/* Loading overlay */}
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted/80 z-20">
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-20">
           <div className="text-center">
-            <MapPin className="h-8 w-8 text-muted-foreground mx-auto mb-2 animate-pulse" />
-            <p className="text-muted-foreground">{t.loading}</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+            <p className="text-sm text-muted-foreground">{t.loading}</p>
           </div>
         </div>
       )}
 
       {/* Error overlay */}
       {mapError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-20">
-          <div className="text-center">
+        <div className="absolute inset-0 flex items-center justify-center bg-background/90 backdrop-blur-sm z-20">
+          <div className="text-center p-4">
             <MapPin className="h-8 w-8 text-destructive mx-auto mb-2" />
             <p className="text-destructive font-medium">{t.mapError}</p>
             <p className="text-sm text-muted-foreground mt-1">{mapError}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.reload()}
+              className="mt-3"
+            >
+              Retry
+            </Button>
           </div>
         </div>
       )}
 
-      {/* Selected provider card */}
+      {/* Selected provider card - Mobile bottom sheet on small screens, top-right card on larger screens */}
       {selectedProvider && (
-        <Card className="absolute top-4 right-4 w-80 max-h-80 overflow-y-auto z-10">
+        <Card className="absolute bottom-0 left-0 right-0 md:top-4 md:right-4 md:bottom-auto md:left-auto w-full md:w-96 max-h-[75vh] md:max-h-[calc(100%-2rem)] overflow-hidden z-30 shadow-xl bg-background/95 backdrop-blur-sm">
+          {/* Mobile drag handle */}
+          <div className="md:hidden w-12 h-1 bg-muted-foreground/30 rounded-full mx-auto mt-3"></div>
+          
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="text-lg">
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-lg font-semibold truncate">
                   {selectedProvider.business_name}
                 </CardTitle>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex flex-wrap items-center gap-1 mt-2">
                   {selectedProvider.is_mobile && (
                     <Badge variant="secondary" className="text-xs">
                       {t.mobile}
@@ -526,76 +537,110 @@ export function ServicesMap({
                 variant="ghost"
                 size="sm"
                 onClick={() => setSelectedProvider(null)}
+                className="flex-shrink-0 ml-2"
               >
                 ×
               </Button>
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4 overflow-y-auto max-h-[50vh] md:max-h-80">
+            {/* Advertisements */}
             {selectedProvider.advertisements &&
               selectedProvider.advertisements.length > 0 && (
-                <div className="space-y-2">
-                  {selectedProvider.advertisements
-                    .slice(0, 2)
-                    .map((ad: any) => (
-                      <div key={ad.id} className="p-2 bg-muted/50 rounded">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-medium text-sm">{ad.title}</h4>
-                            <Badge variant="outline" className="text-xs mt-1">
-                              {ad.category}
-                            </Badge>
+                <div>
+                  <h4 className="font-medium text-sm mb-2 text-muted-foreground">
+                    {language === 'en' ? 'Services' : 'Perkhidmatan'}
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedProvider.advertisements
+                      .slice(0, 2)
+                      .map((ad: any) => (
+                        <div key={ad.id} className="p-3 bg-muted/50 rounded-lg">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm truncate">{ad.title}</h4>
+                              <Badge variant="outline" className="text-xs mt-1">
+                                {ad.category}
+                              </Badge>
+                            </div>
+                            {ad.is_featured && (
+                              <Badge variant="secondary" className="text-xs flex-shrink-0">
+                                {t.featured}
+                              </Badge>
+                            )}
                           </div>
-                          {ad.is_featured && (
-                            <Badge variant="secondary" className="text-xs">
-                              {t.featured}
-                            </Badge>
+                          {ad.description && (
+                            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                              {ad.description}
+                            </p>
+                          )}
+                          {ad.price && (
+                            <p className="text-sm font-semibold text-primary">
+                              RM{ad.price.toFixed(2)}
+                            </p>
                           )}
                         </div>
-                        {ad.price && (
-                          <p className="text-sm font-semibold text-primary mt-1">
-                            RM{ad.price.toFixed(2)}
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                      ))}
+                  </div>
                 </div>
               )}
 
-            {selectedProvider.business_address && (
-              <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-muted-foreground">
-                  {selectedProvider.business_address}
-                </p>
+            {/* Contact Information */}
+            <div>
+              <h4 className="font-medium text-sm mb-2 text-muted-foreground">
+                {language === 'en' ? 'Contact Information' : 'Maklumat Hubungan'}
+              </h4>
+              <div className="space-y-2">
+                {selectedProvider.business_address && (
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-muted-foreground flex-1">
+                      {selectedProvider.business_address}
+                    </p>
+                  </div>
+                )}
+                
+                {selectedProvider.business_phone && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <p className="text-sm text-muted-foreground flex-1">
+                      {selectedProvider.business_phone}
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
-            {(selectedProvider as any).distance && (
-              <div className="flex items-center gap-2">
-                <Navigation className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  {t.distance}: {(selectedProvider as any).distance.toFixed(1)}{" "}
-                  km
-                </span>
-              </div>
-            )}
-
-            {selectedProvider.coverage_radius_km &&
-              selectedProvider.is_mobile && (
-                <div className="text-sm text-muted-foreground">
-                  {t.coverage}: {selectedProvider.coverage_radius_km} km radius
+            {/* Additional Information */}
+            <div className="space-y-2">
+              {(selectedProvider as any).distance && (
+                <div className="flex items-center justify-center gap-2 p-2 bg-primary/10 rounded-lg">
+                  <Navigation className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium text-primary">
+                    {t.distance}: {(selectedProvider as any).distance.toFixed(1)} km
+                  </span>
                 </div>
               )}
 
-            {selectedProvider.travel_fee && selectedProvider.travel_fee > 0 && (
-              <div className="text-sm text-muted-foreground">
-                {t.travelFee}: RM{selectedProvider.travel_fee.toFixed(2)}
-              </div>
-            )}
+              {selectedProvider.coverage_radius_km &&
+                selectedProvider.is_mobile && (
+                  <div className="text-sm text-muted-foreground text-center">
+                    {t.coverage}: {selectedProvider.coverage_radius_km} km radius
+                  </div>
+                )}
 
-            <div className="flex gap-2 pt-2">
+              {selectedProvider.travel_fee && selectedProvider.travel_fee > 0 && (
+                <div className="text-sm text-muted-foreground text-center">
+                  {t.travelFee}: RM{selectedProvider.travel_fee.toFixed(2)}
+                </div>
+              )}
+            </div>
+          </CardContent>
+
+          {/* Action buttons */}
+          <div className="p-4 border-t bg-background/50">
+            <div className="flex gap-3">
               {selectedProvider.business_phone && (
                 <Button
                   variant="outline"
@@ -608,8 +653,8 @@ export function ServicesMap({
                   }
                   className="flex-1"
                 >
-                  <Phone className="w-3 h-3 mr-1" />
-                  Call
+                  <Phone className="w-4 h-4 mr-2" />
+                  {language === 'en' ? 'Call' : 'Panggil'}
                 </Button>
               )}
               <Button
@@ -617,18 +662,18 @@ export function ServicesMap({
                 onClick={() => handleGetDirections(selectedProvider)}
                 className="flex-1"
               >
-                <Navigation className="w-3 h-3 mr-1" />
+                <Navigation className="w-4 h-4 mr-2" />
                 {t.directions}
               </Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {/* No providers overlay */}
       {providers.length === 0 && !loading && !mapError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
-          <div className="text-center">
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
+          <div className="text-center p-4">
             <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">{t.noProviders}</p>
           </div>
