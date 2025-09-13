@@ -21,6 +21,10 @@ interface FormData {
   status: string;
   district_id?: string;
   community_id?: string;
+  // For role-specific validation
+  password?: string;
+  confirmPassword?: string;
+  access_expires_at?: string;
 }
 
 interface CreateUserValidatorProps {
@@ -95,22 +99,51 @@ export function CreateUserValidator({
         : "Invalid email format",
     });
 
-    // Check role-specific requirements
-    if (formData.role === 'guest' && !formData.status) {
-      results.push({
-        check: "Guest Access Expiry",
-        status: "warning",
-        message: "Expiration date required for guests",
-      });
+    // Guest-specific requirement: access expiry
+    if (formData.role === 'guest') {
+      if (!formData.access_expires_at) {
+        results.push({
+          check: "Guest Access Expiry",
+          status: "warning",
+          message: "Expiration date required for guests",
+        });
+      } else {
+        const inFuture = new Date(formData.access_expires_at) > new Date();
+        results.push({
+          check: "Guest Access Expiry",
+          status: inFuture ? "success" : "error",
+          message: inFuture ? "Expiry date set" : "Expiration must be in the future",
+        });
+      }
     }
 
-    // Check password for non-residents/non-guests (this would need form state)
+    // Staff/admin roles: password checks
     if (formData.role && formData.role !== 'resident' && formData.role !== 'guest') {
-      results.push({
-        check: "Password",
-        status: "warning",
-        message: "Password required for staff roles",
-      });
+      if (!formData.password) {
+        results.push({
+          check: "Password",
+          status: "error",
+          message: "Password required for staff roles",
+        });
+      } else if (formData.password.length < 8) {
+        results.push({
+          check: "Password",
+          status: "warning",
+          message: "Password should be at least 8 characters",
+        });
+      } else if (formData.confirmPassword && formData.password !== formData.confirmPassword) {
+        results.push({
+          check: "Password",
+          status: "error",
+          message: "Passwords do not match",
+        });
+      } else {
+        results.push({
+          check: "Password",
+          status: "success",
+          message: "Password set",
+        });
+      }
     }
 
     setValidationResults(results);
@@ -209,6 +242,7 @@ export function CreateUserValidator({
             district_id: formData.district_id,
             community_id: formData.community_id,
             status: formData.status,
+            access_expires_at: formData.access_expires_at
           }, null, 2)}
         </pre>
       </details>

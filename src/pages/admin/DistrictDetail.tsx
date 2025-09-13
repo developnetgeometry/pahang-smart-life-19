@@ -400,9 +400,9 @@ export default function DistrictDetail() {
                 {filteredCommunities.length} of {communities.length} communities {typeFilter !== 'all' && `(filtered by ${getTypeText(typeFilter)})`}
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
               {/* Type Filter */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
                   <SelectTrigger className="w-[150px]">
@@ -418,7 +418,7 @@ export default function DistrictDetail() {
                 </Select>
               </div>
               {canManage && (
-                <Button size="sm" onClick={() => setShowCreateModal(true)}>
+                <Button size="sm" onClick={() => setShowCreateModal(true)} className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
                   {t.addCommunity}
                 </Button>
