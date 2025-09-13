@@ -485,24 +485,49 @@ export default function MyProfile() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="identity_no">
-                    No. Kad Pengenalan * (Tidak boleh diubah)
-                  </Label>
-                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">
-                    {formData.identity_no || "Belum diisi"}
-                  </p>
+                  <Label htmlFor="identity_no">No. Kad Pengenalan *</Label>
+                  {isEditing ? (
+                    <Input
+                      id="identity_no"
+                      value={formData.identity_no}
+                      onChange={(e) =>
+                        setFormData({ ...formData, identity_no: e.target.value })
+                      }
+                      required
+                    />
+                  ) : (
+                    <p className="text-sm p-2 bg-muted rounded">
+                      {formData.identity_no || "Belum diisi"}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="identity_no_type">
-                    Jenis Kad Pengenalan (Tidak boleh diubah)
-                  </Label>
-                  <p className="text-sm p-2 bg-muted rounded text-muted-foreground">
-                    {formData.identity_no_type === "ic"
-                      ? "MyKad"
-                      : formData.identity_no_type === "passport"
-                      ? "Pasport"
-                      : "Lain-lain"}
-                  </p>
+                  <Label htmlFor="identity_no_type">Jenis Kad Pengenalan</Label>
+                  {isEditing ? (
+                    <Select
+                      value={formData.identity_no_type}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, identity_no_type: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih jenis kad pengenalan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ic">MyKad</SelectItem>
+                        <SelectItem value="passport">Pasport</SelectItem>
+                        <SelectItem value="other">Lain-lain</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-sm p-2 bg-muted rounded">
+                      {formData.identity_no_type === "ic"
+                        ? "MyKad"
+                        : formData.identity_no_type === "passport"
+                        ? "Pasport"
+                        : "Lain-lain"}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="gender">Jantina *</Label>
