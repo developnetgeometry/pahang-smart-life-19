@@ -2,9 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell, MessageSquare } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { useNotificationIntegration } from '@/hooks/use-notification-integration';
+import { Bell, MessageSquare, Smartphone, Globe, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
 interface Notification {
   id: string;
@@ -22,6 +25,17 @@ export function NotificationTest() {
   const { user, language } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const {
+    isInitialized,
+    isSupported,
+    hasPermission,
+    isSubscribed,
+    error,
+    requestPermission,
+    subscribe,
+    unsubscribe,
+    sendTestNotification
+  } = useNotificationIntegration();
 
   useEffect(() => {
     if (!user?.id) return;
@@ -83,19 +97,120 @@ export function NotificationTest() {
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
+  const getStatusIcon = (status: boolean | null) => {
+    if (status === null) return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+    return status ? 
+      <CheckCircle className="w-4 h-4 text-green-500" /> : 
+      <XCircle className="w-4 h-4 text-red-500" />;
+  };
+
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bell className="w-5 h-5" />
-          {language === 'en' ? 'Live Notifications' : 'Notifikasi Langsung'}
-          {unreadCount > 0 && (
-            <Badge variant="destructive" className="ml-auto">
-              {unreadCount}
-            </Badge>
+    <div className="w-full max-w-4xl space-y-6">
+      {/* FCM Integration Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Smartphone className="w-5 h-5" />
+            {language === 'en' ? 'FCM Integration Status' : 'Status Integrasi FCM'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="flex items-center gap-2">
+              {getStatusIcon(isInitialized)}
+              <div>
+                <div className="text-sm font-medium">
+                  {language === 'en' ? 'Initialized' : 'Diinisialisasi'}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {isInitialized ? 'Ready' : 'Not Ready'}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {getStatusIcon(isSupported)}
+              <div>
+                <div className="text-sm font-medium">
+                  {language === 'en' ? 'Browser Support' : 'Sokongan Pelayar'}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {isSupported ? 'Supported' : 'Not Supported'}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {getStatusIcon(hasPermission)}
+              <div>
+                <div className="text-sm font-medium">
+                  {language === 'en' ? 'Permission' : 'Kebenaran'}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {hasPermission ? 'Granted' : 'Not Granted'}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {getStatusIcon(isSubscribed)}
+              <div>
+                <div className="text-sm font-medium">
+                  {language === 'en' ? 'Subscription' : 'Langganan'}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {isSubscribed ? 'Active' : 'Inactive'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {error && (
+            <div className="mt-4 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            </div>
           )}
-        </CardTitle>
-      </CardHeader>
+
+          <div className="flex gap-2 mt-4">
+            {!hasPermission && (
+              <Button onClick={requestPermission} size="sm">
+                {language === 'en' ? 'Request Permission' : 'Minta Kebenaran'}
+              </Button>
+            )}
+            {hasPermission && !isSubscribed && (
+              <Button onClick={subscribe} size="sm">
+                {language === 'en' ? 'Subscribe' : 'Langgan'}
+              </Button>
+            )}
+            {isSubscribed && (
+              <>
+                <Button onClick={sendTestNotification} size="sm">
+                  {language === 'en' ? 'Send Test Notification' : 'Hantar Notifikasi Ujian'}
+                </Button>
+                <Button onClick={unsubscribe} variant="outline" size="sm">
+                  {language === 'en' ? 'Unsubscribe' : 'Batal Langgan'}
+                </Button>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Live Notifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="w-5 h-5" />
+            {language === 'en' ? 'Live Notifications' : 'Notifikasi Langsung'}
+            {unreadCount > 0 && (
+              <Badge variant="destructive" className="ml-auto">
+                {unreadCount}
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
       <CardContent>
         <ScrollArea className="h-64">
           {notifications.length === 0 ? (
@@ -149,5 +264,6 @@ export function NotificationTest() {
         </ScrollArea>
       </CardContent>
     </Card>
+    </div>
   );
 }

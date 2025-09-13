@@ -85,6 +85,7 @@ import FacilityComplaintCenterPage from "./pages/FacilityComplaintCenter";
 import PendingApproval from "./pages/PendingApproval";
 import CompleteAccount from "./pages/CompleteAccount";
 import GuestManagement from "./pages/admin/GuestManagement";
+import NotificationTest from "./pages/NotificationTest";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -307,6 +308,16 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <MobileNotifications />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notification-test"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <NotificationTest />
                   </Layout>
                 </ProtectedRoute>
               }
