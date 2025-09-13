@@ -34,7 +34,7 @@ import { useModuleAccess } from "@/hooks/use-module-access";
 import { useNavigate } from "react-router-dom";
 import { WeatherWidget } from "./WeatherWidget";
 import { PrayerTimesWidget } from "./PrayerTimesWidget";
-import PanicButton from "@/components/emergency/PanicButton";
+
 import {
   Wrench,
   Clock,
@@ -1059,8 +1059,6 @@ export function MaintenanceStaffDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Floating Panic Button - only show if security module is enabled */}
-      {isModuleEnabled("security") && <PanicButton />}
     </div>
   );
 }

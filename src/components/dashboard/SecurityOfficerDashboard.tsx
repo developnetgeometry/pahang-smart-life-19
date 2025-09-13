@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import ActivePanicAlerts from "@/components/emergency/ActivePanicAlerts";
+
 import { WeatherWidget } from "./WeatherWidget";
 import { PrayerTimesWidget } from "./PrayerTimesWidget";
 import {
@@ -260,25 +260,6 @@ export function SecurityOfficerDashboard() {
 
       <AnnouncementSlideshow />
 
-      {/* Panic Alert Management - High Priority Section */}
-      <Card className="border-red-200 dark:border-red-800">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
-            <AlertTriangle className="h-5 w-5" />
-            {language === "en"
-              ? "Emergency Panic Alerts"
-              : "Amaran Panik Kecemasan"}
-          </CardTitle>
-          <CardDescription>
-            {language === "en"
-              ? "Monitor and respond to emergency panic alerts from residents"
-              : "Pantau dan respon kepada amaran panik kecemasan daripada penduduk"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ActivePanicAlerts />
-        </CardContent>
-      </Card>
 
       {/* Security Status Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
