@@ -445,45 +445,7 @@ export default function Discussions() {
     }
   }, [discussionsEnabled, language, toast, scrollPosition]);
 
-  // Enhanced effect to handle debounced search and pagination
-  useEffect(() => {
-    fetchDiscussions(currentPage, debouncedSearchTerm, selectedCategory, selectedSortBy);
-  }, [fetchDiscussions, currentPage, debouncedSearchTerm, selectedCategory, selectedSortBy]);
-
-  // Check if discussions module is enabled - do this AFTER all hooks
-  if (!discussionsEnabled) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
-            <p className="text-sm text-muted-foreground">
-              The Discussions module is not enabled for this community.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const categories = [
-    { value: 'all', label: t.allCategories },
-    { value: 'general', label: t.general },
-    { value: 'maintenance', label: t.maintenance },
-    { value: 'events', label: t.events },
-    { value: 'safety', label: t.safety },
-    { value: 'suggestions', label: t.suggestions }
-  ];
-
-  const sortOptions = [
-    { value: 'latest', label: t.latest },
-    { value: 'oldest', label: t.oldest },
-    { value: 'mostReplies', label: t.mostReplies },
-    { value: 'mostViews', label: t.mostViews }
-  ];
-
-  // Enhanced search and filter handlers
+  // Enhanced search and filter handlers - MOVED BEFORE CONDITIONAL LOGIC
   const handleSearchChange = useCallback((value: string) => {
     setSearchTerm(value);
     setCurrentPage(1);
@@ -510,6 +472,44 @@ export default function Discussions() {
 
   // Computed values for display
   const displayedDiscussions = useMemo(() => discussions, [discussions]);
+
+  // Enhanced effect to handle debounced search and pagination
+  useEffect(() => {
+    fetchDiscussions(currentPage, debouncedSearchTerm, selectedCategory, selectedSortBy);
+  }, [fetchDiscussions, currentPage, debouncedSearchTerm, selectedCategory, selectedSortBy]);
+
+  const categories = [
+    { value: 'all', label: t.allCategories },
+    { value: 'general', label: t.general },
+    { value: 'maintenance', label: t.maintenance },
+    { value: 'events', label: t.events },
+    { value: 'safety', label: t.safety },
+    { value: 'suggestions', label: t.suggestions }
+  ];
+
+  const sortOptions = [
+    { value: 'latest', label: t.latest },
+    { value: 'oldest', label: t.oldest },
+    { value: 'mostReplies', label: t.mostReplies },
+    { value: 'mostViews', label: t.mostViews }
+  ];
+
+  // Check if discussions module is enabled - CONDITIONAL RENDERING INSTEAD OF EARLY RETURN
+  if (!discussionsEnabled) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Module Disabled</h3>
+            <p className="text-sm text-muted-foreground">
+              The Discussions module is not enabled for this community.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
