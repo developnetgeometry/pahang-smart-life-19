@@ -10,6 +10,7 @@ import React, {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle } from "lucide-react";
+import { NotificationService } from "@/utils/notificationService";
 
 export type UserRole =
   | "resident"
@@ -232,6 +233,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         if (session?.user) {
           await loadProfileAndRoles(session.user.id);
+          
+          // Initialize notification service after successful auth
+          setTimeout(async () => {
+            try {
+              const notificationService = NotificationService.getInstance();
+              await notificationService.initialize();
+              console.log('Notification service initialized after login');
+            } catch (error) {
+              console.error('Failed to initialize notifications after login:', error);
+            }
+          }, 1000);
         } else {
           setUser(null);
           setRoles([]);

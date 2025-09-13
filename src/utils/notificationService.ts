@@ -187,8 +187,8 @@ export class NotificationService {
         return false;
       }
 
-      // Get VAPID public key - using FCM VAPID public key
-      const vapidPublicKey = 'BO43yWvfoaDMhw0ipVuFyiNFGk9wuKbKFWw1t1DZPp5EOVNgbj69ZD1emAcYSxTvDk7ttJ9NOIBgRTqkl2wOp3Y';
+      // Get VAPID public key from environment or use default FCM key
+      const vapidPublicKey = import.meta.env.VITE_FCM_VAPID_PUBLIC_KEY || 'BO43yWvfoaDMhw0ipVuFyiNFGk9wuKbKFWw1t1DZPp5EOVNgbj69ZD1emAcYSxTvDk7ttJ9NOIBgRTqkl2wOp3Y';
 
       // Convert VAPID key to Uint8Array
       const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);

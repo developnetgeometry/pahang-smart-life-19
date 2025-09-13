@@ -57,13 +57,24 @@ serve(async (req) => {
       notificationType,
     });
 
-    // Get Firebase service account credentials
-    const firebaseServiceAccount = Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
-    if (!firebaseServiceAccount) {
-      throw new Error("Firebase service account not configured");
+    // Get Firebase credentials from environment
+    const firebasePrivateKey = Deno.env.get("FIREBASE_PRIVATE_KEY");
+    const firebaseClientEmail = Deno.env.get("FIREBASE_CLIENT_EMAIL");
+    const firebaseProjectId = Deno.env.get("FIREBASE_PROJECT_ID");
+
+    if (!firebasePrivateKey || !firebaseClientEmail || !firebaseProjectId) {
+      throw new Error("Firebase credentials not properly configured");
     }
 
-    const serviceAccountData = JSON.parse(firebaseServiceAccount);
+    // Create service account object
+    const serviceAccount = {
+      type: "service_account",
+      project_id: firebaseProjectId,
+      private_key: firebasePrivateKey.replace(/\\n/g, '\n'),
+      client_email: firebaseClientEmail,
+    };
+
+    console.log("Firebase config loaded successfully");
 
     // Get push subscriptions for target users
     let subscriptionsQuery = supabaseClient
@@ -101,7 +112,7 @@ serve(async (req) => {
     if (!subscriptions || subscriptions.length === 0) {
       return new Response(
         JSON.stringify({
-          message: "No active subscriptions found",
+          message: "No active push subscriptions found",
           sentCount: 0,
         }),
         {
@@ -111,68 +122,90 @@ serve(async (req) => {
     }
 
     // Get Firebase access token
-    const accessToken = await getFirebaseAccessToken(serviceAccountData);
+    const accessToken = await getFirebaseAccessToken(serviceAccount);
+    console.log("Firebase access token obtained");
 
     // Send push notifications via FCM
     const sendResults = await Promise.allSettled(
       subscriptions.map(async (subscription) => {
         try {
           if (subscription.device_type === 'web') {
-            // Send to web browser via FCM
+            // Send to web browser via FCM Web Push
             const message = {
-              webpush: {
-                endpoint: subscription.endpoint,
-                keys: {
-                  p256dh: subscription.p256dh_key,
-                  auth: subscription.auth_key,
-                },
-                payload: JSON.stringify({
-                  title,
-                  body,
-                  icon: "/icon-192x192.png",
-                  badge: "/badge-72x72.png",
-                  url: url || "/",
+              message: {
+                webpush: {
+                  endpoint: subscription.endpoint,
+                  keys: {
+                    p256dh: subscription.p256dh_key,
+                    auth: subscription.auth_key,
+                  },
                   data: {
+                    title,
+                    body,
+                    icon: "/lovable-uploads/8b5530a7-fe2b-4d5c-bcf6-5f679ad0e912.png",
+                    badge: "/lovable-uploads/8b5530a7-fe2b-4d5c-bcf6-5f679ad0e912.png",  
                     url: url || "/",
                     notificationType,
                   },
-                }),
-              },
+                }
+              }
             };
 
-            const response = await sendToFCM(message, accessToken, serviceAccountData.project_id);
-            console.log(`Web push sent successfully to ${subscription.endpoint}`);
+            const response = await sendToFCM(message, accessToken, serviceAccount.project_id);
+            console.log(`Web push sent successfully to ${subscription.endpoint.substring(0, 50)}...`);
             return { success: true, subscriptionId: subscription.id };
           } else {
             // Send to native app (iOS/Android) via FCM
             const message = {
-              token: subscription.native_token || subscription.endpoint,
-              notification: {
-                title,
-                body,
-              },
-              data: {
-                url: url || "/",
-                notificationType,
-              },
+              message: {
+                token: subscription.endpoint, // For native, endpoint contains the FCM token
+                notification: {
+                  title,
+                  body,
+                },
+                data: {
+                  url: url || "/",
+                  notificationType,
+                },
+                android: {
+                  notification: {
+                    icon: "ic_notification",
+                    color: "#1976d2",
+                    sound: "default",
+                  },
+                },
+                apns: {
+                  payload: {
+                    aps: {
+                      alert: {
+                        title,
+                        body,
+                      },
+                      badge: 1,
+                      sound: "default",
+                    },
+                  },
+                },
+              }
             };
 
-            const response = await sendToFCM(message, accessToken, serviceAccountData.project_id);
-            console.log(`Native push sent successfully to ${subscription.native_token || subscription.endpoint}`);
+            const response = await sendToFCM(message, accessToken, serviceAccount.project_id);
+            console.log(`Native push sent successfully to ${subscription.endpoint.substring(0, 20)}...`);
             return { success: true, subscriptionId: subscription.id };
           }
         } catch (error) {
           console.error(
-            `Failed to send push to ${subscription.endpoint}:`,
+            `Failed to send push to ${subscription.endpoint.substring(0, 50)}...:`,
             error
           );
 
           // Deactivate subscription if it's invalid
-          if (error.message.includes('404') || error.message.includes('410')) {
+          if (error.message.includes('404') || error.message.includes('410') || error.message.includes('UNREGISTERED')) {
             await supabaseClient
               .from("push_subscriptions")
               .update({ is_active: false })
               .eq("id", subscription.id);
+            console.log(`Deactivated invalid subscription: ${subscription.id}`);
           }
 
           return {
@@ -188,6 +221,12 @@ serve(async (req) => {
       (result) => result.status === "fulfilled" && result.value.success
     ).length;
 
+    const failureCount = sendResults.filter(
+      (result) => result.status === "rejected" || !result.value.success
+    ).length;
+
+    console.log(`Push notification results: ${successCount} successful, ${failureCount} failed`);
+
     // Store notification in database for history
     const { error: notificationError } = await supabaseClient
       .from("notifications")
@@ -195,19 +234,47 @@ serve(async (req) => {
         title,
         message: body,
         notification_type: notificationType,
-        url: url || "/",
+        reference_id: null,
+        reference_table: null,
         sent_at: new Date().toISOString(),
-        recipient_id: userIds?.[0] || null, // Set recipient for single user notifications
+        created_by: user.id,
+        priority: notificationType === 'emergency' ? 'high' : 'normal',
+        metadata: {
+          userIds,
+          districtId,
+          url,
+          sentCount: successCount,
+          failureCount,
+        },
       });
 
     if (notificationError) {
       console.error("Error storing notification:", notificationError);
     }
 
+    // Track delivery status for each user
+    if (userIds && userIds.length > 0) {
+      const deliveryRecords = userIds.map(userId => ({
+        user_id: userId,
+        delivery_method: 'push',
+        status: 'sent',
+        delivered_at: new Date().toISOString(),
+      }));
+
+      const { error: deliveryError } = await supabaseClient
+        .from("notification_deliveries")
+        .insert(deliveryRecords);
+
+      if (deliveryError) {
+        console.error("Error tracking delivery status:", deliveryError);
+      }
+    }
+
     return new Response(
       JSON.stringify({
-        message: "Push notifications sent",
+        message: "Push notifications processed",
         sentCount: successCount,
+        failureCount,
         totalSubscriptions: subscriptions.length,
       }),
       {
@@ -236,41 +303,35 @@ async function getFirebaseAccessToken(serviceAccount: any): Promise<string> {
     iat: now,
   };
 
-  // For demo purposes, we'll make a request to get the token
-  // In production, you'd properly sign the JWT
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion: await createServiceAccountJWT(payload, serviceAccount.private_key),
-    }),
-  });
+  try {
+    const jwt = await createServiceAccountJWT(payload, serviceAccount.private_key);
+    
+    const response = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion: jwt,
+      }),
+    });
 
-  if (!response.ok) {
-    throw new Error(`Failed to get access token: ${response.statusText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to get access token: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    return data.access_token;
+  } catch (error) {
+    console.error("Error getting Firebase access token:", error);
+    throw error;
   }
-
-  const data = await response.json();
-  return data.access_token;
 }
 
 // Create JWT for service account authentication
 async function createServiceAccountJWT(payload: any, privateKey: string): Promise<string> {
-  // Import the private key
-  const key = await crypto.subtle.importKey(
-    "pkcs8",
-    new TextEncoder().encode(privateKey),
-    {
-      name: "RSASSA-PKCS1-v1_5",
-      hash: "SHA-256",
-    },
-    false,
-    ["sign"]
-  );
-
   const header = {
     alg: "RS256",
     typ: "JWT",
@@ -288,18 +349,42 @@ async function createServiceAccountJWT(payload: any, privateKey: string): Promis
 
   const data = `${encodedHeader}.${encodedPayload}`;
   
-  const signature = await crypto.subtle.sign(
-    "RSASSA-PKCS1-v1_5",
-    key,
-    new TextEncoder().encode(data)
-  );
+  try {
+    // Import the private key for signing
+    const keyData = privateKey
+      .replace(/-----BEGIN PRIVATE KEY-----/, "")
+      .replace(/-----END PRIVATE KEY-----/, "")
+      .replace(/\s/g, "");
+    
+    const binaryKey = Uint8Array.from(atob(keyData), c => c.charCodeAt(0));
+    
+    const key = await crypto.subtle.importKey(
+      "pkcs8",
+      binaryKey,
+      {
+        name: "RSASSA-PKCS1-v1_5",
+        hash: "SHA-256",
+      },
+      false,
+      ["sign"]
+    );
 
-  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
-    .replace(/=/g, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
+    const signature = await crypto.subtle.sign(
+      "RSASSA-PKCS1-v1_5",
+      key,
+      new TextEncoder().encode(data)
+    );
 
-  return `${data}.${encodedSignature}`;
+    const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
+      .replace(/=/g, "")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_");
+
+    return `${data}.${encodedSignature}`;
+  } catch (error) {
+    console.error("Error creating JWT:", error);
+    throw new Error(`Failed to create JWT: ${error.message}`);
+  }
 }
 
 // Send message to FCM
@@ -312,12 +397,13 @@ async function sendToFCM(message: any, accessToken: string, projectId: string): 
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify(message),
     }
   );
 
   if (!response.ok) {
     const errorText = await response.text();
+    console.error(`FCM API Error: ${response.status} ${errorText}`);
     throw new Error(`FCM request failed: ${response.status} ${errorText}`);
   }
 
