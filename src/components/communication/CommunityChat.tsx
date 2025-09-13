@@ -18,9 +18,11 @@ import {
   Reply,
   Heart,
   ThumbsUp,
-  Laugh
+  Laugh,
+  ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDeviceInfo } from '@/hooks/use-mobile';
 import { Separator } from '@/components/ui/separator';
 import { useRealtimeMessaging } from '@/hooks/use-realtime-messaging';
 import { useChatRooms } from '@/hooks/use-chat-rooms';
@@ -78,6 +80,7 @@ interface CommunityChatProps {
 
 export default function CommunityChat({ marketplaceChat, directoryChat, initialRoomId }: CommunityChatProps = {}) {
   const { language, user } = useAuth();
+  const { isMobile } = useDeviceInfo();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
@@ -323,13 +326,13 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
   const replyToMessage = messages.find(msg => msg.id === replyToMessageId);
 
   return (
-    <div className="flex h-[600px] border rounded-xl overflow-hidden bg-gradient-to-br from-background via-background to-muted/30 shadow-lg backdrop-blur-sm animate-fade-in">
+    <div className="flex min-h-[500px] h-[70vh] max-h-[800px] border rounded-xl overflow-hidden bg-gradient-to-br from-background via-background to-muted/30 shadow-lg backdrop-blur-sm animate-fade-in">
       {/* Chat List Sidebar */}
-      <div className="w-1/3 border-r border-border/50 flex flex-col bg-gradient-to-b from-muted/20 to-transparent backdrop-blur-sm">
+      <div className={`${isMobile ? (selectedRoomId ? 'hidden' : 'w-full') : 'w-full md:w-1/3'} ${!isMobile && 'border-r border-border/50'} flex flex-col bg-gradient-to-b from-muted/20 to-transparent backdrop-blur-sm`}>
         {/* Header */}
-        <div className="p-4 border-b border-border/50 bg-gradient-to-r from-primary/5 to-secondary/5 backdrop-blur-sm">
+        <div className="p-4 md:p-4 border-b border-border/50 bg-gradient-to-r from-primary/5 to-secondary/5 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold">
+            <h3 className="font-semibold text-lg">
               {language === 'en' ? 'Chats' : 'Sembang'}
             </h3>
             <DropdownMenu>
@@ -385,13 +388,23 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className={`${isMobile ? (selectedRoomId ? 'w-full' : 'hidden') : 'flex-1'} flex flex-col`}>
         {selectedRoomId ? (
           <>
             {/* Chat Header */}
-            <div className="p-4 border-b border-border/50 bg-gradient-to-r from-primary/10 via-background to-secondary/10 backdrop-blur-md shadow-sm">
+            <div className="p-3 md:p-4 border-b border-border/50 bg-gradient-to-r from-primary/10 via-background to-secondary/10 backdrop-blur-md shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
+                  {isMobile && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setSelectedRoomId(null)}
+                      className="mr-2"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                  )}
                   <div className="relative">
                     <Avatar className="h-10 w-10 border-2 border-primary/20 shadow-lg hover-scale">
                       <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-primary-foreground font-semibold">
