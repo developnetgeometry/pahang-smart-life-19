@@ -1,6 +1,8 @@
 import PanicAlertHistory from '@/components/emergency/PanicAlertHistory';
+import PanicAlertsAdminView from '@/components/emergency/PanicAlertsAdminView';
 import { useAuth } from '@/contexts/AuthContext';
 import { useModuleAccess } from '@/hooks/use-module-access';
+import { useUserRoles } from '@/hooks/use-user-roles';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, AlertTriangle } from 'lucide-react';
@@ -8,6 +10,7 @@ import { Shield, AlertTriangle } from 'lucide-react';
 export default function PanicAlerts() {
   const { language } = useAuth();
   const { isModuleEnabled, loading } = useModuleAccess();
+  const { hasAnyRole } = useUserRoles();
   
   if (loading) {
     return (
@@ -51,15 +54,23 @@ export default function PanicAlerts() {
     );
   }
   
+  const isAdminView = hasAnyRole(['community_admin','district_coordinator','state_admin','security_officer']);
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 space-y-6 p-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">
-            {language === 'en' ? 'My Panic Alert History' : 'Sejarah Amaran Panik Saya'}
-          </h1>
-        </div>
-        <PanicAlertHistory language={language} />
+        {isAdminView ? (
+          <PanicAlertsAdminView />
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold tracking-tight">
+                {language === 'en' ? 'My Panic Alert History' : 'Sejarah Amaran Panik Saya'}
+              </h1>
+            </div>
+            <PanicAlertHistory language={language} />
+          </>
+        )}
       </div>
     </div>
   );

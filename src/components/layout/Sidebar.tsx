@@ -2,6 +2,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/lib/translations";
 import { NavLink, useLocation } from "react-router-dom";
 import { useModuleAccessOptimized as useModuleAccess } from "@/hooks/use-module-access-optimized";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -53,12 +55,66 @@ export interface NavigationGroup {
 }
 
 export function AppSidebar() {
-  const { language, hasRole } = useAuth();
+  const { language, hasRole, user } = useAuth();
   const { t } = useTranslation(language);
   const location = useLocation();
   const { state, isMobile } = useSidebar();
   const isCollapsed = state === "collapsed" && !isMobile;
   const { isModuleEnabled } = useModuleAccess();
+
+  // Active Panic Alerts badge
+  const [districtId, setDistrictId] = useState<string | null>(null);
+  const [activePanicCount, setActivePanicCount] = useState<number>(0);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadProfile = async () => {
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("district_id")
+          .eq("user_id", user?.id as string)
+          .single();
+        if (mounted) setDistrictId(data?.district_id ?? null);
+      } catch {
+        if (mounted) setDistrictId(null);
+      }
+    };
+    loadProfile();
+    return () => { mounted = false; };
+  }, [user?.id]);
+
+  const fetchActiveCount = async () => {
+    try {
+      let query = supabase
+        .from("panic_alerts")
+        .select("id", { count: "exact", head: true })
+        .eq("alert_status", "active");
+      if (districtId) query = query.eq("district_id", districtId);
+      const { count, error } = await query;
+      if (!error && typeof count === "number") setActivePanicCount(count);
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    if (!isModuleEnabled("security")) return;
+    fetchActiveCount();
+  }, [districtId, isModuleEnabled]);
+
+  useEffect(() => {
+    if (!isModuleEnabled("security")) return;
+    const channel = supabase
+      .channel("panic-alerts-count")
+      .on("postgres_changes", { event: "*", schema: "public", table: "panic_alerts" }, () => {
+        fetchActiveCount();
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [districtId, isModuleEnabled]);
 
   // Role-based navigation groups - enhanced filtering
   const getNavigationForUser = () => {
@@ -518,7 +574,16 @@ export function AppSidebar() {
                         }
                       >
                         <item.icon className="h-4 w-4" />
-                        {!isCollapsed && <span>{item.title}</span>}
+                        {!isCollapsed && (
+                          <span className="flex-1 flex items-center justify-between">
+                            <span>{item.title}</span>
+                            {item.url === "/panic-alerts" && activePanicCount > 0 && (
+                              <span className="ml-2 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] leading-none px-2 py-1">
+                                {activePanicCount}
+                              </span>
+                            )}
+                          </span>
+                        )}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
