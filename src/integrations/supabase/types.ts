@@ -6943,7 +6943,9 @@ export type Database = {
           endpoint: string
           id: string
           is_active: boolean | null
+          native_token: string | null
           p256dh_key: string
+          platform: string | null
           updated_at: string | null
           user_id: string
         }
@@ -6954,7 +6956,9 @@ export type Database = {
           endpoint: string
           id?: string
           is_active?: boolean | null
+          native_token?: string | null
           p256dh_key: string
+          platform?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -6965,7 +6969,9 @@ export type Database = {
           endpoint?: string
           id?: string
           is_active?: boolean | null
+          native_token?: string | null
           p256dh_key?: string
+          platform?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -10336,6 +10342,32 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      get_districts_with_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          actual_population: number
+          address: string
+          area: number
+          area_km2: number
+          city: string
+          code: string
+          communities_count: number
+          coordinator_id: string
+          coordinator_name: string
+          country: string
+          created_at: string
+          description: string
+          district_type: string
+          established_date: string
+          id: string
+          latitude: number
+          longitude: number
+          name: string
+          population: number
+          status: string
+          updated_at: string
+        }[]
+      }
       get_enabled_modules_for_user: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -10352,6 +10384,17 @@ export type Database = {
           module_name: string
         }[]
       }
+      get_filtered_service_requests: {
+        Args: { filters: Json }
+        Returns: {
+          created_at: string
+          description: string
+          id: string
+          priority: string
+          status: string
+          title: string
+        }[]
+      }
       get_guest_permissions_for_community: {
         Args: { p_community_id: string }
         Returns: {
@@ -10362,6 +10405,29 @@ export type Database = {
       get_image_url: {
         Args: { bucket_name: string; file_path: string }
         Returns: string
+      }
+      get_managed_users: {
+        Args: {
+          p_page?: number
+          p_page_size?: number
+          p_requesting_user_id: string
+          p_role_filter?: string
+          p_search_term?: string
+          p_status_filter?: string
+        }
+        Returns: {
+          account_status: string
+          community_id: string
+          created_at: string
+          district_id: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          role: string
+          total_count: number
+          unit_number: string
+        }[]
       }
       get_module_id: {
         Args: { module_name: string }

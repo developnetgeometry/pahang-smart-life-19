@@ -15,11 +15,23 @@ import { useNotificationSystem, NotificationData } from '@/hooks/use-notificatio
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const OptimizedNotificationBell = React.memo(() => {
   const { language } = useAuth();
-  const navigate = useNavigate();
+  
+  // Safely handle navigation with error boundary
+  let navigate: ((route: string) => void) | null = null;
+  
+  try {
+    navigate = useNavigate();
+  } catch (error) {
+    console.warn('Navigation context not available:', error);
+    navigate = (route: string) => {
+      // Fallback to window location if router context is not available
+      window.location.href = route;
+    };
+  }
   const {
     notifications,
     unreadCount,
@@ -69,7 +81,9 @@ const OptimizedNotificationBell = React.memo(() => {
                  routes[notification.notification_type as keyof typeof routes] || 
                  routes.default;
 
-    navigate(route);
+    if (navigate) {
+      navigate(route);
+    }
     setIsOpen(false);
   };
 
@@ -207,7 +221,9 @@ const OptimizedNotificationBell = React.memo(() => {
             <DropdownMenuItem
               className="p-2 text-center text-sm text-primary cursor-pointer"
               onClick={() => {
-                navigate('/notifications');
+                if (navigate) {
+                  navigate('/notifications');
+                }
                 setIsOpen(false);
               }}
             >

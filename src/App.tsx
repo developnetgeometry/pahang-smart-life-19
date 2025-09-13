@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ViewProvider } from "@/contexts/ViewContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import React from "react";
 import { Layout } from "@/components/layout/Layout";
 import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
@@ -55,6 +56,7 @@ import CommunicationHub from "./pages/CommunicationHub";
 import RoleManagement from "./pages/RoleManagement";
 import NotificationSettings from "./pages/NotificationSettings";
 import NotificationPage from "./pages/NotificationPage";
+import MobileNotifications from "./pages/MobileNotifications";
 import PanicAlerts from "./pages/PanicAlerts";
 import Directory from "./pages/Directory";
 import ServiceProviderApplication from "./pages/ServiceProviderApplication";
@@ -171,10 +173,11 @@ const App = () => (
     <TooltipProvider>
       <ViewProvider>
         <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <PWAInstallPrompt />
-          <BrowserRouter>
+          <NotificationProvider>
+            <Toaster />
+            <Sonner />
+            <PWAInstallPrompt />
+            <BrowserRouter>
           <Routes>
             <Route
               path="/login"
@@ -294,6 +297,16 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <NotificationSettings />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/mobile-notifications"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <MobileNotifications />
                   </Layout>
                 </ProtectedRoute>
               }
@@ -1006,8 +1019,9 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-      </AuthProvider>
-    </ViewProvider>
+          </NotificationProvider>
+        </AuthProvider>
+      </ViewProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
