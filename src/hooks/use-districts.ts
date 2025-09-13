@@ -35,7 +35,13 @@ export const useDistricts = () => {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase.rpc("get_districts_with_stats");
+      // Fetch districts with community counts using a direct query
+      const { data, error } = await supabase
+        .from('districts')
+        .select(`
+          *,
+          communities:communities(count)
+        `);
 
       if (error) {
         console.error("Error fetching districts with stats:", error);
@@ -44,13 +50,13 @@ export const useDistricts = () => {
         return;
       }
 
-      // The RPC returns a slightly different structure, let's adapt it
-      const formattedData = data.map((d) => ({
+      // Transform the data to include community count
+      const formattedData = data?.map((d: any) => ({
         ...d,
         // Ensure population and communities_count are numbers
-        population: d.actual_population ?? 0,
-        communities_count: d.communities_count ?? 0,
-      }));
+        population: d.population ?? 0,
+        communities_count: d.communities?.[0]?.count ?? 0,
+      })) || [];
 
       setDistricts(formattedData as District[]);
     } catch (error) {
