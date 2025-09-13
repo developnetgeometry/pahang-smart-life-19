@@ -8,11 +8,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// VAPID details
-const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
-const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY");
-const VAPID_SUBJECT = "mailto:admin@pahangsmartlife.com";
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -62,6 +57,14 @@ serve(async (req) => {
       notificationType,
     });
 
+    // Get Firebase service account credentials
+    const firebaseServiceAccount = Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
+    if (!firebaseServiceAccount) {
+      throw new Error("Firebase service account not configured");
+    }
+
+    const serviceAccountData = JSON.parse(firebaseServiceAccount);
+
     // Get push subscriptions for target users
     let subscriptionsQuery = supabaseClient
       .from("push_subscriptions")
@@ -107,58 +110,71 @@ serve(async (req) => {
       );
     }
 
-    // Send push notifications
+    // Get Firebase access token
+    const accessToken = await getFirebaseAccessToken(serviceAccountData);
+
+    // Send push notifications via FCM
     const sendResults = await Promise.allSettled(
       subscriptions.map(async (subscription) => {
         try {
-          const pushPayload = JSON.stringify({
-            title,
-            body,
-            icon: "/icon-192x192.png",
-            badge: "/badge-72x72.png",
-            url: url || "/",
-            timestamp: Date.now(),
-            data: {
-              url: url || "/",
-              notificationType,
-            },
-          });
+          if (subscription.device_type === 'web') {
+            // Send to web browser via FCM
+            const message = {
+              webpush: {
+                endpoint: subscription.endpoint,
+                keys: {
+                  p256dh: subscription.p256dh_key,
+                  auth: subscription.auth_key,
+                },
+                payload: JSON.stringify({
+                  title,
+                  body,
+                  icon: "/icon-192x192.png",
+                  badge: "/badge-72x72.png",
+                  url: url || "/",
+                  data: {
+                    url: url || "/",
+                    notificationType,
+                  },
+                }),
+              },
+            };
 
-          // Create the push request
-          const pushRequest = await createPushRequest(
-            subscription.endpoint,
-            subscription.p256dh_key,
-            subscription.auth_key,
-            pushPayload
-          );
+            const response = await sendToFCM(message, accessToken, serviceAccountData.project_id);
+            console.log(`Web push sent successfully to ${subscription.endpoint}`);
+            return { success: true, subscriptionId: subscription.id };
+          } else {
+            // Send to native app (iOS/Android) via FCM
+            const message = {
+              token: subscription.native_token || subscription.endpoint,
+              notification: {
+                title,
+                body,
+              },
+              data: {
+                url: url || "/",
+                notificationType,
+              },
+            };
 
-          const response = await fetch(subscription.endpoint, pushRequest);
-
-          if (!response.ok) {
-            console.error(
-              `Push failed for ${subscription.endpoint}:`,
-              response.status,
-              response.statusText
-            );
-
-            // Deactivate subscription if it's invalid
-            if (response.status === 404 || response.status === 410) {
-              await supabaseClient
-                .from("push_subscriptions")
-                .update({ is_active: false })
-                .eq("id", subscription.id);
-            }
-
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            const response = await sendToFCM(message, accessToken, serviceAccountData.project_id);
+            console.log(`Native push sent successfully to ${subscription.native_token || subscription.endpoint}`);
+            return { success: true, subscriptionId: subscription.id };
           }
-
-          console.log(`Push sent successfully to ${subscription.endpoint}`);
-          return { success: true, subscriptionId: subscription.id };
         } catch (error) {
           console.error(
             `Failed to send push to ${subscription.endpoint}:`,
             error
           );
+
+          // Deactivate subscription if it's invalid
+          if (error.message.includes('404') || error.message.includes('410')) {
+            await supabaseClient
+              .from("push_subscriptions")
+              .update({ is_active: false })
+              .eq("id", subscription.id);
+          }
+
           return {
             success: false,
             subscriptionId: subscription.id,
@@ -177,11 +193,11 @@ serve(async (req) => {
       .from("notifications")
       .insert({
         title,
-        body,
-        url,
-        district_id: districtId,
+        message: body,
         notification_type: notificationType,
+        url: url || "/",
         sent_at: new Date().toISOString(),
+        recipient_id: userIds?.[0] || null, // Set recipient for single user notifications
       });
 
     if (notificationError) {
@@ -207,84 +223,103 @@ serve(async (req) => {
   }
 });
 
-// Helper function to create push request with VAPID
-async function createPushRequest(
-  endpoint: string,
-  p256dh: string,
-  auth: string,
-  payload: string
-) {
-  const vapidHeaders = await generateVAPIDHeaders(endpoint);
+// Get Firebase access token using service account
+async function getFirebaseAccessToken(serviceAccount: any): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  
+  // Create JWT payload
+  const payload = {
+    iss: serviceAccount.client_email,
+    scope: "https://www.googleapis.com/auth/firebase.messaging",
+    aud: "https://oauth2.googleapis.com/token",
+    exp: now + 3600,
+    iat: now,
+  };
 
-  // Encrypt the payload
-  const encryptedPayload = await encryptPayload(payload, p256dh, auth);
-
-  return {
+  // For demo purposes, we'll make a request to get the token
+  // In production, you'd properly sign the JWT
+  const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: {
-      "Content-Type": "application/octet-stream",
-      "Content-Encoding": "aes128gcm",
-      TTL: "86400", // 24 hours
-      ...vapidHeaders,
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: encryptedPayload,
-  };
-}
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: await createServiceAccountJWT(payload, serviceAccount.private_key),
+    }),
+  });
 
-// Generate VAPID headers
-async function generateVAPIDHeaders(endpoint: string) {
-  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-    throw new Error("VAPID keys not configured");
+  if (!response.ok) {
+    throw new Error(`Failed to get access token: ${response.statusText}`);
   }
 
-  const url = new URL(endpoint);
-  const audience = `${url.protocol}//${url.host}`;
+  const data = await response.json();
+  return data.access_token;
+}
 
-  // Create JWT for VAPID
+// Create JWT for service account authentication
+async function createServiceAccountJWT(payload: any, privateKey: string): Promise<string> {
+  // Import the private key
+  const key = await crypto.subtle.importKey(
+    "pkcs8",
+    new TextEncoder().encode(privateKey),
+    {
+      name: "RSASSA-PKCS1-v1_5",
+      hash: "SHA-256",
+    },
+    false,
+    ["sign"]
+  );
+
   const header = {
+    alg: "RS256",
     typ: "JWT",
-    alg: "ES256",
   };
 
-  const payload = {
-    aud: audience,
-    exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-    sub: VAPID_SUBJECT,
-  };
-
-  // For simplicity, we'll use a basic JWT implementation
-  // In production, you might want to use a proper JWT library
-  const jwt = await createJWT(header, payload, VAPID_PRIVATE_KEY);
-
-  return {
-    Authorization: `vapid t=${jwt}, k=${VAPID_PUBLIC_KEY}`,
-    "Crypto-Key": `p256ecdsa=${VAPID_PUBLIC_KEY}`,
-  };
-}
-
-// Basic JWT creation for VAPID (simplified version)
-async function createJWT(header: any, payload: any, privateKey: string) {
-  const encoder = new TextEncoder();
-
-  const headerB64 = btoa(JSON.stringify(header))
+  const encodedHeader = btoa(JSON.stringify(header))
     .replace(/=/g, "")
     .replace(/\+/g, "-")
     .replace(/\//g, "_");
-  const payloadB64 = btoa(JSON.stringify(payload))
+  
+  const encodedPayload = btoa(JSON.stringify(payload))
     .replace(/=/g, "")
     .replace(/\+/g, "-")
     .replace(/\//g, "_");
 
-  const data = `${headerB64}.${payloadB64}`;
+  const data = `${encodedHeader}.${encodedPayload}`;
+  
+  const signature = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    key,
+    new TextEncoder().encode(data)
+  );
 
-  // For demo purposes, return unsigned JWT
-  // In production, you should properly sign this with the private key
-  return `${data}.signature`;
+  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+
+  return `${data}.${encodedSignature}`;
 }
 
-// Simplified payload encryption (in production, use proper Web Push encryption)
-async function encryptPayload(payload: string, p256dh: string, auth: string) {
-  // For demo purposes, return the payload as-is
-  // In production, implement proper AES128GCM encryption
-  return new TextEncoder().encode(payload);
+// Send message to FCM
+async function sendToFCM(message: any, accessToken: string, projectId: string): Promise<Response> {
+  const response = await fetch(
+    `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`FCM request failed: ${response.status} ${errorText}`);
+  }
+
+  return response;
 }

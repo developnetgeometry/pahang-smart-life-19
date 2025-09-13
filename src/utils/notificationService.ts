@@ -187,8 +187,8 @@ export class NotificationService {
         return false;
       }
 
-      // Get VAPID public key from environment or config
-      const vapidPublicKey = 'BH7wKdB8R8X8Lz5b9k3W7v2c4P6m1s9x8V3n2Q0e1R7t4Y6h5F8g2L9d3K6j5B1m8S0c7X4z2V5n9A3s6F2r8T1q4W7y3E6u0I9p2M5k8B4v7C0z3X6s9L2d5H8f1G4j7N0o3R6t9Y2e5W8a1S4f7J0m3P6l9C2x5A8d1G4k7O0r3U6y9B2f5I8c1L4n7Q0t3V6z9F2i5K8e1N4q7S0v3Y6b9E2h5M8g1O4r7U0x3A6d9G2k5H8f1J4m7P0s3V6z9C2l5I8n1Q4t7W0y3B6e9H2i5L8o1R4u7X0a3D6g9J2m5P8s1V4y7B0e3H6k9N2q5T8w1Z4c7F0i3L6o9R2u5X8a1D4g7J0m3P6s9V2y5B8e1H4k7N0q3T6w9Z2c5F8i1L4o7R0u3X6a9D2g5J8m1P4s7V0y3B6e9H2';
+      // Get VAPID public key - using FCM VAPID public key
+      const vapidPublicKey = 'BO43yWvfoaDMhw0ipVuFyiNFGk9wuKbKFWw1t1DZPp5EOVNgbj69ZD1emAcYSxTvDk7ttJ9NOIBgRTqkl2wOp3Y';
 
       // Convert VAPID key to Uint8Array
       const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
