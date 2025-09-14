@@ -1169,10 +1169,6 @@ export default function Login() {
         {/* Left side - Hero content */}
         <div className="text-center lg:text-left space-y-6 text-white">
           <div className="space-y-4">
-            <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur rounded-full px-4 py-2">
-              <MapPin className="w-5 h-5" />
-              <span className="font-medium">{t("pahangState")}</span>
-            </div>
             <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
               {t("smartCommunity")}
             </h1>

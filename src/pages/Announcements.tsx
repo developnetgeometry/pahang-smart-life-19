@@ -427,7 +427,8 @@ export default function Announcements() {
       refresh: "Refresh",
       filters: "Filters",
       clearFilters: "Clear Filters",
-      applyFilters: "Apply Filters"
+      applyFilters: "Apply Filters",
+      content: "Content"
     },
     ms: {
       title: "Pengumuman Komuniti",
@@ -497,7 +498,8 @@ export default function Announcements() {
       refresh: "Muat Semula",
       filters: "Penapis",
       clearFilters: "Kosongkan Penapis",
-      applyFilters: "Gunakan Penapis"
+      applyFilters: "Gunakan Penapis",
+      content: "Kandungan"
     },
   };
 
@@ -1300,7 +1302,7 @@ export default function Announcements() {
           {selectedAnnouncement && (
             <div className="space-y-4">
               <Input
-                placeholder={t.announcementTitle}
+                placeholder={t.title}
                 value={editForm.title || selectedAnnouncement.title}
                 onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
               />
