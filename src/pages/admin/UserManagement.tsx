@@ -75,6 +75,7 @@ import RoleValidationTests from "@/components/admin/RoleValidationTests";
 import { AdminDiagnostics } from "@/components/admin/AdminDiagnostics";
 import { CreateUserValidator } from "@/components/admin/CreateUserValidator";
 import { adminDeleteUser } from "@/service/adminService";
+import { validateMalaysianPhone, handlePhoneInput } from "@/lib/phone-validation";
 
 interface User {
   // Auth user id (used for auth actions and linking)
@@ -375,6 +376,11 @@ export default function UserManagement() {
   const [creating, setCreating] = useState(false);
   const [isModalOperation, setIsModalOperation] = useState(false); // Flag to prevent unnecessary refetch
   const [scrollPosition, setScrollPosition] = useState(0); // Track scroll position
+
+  // Phone validation states
+  const [phoneError, setPhoneError] = useState<string>("");
+  const [emergencyPhoneError, setEmergencyPhoneError] = useState<string>("");
+  const [tenantPhoneError, setTenantPhoneError] = useState<string>("");
 
   // User details sheet states
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -994,12 +1000,36 @@ export default function UserManagement() {
   };
 
   const handleCreateUser = async () => {
-    if (!form.name || !form.email || !form.role) {
+    if (!form.name || !form.email || !form.role || !form.phone) {
       toast({
         title: t.createUser,
-        description: "Please fill all required fields.",
+        description: "Please fill all required fields including phone number.",
       });
       return;
+    }
+
+    // Validate phone number
+    const phoneValidation = validateMalaysianPhone(form.phone, true, language);
+    if (!phoneValidation.isValid) {
+      setPhoneError(phoneValidation.error || "Invalid phone number");
+      toast({
+        title: t.createUser,
+        description: phoneValidation.error,
+      });
+      return;
+    }
+
+    // Validate emergency contact phone if provided
+    if (form.emergencyContactPhone) {
+      const emergencyPhoneValidation = validateMalaysianPhone(form.emergencyContactPhone, false, language);
+      if (!emergencyPhoneValidation.isValid) {
+        setEmergencyPhoneError(emergencyPhoneValidation.error || "Invalid emergency contact phone number");
+        toast({
+          title: t.createUser,
+          description: emergencyPhoneValidation.error,
+        });
+        return;
+      }
     }
 
     // Check if the selected role is allowed based on enabled modules
@@ -2134,22 +2164,36 @@ export default function UserManagement() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">{t.phone}</Label>
+                      <Label htmlFor="phone" className="flex items-center gap-1">
+                        {t.phone} <span className="text-destructive">*</span>
+                      </Label>
                       <Input
                         id="phone"
                         placeholder={
                           language === "en"
-                            ? "e.g. +60123456789"
-                            : "cth: +60123456789"
+                            ? "e.g. 012-3456789"
+                            : "cth: 012-3456789"
                         }
                         value={form.phone}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const filteredValue = handlePhoneInput(e.target.value);
                           setForm((prev) => ({
                             ...prev,
-                            phone: e.target.value,
-                          }))
-                        }
+                            phone: filteredValue,
+                          }));
+                          // Clear error when user starts typing
+                          if (phoneError) setPhoneError("");
+                          // Validate in real-time
+                          const validation = validateMalaysianPhone(filteredValue, true, language);
+                          if (!validation.isValid && filteredValue) {
+                            setPhoneError(validation.error || "");
+                          }
+                        }}
+                        className={phoneError ? "border-destructive" : ""}
                       />
+                      {phoneError && (
+                        <p className="text-sm text-destructive">{phoneError}</p>
+                      )}
                     </div>
                   </div>
                 </>
@@ -2241,22 +2285,36 @@ export default function UserManagement() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">{t.phone}</Label>
+                      <Label htmlFor="phone" className="flex items-center gap-1">
+                        {t.phone} <span className="text-destructive">*</span>
+                      </Label>
                       <Input
                         id="phone"
                         placeholder={
                           language === "en"
-                            ? "e.g. +60123456789"
-                            : "cth: +60123456789"
+                            ? "e.g. 012-3456789"
+                            : "cth: 012-3456789"
                         }
                         value={form.phone}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const filteredValue = handlePhoneInput(e.target.value);
                           setForm((prev) => ({
                             ...prev,
-                            phone: e.target.value,
-                          }))
-                        }
+                            phone: filteredValue,
+                          }));
+                          // Clear error when user starts typing
+                          if (phoneError) setPhoneError("");
+                          // Validate in real-time
+                          const validation = validateMalaysianPhone(filteredValue, true, language);
+                          if (!validation.isValid && filteredValue) {
+                            setPhoneError(validation.error || "");
+                          }
+                        }}
+                        className={phoneError ? "border-destructive" : ""}
                       />
+                      {phoneError && (
+                        <p className="text-sm text-destructive">{phoneError}</p>
+                      )}
                     </div>
                   </div>
                 </>
@@ -2540,17 +2598,31 @@ export default function UserManagement() {
                         id="emergencyContactPhone"
                         placeholder={
                           language === "en"
-                            ? "Emergency contact phone"
-                            : "Telefon hubungan kecemasan"
+                            ? "e.g. 012-3456789"
+                            : "cth: 012-3456789"
                         }
                         value={form.emergencyContactPhone || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const filteredValue = handlePhoneInput(e.target.value);
                           setForm((prev) => ({
                             ...prev,
-                            emergencyContactPhone: e.target.value,
-                          }))
-                        }
+                            emergencyContactPhone: filteredValue,
+                          }));
+                          // Clear error when user starts typing
+                          if (emergencyPhoneError) setEmergencyPhoneError("");
+                          // Validate in real-time if not empty
+                          if (filteredValue) {
+                            const validation = validateMalaysianPhone(filteredValue, false, language);
+                            if (!validation.isValid) {
+                              setEmergencyPhoneError(validation.error || "");
+                            }
+                          }
+                        }}
+                        className={emergencyPhoneError ? "border-destructive" : ""}
                       />
+                      {emergencyPhoneError && (
+                        <p className="text-sm text-destructive">{emergencyPhoneError}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2637,17 +2709,31 @@ export default function UserManagement() {
                         id="emergencyContactPhone"
                         placeholder={
                           language === "en"
-                            ? "Emergency contact phone"
-                            : "Telefon hubungan kecemasan"
+                            ? "e.g. 012-3456789"
+                            : "cth: 012-3456789"
                         }
                         value={form.emergencyContactPhone || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const filteredValue = handlePhoneInput(e.target.value);
                           setForm((prev) => ({
                             ...prev,
-                            emergencyContactPhone: e.target.value,
-                          }))
-                        }
+                            emergencyContactPhone: filteredValue,
+                          }));
+                          // Clear error when user starts typing
+                          if (emergencyPhoneError) setEmergencyPhoneError("");
+                          // Validate in real-time if not empty
+                          if (filteredValue) {
+                            const validation = validateMalaysianPhone(filteredValue, false, language);
+                            if (!validation.isValid) {
+                              setEmergencyPhoneError(validation.error || "");
+                            }
+                          }
+                        }}
+                        className={emergencyPhoneError ? "border-destructive" : ""}
                       />
+                      {emergencyPhoneError && (
+                        <p className="text-sm text-destructive">{emergencyPhoneError}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2731,17 +2817,31 @@ export default function UserManagement() {
                         id="emergencyContactPhone"
                         placeholder={
                           language === "en"
-                            ? "Emergency contact phone"
-                            : "Telefon hubungan kecemasan"
+                            ? "e.g. 012-3456789"
+                            : "cth: 012-3456789"
                         }
                         value={form.emergencyContactPhone || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const filteredValue = handlePhoneInput(e.target.value);
                           setForm((prev) => ({
                             ...prev,
-                            emergencyContactPhone: e.target.value,
-                          }))
-                        }
+                            emergencyContactPhone: filteredValue,
+                          }));
+                          // Clear error when user starts typing
+                          if (emergencyPhoneError) setEmergencyPhoneError("");
+                          // Validate in real-time if not empty
+                          if (filteredValue) {
+                            const validation = validateMalaysianPhone(filteredValue, false, language);
+                            if (!validation.isValid) {
+                              setEmergencyPhoneError(validation.error || "");
+                            }
+                          }
+                        }}
+                        className={emergencyPhoneError ? "border-destructive" : ""}
                       />
+                      {emergencyPhoneError && (
+                        <p className="text-sm text-destructive">{emergencyPhoneError}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2825,17 +2925,31 @@ export default function UserManagement() {
                         id="emergencyContactPhone"
                         placeholder={
                           language === "en"
-                            ? "Emergency contact phone"
-                            : "Telefon hubungan kecemasan"
+                            ? "e.g. 012-3456789"
+                            : "cth: 012-3456789"
                         }
                         value={form.emergencyContactPhone || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const filteredValue = handlePhoneInput(e.target.value);
                           setForm((prev) => ({
                             ...prev,
-                            emergencyContactPhone: e.target.value,
-                          }))
-                        }
+                            emergencyContactPhone: filteredValue,
+                          }));
+                          // Clear error when user starts typing
+                          if (emergencyPhoneError) setEmergencyPhoneError("");
+                          // Validate in real-time if not empty
+                          if (filteredValue) {
+                            const validation = validateMalaysianPhone(filteredValue, false, language);
+                            if (!validation.isValid) {
+                              setEmergencyPhoneError(validation.error || "");
+                            }
+                          }
+                        }}
+                        className={emergencyPhoneError ? "border-destructive" : ""}
                       />
+                      {emergencyPhoneError && (
+                        <p className="text-sm text-destructive">{emergencyPhoneError}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -3173,18 +3287,32 @@ export default function UserManagement() {
                           <Input
                             id="tenantPhone"
                             value={tenantForm.tenant_phone}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              const filteredValue = handlePhoneInput(e.target.value);
                               setTenantForm((prev) => ({
                                 ...prev,
-                                tenant_phone: e.target.value,
-                              }))
-                            }
+                                tenant_phone: filteredValue,
+                              }));
+                              // Clear error when user starts typing
+                              if (tenantPhoneError) setTenantPhoneError("");
+                              // Validate in real-time if not empty
+                              if (filteredValue) {
+                                const validation = validateMalaysianPhone(filteredValue, false, language);
+                                if (!validation.isValid) {
+                                  setTenantPhoneError(validation.error || "");
+                                }
+                              }
+                            }}
                             placeholder={
                               language === "en"
-                                ? "Enter tenant phone (optional)"
-                                : "Masukkan telefon penyewa (pilihan)"
+                                ? "e.g. 012-3456789 (optional)"
+                                : "cth: 012-3456789 (pilihan)"
                             }
+                            className={tenantPhoneError ? "border-destructive" : ""}
                           />
+                          {tenantPhoneError && (
+                            <p className="text-sm text-destructive">{tenantPhoneError}</p>
+                          )}
                         </div>
 
                         <div className="space-y-2">

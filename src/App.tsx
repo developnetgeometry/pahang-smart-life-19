@@ -3,7 +3,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { ViewProvider } from "@/contexts/ViewContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import React from "react";
 import { Layout } from "@/components/layout/Layout";
@@ -172,13 +171,12 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 const App = () => (
   <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ViewProvider>
         <NotificationProvider>
             <Toaster />
             <Sonner />
             <PWAInstallPrompt />
             <BrowserRouter>
-          <Routes>
+              <Routes>
             <Route
               path="/login"
               element={
@@ -1040,7 +1038,6 @@ const App = () => (
           </Routes>
         </BrowserRouter>
         </NotificationProvider>
-        </ViewProvider>
       </AuthProvider>
   </QueryClientProvider>
 );
