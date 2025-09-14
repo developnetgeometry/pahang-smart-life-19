@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { DeviceProvider } from "@/contexts/DeviceContext";
 import React from "react";
 import { Layout } from "@/components/layout/Layout";
 import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
@@ -172,6 +173,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <NotificationProvider>
+          <DeviceProvider>
             <Toaster />
             <Sonner />
             <PWAInstallPrompt />
@@ -1037,6 +1039,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+          </DeviceProvider>
         </NotificationProvider>
       </AuthProvider>
   </QueryClientProvider>
