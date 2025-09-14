@@ -1041,11 +1041,11 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-          </NotificationProvider>
-        </AuthProvider>
-      </ViewProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+      </NotificationProvider>
+    </AuthProvider>
+  </ViewProvider>
+</TooltipProvider>
+    </QueryClientProvider>
 );
 
 export default App;
