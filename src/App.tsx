@@ -171,8 +171,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ViewProvider>
       <AuthProvider>
+        <ViewProvider>
         <NotificationProvider>
             <Toaster />
             <Sonner />
@@ -1040,8 +1040,8 @@ const App = () => (
           </Routes>
         </BrowserRouter>
         </NotificationProvider>
+        </ViewProvider>
       </AuthProvider>
-    </ViewProvider>
   </QueryClientProvider>
 );
 
