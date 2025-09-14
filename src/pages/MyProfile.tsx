@@ -127,7 +127,7 @@ export default function MyProfile() {
           gender: profile.gender || "",
           dob: profile.dob || "",
           age: profile.age?.toString() || "",
-          mobile_no: profile.mobile_no || user.phone || "",
+          mobile_no: profile.phone || profile.mobile_no ||user.phone || "",
           email: profile.email || user.email || "",
           address: profile.address || "",
           socio_id: profile.socio_id || "",

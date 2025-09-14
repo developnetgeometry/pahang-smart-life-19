@@ -229,6 +229,7 @@ export default function Marketplace() {
           `
           )
           .eq("is_active", true)
+          .eq("community_id", user?.active_community_id)
           .order("created_at", { ascending: false })
           .limit(20); // Limit results for better performance
 
@@ -270,16 +271,16 @@ export default function Marketplace() {
             postedDate: new Date(item.created_at).toISOString().split("T")[0],
             images: item.image
               ? [
-                  item.image.startsWith("http")
-                    ? item.image
-                    : item.image === "iphone-marketplace.jpg"
+                item.image.startsWith("http")
+                  ? item.image
+                  : item.image === "iphone-marketplace.jpg"
                     ? "/src/assets/iphone-marketplace.jpg"
                     : item.image === "dining-table-marketplace.jpg"
-                    ? "/src/assets/dining-table-marketplace.jpg"
-                    : item.image === "programming-books-marketplace.jpg"
-                    ? "/src/assets/programming-books-marketplace.jpg"
-                    : getFallbackImage(item.title, item.category),
-                ]
+                      ? "/src/assets/dining-table-marketplace.jpg"
+                      : item.image === "programming-books-marketplace.jpg"
+                        ? "/src/assets/programming-books-marketplace.jpg"
+                        : getFallbackImage(item.title, item.category),
+              ]
               : [getFallbackImage(item.title, item.category)],
             isFavorite: false,
             sellerType: item.seller_type as "resident" | "service_provider",
@@ -507,6 +508,7 @@ export default function Marketplace() {
             `
             )
             .eq("is_active", true)
+            .eq("community_id", user?.active_community_id)
             .order("created_at", { ascending: false });
 
           if (error) throw error;
@@ -541,16 +543,16 @@ export default function Marketplace() {
               postedDate: new Date(item.created_at).toISOString().split("T")[0],
               images: item.image
                 ? [
-                    item.image.startsWith("http")
-                      ? item.image
-                      : item.image === "iphone-marketplace.jpg"
+                  item.image.startsWith("http")
+                    ? item.image
+                    : item.image === "iphone-marketplace.jpg"
                       ? "/src/assets/iphone-marketplace.jpg"
                       : item.image === "dining-table-marketplace.jpg"
-                      ? "/src/assets/dining-table-marketplace.jpg"
-                      : item.image === "programming-books-marketplace.jpg"
-                      ? "/src/assets/programming-books-marketplace.jpg"
-                      : getFallbackImage(item.title, item.category),
-                  ]
+                        ? "/src/assets/dining-table-marketplace.jpg"
+                        : item.image === "programming-books-marketplace.jpg"
+                          ? "/src/assets/programming-books-marketplace.jpg"
+                          : getFallbackImage(item.title, item.category),
+                ]
                 : [getFallbackImage(item.title, item.category)],
               isFavorite: false,
               sellerType: item.seller_type as "resident" | "service_provider",
@@ -596,7 +598,7 @@ export default function Marketplace() {
         .select('seller_id')
         .eq('id', item.id)
         .single();
-        
+
       if (!sellerData?.seller_id) {
         throw new Error('Seller not found');
       }
@@ -612,12 +614,10 @@ export default function Marketplace() {
             chatWith: item.seller,
             presetMessage:
               language === "en"
-                ? `Hi, is this item still available? - ${
-                    item.title
-                  } (RM${item.price.toLocaleString()})`
-                : `Hai, adakah item ini masih tersedia? - ${
-                    item.title
-                  } (RM${item.price.toLocaleString()})`,
+                ? `Hi, is this item still available? - ${item.title
+                } (RM${item.price.toLocaleString()})`
+                : `Hai, adakah item ini masih tersedia? - ${item.title
+                } (RM${item.price.toLocaleString()})`,
             itemInfo: {
               title: item.title,
               price: item.price,
@@ -657,6 +657,8 @@ export default function Marketplace() {
           </h1>
           <p className="text-muted-foreground mt-2">{t.subtitle}</p>
         </div>
+        {/* <pre>{JSON.stringify(user, null, 2)}</pre> */}
+
         <div className="flex flex-col sm:flex-row items-center gap-2">
           <CartIcon onClick={() => setShowCart(!showCart)} />
           {user && (
