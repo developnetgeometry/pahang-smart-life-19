@@ -1175,8 +1175,8 @@ export default function Login() {
               </h1>
               <p className="text-xl md:text-2xl text-white/90 leading-relaxed max-w-2xl">
                 {language === "en"
-                  ? "Connecting communities across Pahang state with modern digital solutions for residents, administrators, and security personnel."
-                  : "Menghubungkan komuniti di seluruh negeri Pahang dengan penyelesaian digital moden untuk penduduk, pentadbir, dan kakitangan keselamatan."}
+                  ? "Connecting communities nationwide with modern digital solutions for residents, administrators, and security personnel."
+                  : "Menghubungkan komuniti di seluruh negara dengan penyelesaian digital moden untuk penduduk, pentadbir, dan kakitangan keselamatan."}
               </p>
             </div>
 

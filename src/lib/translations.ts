@@ -125,7 +125,7 @@ export const translations = {
 
     // System
     smartCommunity: "Integrated Smart City System",
-    pahangState: "Pahang State",
+    
     poweredBy: "Powered by Smart City Initiative",
 
     // New navigation items (not duplicates)
