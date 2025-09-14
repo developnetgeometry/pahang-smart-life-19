@@ -77,7 +77,10 @@ import { CreateUserValidator } from "@/components/admin/CreateUserValidator";
 import { adminDeleteUser } from "@/service/adminService";
 
 interface User {
+  // Auth user id (used for auth actions and linking)
   id: string;
+  // Profiles table primary key
+  profileId: string;
   name: string;
   email: string;
   phone: string;
@@ -360,6 +363,15 @@ export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [tenantHost, setTenantHost] = useState<null | { id: string; full_name: string; email: string; unit_number?: string }>(null);
+  const goToResident = () => {
+    if (!tenantHost) return;
+    const host = users.find(u => u.profileId === tenantHost.id);
+    if (host) {
+      setIsCreateOpen(false);
+      handleUserClick(host);
+    }
+  };
   const [creating, setCreating] = useState(false);
   const [isModalOperation, setIsModalOperation] = useState(false); // Flag to prevent unnecessary refetch
   const [scrollPosition, setScrollPosition] = useState(0); // Track scroll position
@@ -395,6 +407,7 @@ export default function UserManagement() {
   // Validation and diagnostics state
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [showValidator, setShowValidator] = useState(false);
+  const [showTenantValidator, setShowTenantValidator] = useState(true);
 
   const text = {
     en: {
@@ -445,7 +458,7 @@ export default function UserManagement() {
       // User details and tenant management
       userDetails: "User Details",
       householdMembers: "Household Members",
-      addTenant: "Add Guest",
+      addTenant: "Add Tenant",
       tenantName: "Tenant Name",
       tenantEmail: "Tenant Email",
       tenantPhone: "Tenant Phone",
@@ -457,7 +470,7 @@ export default function UserManagement() {
       discussions: "Discussions",
       createTenant: "Create Tenant",
       tenantCreated: "Tenant account created successfully!",
-      noHouseholdMembers: "No guest registered",
+      noHouseholdMembers: "No tenant registered",
       // Role-specific fields
       familySize: "Family Size",
       vehicleNumber: "Vehicle Number",
@@ -518,7 +531,7 @@ export default function UserManagement() {
       // User details and tenant management
       userDetails: "Butiran Pengguna",
       householdMembers: "Ahli Rumah",
-      addTenant: "Tambah Tetamu",
+      addTenant: "Tambah Penyewa",
       tenantName: "Nama Penyewa",
       tenantEmail: "E-mel Penyewa",
       tenantPhone: "Telefon Penyewa",
@@ -530,7 +543,7 @@ export default function UserManagement() {
       discussions: "Perbincangan",
       createTenant: "Cipta Penyewa",
       tenantCreated: "Akaun penyewa berjaya dicipta!",
-      noHouseholdMembers: "Tiada ahli rumah dijumpai.",
+      noHouseholdMembers: "Tiada penyewa didaftarkan.",
       // Role-specific fields
       familySize: "Saiz Keluarga",
       vehicleNumber: "Nombor Kenderaan",
@@ -634,6 +647,7 @@ export default function UserManagement() {
       let query = supabase.from("profiles").select(
         `
           id,
+          user_id,
           full_name,
           email,
           phone,
@@ -736,11 +750,13 @@ export default function UserManagement() {
       }
 
       const formattedUsers: User[] = (profiles || []).map((profile) => ({
-        id: profile.id,
+        id: profile.user_id, // auth user id
+        profileId: profile.id,
         name: profile.full_name || "Unknown User",
         email: profile.email || "",
         phone: profile.phone || "",
         unit: profile.unit_number || "",
+        // enhanced_user_roles.user_id references profiles.id
         role: roleMap.get(profile.id)?.[0] || "resident",
         status: (profile.account_status || "pending") as User["status"],
         joinDate: profile.created_at
@@ -1049,11 +1065,11 @@ export default function UserManagement() {
       return;
     }
 
-    // For guests, expiration date is required
+    // For tenants (guest role), expiration date is required
     if (form.role === "guest" && !form.access_expires_at) {
       toast({
         title: "Error",
-        description: "Please select an expiration date for guest access.",
+        description: "Please select an expiration date for tenant access.",
         variant: "destructive",
       });
       return;
@@ -1168,12 +1184,16 @@ export default function UserManagement() {
           requestBody.access_expires_at = form.access_expires_at;
         }
 
-        // Add district and community IDs
+        // Add district and community IDs (from form or fallback to admin scope)
         if (form.district_id) {
           requestBody.district_id = form.district_id;
+        } else if (user?.district) {
+          requestBody.district_id = user.district as any;
         }
         if (form.community_id) {
           requestBody.community_id = form.community_id;
+        } else if (user?.active_community_id) {
+          requestBody.community_id = user.active_community_id as any;
         }
 
         try {
@@ -1284,6 +1304,7 @@ export default function UserManagement() {
     setScrollPosition(window.scrollY);
     setIsModalOperation(true); // Prevent refetch during modal operations
     setEditingId(user.id);
+    fetchTenantHost(user.profileId);
     setForm({
       name: user.name,
       email: user.email,
@@ -1391,8 +1412,9 @@ export default function UserManagement() {
       } = await supabase.auth.getSession();
       if (!session) throw new Error("No session");
 
+      const ts = Date.now();
       const response = await fetch(
-        `https://hjhalygcsdolryngmlry.supabase.co/functions/v1/admin-household?host_user_id=${userId}`,
+        `https://hjhalygcsdolryngmlry.supabase.co/functions/v1/admin-household?host_user_id=${userId}&ts=${ts}`,
         {
           method: "GET",
           headers: {
@@ -1405,7 +1427,12 @@ export default function UserManagement() {
       );
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let msg = `HTTP error! status: ${response.status}`;
+        try {
+          const err = await response.json();
+          if (err?.error) msg += ` - ${err.error}`;
+        } catch {}
+        throw new Error(msg);
       }
 
       const result = await response.json();
@@ -1455,7 +1482,34 @@ export default function UserManagement() {
   const handleUserClick = (user: User) => {
     setSelectedUser(user);
     setIsUserDetailsOpen(true);
-    fetchHouseholdAccounts(user.id);
+    fetchHouseholdAccounts(user.profileId);
+    // If the selected user is a tenant, fetch the host resident info
+    fetchTenantHost(user.profileId);
+  };
+
+  const fetchTenantHost = async (tenantProfileId: string) => {
+    try {
+      setTenantHost(null);
+      const { data: ha, error: haErr } = await supabase
+        .from('household_accounts')
+        .select('primary_account_id')
+        .eq('linked_account_id', tenantProfileId)
+        .eq('relationship_type', 'tenant')
+        .eq('is_active', true)
+        .maybeSingle();
+      if (haErr || !ha?.primary_account_id) return;
+
+      const { data: host, error: hostErr } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, unit_number')
+        .eq('id', ha.primary_account_id)
+        .single();
+      if (!hostErr && host) {
+        setTenantHost({ id: host.id, full_name: host.full_name || 'Resident', email: host.email || '', unit_number: host.unit_number || undefined });
+      }
+    } catch (e) {
+      // best-effort only
+    }
   };
 
   // Handle create tenant (guest)
@@ -1478,7 +1532,131 @@ export default function UserManagement() {
     try {
       setIsCreatingTenant(true);
 
-      // Call admin-create-guest instead of admin-household
+      // Preflight: check if a user with this email already exists
+      const { data: existingProfile, error: existingProfileError } = await supabase
+        .from('profiles')
+        .select('id, user_id, district_id, community_id')
+        .eq('email', tenantForm.tenant_email)
+        .maybeSingle();
+
+      if (existingProfileError) {
+        console.warn('Preflight lookup failed, proceeding to create:', existingProfileError);
+      }
+
+      if (existingProfile?.user_id) {
+        // Check roles for the existing user
+        const { data: existingRoles } = await supabase
+          .from('enhanced_user_roles')
+          .select('role, is_active')
+          .eq('user_id', existingProfile.user_id)
+          .eq('is_active', true);
+
+        const hasResident = !!existingRoles?.some(r => r.role === 'resident');
+        const hasGuest = !!existingRoles?.some(r => r.role === 'guest');
+
+        // If currently resident, ask to convert to tenant
+        if (hasResident) {
+          const proceed = window.confirm(
+            'This email belongs to an existing resident. Convert to tenant (remove resident role) and link to this household?'
+          );
+          if (!proceed) {
+            toast({ title: 'Cancelled', description: 'No changes were made.' });
+            setIsCreatingTenant(false);
+            return;
+          }
+
+          await supabase
+            .from('enhanced_user_roles')
+            .update({ is_active: false })
+            .eq('user_id', existingProfile.user_id)
+            .eq('role', 'resident');
+        }
+
+        // Ensure guest role is active
+        if (!hasGuest) {
+          await supabase
+            .from('enhanced_user_roles')
+            .upsert(
+              {
+                user_id: existingProfile.user_id,
+                role: 'guest',
+                is_active: true,
+                assigned_by: user?.id,
+                assigned_at: new Date().toISOString(),
+              },
+              { onConflict: 'user_id,role' }
+            );
+        }
+
+        // Update profile expiry and copy scope if missing
+        await supabase
+          .from('profiles')
+          .update({
+            access_expires_at: tenantForm.access_expires_at,
+            district_id: existingProfile.district_id || selectedUser.district_id,
+            community_id: existingProfile.community_id || selectedUser.community_id,
+            full_name: tenantForm.tenant_name,
+            phone: tenantForm.tenant_phone,
+          })
+          .eq('user_id', existingProfile.user_id);
+
+        // Ensure household link
+        const { data: link } = await supabase
+          .from('household_accounts')
+          .select('id, is_active')
+          .eq('primary_account_id', selectedUser.profileId)
+          .eq('linked_account_id', existingProfile.id)
+          .eq('relationship_type', 'tenant')
+          .maybeSingle();
+
+        if (link?.id) {
+          if (link.is_active === false) {
+            await supabase
+              .from('household_accounts')
+              .update({ is_active: true })
+              .eq('id', link.id);
+          }
+        } else {
+          await supabase
+            .from('household_accounts')
+            .insert({
+              primary_account_id: selectedUser.profileId,
+              linked_account_id: existingProfile.id,
+              relationship_type: 'tenant',
+              permissions: {
+                marketplace: !!tenantForm.permissions.marketplace,
+                bookings: !!tenantForm.permissions.bookings,
+                announcements: !!tenantForm.permissions.announcements,
+                complaints: !!tenantForm.permissions.complaints,
+                discussions: !!tenantForm.permissions.discussions,
+              },
+              created_by: user?.id,
+            });
+        }
+
+        toast({ title: 'Tenant Linked', description: 'Existing user converted/assigned as tenant and linked.' });
+
+        // Reset and refresh
+        setTenantForm({
+          tenant_name: '',
+          tenant_email: '',
+          tenant_phone: '',
+          access_expires_at: '',
+          permissions: {
+            marketplace: true,
+            bookings: true,
+            announcements: true,
+            complaints: true,
+            discussions: true,
+            panic_button: true,
+          },
+        });
+        setIsAddTenantOpen(false);
+        fetchHouseholdAccounts(selectedUser.profileId);
+        return;
+      }
+
+      // Call admin-create-guest to create the tenant user
       const { data, error } = await supabase.functions.invoke(
         "admin-create-guest",
         {
@@ -1498,16 +1676,62 @@ export default function UserManagement() {
 
       // Check for errors in response body even with 2xx status
       if (data?.error || data?.success === false) {
-        console.error("Error in response body from admin-create-guest:", data);
+        console.error('Error in response body from admin-create-guest:', data);
         throw new Error(data.error || "Function returned error response");
       }
 
+      // Try to resolve the newly created tenant's auth id via their email
+      const { data: createdProfile, error: profileLookupError } = await supabase
+        .from('profiles')
+        .select('user_id, id')
+        .eq('email', tenantForm.tenant_email)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (profileLookupError) {
+        console.warn('Could not look up tenant profile after creation:', profileLookupError);
+      }
+
+      if (createdProfile?.user_id && selectedUser) {
+        // Assign tenant unit from host resident, regardless of link success
+        if (selectedUser.unit) {
+          await supabase
+            .from('profiles')
+            .update({ unit_number: selectedUser.unit })
+            .eq('user_id', createdProfile.user_id);
+        }
+        // Create household link to selected resident (use profile IDs)
+        const { error: householdError } = await supabase
+          .from('household_accounts')
+          .insert({
+            primary_account_id: selectedUser.profileId, // host profile id
+            linked_account_id: createdProfile.id, // tenant profile id
+            relationship_type: 'tenant',
+            permissions: {
+              marketplace: !!tenantForm.permissions.marketplace,
+              bookings: !!tenantForm.permissions.bookings,
+              announcements: !!tenantForm.permissions.announcements,
+              complaints: !!tenantForm.permissions.complaints,
+              discussions: !!tenantForm.permissions.discussions,
+            },
+            created_by: selectedUser.profileId,
+          });
+
+        if (householdError) {
+          console.error('Failed to create household tenant link:', householdError);
+          throw new Error('Tenant was created but linking to resident failed');
+        }
+
+        // Unit already assigned above
+      }
+
       toast({
-        title: "Guest Created Successfully",
+        title: "Tenant Created Successfully",
         description:
           language === "en"
-            ? "Guest account created with temporary credentials."
-            : "Akaun tetamu dicipta dengan kelayakan sementara.",
+            ? "Tenant account created and linked to resident."
+            : "Akaun penyewa dicipta dan dipautkan kepada penduduk.",
       });
 
       // Reset form and close modal
@@ -1529,13 +1753,144 @@ export default function UserManagement() {
 
       // Refresh household accounts
       if (selectedUser) {
-        fetchHouseholdAccounts(selectedUser.id);
+        fetchHouseholdAccounts(selectedUser.profileId);
       }
-    } catch (error) {
-      console.error("Error creating guest:", error);
+    } catch (error: any) {
+      console.error("Error creating tenant:", error);
+
+      const msg = String(error?.message || "").toLowerCase();
+      const conflict = msg.includes("cannot assign guest role") || msg.includes("already has resident role");
+
+      if (conflict) {
+        try {
+          // Find existing user by email
+          const { data: existingProfile, error: existingErr } = await supabase
+            .from('profiles')
+            .select('id, user_id')
+            .eq('email', tenantForm.tenant_email)
+            .maybeSingle();
+
+          if (existingErr || !existingProfile?.user_id) {
+            throw new Error('Found conflicting resident but could not resolve the account');
+          }
+
+          const proceed = window.confirm(
+            'This email belongs to an existing resident. Convert to tenant (remove resident role) and link to this household?'
+          );
+          if (!proceed) {
+            toast({ title: 'Cancelled', description: 'No changes were made.' });
+            return;
+          }
+
+          // Deactivate resident role
+          await supabase
+            .from('enhanced_user_roles')
+            .update({ is_active: false })
+            .eq('user_id', existingProfile.user_id)
+            .eq('role', 'resident');
+
+          // Assign guest role
+          await supabase
+            .from('enhanced_user_roles')
+            .upsert(
+              {
+                user_id: existingProfile.user_id,
+                role: 'guest',
+                is_active: true,
+                assigned_by: user?.id,
+                assigned_at: new Date().toISOString(),
+              },
+              { onConflict: 'user_id,role' }
+            );
+
+          // Update access expiry on profile
+          await supabase
+            .from('profiles')
+            .update({ 
+              access_expires_at: tenantForm.access_expires_at,
+              unit_number: selectedUser?.unit || null
+            })
+            .eq('user_id', existingProfile.user_id);
+
+          // Link household (create or reactivate)
+          // Assign unit from host before linking
+          if (selectedUser?.unit) {
+            await supabase
+              .from('profiles')
+              .update({ unit_number: selectedUser.unit })
+              .eq('user_id', existingProfile.user_id);
+          }
+
+          const { data: existingLink } = await supabase
+            .from('household_accounts')
+            .select('id, is_active')
+            .eq('primary_account_id', selectedUser!.profileId)
+            .eq('linked_account_id', existingProfile.id)
+            .eq('relationship_type', 'tenant')
+            .maybeSingle();
+
+          if (existingLink?.id) {
+            if (existingLink.is_active === false) {
+              await supabase
+                .from('household_accounts')
+                .update({ is_active: true })
+                .eq('id', existingLink.id);
+            }
+          } else {
+            await supabase
+              .from('household_accounts')
+              .insert({
+                primary_account_id: selectedUser!.profileId,
+                linked_account_id: existingProfile.id,
+                relationship_type: 'tenant',
+                permissions: {
+                  marketplace: !!tenantForm.permissions.marketplace,
+                  bookings: !!tenantForm.permissions.bookings,
+                  announcements: !!tenantForm.permissions.announcements,
+                  complaints: !!tenantForm.permissions.complaints,
+                  discussions: !!tenantForm.permissions.discussions,
+                },
+                created_by: selectedUser!.profileId,
+              });
+          }
+
+          toast({
+            title: 'Tenant Linked',
+            description: 'Converted resident to tenant and linked to the household.',
+          });
+
+          // Reset form, close modal and refresh
+          setTenantForm({
+            tenant_name: "",
+            tenant_email: "",
+            tenant_phone: "",
+            access_expires_at: "",
+            permissions: {
+              marketplace: true,
+              bookings: true,
+              announcements: true,
+              complaints: true,
+              discussions: true,
+              panic_button: true,
+            },
+          });
+          setIsAddTenantOpen(false);
+          fetchHouseholdAccounts(selectedUser!.profileId);
+          return;
+        } catch (fallbackErr: any) {
+          console.error('Tenant conversion/link fallback failed:', fallbackErr);
+          toast({
+            title: 'Conversion Failed',
+            description: fallbackErr.message || 'Could not convert resident to tenant',
+            variant: 'destructive',
+          });
+        }
+      }
+
+      // Default error handling
       toast({
         title: "Error",
-        description: error.message || "Failed to create guest account",
+        description: error?.message || "Failed to create tenant account",
         variant: "destructive",
       });
     } finally {
@@ -1557,6 +1912,35 @@ export default function UserManagement() {
           >
             {showDiagnostics ? "Hide" : "Show"} Diagnostics
           </Button>
+          {(hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin')) && (
+            <Button
+              variant="secondary"
+              onClick={async () => {
+                try {
+                  const { data: { session } } = await supabase.auth.getSession();
+                  if (!session) throw new Error('No session');
+                  const resp = await fetch(`https://hjhalygcsdolryngmlry.supabase.co/functions/v1/admin-repair-household`, {
+                    method: 'POST',
+                    headers: {
+                      Authorization: `Bearer ${session.access_token}`,
+                      apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqaGFseWdjc2RvbHJ5bmdtbHJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0ODYwNDYsImV4cCI6MjA3MTA2MjA0Nn0.xfJ_IHy-Pw1iiKFbKxHxGe93wgKu26PtW8QCtzj34cI',
+                      'Content-Type': 'application/json'
+                    }
+                  });
+                  const result = await resp.json();
+                  if (!resp.ok) throw new Error(result?.error || 'Repair failed');
+                  toast({ title: 'Repair complete', description: `IDs fixed: ${result.updatedIds}, Duplicates removed: ${result.deletedDup}, Units backfilled: ${result.unitUpdated}` });
+                  // Refresh current lists
+                  fetchUsers();
+                  if (selectedUser) fetchHouseholdAccounts(selectedUser.profileId);
+                } catch (e: any) {
+                  toast({ title: 'Repair failed', description: e.message || 'Unknown error', variant: 'destructive' });
+                }
+              }}
+            >
+              Repair Household Links
+            </Button>
+          )}
         </div>
       </div>
 
@@ -1604,72 +1988,86 @@ export default function UserManagement() {
         >
           <DialogTrigger asChild>
             <Button>
-              <UserPlus className="h-4 w-4 mr-2" />
-              {t.addUser}
+              {editingId ? (
+                <>
+                  <Edit className="h-4 w-4 mr-2" />
+                  {t.edit}
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  {t.addUser}
+                </>
+              )}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{t.createUser}</DialogTitle>
-              <DialogDescription>{t.createSubtitle}</DialogDescription>
+              <DialogTitle>{editingId ? t.edit : t.createUser}</DialogTitle>
+              <DialogDescription>{editingId ? t.userDetails : t.createSubtitle}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              {/* Validation Panel */}
-              <CreateUserValidator
-                formData={{
-                  name: form.name,
-                  email: form.email,
-                  phone: form.phone,
-                  unit: form.unit,
-                  role: form.role,
-                  status: form.status,
-                  district_id: form.district_id,
-                  community_id: form.community_id,
-                  password: form.password,
-                  confirmPassword: form.confirmPassword,
-                  access_expires_at: form.access_expires_at,
-                }}
-                isVisible={showValidator}
-                onToggleVisibility={() => setShowValidator(!showValidator)}
-              />
+              {/* Validation Panel - only for creating new users */}
+              {!editingId && (
+                <CreateUserValidator
+                  formData={{
+                    name: form.name,
+                    email: form.email,
+                    phone: form.phone,
+                    unit: form.unit,
+                    role: form.role,
+                    status: form.status,
+                    district_id: form.district_id,
+                    community_id: form.community_id,
+                    password: form.password,
+                    confirmPassword: form.confirmPassword,
+                    access_expires_at: form.access_expires_at,
+                  }}
+                  isVisible={showValidator}
+                  onToggleVisibility={() => setShowValidator(!showValidator)}
+                />
+              )}
 
-              {/* Role Selection - Always shown first */}
-              <div className="space-y-2">
-                <Label htmlFor="role">{t.role} *</Label>
-                <Select
-                  value={form.role || "resident"}
-                  onValueChange={handleRoleChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t.selectRole} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles.slice(1).map((role) => {
-                      const isDisabled =
-                        (role.value === "security_officer" &&
-                          !isModuleEnabled("security")) ||
-                        ((role.value === "facility_manager" ||
-                          role.value === "maintenance_staff") &&
-                          !isModuleEnabled("facilities"));
+              {/* Role Selection - hide when editing a tenant */}
+              {!(editingId && form.role === 'guest') && (
+                <div className="space-y-2">
+                  <Label htmlFor="role">{t.role} *</Label>
+                  <Select
+                    value={form.role || "resident"}
+                    onValueChange={handleRoleChange}
+                    disabled={!!editingId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t.selectRole} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roles.slice(1).map((role) => {
+                        const isDisabled =
+                          (role.value === "security_officer" &&
+                            !isModuleEnabled("security")) ||
+                          ((role.value === "facility_manager" ||
+                            role.value === "maintenance_staff") &&
+                            !isModuleEnabled("facilities"));
 
-                      return (
-                        <SelectItem
-                          key={role.value}
-                          value={role.value}
-                          disabled={isDisabled}
-                        >
-                          {role.label}
-                          {isDisabled && (
-                            <span className="text-xs text-muted-foreground ml-2">
-                              (Module disabled)
-                            </span>
-                          )}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
+                        return (
+                          <SelectItem
+                            key={role.value}
+                            value={role.value}
+                            disabled={isDisabled}
+                          >
+                            {role.label}
+                            {isDisabled && (
+                              <span className="text-xs text-muted-foreground ml-2">
+                                (Module disabled)
+                              </span>
+                            )}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {/* Simplified form for residents, full form for other roles */}
               {form.role === "resident" || !form.role ? (
@@ -1757,21 +2155,31 @@ export default function UserManagement() {
                 </>
               ) : form.role === "guest" ? (
                 <>
-                  {/* Guest-specific form */}
+                  {/* Tenant-specific form (guest role) */}
                   <div className="space-y-3 p-4 bg-yellow-50 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <UserPlus className="h-4 w-4 text-yellow-600" />
                       <span className="text-sm font-medium text-yellow-800">
-                        {language === "en"
-                          ? "Creating New Guest"
-                          : "Mencipta Tetamu Baru"}
+                        {language === "en" ? "Creating New Tenant" : "Mencipta Penyewa Baru"}
                       </span>
                     </div>
                     <p className="text-xs text-yellow-700">
                       {language === "en"
-                        ? "Guest users will receive temporary credentials with an expiration date."
-                        : "Pengguna tetamu akan menerima kelayakan sementara dengan tarikh tamat tempoh."}
+                        ? "Tenant accounts include limited access with an expiration date."
+                        : "Akaun penyewa mempunyai akses terhad dengan tarikh luput."}
                     </p>
+                    {editingId && tenantHost && (
+                      <div className="mt-2 p-2 bg-yellow-100 border border-yellow-200 rounded text-xs text-yellow-900 flex items-center justify-between">
+                        <div>
+                          {language === 'en' ? 'Belongs to: ' : 'Di bawah: '}
+                          <strong>{tenantHost.full_name}</strong>
+                          {tenantHost.unit_number ? ` • Unit ${tenantHost.unit_number}` : ''}
+                        </div>
+                        <Button variant="link" size="sm" onClick={goToResident} className="text-yellow-900">
+                          {language === 'en' ? 'Go to resident' : 'Lihat penduduk'}
+                        </Button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -1804,8 +2212,18 @@ export default function UserManagement() {
                     </div>
                   </div>
 
-                  {/* Guest-specific fields */}
+                  {/* Tenant-specific fields */}
                   <div className="grid grid-cols-2 gap-4">
+                    {/* Unit - readonly from host */}
+                    <div className="space-y-2 col-span-2">
+                      <Label htmlFor="tenantUnit">{t.unit}</Label>
+                      <Input
+                        id="tenantUnit"
+                        value={tenantHost?.unit_number || form.unit || ''}
+                        readOnly
+                        disabled
+                      />
+                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="access_expires_at">
                         Access Expires *
@@ -1913,6 +2331,7 @@ export default function UserManagement() {
                     </div>
                   )}
 
+                  {form.role !== 'guest' && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="district">District *</Label>
@@ -1976,44 +2395,48 @@ export default function UserManagement() {
                       </div>
                     )}
                   </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="role">{t.role}</Label>
-                      <Select
-                        value={form.role}
-                        onValueChange={handleRoleChange}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={t.selectRole} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {roles.slice(1).map((role) => {
-                            const isDisabled =
-                              (role.value === "security_officer" &&
-                                !isModuleEnabled("security")) ||
-                              ((role.value === "facility_manager" ||
-                                role.value === "maintenance_staff") &&
-                                !isModuleEnabled("facilities"));
+                    {form.role !== 'guest' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="role">{t.role}</Label>
+                        <Select
+                          value={form.role}
+                          onValueChange={handleRoleChange}
+                          disabled={!!editingId}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={t.selectRole} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {roles.slice(1).map((role) => {
+                              const isDisabled =
+                                (role.value === "security_officer" &&
+                                  !isModuleEnabled("security")) ||
+                                ((role.value === "facility_manager" ||
+                                  role.value === "maintenance_staff") &&
+                                  !isModuleEnabled("facilities"));
 
-                            return (
-                              <SelectItem
-                                key={role.value}
-                                value={role.value}
-                                disabled={isDisabled}
-                              >
-                                {role.label}
-                                {isDisabled && (
-                                  <span className="text-xs text-muted-foreground ml-2">
-                                    (Module disabled)
-                                  </span>
-                                )}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                              return (
+                                <SelectItem
+                                  key={role.value}
+                                  value={role.value}
+                                  disabled={isDisabled}
+                                >
+                                  {role.label}
+                                  {isDisabled && (
+                                    <span className="text-xs text-muted-foreground ml-2">
+                                      (Module disabled)
+                                    </span>
+                                  )}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     {/* Status field for staff roles only (not residents or guests) */}
                     {form.role !== "resident" && form.role !== "guest" && (
                       <div className="space-y-2">
@@ -2639,6 +3062,18 @@ export default function UserManagement() {
                     <p className="text-sm text-muted-foreground">
                       {selectedUser.phone}
                     </p>
+                    {selectedUser.role === 'guest' && tenantHost && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <p className="text-xs text-yellow-900 bg-yellow-50 border border-yellow-200 inline-block px-2 py-1 rounded">
+                          {language === 'en' ? 'Belongs to: ' : 'Di bawah: '}
+                          <strong>{tenantHost.full_name}</strong>
+                          {tenantHost.unit_number ? ` • Unit ${tenantHost.unit_number}` : ''}
+                        </p>
+                        <Button variant="link" size="sm" onClick={goToResident} className="h-auto p-0 text-yellow-900">
+                          {language === 'en' ? 'Go to resident' : 'Lihat penduduk'}
+                        </Button>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 mt-2">
                       <Badge className={getRoleColor(selectedUser.role)}>
                         {getRoleText(selectedUser.role)}
@@ -2651,7 +3086,8 @@ export default function UserManagement() {
                 </div>
               </div>
 
-              {/* Household Members Section */}
+              {/* Household Members Section - hidden for tenants */}
+              {!['guest','tenant'].includes(selectedUser.role as string) && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="text-lg font-semibold">
@@ -2667,7 +3103,7 @@ export default function UserManagement() {
                         {t.addTenant}
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="sm:max-w-[560px] max-h-[80vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle>{t.addTenant}</DialogTitle>
                         <DialogDescription>
@@ -2677,6 +3113,22 @@ export default function UserManagement() {
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4">
+                        {/* Validation panel for tenant creation */}
+                        <CreateUserValidator
+                          formData={{
+                            name: tenantForm.tenant_name,
+                            email: tenantForm.tenant_email,
+                            phone: tenantForm.tenant_phone,
+                            unit: "",
+                            role: "guest",
+                            status: "",
+                            district_id: selectedUser?.district_id,
+                            community_id: selectedUser?.community_id,
+                            access_expires_at: tenantForm.access_expires_at,
+                          }}
+                          isVisible={showTenantValidator}
+                          onToggleVisibility={() => setShowTenantValidator(!showTenantValidator)}
+                        />
                         <div className="space-y-2">
                           <Label htmlFor="tenantName">{t.tenantName} *</Label>
                           <Input
@@ -2874,6 +3326,7 @@ export default function UserManagement() {
                   </div>
                 )}
               </div>
+              )}
             </div>
           )}
         </DialogContent>

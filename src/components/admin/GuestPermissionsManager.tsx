@@ -64,7 +64,7 @@ export default function GuestPermissionsManager() {
       console.error('Error fetching guest permissions:', error);
       toast({
         title: "Error",
-        description: "Failed to load guest permissions",
+        description: "Failed to load tenant permissions",
         variant: "destructive",
       });
     } finally {
@@ -115,13 +115,13 @@ export default function GuestPermissionsManager() {
 
       toast({
         title: "Success",
-        description: "Guest permissions updated successfully",
+        description: "Tenant permissions updated successfully",
       });
     } catch (error) {
-      console.error('Error saving guest permissions:', error);
+      console.error('Error saving tenant permissions:', error);
       toast({
         title: "Error",
-        description: "Failed to save guest permissions",
+        description: "Failed to save tenant permissions",
         variant: "destructive",
       });
     } finally {
@@ -142,9 +142,9 @@ export default function GuestPermissionsManager() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Guest Permissions</CardTitle>
+        <CardTitle>Tenant Permissions</CardTitle>
         <CardDescription>
-          Control what features guest users can access in your community
+          Control what features tenant users can access in your community
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

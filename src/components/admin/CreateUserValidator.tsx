@@ -39,12 +39,15 @@ export function CreateUserValidator({
   onToggleVisibility 
 }: CreateUserValidatorProps) {
   const { user } = useAuth();
-  const { hasRole } = useUserRoles();
+  const { userRoles } = useUserRoles();
   const [validationResults, setValidationResults] = useState<any[]>([]);
 
   useEffect(() => {
     validateForm();
-  }, [formData, user, hasRole]);
+    // Only re-run when form data changes, user changes, or role list changes
+    // Avoid depending on function references to prevent render loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData, user?.id, JSON.stringify(userRoles)]);
 
   const validateForm = () => {
     const results = [];
@@ -57,7 +60,9 @@ export function CreateUserValidator({
     });
 
     // Check admin permissions
-    const isAdmin = hasRole('community_admin') || hasRole('district_coordinator') || hasRole('state_admin');
+    const isAdmin = userRoles?.some(r => (
+      r === 'community_admin' || r === 'district_coordinator' || r === 'state_admin')
+    );
     results.push({
       check: "Admin Role",
       status: isAdmin ? "success" : "error", 
@@ -99,18 +104,18 @@ export function CreateUserValidator({
         : "Invalid email format",
     });
 
-    // Guest-specific requirement: access expiry
+    // Tenant (guest role) specific requirement: access expiry
     if (formData.role === 'guest') {
       if (!formData.access_expires_at) {
         results.push({
-          check: "Guest Access Expiry",
+          check: "Tenant Access Expiry",
           status: "warning",
-          message: "Expiration date required for guests",
+          message: "Expiration date required for tenants",
         });
       } else {
         const inFuture = new Date(formData.access_expires_at) > new Date();
         results.push({
-          check: "Guest Access Expiry",
+          check: "Tenant Access Expiry",
           status: inFuture ? "success" : "error",
           message: inFuture ? "Expiry date set" : "Expiration must be in the future",
         });

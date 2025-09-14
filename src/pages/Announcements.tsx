@@ -50,6 +50,7 @@ import {
   Eye,
   FileText,
   Download,
+  Paperclip,
   Send,
   Reply,
   Image as ImageIcon,
@@ -65,6 +66,8 @@ import { useToast } from "@/hooks/use-toast";
 import CreateAnnouncementModal from "@/components/announcements/CreateAnnouncementModal";
 import PollComponent from "@/components/announcements/PollComponent";
 import { useUserRoles } from "@/hooks/use-user-roles";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -321,6 +324,10 @@ export default function Announcements() {
   const [totalAnnouncements, setTotalAnnouncements] = useState(0);
   const [scrollPosition, setScrollPosition] = useState(0);
   const announcementsPerPage = 15;
+
+  // User profile context for scoping
+  const [profileDistrictId, setProfileDistrictId] = useState<string | null>(null);
+  const [profileCommunityId, setProfileCommunityId] = useState<string | null>(null);
   
   // Debounced search
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -329,6 +336,17 @@ export default function Announcements() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    content: "",
+    type: "general",
+    is_urgent: false,
+    is_published: true,
+    publish_at: "",
+    expire_at: "",
+  });
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [commentsLoading, setCommentsLoading] = useState(false);
@@ -485,6 +503,26 @@ export default function Announcements() {
 
   const t = text[language];
 
+  // Load profile once for scoping
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        if (!user) return;
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("district_id, community_id")
+          .eq("user_id", user.id)
+          .single();
+        if (error) return;
+        setProfileDistrictId(data?.district_id ?? null);
+        setProfileCommunityId(data?.community_id ?? null);
+      } catch (e) {
+        // non-blocking
+      }
+    };
+    loadProfile();
+  }, [user]);
+
   // Enhanced fetch announcements with server-side pagination and filtering
   const fetchAnnouncements = useCallback(async (page = 1, preserveScroll = false) => {
     try {
@@ -511,6 +549,8 @@ export default function Announcements() {
           created_at,
           author_id,
           scope,
+          district_id,
+          community_id,
           images,
           attachments,
           reading_time_minutes
@@ -519,14 +559,32 @@ export default function Announcements() {
         .lte("publish_at", new Date().toISOString())
         .or("expire_at.is.null,expire_at.gt." + new Date().toISOString());
 
+      // Apply user scoping: state OR (district & user district) OR (community & user community)
+      // If user selects a specific scope, further narrow it.
+      const filters: string[] = [];
+      const canSeeState = true; // all users see state-level
+      if (selectedScope === 'all') {
+        if (canSeeState) filters.push('scope.eq.state');
+        if (profileDistrictId) filters.push(`and(scope.eq.district,district_id.eq.${profileDistrictId})`);
+        if (profileCommunityId) filters.push(`and(scope.eq.community,community_id.eq.${profileCommunityId})`);
+        if (filters.length > 0) {
+          query = query.or(filters.join(','));
+        }
+      } else if (selectedScope === 'state') {
+        query = query.eq('scope', 'state');
+      } else if (selectedScope === 'district') {
+        query = query.eq('scope', 'district');
+        if (profileDistrictId) query = query.eq('district_id', profileDistrictId);
+        else query = query.eq('district_id', ''); // ensure none if unknown
+      } else if (selectedScope === 'community') {
+        query = query.eq('scope', 'community');
+        if (profileCommunityId) query = query.eq('community_id', profileCommunityId);
+        else query = query.eq('community_id', '');
+      }
+
       // Apply search filter
       if (debouncedSearchTerm) {
         query = query.or(`title.ilike.%${debouncedSearchTerm}%,content.ilike.%${debouncedSearchTerm}%,type.ilike.%${debouncedSearchTerm}%`);
-      }
-
-      // Apply scope filter
-      if (selectedScope !== 'all') {
-        query = query.eq('scope', selectedScope);
       }
 
       // Apply category filter
@@ -653,7 +711,7 @@ export default function Announcements() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [debouncedSearchTerm, selectedScope, selectedCategory, selectedPriority, sortBy, language, scrollPosition]);
+  }, [debouncedSearchTerm, selectedScope, selectedCategory, selectedPriority, sortBy, language, scrollPosition, profileDistrictId, profileCommunityId]);
 
   // Effects for data fetching
   useEffect(() => {
@@ -670,7 +728,7 @@ export default function Announcements() {
     } else {
       fetchAnnouncements(1);
     }
-  }, [debouncedSearchTerm, selectedScope, selectedCategory, selectedPriority, sortBy]);
+  }, [debouncedSearchTerm, selectedScope, selectedCategory, selectedPriority, sortBy, profileDistrictId, profileCommunityId]);
 
   // Real-time subscription
   useEffect(() => {
@@ -1127,9 +1185,230 @@ export default function Announcements() {
         }}
       />
 
-      {/* Announcement Details Modal - Rest of the modal logic would go here */}
-      {/* For brevity, I'm not including the full modal implementation */}
-      {/* The modal would include reactions, comments, bookmarking, sharing functionality */}
+      {/* Announcement Details Modal */}
+      <Dialog open={detailsModalOpen} onOpenChange={setDetailsModalOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Megaphone className="w-5 h-5" />
+              {t.announcementDetails}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedAnnouncement && (
+            <div className="space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold mb-2">{selectedAnnouncement.title}</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant={getPriorityColor(selectedAnnouncement.priority)}>
+                      {getPriorityText(selectedAnnouncement.priority)}
+                    </Badge>
+                    <Badge className={getScopeColor(selectedAnnouncement.scope)}>
+                      {getScopeText(selectedAnnouncement.scope)}
+                    </Badge>
+                    <Badge variant="secondary">
+                      {t[selectedAnnouncement.category as keyof typeof t] || selectedAnnouncement.category}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-muted-foreground flex items-center gap-4">
+                    <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {t.publishedOn}: {selectedAnnouncement.created_date}</span>
+                    <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {t.author}: {selectedAnnouncement.author}</span>
+                  </div>
+                </div>
+                {canCreateAnnouncements && (
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setEditModalOpen(true)}>
+                      <FileText className="w-4 h-4 mr-1" /> Edit
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={async () => {
+                        if (!selectedAnnouncement) return;
+                        if (!confirm(language === 'en' ? 'Delete this announcement?' : 'Padam pengumuman ini?')) return;
+                        try {
+                          const { error } = await supabase
+                            .from('announcements')
+                            .delete()
+                            .eq('id', selectedAnnouncement.id);
+                          if (error) throw error;
+                          setDetailsModalOpen(false);
+                          setSelectedAnnouncement(null);
+                          handleRefresh();
+                        } catch (e) {
+                          toast({ title: language === 'en' ? 'Delete failed' : 'Gagal memadam', variant: 'destructive' });
+                        }
+                      }}
+                    >
+                      Delete
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleTogglePin(selectedAnnouncement.id, selectedAnnouncement.is_pinned)}
+                    >
+                      {selectedAnnouncement.is_pinned ? <PinOff className="w-4 h-4 mr-1" /> : <Pin className="w-4 h-4 mr-1" />}
+                      {selectedAnnouncement.is_pinned ? t.unpinAnnouncement : t.pinAnnouncement}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Images */}
+              {selectedAnnouncement.images && selectedAnnouncement.images.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {selectedAnnouncement.images.map((img, idx) => (
+                    <img key={idx} src={img} alt={`image-${idx}`} className="w-full h-32 object-cover rounded-md border" />
+                  ))}
+                </div>
+              )}
+
+              {/* Content */}
+              <div className="prose dark:prose-invert max-w-none">
+                <p>{selectedAnnouncement.content}</p>
+              </div>
+
+              {/* Attachments */}
+              {selectedAnnouncement.attachments && selectedAnnouncement.attachments.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2 flex items-center gap-2"><Paperclip className="w-4 h-4" /> {t.attachments}</h4>
+                  <div className="space-y-2">
+                    {selectedAnnouncement.attachments.map((att, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2 border rounded-md">
+                        <span className="text-sm">{att.name || `Attachment ${idx + 1}`}</span>
+                        <Button asChild variant="outline" size="sm">
+                          <a href={att.url} target="_blank" rel="noopener noreferrer">
+                            <Download className="w-4 h-4 mr-1" /> {t.download}
+                          </a>
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Modal */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Announcement</DialogTitle>
+          </DialogHeader>
+          {selectedAnnouncement && (
+            <div className="space-y-4">
+              <Input
+                placeholder={t.announcementTitle}
+                value={editForm.title || selectedAnnouncement.title}
+                onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
+              />
+              <Textarea
+                rows={5}
+                placeholder={t.content}
+                value={editForm.content || selectedAnnouncement.content}
+                onChange={(e) => setEditForm((p) => ({ ...p, content: e.target.value }))}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Select
+                  value={editForm.type || selectedAnnouncement.type}
+                  onValueChange={(v) => setEditForm((p) => ({ ...p, type: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">{t.general}</SelectItem>
+                    <SelectItem value="maintenance">{t.maintenance}</SelectItem>
+                    <SelectItem value="emergency">{t.emergency}</SelectItem>
+                    <SelectItem value="event">{t.event}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={editForm.is_urgent ?? selectedAnnouncement.is_urgent}
+                    onCheckedChange={(c) => setEditForm((p) => ({ ...p, is_urgent: c }))}
+                  />
+                  <span className="text-sm">{t.urgent}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={editForm.is_published ?? true}
+                    onCheckedChange={(c) => setEditForm((p) => ({ ...p, is_published: c }))}
+                  />
+                  <span className="text-sm">Published</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <Label>Publish At</Label>
+                  <Input
+                    type="datetime-local"
+                    value={(editForm.publish_at || selectedAnnouncement.publish_at || '').toString().slice(0,16)}
+                    onChange={(e) => setEditForm((p) => ({ ...p, publish_at: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label>Expire At</Label>
+                  <Input
+                    type="datetime-local"
+                    value={(editForm.expire_at || selectedAnnouncement.expire_at || '').toString().slice(0,16)}
+                    onChange={(e) => setEditForm((p) => ({ ...p, expire_at: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setEditModalOpen(false)}>Cancel</Button>
+                <Button
+                  onClick={async () => {
+                    if (!selectedAnnouncement) return;
+                    setEditSubmitting(true);
+                    try {
+                      const updates: any = {
+                        title: editForm.title || selectedAnnouncement.title,
+                        content: editForm.content || selectedAnnouncement.content,
+                        type: editForm.type || selectedAnnouncement.type,
+                        is_urgent: editForm.is_urgent ?? selectedAnnouncement.is_urgent,
+                        is_published: editForm.is_published ?? true,
+                        publish_at: editForm.publish_at || selectedAnnouncement.publish_at,
+                        expire_at: editForm.expire_at || selectedAnnouncement.expire_at,
+                      };
+                      const { error } = await supabase
+                        .from('announcements')
+                        .update(updates)
+                        .eq('id', selectedAnnouncement.id);
+                      if (error) throw error;
+                      // Reflect changes locally
+                      setAnnouncements((prev) => prev.map((a) => a.id === selectedAnnouncement.id ? {
+                        ...a,
+                        title: updates.title,
+                        content: updates.content,
+                        category: updates.type,
+                        is_urgent: updates.is_urgent,
+                        priority: updates.is_urgent ? 'urgent' : a.priority,
+                        publish_at: updates.publish_at,
+                        expire_at: updates.expire_at,
+                        type: updates.type,
+                      } : a));
+                      setEditModalOpen(false);
+                      toast({ title: language === 'en' ? 'Updated successfully' : 'Berjaya dikemaskini' });
+                    } catch (e) {
+                      toast({ title: language === 'en' ? 'Update failed' : 'Gagal kemaskini', variant: 'destructive' });
+                    } finally {
+                      setEditSubmitting(false);
+                    }
+                  }}
+                  disabled={editSubmitting}
+                >
+                  {editSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                  Save
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

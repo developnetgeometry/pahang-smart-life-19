@@ -39,13 +39,15 @@ interface Announcement {
 }
 
 export function AnnouncementSlideshow() {
-  const { language } = useAuth();
+  const { language, user } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(true);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [imageLoadError, setImageLoadError] = useState<string | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [districtId, setDistrictId] = useState<string | null>(null);
+  const [communityId, setCommunityId] = useState<string | null>(null);
 
   // Helper function to get localized content
   const getLocalizedTitle = (announcement: Announcement): string => {
@@ -84,11 +86,32 @@ export function AnnouncementSlideshow() {
     return truncated;
   };
 
-  // Fetch only pinned announcements
+  // Load profile for scoping
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        if (!user) return;
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('district_id, community_id')
+          .eq('user_id', user.id)
+          .single();
+        if (!error && data) {
+          setDistrictId(data.district_id ?? null);
+          setCommunityId(data.community_id ?? null);
+        }
+      } catch (e) {
+        // non-blocking
+      }
+    };
+    loadProfile();
+  }, [user]);
+
+  // Fetch only pinned announcements with scoping
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('announcements')
           .select(`
             id, 
@@ -114,7 +137,14 @@ export function AnnouncementSlideshow() {
           .eq('is_published', true)
           .eq('is_pinned', true)
           .lte('publish_at', new Date().toISOString())
-          .or('expire_at.is.null,expire_at.gt.' + new Date().toISOString())
+          .or('expire_at.is.null,expire_at.gt.' + new Date().toISOString());
+
+        const parts: string[] = ['scope.eq.state'];
+        if (districtId) parts.push(`and(scope.eq.district,district_id.eq.${districtId})`);
+        if (communityId) parts.push(`and(scope.eq.community,community_id.eq.${communityId})`);
+        query = query.or(parts.join(','));
+
+        const { data, error } = await query
           .order('is_urgent', { ascending: false })
           .order('created_at', { ascending: false })
           .limit(5);
@@ -132,7 +162,7 @@ export function AnnouncementSlideshow() {
     };
 
     fetchAnnouncements();
-  }, []);
+  }, [districtId, communityId]);
 
   // Reset image error when slide changes
   useEffect(() => {

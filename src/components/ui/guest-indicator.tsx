@@ -12,7 +12,7 @@ export function GuestIndicator() {
   return (
     <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
       <Clock className="w-3 h-3 mr-1" />
-      Guest Access
+      Tenant Access
     </Badge>
   );
 }
