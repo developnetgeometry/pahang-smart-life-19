@@ -82,7 +82,8 @@ interface CommunityChatProps {
 export default function CommunityChat({ marketplaceChat, directoryChat, initialRoomId }: CommunityChatProps = {}) {
   const { language, user } = useAuth();
   const { t } = useTranslation(language);
-  const { isMobile } = useView();
+  // const { isMobile } = useView();
+  const isMobile = false; // Temporary fallback
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   

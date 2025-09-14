@@ -2,8 +2,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Header } from './Header';
 import { AppSidebar } from './Sidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { useView } from '@/contexts/ViewContext';
-import { MobileLayout } from './MobileLayout';
+// import { useView } from '@/contexts/ViewContext';
+// import { MobileLayout } from './MobileLayout';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,15 +11,11 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const { isAuthenticated } = useAuth();
-  const { viewMode } = useView();
+  // const { viewMode } = useView();
+  // Using desktop layout only as fallback while ViewProvider is disabled
 
   if (!isAuthenticated) {
     return <>{children}</>;
-  }
-
-  // Use different layouts for mobile vs desktop
-  if (viewMode === 'mobile') {
-    return <MobileLayout>{children}</MobileLayout>;
   }
 
   // Desktop layout with sidebar  
