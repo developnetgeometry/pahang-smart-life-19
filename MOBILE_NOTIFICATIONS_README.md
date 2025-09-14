@@ -171,4 +171,4 @@ await notificationService.sendNotification(title, message, options);
 5. **Analytics**: Track notification delivery and engagement rates
 6. **Scheduling**: Add support for scheduled and recurring notifications
 
-For more information about Capacitor mobile development, see: https://lovable.dev/blogs/TODO
+For more information about Capacitor mobile development, see: https://netgeometry.com/blogs/capacitor-mobile-development
