@@ -748,6 +748,7 @@ export default function CreateAnnouncementModal({
                   id="publish_at"
                   type="datetime-local"
                   value={formData.publish_at}
+                  min={new Date().toISOString().slice(0, 16)}
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
@@ -763,6 +764,7 @@ export default function CreateAnnouncementModal({
                   id="expire_at"
                   type="datetime-local"
                   value={formData.expire_at}
+                  min={new Date().toISOString().slice(0, 16)}
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
@@ -830,6 +832,7 @@ export default function CreateAnnouncementModal({
                       id="pollExpires"
                       type="datetime-local"
                       value={poll.expires_at}
+                      min={new Date().toISOString().slice(0, 16)}
                       onChange={(e) =>
                         setPoll((prev) => ({
                           ...prev,

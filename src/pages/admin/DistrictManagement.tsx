@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRoles } from '@/hooks/use-user-roles';
 import { useDistricts } from '@/hooks/use-districts';
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Map as MapIcon, MapPin, Search, Building, Users, Loader2, Eye, RefreshCw } from 'lucide-react';
+import { Map as MapIcon, MapPin, Search, Building, Users, Loader2, Eye, RefreshCw, Plus, Edit, Trash2, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,6 +32,248 @@ export default function DistrictManagement() {
     postal_code: ''
   });
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Admin management states
+  const [showCreateAdmin, setShowCreateAdmin] = useState(false);
+  const [showAdminDetails, setShowAdminDetails] = useState(false);
+  const [selectedDistrictForAdmin, setSelectedDistrictForAdmin] = useState<any>(null);
+  const [districtAdmins, setDistrictAdmins] = useState<any[]>([]);
+  const [loadingAdmins, setLoadingAdmins] = useState(false);
+  const [editingAdmin, setEditingAdmin] = useState<any>(null);
+  
+  // Create admin form
+  const [createAdminForm, setCreateAdminForm] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    full_name: '',
+    phone: '',
+    district_id: ''
+  });
+  
+  // Edit admin form
+  const [editAdminForm, setEditAdminForm] = useState({
+    email: '',
+    full_name: '',
+    phone: '',
+    district_id: ''
+  });
+
+  // Validation functions
+  const validatePassword = (password: string) => {
+    const hasCapital = /[A-Z]/.test(password);
+    const hasMinLength = password.length >= 8;
+    return {
+      isValid: hasCapital && hasMinLength,
+      hasCapital,
+      hasMinLength
+    };
+  };
+
+  const validatePhone = (phone: string) => {
+    const isNumeric = /^\d+$/.test(phone);
+    const startsWithZero = phone.startsWith('0');
+    return {
+      isValid: isNumeric && startsWithZero && phone.length >= 10,
+      isNumeric,
+      startsWithZero,
+      hasMinLength: phone.length >= 10
+    };
+  };
+
+  // Load admins for a district
+  const loadDistrictAdmins = async (districtId: string) => {
+    setLoadingAdmins(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          user_roles!inner(role)
+        `)
+        .eq('district_id', districtId)
+        .eq('user_roles.role', 'community_admin');
+      
+      if (error) throw error;
+      setDistrictAdmins(data || []);
+    } catch (error) {
+      console.error('Error loading district admins:', error);
+      toast.error('Failed to load district administrators');
+    } finally {
+      setLoadingAdmins(false);
+    }
+  };
+
+  // Create new admin
+  const handleCreateAdmin = async () => {
+    const passwordValidation = validatePassword(createAdminForm.password);
+    const phoneValidation = validatePhone(createAdminForm.phone);
+    
+    if (!passwordValidation.isValid) {
+      toast.error('Password must be at least 8 characters and contain at least one capital letter');
+      return;
+    }
+    
+    if (!phoneValidation.isValid) {
+      toast.error('Phone number must contain only numbers, start with 0, and be at least 10 digits');
+      return;
+    }
+    
+    if (createAdminForm.password !== createAdminForm.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      
+      // Create user account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: createAdminForm.email,
+        password: createAdminForm.password,
+      });
+
+      if (authError) throw authError;
+      
+      if (authData.user) {
+        // Create profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: authData.user.id,
+            email: createAdminForm.email,
+            full_name: createAdminForm.full_name,
+            mobile_no: createAdminForm.phone,
+            district_id: createAdminForm.district_id,
+            account_status: 'approved'
+          });
+
+        if (profileError) throw profileError;
+
+        // Assign community admin role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: authData.user.id,
+            role: 'community_admin'
+          });
+
+        if (roleError) throw roleError;
+
+        toast.success('Community admin created successfully');
+        setShowCreateAdmin(false);
+        setCreateAdminForm({
+          email: '',
+          password: '',
+          confirmPassword: '',
+          full_name: '',
+          phone: '',
+          district_id: ''
+        });
+        
+        if (selectedDistrictForAdmin) {
+          loadDistrictAdmins(selectedDistrictForAdmin.id);
+        }
+      }
+    } catch (error: any) {
+      console.error('Error creating admin:', error);
+      toast.error(error.message || 'Failed to create admin');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Update admin
+  const handleUpdateAdmin = async () => {
+    const phoneValidation = validatePhone(editAdminForm.phone);
+    
+    if (!phoneValidation.isValid) {
+      toast.error('Phone number must contain only numbers, start with 0, and be at least 10 digits');
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          email: editAdminForm.email,
+          full_name: editAdminForm.full_name,
+          mobile_no: editAdminForm.phone,
+          district_id: editAdminForm.district_id
+        })
+        .eq('id', editingAdmin.id);
+
+      if (error) throw error;
+
+      toast.success('Admin updated successfully');
+      setEditingAdmin(null);
+      setEditAdminForm({
+        email: '',
+        full_name: '',
+        phone: '',
+        district_id: ''
+      });
+      
+      if (selectedDistrictForAdmin) {
+        loadDistrictAdmins(selectedDistrictForAdmin.id);
+      }
+    } catch (error: any) {
+      console.error('Error updating admin:', error);
+      toast.error(error.message || 'Failed to update admin');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Delete admin
+  const handleDeleteAdmin = async (adminId: string) => {
+    if (!confirm('Are you sure you want to delete this admin? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      
+      // Delete user roles first
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', adminId);
+
+      if (roleError) throw roleError;
+
+      // Delete profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('user_id', adminId);
+
+      if (profileError) throw profileError;
+
+      toast.success('Admin deleted successfully');
+      
+      if (selectedDistrictForAdmin) {
+        loadDistrictAdmins(selectedDistrictForAdmin.id);
+      }
+    } catch (error: any) {
+      console.error('Error deleting admin:', error);
+      toast.error(error.message || 'Failed to delete admin');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const openEditAdmin = (admin: any) => {
+    setEditingAdmin(admin);
+    setEditAdminForm({
+      email: admin.email || '',
+      full_name: admin.full_name || '',
+      phone: admin.mobile_no || '',
+      district_id: admin.district_id || ''
+    });
+  };
 
   const openEditModal = (district: any) => {
     setEditingDistrict(district);
@@ -97,6 +339,24 @@ export default function DistrictManagement() {
       totalPopulation: 'Total Population',
       totalCommunities: 'Total Communities',
       avgPopulation: 'Avg Population',
+      // Admin management
+      createAdmin: 'Create Admin',
+      manageAdmins: 'Manage Admins',
+      adminDetails: 'Admin Details',
+      email: 'Email',
+      password: 'Password',
+      confirmPassword: 'Confirm Password',
+      fullName: 'Full Name',
+      phone: 'Phone Number',
+      district: 'District',
+      save: 'Save',
+      cancel: 'Cancel',
+      delete: 'Delete',
+      update: 'Update',
+      passwordRequirement: 'Password must be at least 8 characters with one capital letter',
+      phoneRequirement: 'Phone must start with 0 and contain only numbers',
+      assignedAdmins: 'Assigned Administrators',
+      noAdmins: 'No administrators assigned to this district',
     },
     ms: {
       title: 'Pengurusan Daerah',
@@ -126,6 +386,24 @@ export default function DistrictManagement() {
       totalPopulation: 'Jumlah Penduduk',
       totalCommunities: 'Jumlah Komuniti',
       avgPopulation: 'Purata Penduduk',
+      // Admin management
+      createAdmin: 'Cipta Admin',
+      manageAdmins: 'Urus Admin',
+      adminDetails: 'Butiran Admin',
+      email: 'Emel',
+      password: 'Kata Laluan',
+      confirmPassword: 'Sahkan Kata Laluan',
+      fullName: 'Nama Penuh',
+      phone: 'Nombor Telefon',
+      district: 'Daerah',
+      save: 'Simpan',
+      cancel: 'Batal',
+      delete: 'Padam',
+      update: 'Kemaskini',
+      passwordRequirement: 'Kata laluan mesti sekurang-kurangnya 8 aksara dengan satu huruf besar',
+      phoneRequirement: 'Telefon mesti bermula dengan 0 dan hanya mengandungi nombor',
+      assignedAdmins: 'Pentadbir yang Ditugaskan',
+      noAdmins: 'Tiada pentadbir ditugaskan untuk daerah ini',
     }
   };
 
@@ -437,6 +715,19 @@ export default function DistrictManagement() {
                     <Eye className="h-4 w-4 mr-1" />
                     {t.view}
                   </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => {
+                      setSelectedDistrictForAdmin(district);
+                      loadDistrictAdmins(district.id);
+                      setShowAdminDetails(true);
+                    }}
+                  >
+                    <UserPlus className="h-4 w-4 mr-1" />
+                    {t.manageAdmins}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -450,6 +741,224 @@ export default function DistrictManagement() {
         </div>
       )}
       
+      {/* Admin Management Modal */}
+      <Dialog open={showAdminDetails} onOpenChange={setShowAdminDetails}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{t.adminDetails} - {selectedDistrictForAdmin?.name}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h4 className="font-medium">{t.assignedAdmins}</h4>
+              <Button 
+                onClick={() => {
+                  setCreateAdminForm(prev => ({ ...prev, district_id: selectedDistrictForAdmin?.id || '' }));
+                  setShowCreateAdmin(true);
+                }}
+                size="sm"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                {t.createAdmin}
+              </Button>
+            </div>
+            
+            {loadingAdmins ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : districtAdmins.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">{t.noAdmins}</p>
+            ) : (
+              <div className="space-y-2">
+                {districtAdmins.map((admin) => (
+                  <div key={admin.id} className="flex items-center justify-between p-3 border rounded">
+                    <div>
+                      <p className="font-medium">{admin.full_name}</p>
+                      <p className="text-sm text-muted-foreground">{admin.email}</p>
+                      <p className="text-sm text-muted-foreground">{admin.mobile_no}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => openEditAdmin(admin)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleDeleteAdmin(admin.user_id)}
+                        disabled={isUpdating}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Admin Modal */}
+      <Dialog open={showCreateAdmin} onOpenChange={setShowCreateAdmin}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>{t.createAdmin}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="email">{t.email}</Label>
+              <Input
+                id="email"
+                type="email"
+                value={createAdminForm.email}
+                onChange={(e) => setCreateAdminForm(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="admin@example.com"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="password">{t.password}</Label>
+              <Input
+                id="password"
+                type="password"
+                value={createAdminForm.password}
+                onChange={(e) => setCreateAdminForm(prev => ({ ...prev, password: e.target.value }))}
+                placeholder="Password"
+              />
+              <p className="text-xs text-muted-foreground mt-1">{t.passwordRequirement}</p>
+            </div>
+            
+            <div>
+              <Label htmlFor="confirmPassword">{t.confirmPassword}</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={createAdminForm.confirmPassword}
+                onChange={(e) => setCreateAdminForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                placeholder="Confirm Password"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="fullName">{t.fullName}</Label>
+              <Input
+                id="fullName"
+                value={createAdminForm.full_name}
+                onChange={(e) => setCreateAdminForm(prev => ({ ...prev, full_name: e.target.value }))}
+                placeholder="John Doe"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="phone">{t.phone}</Label>
+              <Input
+                id="phone"
+                value={createAdminForm.phone}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                  setCreateAdminForm(prev => ({ ...prev, phone: value }));
+                }}
+                placeholder="0123456789"
+                maxLength={15}
+              />
+              <p className="text-xs text-muted-foreground mt-1">{t.phoneRequirement}</p>
+            </div>
+            
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setShowCreateAdmin(false)}>
+                {t.cancel}
+              </Button>
+              <Button onClick={handleCreateAdmin} disabled={isUpdating}>
+                {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                {t.save}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Admin Modal */}
+      <Dialog open={!!editingAdmin} onOpenChange={(open) => !open && setEditingAdmin(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>{t.edit} {t.adminDetails}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="editEmail">{t.email}</Label>
+              <Input
+                id="editEmail"
+                type="email"
+                value={editAdminForm.email}
+                onChange={(e) => setEditAdminForm(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="admin@example.com"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="editFullName">{t.fullName}</Label>
+              <Input
+                id="editFullName"
+                value={editAdminForm.full_name}
+                onChange={(e) => setEditAdminForm(prev => ({ ...prev, full_name: e.target.value }))}
+                placeholder="John Doe"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="editPhone">{t.phone}</Label>
+              <Input
+                id="editPhone"
+                value={editAdminForm.phone}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                  setEditAdminForm(prev => ({ ...prev, phone: value }));
+                }}
+                placeholder="0123456789"
+                maxLength={15}
+              />
+              <p className="text-xs text-muted-foreground mt-1">{t.phoneRequirement}</p>
+            </div>
+            
+            <div>
+              <Label htmlFor="editDistrict">{t.district}</Label>
+              <Select 
+                value={editAdminForm.district_id} 
+                onValueChange={(value) => setEditAdminForm(prev => ({ ...prev, district_id: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select district" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredDistricts.map((district) => (
+                    <SelectItem key={district.id} value={district.id}>
+                      {district.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setEditingAdmin(null)}>
+                {t.cancel}
+              </Button>
+              <Button onClick={handleUpdateAdmin} disabled={isUpdating}>
+                {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                {t.update}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Quick Edit Modal disabled; use Detailed Edit on District page
       <Dialog open={!!editingDistrict} onOpenChange={(open) => !open && setEditingDistrict(null)}>
         <DialogContent className="sm:max-w-[425px]">

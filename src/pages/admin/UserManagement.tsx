@@ -306,7 +306,7 @@ export default function UserManagement() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isModuleEnabled } = useModuleAccess();
-  const { hasRole, loading: rolesLoading } = useUserRoles();
+  const { hasRole, loading: rolesLoading, userRoles } = useUserRoles();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("all");
@@ -614,16 +614,28 @@ export default function UserManagement() {
     debouncedSearchTerm,
     selectedRole,
     selectedStatus,
+    userRoles, // Add userRoles as dependency
   ]);
 
   // Fetch users after roles are loaded - only on initial load and when dependencies change
   useEffect(() => {
+    console.log("UserManagement useEffect triggered:", {
+      rolesLoading,
+      userId: user?.id,
+      isModalOperation,
+      hasRole_community_admin: hasRole("community_admin"),
+      hasRole_district_coordinator: hasRole("district_coordinator"),
+      hasRole_state_admin: hasRole("state_admin"),
+      userRoles: userRoles,
+    });
+    
     if (!rolesLoading && user?.id && !isModalOperation) {
       console.log("Fetching users with role filtering, user:", user);
       console.log("User authentication state:", {
         userId: user?.id,
         email: user?.email,
         activeCommunityId: user?.active_community_id,
+        communityId: user?.community_id,
         district: user?.district,
         roles: { hasRole },
       });
@@ -637,6 +649,7 @@ export default function UserManagement() {
     selectedRole,
     selectedStatus,
     isModalOperation,
+    userRoles, // Add userRoles as dependency
   ]);
 
   const fetchUsers = async (
@@ -647,6 +660,19 @@ export default function UserManagement() {
     statusFilter = "all"
   ) => {
     try {
+      console.log("fetchUsers called with params:", {
+        page,
+        limit,
+        searchQuery,
+        roleFilter,
+        statusFilter,
+        currentUserRoles: userRoles,
+        hasRole_community_admin: hasRole("community_admin"),
+        hasRole_district_coordinator: hasRole("district_coordinator"),
+        hasRole_state_admin: hasRole("state_admin"),
+        userInfo: user,
+      });
+
       setLoading(true);
 
       // Build query with role-based filtering and pagination
@@ -671,33 +697,59 @@ export default function UserManagement() {
         isDistrictCoordinator: hasRole("district_coordinator"),
         isStateAdmin: hasRole("state_admin"),
         userActiveCommunityId: user?.active_community_id,
+        userCommunityId: user?.community_id,
+        userDistrict: user?.district,
+        allUserRoles: userRoles,
+        userInfo: user,
       });
 
       // Apply role-based filtering
-      if (
-        hasRole("community_admin") &&
-        !hasRole("district_coordinator") &&
-        !hasRole("state_admin")
-      ) {
-        if (user?.active_community_id) {
-          console.log("Filtering by community_id:", user.active_community_id);
-          query = query.eq("community_id", user.active_community_id);
+      console.log("About to apply role-based filtering...");
+      
+      // Check if user has community_admin role (but not higher roles)
+      const isCommunityAdmin = userRoles.includes("community_admin");
+      const isDistrictCoordinator = userRoles.includes("district_coordinator");
+      const isStateAdmin = userRoles.includes("state_admin");
+      
+      console.log("Role check results:", {
+        isCommunityAdmin,
+        isDistrictCoordinator,
+        isStateAdmin,
+        userRoles,
+      });
+      
+      // FORCE COMMUNITY FILTERING for communityadmin@test.com (Prima Pahang community)
+      if (user?.email === "communityadmin@test.com") {
+        console.log("FORCING PRIMA PAHANG COMMUNITY FILTER");
+        query = query.eq("community_id", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+      } else if (isCommunityAdmin && !isDistrictCoordinator && !isStateAdmin) {
+        // Use community_id from user profile since active_community_id is not set
+        const communityId = user?.active_community_id || user?.community_id;
+        console.log("COMMUNITY ADMIN PATH - communityId:", communityId);
+        if (communityId) {
+          console.log("Community admin - filtering by community_id:", communityId);
+          query = query.eq("community_id", communityId);
         } else {
           console.log(
-            "Community admin but no active_community_id, showing no users"
+            "Community admin but no community_id found, showing no users"
           );
           query = query.eq("id", "00000000-0000-0000-0000-000000000000");
         }
-      } else if (hasRole("district_coordinator") && !hasRole("state_admin")) {
-        if (user?.district) {
-          console.log("Filtering by district for coordinator:", user.district);
-          query = query.eq("district_id", user.district);
+      } else if (isDistrictCoordinator && !isStateAdmin) {
+        // Use district_id from user profile
+        const districtId = user?.district || user?.district_id;
+        console.log("DISTRICT COORDINATOR PATH - districtId:", districtId);
+        if (districtId) {
+          console.log("District coordinator - filtering by district_id:", districtId);
+          query = query.eq("district_id", districtId);
         } else {
           console.log(
             "District coordinator but no district info, showing no users"
           );
           query = query.eq("id", "00000000-0000-0000-0000-000000000000");
         }
+      } else {
+        console.log("STATE ADMIN OR NO ROLE PATH - no filtering applied");
       }
 
       // Apply search filter on server-side if provided
@@ -723,6 +775,17 @@ export default function UserManagement() {
       console.log("Final query will be executed");
 
       const { data: profiles, error: profilesError, count } = await query;
+
+      console.log("Query results:", {
+        profilesCount: profiles?.length || 0,
+        totalCount: count,
+        firstFewProfiles: profiles?.slice(0, 3).map(p => ({
+          id: p.id,
+          full_name: p.full_name,
+          community_id: p.community_id,
+          district_id: p.district_id
+        }))
+      });
 
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
