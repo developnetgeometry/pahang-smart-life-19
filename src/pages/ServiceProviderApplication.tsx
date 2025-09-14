@@ -96,6 +96,11 @@ export default function ServiceProviderApplication() {
   });
 
   const handleInputChange = (field: string, value: string) => {
+    if (field === 'contactPhone') {
+      const sanitized = value.replace(/[^0-9]/g, '');
+      setFormData((prev) => ({ ...prev, [field]: sanitized }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -321,12 +326,13 @@ export default function ServiceProviderApplication() {
                 <Input
                   id="contactPhone"
                   value={formData.contactPhone}
-                  onChange={(e) =>
-                    handleInputChange("contactPhone", e.target.value)
-                  }
-                  placeholder="e.g., +60123456789"
+                  onChange={(e) => handleInputChange("contactPhone", e.target.value)}
+                  placeholder="e.g., 0123456789"
                   required
                 />
+                {formData.contactPhone && !formData.contactPhone.startsWith('0') && (
+                  <p className="text-xs text-destructive">Phone must start with 0</p>
+                )}
               </div>
             </div>
 

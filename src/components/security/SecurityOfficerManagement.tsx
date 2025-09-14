@@ -72,6 +72,7 @@ export default function SecurityOfficerManagement() {
     phone: "",
     password: "",
   });
+  const [phoneError, setPhoneError] = useState<string>("");
 
   useEffect(() => {
     fetchSecurityOfficers();
@@ -294,14 +295,21 @@ export default function SecurityOfficerManagement() {
                   <Input
                     id="phone"
                     value={formData.phone}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        phone: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      const sanitized = raw.replace(/[^0-9]/g, "");
+                      setFormData((prev) => ({ ...prev, phone: sanitized }));
+                      if (sanitized && !sanitized.startsWith("0")) {
+                        setPhoneError("Phone must start with 0");
+                      } else {
+                        setPhoneError("");
+                      }
+                    }}
                     placeholder="+60123456789"
                   />
+                  {phoneError && (
+                    <p className="text-xs text-destructive">{phoneError}</p>
+                  )}
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="password">Password *</Label>
@@ -326,7 +334,7 @@ export default function SecurityOfficerManagement() {
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleCreateOfficer} disabled={creating}>
+                <Button onClick={handleCreateOfficer} disabled={creating || !!phoneError}>
                   {creating ? "Creating..." : "Create Officer"}
                 </Button>
               </DialogFooter>

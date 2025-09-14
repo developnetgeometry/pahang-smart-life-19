@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, MapPin, Users, Building, Calendar, Map as MapIcon, Settings, Plus, Loader2, Filter, UserCheck, Pencil, Trash2, UserPlus, Globe } from 'lucide-react';
+import { ArrowLeft, MapPin, Users, Building, Calendar, Map as MapIcon, Settings, Plus, Loader2, Filter, UserCheck, Pencil, Trash2, UserPlus, Globe, Hash } from 'lucide-react';
 import { toast } from 'sonner';
 import CreateCommunityModal from '@/components/communities/CreateCommunityModal';
 import EditCommunityModal from '@/components/communities/EditCommunityModal';
@@ -40,6 +40,10 @@ interface District {
   status?: string;
   district_type?: string;
   address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postal_code?: string;
   description?: string;
   latitude?: number;
   longitude?: number;
@@ -97,6 +101,12 @@ export default function DistrictDetail() {
       type: 'Type',
       address: 'Address',
       description: 'Description',
+      location: 'Location',
+      city: 'City',
+      state: 'State',
+      country: 'Country',
+      postalCode: 'Postal Code',
+      districtCode: 'District Code',
       addCommunity: 'Add Community',
       editDistrict: 'Edit District',
       settings: 'Settings',
@@ -119,7 +129,10 @@ export default function DistrictDetail() {
       noCommunities: 'No communities found in this district',
       unassigned: 'Unassigned',
       adminAssigned: 'Admin Assigned',
-      adminLabel: 'Admin'
+      adminLabel: 'Admin',
+      viewOnMap: 'View on map',
+      notSet: 'Not set',
+      additional: 'Additional'
     },
     ms: {
       backToDistricts: 'Kembali ke Daerah',
@@ -138,6 +151,12 @@ export default function DistrictDetail() {
       type: 'Jenis',
       address: 'Alamat',
       description: 'Penerangan',
+      location: 'Lokasi',
+      city: 'Bandar',
+      state: 'Negeri',
+      country: 'Negara',
+      postalCode: 'Poskod',
+      districtCode: 'Kod Daerah',
       addCommunity: 'Tambah Komuniti',
       editDistrict: 'Edit Daerah',
       settings: 'Tetapan',
@@ -160,7 +179,10 @@ export default function DistrictDetail() {
       noCommunities: 'Tiada komuniti dijumpai dalam daerah ini',
       unassigned: 'Belum Ditetapkan',
       adminAssigned: 'Pentadbir Ditugaskan',
-      adminLabel: 'Pentadbir'
+      adminLabel: 'Pentadbir',
+      viewOnMap: 'Lihat pada peta',
+      notSet: 'Belum ditetapkan',
+      additional: 'Maklumat Lain'
     }
   };
 
@@ -308,6 +330,35 @@ export default function DistrictDetail() {
     }
   };
 
+  const formatCoordinates = (lat?: number | null, lng?: number | null) => {
+    const hasLat = typeof lat === 'number';
+    const hasLng = typeof lng === 'number';
+    if (!hasLat && !hasLng) return t.notSet;
+    const latStr = hasLat ? lat!.toFixed(6) : '-';
+    const lngStr = hasLng ? lng!.toFixed(6) : '-';
+    return `${latStr}, ${lngStr}`;
+  };
+
+  type IconType = React.ComponentType<{ className?: string }>;
+  const InfoRow = ({
+    icon: Icon,
+    label,
+    value,
+  }: { icon: IconType; label: string; value?: string | number | null }) => {
+    if (!value && value !== 0) return null;
+    return (
+      <div className="flex items-start justify-between py-2">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Icon className="h-4 w-4" />
+          <span className="text-sm">{label}</span>
+        </div>
+        <div className="text-sm font-medium text-right max-w-[65%] break-words">
+          {String(value)}
+        </div>
+      </div>
+    );
+  };
+
   // Filter communities when type filter changes
   useEffect(() => {
     if (typeFilter === 'all') {
@@ -450,22 +501,32 @@ export default function DistrictDetail() {
             </div>
           </div>
 
-          {(district.address || district.description) && (
-            <div className="mt-6 space-y-4">
-              {district.address && (
-                <div>
-                  <h4 className="text-sm font-medium mb-2">{t.address}</h4>
-                  <p className="text-sm text-muted-foreground">{district.address}</p>
-                </div>
-              )}
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <h4 className="text-sm font-semibold mb-2">{t.location}</h4>
+              <div className="divide-y">
+                <InfoRow icon={Hash} label={t.districtCode} value={district.code || t.notSet} />
+                <InfoRow icon={MapPin} label={`${t.city}/${t.state}`} value={([district.city, district.state].filter(Boolean).join(', ')) || t.notSet} />
+                <InfoRow icon={Globe} label={`${t.postalCode}/${t.country}`} value={([district.postal_code, district.country].filter(Boolean).join(', ')) || t.notSet} />
+                <InfoRow icon={MapIcon} label={t.address} value={district.address || t.notSet} />
+              </div>
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <h4 className="text-sm font-semibold mb-2">{t.additional}</h4>
+              <div className="divide-y">
+                <InfoRow icon={Users} label={t.coordinator} value={district.coordinator_name || t.unassigned} />
+                <InfoRow icon={Building} label={t.totalCommunities} value={communities.length} />
+                <InfoRow icon={MapIcon} label={t.type} value={getTypeText(district.district_type)} />
+                <InfoRow icon={Settings} label={t.status} value={getStatusText(district.status)} />
+              </div>
               {district.description && (
-                <div>
-                  <h4 className="text-sm font-medium mb-2">{t.description}</h4>
-                  <p className="text-sm text-muted-foreground">{district.description}</p>
+                <div className="mt-4">
+                  <h5 className="text-sm font-medium mb-1">{t.description}</h5>
+                  <p className="text-sm text-muted-foreground whitespace-pre-line">{district.description}</p>
                 </div>
               )}
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
 
