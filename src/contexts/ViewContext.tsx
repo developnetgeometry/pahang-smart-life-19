@@ -1,3 +1,4 @@
+// Completely new ViewContext - no React hooks at all
 import { createContext, useContext, ReactNode } from 'react';
 
 export type DeviceType = 'mobile' | 'tablet' | 'desktop';
@@ -14,8 +15,8 @@ interface ViewContextType extends DeviceInfo {
   viewMode: 'mobile' | 'desktop';
 }
 
-// Default static values - no window access, no React hooks
-const DEFAULT_DEVICE_INFO: ViewContextType = {
+// Static fallback - no dynamic detection
+const STATIC_DEVICE_INFO: ViewContextType = {
   width: 1024,
   isMobile: false,
   isTablet: false,
@@ -24,16 +25,16 @@ const DEFAULT_DEVICE_INFO: ViewContextType = {
   viewMode: 'desktop'
 };
 
-const ViewContext = createContext<ViewContextType>(DEFAULT_DEVICE_INFO);
+const ViewContext = createContext<ViewContextType>(STATIC_DEVICE_INFO);
 
 interface ViewProviderProps {
   children: ReactNode;
 }
 
+// Static provider - no hooks, no window access
 export function ViewProvider({ children }: ViewProviderProps) {
-  // Return completely static context without any React hooks or window access
   return (
-    <ViewContext.Provider value={DEFAULT_DEVICE_INFO}>
+    <ViewContext.Provider value={STATIC_DEVICE_INFO}>
       {children}
     </ViewContext.Provider>
   );

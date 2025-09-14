@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
-import { useView } from '@/contexts/ViewContext';
+// import { useView } from '@/contexts/ViewContext';
 import { Separator } from '@/components/ui/separator';
 import { useRealtimeMessaging } from '@/hooks/use-realtime-messaging';
 import { useChatRooms } from '@/hooks/use-chat-rooms';
