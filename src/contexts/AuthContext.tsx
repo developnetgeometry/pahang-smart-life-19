@@ -1,7 +1,15 @@
-import * as React from "react";
-import { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { CheckCircle } from "lucide-react";
 
 export type UserRole =
   | "resident"
@@ -18,42 +26,46 @@ export type UserRole =
   | "tenant"
   | "guest";
 
+// ViewRole removed - using role-based navigation instead
 export type Language = "en" | "ms";
 export type Theme = "light" | "dark";
 
 export interface User {
   id: string;
-  display_name?: string | null;
-  email?: string | null;
-  roles?: UserRole[];
-  language_preference?: Language;
-  full_name?: string | null;
-  district_id?: string | null;
-  community_id?: string | null;
-  account_status?: string | null;
-  active_community_id?: string | null;
-  district?: any;
-  community?: any;
-  user_role?: string | null;
-  available_roles?: UserRole[];
-  phone?: string | null;
-  address?: string | null;
+  display_name: string;
+  email: string;
+  associated_community_ids: string[];
+  active_community_id: string;
+  district: string;
+  community: string;
+  user_role: UserRole; // primary role for display
+  available_roles: UserRole[];
+  // current_view_role removed - using role-based navigation
+  phone: string;
+  address: string;
+  language_preference: Language;
+  theme_preference: Theme;
+  unit_type?: string;
+  ownership_status?: string;
+  vehicle_registration_numbers: string[];
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   initializing: boolean;
-  isApproved: boolean;
   accountStatus: string | null;
+  isApproved: boolean;
   language: Language;
   theme: Theme;
   roles: UserRole[];
-  login: (email: string, password: string) => Promise<{ error: any }>;
-  logout: () => Promise<void>;
-  switchLanguage: (lang: Language) => Promise<void>;
-  switchTheme: (newTheme: Theme) => void;
   hasRole: (role: UserRole) => boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  switchLanguage: (lang: Language) => void;
+  switchTheme: (theme: Theme) => void;
   updateProfile: (updates: Partial<User>) => void;
   loadProfileAndRoles: () => Promise<void>;
 }
@@ -61,226 +73,330 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  // State initialization
   const [user, setUser] = useState<User | null>(null);
   const [initializing, setInitializing] = useState(true);
-  const [language, setLanguage] = useState<Language>("ms");
+  const [accountStatus, setAccountStatus] = useState<string | null>(null);
+  const [language, setLanguage] = useState<Language>(() => {
+    const saved = localStorage.getItem("language_preference");
+    // Validate language preference - only allow "en" or "ms"
+    if (saved === "en" || saved === "ms") {
+      return saved;
+    }
+    // If invalid or null, default to "ms" and clean up localStorage
+    if (saved && saved !== "en" && saved !== "ms") {
+      localStorage.setItem("language_preference", "ms");
+    }
+    return "ms";
+  });
   const [theme, setTheme] = useState<Theme>("light");
   const [roles, setRoles] = useState<UserRole[]>([]);
-  const [accountStatus, setAccountStatus] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  // Computed values
-  const isAuthenticated = !!user;
+  // Move isProcessing outside useEffect to persist across renders
+  const isProcessingRef = useRef(false);
+
   const isApproved = accountStatus === "approved";
 
-  const hasRole = (role: UserRole) => roles.includes(role);
+  // Apply theme
+  useEffect(() => {
+    if (theme === "dark") document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
+  }, [theme]);
 
-  // Load user profile and roles from database
-  const loadProfileAndRoles = async (userId?: string) => {
+  const hasRole = useMemo(
+    () => (role: UserRole) => {
+      return roles.includes(role);
+    },
+    [roles]
+  );
+
+  const loadProfileAndRoles = useCallback(async (userId: string) => {
     try {
-      const targetUserId = userId || user?.id;
-      if (!targetUserId) return;
-
-      // Get user profile - simplified query to avoid TypeScript issues
-      const { data: profile, error: profileError } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("*")
-        .eq("user_id", targetUserId)
+        .select(
+          "full_name, email, district_id, community_id, language_preference, account_status"
+        )
+        .eq("user_id", userId)
         .single();
 
       if (profileError) {
-        console.error("Error loading profile:", profileError);
-        return;
+        throw new Error(`Failed to fetch profile: ${profileError.message}`);
+      }
+      if (!profileData) {
+        throw new Error("User profile not found.");
       }
 
-      // Get user roles
-      const { data: userRoles, error: rolesError } = await supabase
-        .from("enhanced_user_roles")
-        .select("role, is_active")
-        .eq("user_id", targetUserId)
-        .eq("is_active", true);
+      setAccountStatus(profileData.account_status || "pending");
 
-      if (rolesError) {
-        console.error("Error loading roles:", rolesError);
-        return;
+      if (
+        profileData.account_status !== "approved" &&
+        profileData.account_status !== "pending_completion"
+      ) {
+        throw new Error(
+          `Account not active. Status: ${profileData.account_status}`
+        );
       }
 
-      const activeRoles = userRoles?.map((r) => r.role) || [];
+      const [
+        districtResult,
+        communityResult,
+        { data: roleRows, error: rolesError },
+        { data: primaryRoleData, error: primaryRoleError },
+      ] = await Promise.all([
+        profileData.district_id
+          ? supabase
+              .from("districts")
+              .select("name")
+              .eq("id", profileData.district_id)
+              .single()
+          : Promise.resolve({ data: null, error: null }),
+        profileData.community_id
+          ? supabase
+              .from("communities")
+              .select("name")
+              .eq("id", profileData.community_id)
+              .single()
+          : Promise.resolve({ data: null, error: null }),
+        supabase
+          .from("enhanced_user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .eq("is_active", true),
+        supabase.rpc("get_user_highest_role", { check_user_id: userId }),
+      ]);
 
-      setUser({
-        id: targetUserId,
-        email: profile.email,
-        full_name: profile.full_name,
-        display_name: profile.full_name,
-        language_preference: (profile.language as Language) || "ms",
-        district_id: profile.district_id,
-        community_id: profile.community_id,
-        account_status: profile.account_status,
-        active_community_id: profile.community_id,
-        roles: activeRoles,
-        available_roles: activeRoles,
-        phone: profile.mobile_no,
-        address: profile.address,
-      });
+      if (rolesError)
+        throw new Error(`Failed to fetch roles: ${rolesError.message}`);
+      if (primaryRoleError)
+        throw new Error(
+          `Failed to fetch primary role: ${primaryRoleError.message}`
+        );
 
-      setRoles(activeRoles);
-      setAccountStatus(profile.account_status);
-      setLanguage((profile.language as Language) || "ms");
+      const roleList: UserRole[] = (roleRows || []).map(
+        (r) => r.role as UserRole
+      );
+      const primaryRole: UserRole =
+        (primaryRoleData as UserRole) || roleList[0] || "resident";
+
+      const profileLanguage = profileData?.language_preference as Language;
+      if (
+        profileLanguage &&
+        (profileLanguage === "en" || profileLanguage === "ms") &&
+        profileLanguage !== localStorage.getItem("language_preference")
+      ) {
+        setLanguage(profileLanguage);
+        localStorage.setItem("language_preference", profileLanguage);
+      }
+
+      const userObj: User = {
+        id: userId,
+        display_name: profileData?.full_name || profileData?.email || "",
+        email: profileData?.email || "",
+        associated_community_ids: [],
+        active_community_id: profileData?.community_id || "",
+        district: districtResult.data?.name || "",
+        community: communityResult.data?.name || "",
+        user_role: primaryRole,
+        available_roles: roleList.length ? roleList : ["resident"],
+        phone: "",
+        address: "",
+        language_preference:
+          profileLanguage ||
+          (localStorage.getItem("language_preference") as Language) ||
+          "ms",
+        theme_preference: theme,
+        unit_type: undefined,
+        ownership_status: undefined,
+        vehicle_registration_numbers: [],
+        emergency_contact_name: undefined,
+        emergency_contact_phone: undefined,
+      };
+
+      setUser(userObj);
+      setRoles(userObj.available_roles);
     } catch (error) {
-      console.error("Error in loadProfileAndRoles:", error);
-    }
-  };
-
-  // Login function with proper Supabase authentication
-  const login = async (email: string, password: string) => {
-    try {
-      console.log("🔐 Starting login process for:", email);
-
-      // Sign in with Supabase
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        console.error("🚫 Login error:", error);
-
-        // Handle specific error types
-        if (error.message.includes("Invalid login credentials")) {
-          throw new Error("Invalid login credentials");
-        }
-
-        throw error;
-      }
-
-      if (data.user) {
-        console.log("✅ Login successful, loading profile...");
-        await loadProfileAndRoles(data.user.id);
-
-        // Check account status and throw appropriate errors
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("account_status, is_active")
-          .eq("user_id", data.user.id)
-          .single();
-
-        if (profile) {
-          if (!profile.is_active) {
-            throw new Error("ACCOUNT_INACTIVE");
-          }
-          if (profile.account_status === "pending") {
-            throw new Error("ACCOUNT_PENDING");
-          }
-          if (profile.account_status === "rejected") {
-            throw new Error("ACCOUNT_REJECTED");
-          }
-          if (profile.account_status === "suspended") {
-            throw new Error("ACCOUNT_SUSPENDED");
-          }
-          if (profile.account_status !== "approved") {
-            throw new Error("ACCOUNT_NOT_APPROVED");
-          }
-        }
-
-        return { error: null };
-      }
-
-      throw new Error("Login failed");
-    } catch (error: any) {
-      console.error("🚫 Login failed:", error);
-      return { error };
-    }
-  };
-
-  const logout = async () => {
-    try {
-      await supabase.auth.signOut();
+      console.error("AuthContext: Failed to load profile and roles.", error);
       setUser(null);
       setRoles([]);
       setAccountStatus(null);
-    } catch (error) {
-      console.error("Logout error:", error);
+      throw error; // Re-throw the error to be caught by the caller
     }
-  };
+  }, []);
 
-  const switchLanguage = async (lang: Language) => {
-    try {
-      setLanguage(lang);
-
-      if (user?.id) {
-        await supabase
-          .from("profiles")
-          .update({ language: lang })
-          .eq("user_id", user.id);
-      }
-    } catch (error) {
-      console.error("Error switching language:", error);
-    }
-  };
-
-  const switchTheme = (newTheme: Theme) => {
-    setTheme(newTheme);
-  };
-
-  const updateProfile = (updates: Partial<User>) => {
-    if (user) {
-      setUser({ ...user, ...updates });
-    }
-  };
-
-  // Initialize auth state on mount
   useEffect(() => {
-    console.log("🚀 Initializing auth state...");
+    const handleAuthChange = async (session: any) => {
+      if (isProcessingRef.current) return;
+      isProcessingRef.current = true;
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        console.log("📋 Found existing session:", session.user.email);
-        loadProfileAndRoles(session.user.id);
-      } else {
-        console.log("❌ No existing session found");
-        setInitializing(false);
-      }
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("🔄 Auth state changed:", event, session?.user?.email);
-
-      if (event === "SIGNED_IN" && session?.user) {
-        await loadProfileAndRoles(session.user.id);
-      } else if (event === "SIGNED_OUT") {
+      try {
+        if (session?.user) {
+          await loadProfileAndRoles(session.user.id);
+        } else {
+          setUser(null);
+          setRoles([]);
+          setAccountStatus(null);
+        }
+      } catch (error) {
+        console.error("AuthContext: Error handling auth state change:", error);
+        // Clear user state on error to prevent being stuck in a bad state
         setUser(null);
         setRoles([]);
         setAccountStatus(null);
+        // Optionally sign out to clear the invalid session
+        await supabase.auth.signOut();
+      } finally {
+        setInitializing(false);
+        isProcessingRef.current = false;
       }
+    };
 
-      setInitializing(false);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleAuthChange(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleAuthChange(session);
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [loadProfileAndRoles]);
+
+  const login = async (email: string, password: string) => {
+    const { data: authData, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      if (error.message.includes("Invalid login credentials")) {
+        throw new Error("Invalid email or password.");
+      }
+      throw error;
+    }
+
+    if (!authData.user) {
+      throw new Error("Login failed, please try again.");
+    }
+
+    // After successful authentication, check account status
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("account_status, is_active")
+      .eq("user_id", authData.user.id)
+      .single();
+
+    if (profileError) {
+      await supabase.auth.signOut();
+      throw new Error("Failed to retrieve user profile.");
+    }
+
+    if (profile) {
+      if (!profile.is_active) {
+        await supabase.auth.signOut();
+        throw new Error("ACCOUNT_INACTIVE");
+      }
+      if (profile.account_status === "pending") {
+        await supabase.auth.signOut();
+        throw new Error("ACCOUNT_PENDING");
+      }
+      if (profile.account_status === "rejected") {
+        await supabase.auth.signOut();
+        throw new Error("ACCOUNT_REJECTED");
+      }
+      if (profile.account_status === "suspended") {
+        await supabase.auth.signOut();
+        throw new Error("ACCOUNT_SUSPENDED");
+      }
+      if (
+        profile.account_status !== "approved" &&
+        profile.account_status !== "pending_completion"
+      ) {
+        await supabase.auth.signOut();
+        throw new Error("ACCOUNT_NOT_APPROVED");
+      }
+    }
+  };
+
+  const logout = async () => {
+    setUser(null);
+    setRoles([]);
+    setAccountStatus(null);
+
+    // Clear all session and local storage related to auth
+    sessionStorage.clear();
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith("sb-") || key.startsWith("supabase"))
+      .forEach((key) => localStorage.removeItem(key));
+
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
+  };
+
+  const switchLanguage = async (lang: Language) => {
+    if (lang !== "en" && lang !== "ms") {
+      lang = "ms";
+    }
+
+    setLanguage(lang);
+    localStorage.setItem("language_preference", lang);
+
+    if (user) {
+      setUser({ ...user, language_preference: lang });
+      try {
+        await supabase
+          .from("profiles")
+          .update({ language_preference: lang })
+          .eq("user_id", user.id);
+      } catch (error) {
+        console.error("Failed to update language preference:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Could not save your language preference.",
+        });
+      }
+    }
+  };
+
+  const switchTheme = (newTheme: Theme) => {
+    setTheme(newTheme);
+    if (user) setUser({ ...user, theme_preference: newTheme });
+  };
+
+  const updateProfile = (updates: Partial<User>) => {
+    if (user) setUser({ ...user, ...updates });
+  };
 
   const value: AuthContextType = {
     user,
-    isAuthenticated,
+    isAuthenticated: !!user,
     initializing,
-    isApproved,
     accountStatus,
+    isApproved,
     language,
     theme,
     roles,
+    hasRole,
     login,
     logout,
     switchLanguage,
     switchTheme,
-    hasRole,
     updateProfile,
-    loadProfileAndRoles,
+    loadProfileAndRoles: useCallback(async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user?.id) {
+        return loadProfileAndRoles(data.session.user.id);
+      }
+      return Promise.resolve();
+    }, [loadProfileAndRoles]),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
