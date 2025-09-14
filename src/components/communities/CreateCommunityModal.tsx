@@ -10,10 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { CalendarIcon, Loader2, ChevronDown } from 'lucide-react';
+import { CalendarIcon, Loader2, ChevronDown, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+// Map picking is temporarily disabled per request
+// import mapboxgl from 'mapbox-gl';
+// import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface CreateCommunityModalProps {
   open: boolean;
@@ -33,6 +36,15 @@ export default function CreateCommunityModal({
   const [nameError, setNameError] = useState<string>('');
   const [checkingName, setCheckingName] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  // const [mapOpen, setMapOpen] = useState(false);
+  // const mapContainer = useState<HTMLDivElement | null>(null)[0] as any;
+  // const mapRef = useState<mapboxgl.Map | null>(null)[0] as any;
+  // const markerRef = useState<mapboxgl.Marker | null>(null)[0] as any;
+  // const mapContainerRef = (node: HTMLDivElement | null) => {
+  //   (CreateCommunityModal as any)._mapContainer = node;
+  // };
+  // const getMapContainer = () => (CreateCommunityModal as any)._mapContainer as HTMLDivElement | null;
+  // const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     community_type: 'residential',
@@ -41,6 +53,8 @@ export default function CreateCommunityModal({
     total_units: '',
     occupied_units: '',
     postal_code: '',
+    latitude: '',
+    longitude: '',
     established_date: new Date(),
     status: 'active'
   });
@@ -85,6 +99,8 @@ export default function CreateCommunityModal({
       cancel: 'Cancel',
       create: 'Create Community',
       creating: 'Creating...',
+      // pickOnMap: 'Pick on map',
+      // useMyLocation: 'Use my location',
       nameRequired: 'Community name is required',
       duplicateName: 'This community is already registered in this district',
       checkingName: 'Checking availability...',
@@ -130,6 +146,8 @@ export default function CreateCommunityModal({
       cancel: 'Batal',
       create: 'Cipta Komuniti',
       creating: 'Mencipta...',
+      // pickOnMap: 'Pilih pada peta',
+      // useMyLocation: 'Guna lokasi saya',
       nameRequired: 'Nama komuniti diperlukan',
       duplicateName: 'Komuniti ini sudah didaftarkan dalam daerah ini',
       checkingName: 'Semak ketersediaan...',
@@ -139,6 +157,72 @@ export default function CreateCommunityModal({
   };
 
   const t = text[language];
+
+  // Mapbox token fetch (disabled)
+  // useEffect(() => {
+  //   const fetchToken = async () => {
+  //     try {
+  //       const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+  //       if (error) return;
+  //       setMapboxToken(data.token);
+  //     } catch (e) {
+  //       console.warn('Mapbox token not available');
+  //     }
+  //   };
+  //   if (open) fetchToken();
+  // }, [open]);
+
+  // Initialize map when popover opens (disabled)
+  // useEffect(() => {
+  //   if (!mapOpen || !mapboxToken) return;
+  //   const container = getMapContainer();
+  //   if (!container) return;
+  //   if ((CreateCommunityModal as any)._map) return; // already initialized
+  //   mapboxgl.accessToken = mapboxToken;
+  //   const map = new mapboxgl.Map({
+  //     container,
+  //     style: 'mapbox://styles/mapbox/streets-v12',
+  //     center: [101.6869, 3.139],
+  //     zoom: 10,
+  //   });
+  //   (CreateCommunityModal as any)._map = map;
+  //   map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+  //   map.on('click', (e) => {
+  //     const { lng, lat } = e.lngLat;
+  //     setFormData(prev => ({ ...prev, latitude: String(lat), longitude: String(lng) }));
+  //     let marker = (CreateCommunityModal as any)._marker as mapboxgl.Marker | null;
+  //     if (marker) marker.remove();
+  //     marker = new mapboxgl.Marker({ draggable: true }).setLngLat([lng, lat]).addTo(map);
+  //     marker.on('dragend', () => {
+  //       const ll = marker!.getLngLat();
+  //       setFormData(prev => ({ ...prev, latitude: String(ll.lat), longitude: String(ll.lng) }));
+  //     });
+  //     (CreateCommunityModal as any)._marker = marker;
+  //   });
+  // }, [mapOpen, mapboxToken]);
+
+  // const useMyLocation = () => {
+  //   if (!navigator.geolocation) {
+  //     toast.error('Geolocation not supported');
+  //     return;
+  //   }
+  //   navigator.geolocation.getCurrentPosition((pos) => {
+  //     const { latitude, longitude } = pos.coords;
+  //     setFormData(prev => ({ ...prev, latitude: String(latitude), longitude: String(longitude) }));
+  //     const map = (CreateCommunityModal as any)._map as mapboxgl.Map | null;
+  //     if (map) map.flyTo({ center: [longitude, latitude], zoom: 14 });
+  //     let marker = (CreateCommunityModal as any)._marker as mapboxgl.Marker | null;
+  //     if (marker) marker.remove();
+  //     if ((CreateCommunityModal as any)._map) {
+  //       marker = new mapboxgl.Marker({ draggable: true }).setLngLat([longitude, latitude]).addTo((CreateCommunityModal as any)._map);
+  //       marker.on('dragend', () => {
+  //         const ll = marker!.getLngLat();
+  //         setFormData(prev => ({ ...prev, latitude: String(ll.lat), longitude: String(ll.lng) }));
+  //       });
+  //       (CreateCommunityModal as any)._marker = marker;
+  //     }
+  //   }, () => toast.error('Unable to get current location'));
+  // };
 
   // Debounced name check
   const checkNameAvailability = useCallback(async (name: string) => {
@@ -214,6 +298,18 @@ export default function CreateCommunityModal({
       return;
     }
 
+    // Coordinates validation (if provided)
+    const lat = formData.latitude ? parseFloat(formData.latitude) : null;
+    const lng = formData.longitude ? parseFloat(formData.longitude) : null;
+    if (lat !== null && (isNaN(lat) || lat < -90 || lat > 90)) {
+      toast.error('Latitude must be between -90 and 90');
+      return;
+    }
+    if (lng !== null && (isNaN(lng) || lng < -180 || lng > 180)) {
+      toast.error('Longitude must be between -180 and 180');
+      return;
+    }
+
     setLoading(true);
     
     try {
@@ -228,6 +324,8 @@ export default function CreateCommunityModal({
           total_units: formData.total_units ? parseInt(formData.total_units) : 0,
           occupied_units: formData.occupied_units ? parseInt(formData.occupied_units) : 0,
           postal_code: formData.postal_code.trim() || null,
+          latitude: lat,
+          longitude: lng,
           established_date: formData.established_date.toISOString().split('T')[0],
           district_id: districtId,
           status: formData.status,
@@ -256,6 +354,8 @@ export default function CreateCommunityModal({
         total_units: '',
         occupied_units: '',
         postal_code: '',
+        latitude: '',
+        longitude: '',
         established_date: new Date(),
         status: 'active'
       });
@@ -330,10 +430,10 @@ export default function CreateCommunityModal({
           {/* Advanced Details - Collapsible */}
           <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" type="button" className="flex items-center justify-between w-full p-0 h-auto">
+              <div role="button" className="flex items-center justify-between w-full px-2 py-1 rounded-md bg-muted text-foreground select-none">
                 <span className="text-sm font-medium">{t.advancedDetails}</span>
                 <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", showAdvanced && "rotate-180")} />
-              </Button>
+              </div>
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-4 pt-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -357,6 +457,41 @@ export default function CreateCommunityModal({
                   </Select>
                   <p className="text-xs text-muted-foreground mt-1">{t.typeDescription}</p>
                 </div>
+
+                {/* Coordinates */}
+                <div className="relative">
+                  <Label htmlFor="latitude">{t.latitude}</Label>
+                  <Input
+                    id="latitude"
+                    type="number"
+                    step="0.000001"
+                    min="-90"
+                    max="90"
+                    value={formData.latitude}
+                    onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value }))}
+                    placeholder={t.latitudePlaceholder}
+                    disabled={loading}
+                  />
+                </div>
+                <div className="relative">
+                  <Label htmlFor="longitude">{t.longitude}</Label>
+                  <Input
+                    id="longitude"
+                    type="number"
+                    step="0.000001"
+                    min="-180"
+                    max="180"
+                    value={formData.longitude}
+                    onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value }))}
+                    placeholder={t.longitudePlaceholder}
+                    disabled={loading}
+                  />
+                </div>
+                {/* Map picking temporarily disabled
+                <div className="sm:col-span-2 flex items-center gap-2">
+                  ... pick on map / use my location ...
+                </div>
+                */}
 
                 {/* Total Units */}
                 <div>

@@ -638,10 +638,16 @@ export default function CompleteAccount() {
                   id="phone"
                   type="tel"
                   value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="01X-XXXXXXX"
+                  onChange={(e) => {
+                    const sanitized = e.target.value.replace(/[^0-9]/g, '');
+                    setForm({ ...form, phone: sanitized });
+                  }}
+                  placeholder="0123456789"
                   required
                 />
+                {form.phone && !form.phone.startsWith('0') && (
+                  <p className="text-xs text-destructive">Phone must start with 0</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -700,12 +706,16 @@ export default function CompleteAccount() {
                   id="emergency_contact_phone"
                   type="tel"
                   value={form.emergency_contact_phone}
-                  onChange={(e) =>
-                    setForm({ ...form, emergency_contact_phone: e.target.value })
-                  }
-                  placeholder="01X-XXXXXXX"
+                  onChange={(e) => {
+                    const sanitized = e.target.value.replace(/[^0-9]/g, '');
+                    setForm({ ...form, emergency_contact_phone: sanitized });
+                  }}
+                  placeholder="0123456789"
                   required
                 />
+                {form.emergency_contact_phone && !form.emergency_contact_phone.startsWith('0') && (
+                  <p className="text-xs text-destructive">Phone must start with 0</p>
+                )}
               </div>
             </div>
 

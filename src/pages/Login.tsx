@@ -345,17 +345,10 @@ export default function Login() {
 
     switch (fieldName) {
       case "phone":
-        if (value && !validateMalaysianPhoneNumber(value)) {
-          error =
-            language === "en"
-              ? "Invalid Malaysian phone number format"
-              : "Format nombor telefon Malaysia tidak sah";
-        }
-        if (value && !/^\+?[\d\s\-\(\)]+$/.test(value)) {
-          error =
-            language === "en"
-              ? "Phone number must contain numbers only"
-              : "Nombor telefon mesti mengandungi nombor sahaja";
+        if (/[A-Za-z]/.test(value)) {
+          error = language === "en" ? "Phone cannot contain letters" : "Telefon tidak boleh mengandungi huruf";
+        } else if (value && !/^0\d*$/.test(value)) {
+          error = language === "en" ? "Phone must start with 0 and contain digits only" : "Telefon mesti bermula dengan 0 dan mengandungi nombor sahaja";
         }
         break;
       case "businessName":
@@ -396,17 +389,9 @@ export default function Login() {
   };
 
   // Enhanced validation functions
-  const validateMalaysianPhoneNumber = (phone: string): boolean => {
-    // Remove all spaces, dashes, and brackets
-    const cleanPhone = phone.replace(/[\s\-\(\)]/g, "");
-
-    // Malaysian phone number patterns:
-    // Mobile: +60123456789 or 60123456789 or 0123456789
-    // Landline: +6032123456 or 6032123456 or 032123456
-    const mobilePattern = /^(\+?60|0)?1[0-9]{8,9}$/;
-    const landlinePattern = /^(\+?60|0)?[2-9][0-9]{7,8}$/;
-
-    return mobilePattern.test(cleanPhone) || landlinePattern.test(cleanPhone);
+  const validateMalaysianPhoneNumber = (input: string): boolean => {
+    // New simple rule: digits only and must start with 0
+    return /^0\d+$/.test(input);
   };
 
   const validateBusinessName = (name: string): boolean => {
@@ -487,7 +472,7 @@ export default function Login() {
       );
     }
 
-    // Phone number validation (now required for service providers)
+    // Phone number validation (required for service providers)
     if (!phone.trim()) {
       throw new Error(
         language === "en"
@@ -496,21 +481,12 @@ export default function Login() {
       );
     }
 
-    // Validate Malaysian phone format and numbers only
-    const phoneNumbersOnly = /^\+?[\d\s\-\(\)]+$/;
-    if (!phoneNumbersOnly.test(phone)) {
+    // Digits only and must start with 0
+    if (/[A-Za-z]/.test(phone) || !/^0\d+$/.test(phone)) {
       throw new Error(
         language === "en"
-          ? "Phone number must contain numbers only"
-          : "Nombor telefon mesti mengandungi nombor sahaja"
-      );
-    }
-
-    if (!validateMalaysianPhoneNumber(phone)) {
-      throw new Error(
-        language === "en"
-          ? "Please enter a valid Malaysian phone number (e.g., +60123456789 or 0123456789)"
-          : "Sila masukkan nombor telefon Malaysia yang sah (cth: +60123456789 atau 0123456789)"
+          ? "Phone must start with 0 and contain digits only"
+          : "Telefon mesti bermula dengan 0 dan mengandungi nombor sahaja"
       );
     }
 
@@ -1572,18 +1548,15 @@ export default function Login() {
                               type="tel"
                               value={phone}
                               onChange={(e) => {
-                                // Allow only numbers, spaces, dashes, brackets and plus sign
-                                const value = e.target.value.replace(
-                                  /[^\d\s\-\(\)\+]/g,
-                                  ""
-                                );
+                                // Allow digits only
+                                const value = e.target.value.replace(/[^0-9]/g, "");
                                 setPhone(value);
                                 if (fieldTouched.phone) {
                                   validateField("phone", value);
                                 }
                               }}
                               onBlur={() => handleFieldBlur("phone", phone)}
-                              placeholder="+60123456789"
+                              placeholder="0123456789"
                               required
                               className={`transition-smooth pr-10 ${
                                 fieldTouched.phone && validationErrors.phone
@@ -1612,8 +1585,8 @@ export default function Login() {
                           )}
                           <p className="text-xs text-muted-foreground">
                             {language === "en"
-                              ? "Malaysian phone number format (e.g., +60123456789 or 0123456789)"
-                              : "Format nombor telefon Malaysia (cth: +60123456789 atau 0123456789)"}
+                              ? "Digits only; must start with 0 (e.g., 0123456789)"
+                              : "Nombor sahaja; mesti bermula dengan 0 (cth: 0123456789)"}
                           </p>
                         </div>
 

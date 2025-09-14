@@ -23,7 +23,12 @@ const serviceSchema = z.object({
   price_range: z.string().optional(),
   availability: z.string().optional(),
   contact_method: z.enum(['phone', 'email', 'both']),
-  phone_number: z.string().optional(),
+  phone_number: z
+    .string()
+    .optional()
+    .refine((val) => !val || /^0\d+$/.test(val), {
+      message: 'Phone must start with 0 and contain digits only',
+    }),
   email: z.string().email('Invalid email').optional(),
   location: z.string().optional(),
   is_active: z.boolean().default(true),
@@ -60,6 +65,7 @@ export const ServiceManagement: React.FC = () => {
 
   const form = useForm<ServiceFormData>({
     resolver: zodResolver(serviceSchema),
+    mode: 'onChange',
     defaultValues: {
       service_name: '',
       description: '',
@@ -428,7 +434,11 @@ export const ServiceManagement: React.FC = () => {
                     <FormItem>
                       <FormLabel>Phone Number</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. +60123456789" {...field} />
+                        <Input
+                          placeholder="e.g. 0123456789"
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value.replace(/[^0-9]/g, ''))}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

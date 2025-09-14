@@ -1204,14 +1204,15 @@ const InteractiveUnitEditor: React.FC<InteractiveUnitEditorProps> = ({
                 <Input
                   id="phone_number"
                   value={formData.phone_number}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      phone_number: e.target.value,
-                    }))
-                  }
-                  placeholder="+60123456789"
+                  onChange={(e) => {
+                    const sanitized = e.target.value.replace(/[^0-9]/g, '');
+                    setFormData((prev) => ({ ...prev, phone_number: sanitized }));
+                  }}
+                  placeholder="0123456789"
                 />
+                {formData.phone_number && !String(formData.phone_number).startsWith('0') && (
+                  <p className="text-xs text-destructive">Phone must start with 0</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="email">Email</Label>

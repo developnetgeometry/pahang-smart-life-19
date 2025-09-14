@@ -13,6 +13,9 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+// Map picking is temporarily disabled per request
+// import mapboxgl from 'mapbox-gl';
+// import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface EditCommunityModalProps {
   open: boolean;
@@ -25,6 +28,8 @@ export default function EditCommunityModal({ open, onOpenChange, communityId, on
   const { language } = useAuth();
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(false);
+  // const [mapOpen, setMapOpen] = useState(false);
+  // const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     community_type: 'residential',
@@ -33,6 +38,8 @@ export default function EditCommunityModal({ open, onOpenChange, communityId, on
     total_units: '',
     occupied_units: '',
     postal_code: '',
+    latitude: '',
+    longitude: '',
     established_date: new Date(),
     status: 'active'
   });
@@ -48,6 +55,8 @@ export default function EditCommunityModal({ open, onOpenChange, communityId, on
       totalUnits: 'Total Units (No. of Houses)',
       occupiedUnits: 'Occupied Units',
       postalCode: 'Postal Code',
+      latitude: 'Latitude',
+      longitude: 'Longitude',
       establishedDate: 'Established Date',
       
       status: 'Status',
@@ -75,6 +84,8 @@ export default function EditCommunityModal({ open, onOpenChange, communityId, on
       totalUnits: 'Jumlah Unit (Bilangan Rumah)',
       occupiedUnits: 'Unit Diduduki',
       postalCode: 'Poskod',
+      latitude: 'Latitud',
+      longitude: 'Longitud',
       establishedDate: 'Tarikh Ditubuhkan',
       
       status: 'Status',
@@ -94,6 +105,17 @@ export default function EditCommunityModal({ open, onOpenChange, communityId, on
     }
   }[language];
 
+  // Mapbox token fetch disabled
+  // useEffect(() => {
+  //   if (!open) return;
+  //   (async () => {
+  //     try {
+  //       const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+  //       if (!error) setMapboxToken(data.token);
+  //     } catch {}
+  //   })();
+  // }, [open]);
+
   useEffect(() => {
     const load = async () => {
       if (!open || !communityId) return;
@@ -101,7 +123,7 @@ export default function EditCommunityModal({ open, onOpenChange, communityId, on
       try {
         const { data, error } = await supabase
           .from('communities')
-          .select('id, name, community_type, address, description, total_units, occupied_units, postal_code, established_date, status')
+          .select('id, name, community_type, address, description, total_units, occupied_units, postal_code, established_date, status, latitude, longitude')
           .eq('id', communityId)
           .single();
         if (error) throw error;
@@ -114,6 +136,8 @@ export default function EditCommunityModal({ open, onOpenChange, communityId, on
             total_units: (data.total_units ?? '').toString(),
             occupied_units: (data.occupied_units ?? '').toString(),
             postal_code: data.postal_code || '',
+            latitude: (data.latitude ?? '').toString(),
+            longitude: (data.longitude ?? '').toString(),
             established_date: data.established_date ? new Date(data.established_date) : new Date(),
             status: data.status || 'active'
           });
@@ -128,6 +152,64 @@ export default function EditCommunityModal({ open, onOpenChange, communityId, on
     load();
   }, [open, communityId]);
 
+  // Initialize map when popover opens (disabled)
+  // useEffect(() => {
+  //   if (!mapOpen || !mapboxToken) return;
+  //   const container = (EditCommunityModal as any)._mapContainer as HTMLDivElement | null;
+  //   if (!container) return;
+  //   if ((EditCommunityModal as any)._map) return;
+  //   mapboxgl.accessToken = mapboxToken;
+  //   const initLng = parseFloat(formData.longitude || '101.6869');
+  //   const initLat = parseFloat(formData.latitude || '3.139');
+  //   const map = new mapboxgl.Map({
+  //     container,
+  //     style: 'mapbox://styles/mapbox/streets-v12',
+  //     center: [initLng, initLat],
+  //     zoom: 12,
+  //   });
+  //   (EditCommunityModal as any)._map = map;
+  //   map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+  //   map.on('click', (e) => {
+  //     const { lng, lat } = e.lngLat;
+  //     setFormData(prev => ({ ...prev, latitude: String(lat), longitude: String(lng) }));
+  //     let marker = (EditCommunityModal as any)._marker as mapboxgl.Marker | null;
+  //     if (marker) marker.remove();
+  //     marker = new mapboxgl.Marker({ draggable: true }).setLngLat([lng, lat]).addTo(map);
+  //     marker.on('dragend', () => {
+  //       const ll = marker!.getLngLat();
+  //       setFormData(prev => ({ ...prev, latitude: String(ll.lat), longitude: String(ll.lng) }));
+  //     });
+  //     (EditCommunityModal as any)._marker = marker;
+  //   });
+  // }, [mapOpen, mapboxToken]);
+
+  // const setMapContainer = (node: HTMLDivElement | null) => {
+  //   (EditCommunityModal as any)._mapContainer = node;
+  // };
+
+  // const useMyLocation = () => {
+  //   if (!navigator.geolocation) {
+  //     toast.error('Geolocation not supported');
+  //     return;
+  //   }
+  //   navigator.geolocation.getCurrentPosition((pos) => {
+  //     const { latitude, longitude } = pos.coords;
+  //     setFormData(p => ({ ...p, latitude: String(latitude), longitude: String(longitude) }));
+  //     const map = (EditCommunityModal as any)._map as mapboxgl.Map | null;
+  //     if (map) map.flyTo({ center: [longitude, latitude], zoom: 14 });
+  //     let marker = (EditCommunityModal as any)._marker as mapboxgl.Marker | null;
+  //     if (marker) marker.remove();
+  //     if ((EditCommunityModal as any)._map) {
+  //       marker = new mapboxgl.Marker({ draggable: true }).setLngLat([longitude, latitude]).addTo((EditCommunityModal as any)._map);
+  //       marker.on('dragend', () => {
+  //         const ll = marker!.getLngLat();
+  //         setFormData(prev => ({ ...prev, latitude: String(ll.lat), longitude: String(ll.lng) }));
+  //       });
+  //       (EditCommunityModal as any)._marker = marker;
+  //     }
+  //   }, () => toast.error('Unable to get current location'));
+  // };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!communityId) return;
@@ -135,6 +217,17 @@ export default function EditCommunityModal({ open, onOpenChange, communityId, on
     const occupied = formData.occupied_units ? parseInt(formData.occupied_units) : 0;
     if (occupied > total) {
       toast.error('Occupied units cannot exceed total units');
+      return;
+    }
+    // Validate coordinates
+    const lat = formData.latitude ? parseFloat(formData.latitude) : null;
+    const lng = formData.longitude ? parseFloat(formData.longitude) : null;
+    if (lat !== null && (isNaN(lat) || lat < -90 || lat > 90)) {
+      toast.error('Latitude must be between -90 and 90');
+      return;
+    }
+    if (lng !== null && (isNaN(lng) || lng < -180 || lng > 180)) {
+      toast.error('Longitude must be between -180 and 180');
       return;
     }
     setLoading(true);
@@ -147,6 +240,8 @@ export default function EditCommunityModal({ open, onOpenChange, communityId, on
         total_units: formData.total_units ? parseInt(formData.total_units) : 0,
         occupied_units: formData.occupied_units ? parseInt(formData.occupied_units) : 0,
         postal_code: formData.postal_code.trim() || null,
+        latitude: lat,
+        longitude: lng,
         established_date: formData.established_date ? formData.established_date.toISOString().split('T')[0] : null,
         status: formData.status,
       };
@@ -193,6 +288,21 @@ export default function EditCommunityModal({ open, onOpenChange, communityId, on
                 <div>
                   <Label htmlFor="description">{t.description}</Label>
                   <Textarea id="description" value={formData.description} onChange={(e) => setFormData(p => ({...p, description: e.target.value}))} rows={3} disabled={loading} />
+                </div>
+                {/* Map picking temporarily disabled
+                <div className="flex items-center gap-2">
+                  ... pick on map / use my location ...
+                </div>
+                */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="latitude">{t.latitude}</Label>
+                    <Input id="latitude" type="number" step="0.000001" min="-90" max="90" value={formData.latitude} onChange={(e) => setFormData(p => ({...p, latitude: e.target.value}))} disabled={loading} />
+                  </div>
+                  <div>
+                    <Label htmlFor="longitude">{t.longitude}</Label>
+                    <Input id="longitude" type="number" step="0.000001" min="-180" max="180" value={formData.longitude} onChange={(e) => setFormData(p => ({...p, longitude: e.target.value}))} disabled={loading} />
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>

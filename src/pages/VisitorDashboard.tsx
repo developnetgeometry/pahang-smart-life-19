@@ -423,8 +423,8 @@ export default function VisitorDashboard() {
                   <p className="text-sm font-medium">{selectedVisitor.visitor_name}</p>
                 </div>
                 <div>
-                  <Label>{language === 'en' ? 'Phone' : 'Telefon'}</Label>
-                  <p className="text-sm font-medium">{selectedVisitor.visitor_phone}</p>
+                <Label>{language === 'en' ? 'Phone' : 'Telefon'}</Label>
+                <p className="text-sm font-medium">{selectedVisitor.visitor_phone}</p>
                 </div>
                 {selectedVisitor.visitor_ic && (
                   <div>

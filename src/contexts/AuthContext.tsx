@@ -94,7 +94,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Move isProcessing outside useEffect to persist across renders
   const isProcessingRef = useRef(false);
-
   const isApproved = accountStatus === "approved";
 
   // Apply theme
@@ -374,6 +373,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateProfile = (updates: Partial<User>) => {
     if (user) setUser({ ...user, ...updates });
   };
+  const updateProfile = useCallback(
+    async (updates: Partial<User>) => {
+      try {
+        const { data: userResp } = await supabase.auth.getUser();
+        const sessionUser = userResp.user;
+        if (!sessionUser) return;
+
+        // Map incoming generic fields to profiles table columns
+        const profileUpdates: Record<string, any> = {};
+        if (typeof updates.full_name !== "undefined") profileUpdates.full_name = updates.full_name;
+        if (typeof updates.address !== "undefined") profileUpdates.address = updates.address;
+        if (typeof updates.phone !== "undefined") profileUpdates.mobile_no = updates.phone;
+        if (typeof updates.language_preference !== "undefined") profileUpdates.language_preference = updates.language_preference;
+        if (typeof (updates as any).theme_preference !== "undefined") profileUpdates.theme_preference = (updates as any).theme_preference;
+        if (typeof updates.community_id !== "undefined") profileUpdates.community_id = updates.community_id;
+        if (typeof updates.district_id !== "undefined") profileUpdates.district_id = updates.district_id;
+        if (typeof updates.account_status !== "undefined") profileUpdates.account_status = updates.account_status;
+
+        if (Object.keys(profileUpdates).length === 0) return;
+
+        await supabase
+          .from("profiles")
+          .update(profileUpdates)
+          .eq("user_id", sessionUser.id);
+
+        // Refresh local state
+        await loadProfileAndRoles();
+      } catch (e) {
+        console.error("updateProfile error:", e);
+      }
+    },
+    [loadProfileAndRoles]
+  );
 
   const value: AuthContextType = {
     user,
@@ -403,7 +435,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context = React.useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
