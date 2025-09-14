@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, MapPin, Users, Building, Calendar, Map as MapIcon, Settings, Plus, Loader2, Filter, UserCheck, Pencil, Trash2, UserPlus } from 'lucide-react';
+import { ArrowLeft, MapPin, Users, Building, Calendar, Map as MapIcon, Settings, Plus, Loader2, Filter, UserCheck, Pencil, Trash2, UserPlus, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import CreateCommunityModal from '@/components/communities/CreateCommunityModal';
 import EditCommunityModal from '@/components/communities/EditCommunityModal';
@@ -41,6 +41,8 @@ interface District {
   district_type?: string;
   address?: string;
   description?: string;
+  latitude?: number;
+  longitude?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -88,6 +90,9 @@ export default function DistrictDetail() {
       totalCommunities: 'Total Communities',
       coordinator: 'Coordinator',
       established: 'Established',
+      latitude: 'Latitude',
+      longitude: 'Longitude',
+      coordinates: 'Coordinates',
       status: 'Status',
       type: 'Type',
       address: 'Address',
@@ -126,6 +131,9 @@ export default function DistrictDetail() {
       totalCommunities: 'Jumlah Komuniti',
       coordinator: 'Penyelaras',
       established: 'Ditubuhkan',
+      latitude: 'Latitud',
+      longitude: 'Longitud',
+      coordinates: 'Koordinat',
       status: 'Status',
       type: 'Jenis',
       address: 'Alamat',
@@ -388,7 +396,7 @@ export default function DistrictDetail() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
             <div className="flex items-center gap-3">
               <MapIcon className="h-8 w-8 text-muted-foreground" />
               <div>
@@ -419,6 +427,24 @@ export default function DistrictDetail() {
                     ? new Date(district.established_date).getFullYear()
                     : 'Not set'
                   }
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Globe className="h-8 w-8 text-muted-foreground" />
+              <div>
+                <p className="text-sm text-muted-foreground">{t.latitude}</p>
+                <p className="text-xl font-semibold">
+                  {district.latitude ? `${Number(district.latitude).toFixed(6)}°` : 'N/A'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Globe className="h-8 w-8 text-muted-foreground" />
+              <div>
+                <p className="text-sm text-muted-foreground">{t.longitude}</p>
+                <p className="text-xl font-semibold">
+                  {district.longitude ? `${Number(district.longitude).toFixed(6)}°` : 'N/A'}
                 </p>
               </div>
             </div>
