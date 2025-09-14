@@ -370,9 +370,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user) setUser({ ...user, theme_preference: newTheme });
   };
 
-  const updateProfile = (updates: Partial<User>) => {
-    if (user) setUser({ ...user, ...updates });
-  };
   const updateProfile = useCallback(
     async (updates: Partial<User>) => {
       try {
@@ -382,14 +379,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Map incoming generic fields to profiles table columns
         const profileUpdates: Record<string, any> = {};
-        if (typeof updates.full_name !== "undefined") profileUpdates.full_name = updates.full_name;
-        if (typeof updates.address !== "undefined") profileUpdates.address = updates.address;
-        if (typeof updates.phone !== "undefined") profileUpdates.mobile_no = updates.phone;
-        if (typeof updates.language_preference !== "undefined") profileUpdates.language_preference = updates.language_preference;
-        if (typeof (updates as any).theme_preference !== "undefined") profileUpdates.theme_preference = (updates as any).theme_preference;
-        if (typeof updates.community_id !== "undefined") profileUpdates.community_id = updates.community_id;
-        if (typeof updates.district_id !== "undefined") profileUpdates.district_id = updates.district_id;
-        if (typeof updates.account_status !== "undefined") profileUpdates.account_status = updates.account_status;
+        if (typeof updates.full_name !== "undefined")
+          profileUpdates.full_name = updates.full_name;
+        if (typeof updates.address !== "undefined")
+          profileUpdates.address = updates.address;
+        if (typeof updates.phone !== "undefined")
+          profileUpdates.mobile_no = updates.phone;
+        if (typeof updates.language_preference !== "undefined")
+          profileUpdates.language_preference = updates.language_preference;
+        if (typeof (updates as any).theme_preference !== "undefined")
+          profileUpdates.theme_preference = (updates as any).theme_preference;
+        if (typeof updates.community_id !== "undefined")
+          profileUpdates.community_id = updates.community_id;
+        if (typeof updates.district_id !== "undefined")
+          profileUpdates.district_id = updates.district_id;
+        if (typeof updates.account_status !== "undefined")
+          profileUpdates.account_status = updates.account_status;
 
         if (Object.keys(profileUpdates).length === 0) return;
 
