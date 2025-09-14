@@ -57,7 +57,7 @@ import RoleManagement from "./pages/RoleManagement";
 import NotificationSettings from "./pages/NotificationSettings";
 import NotificationPage from "./pages/NotificationPage";
 import MobileNotifications from "./pages/MobileNotifications";
-
+import PanicAlerts from "./pages/PanicAlerts";
 import Directory from "./pages/Directory";
 import ServiceProviderApplication from "./pages/ServiceProviderApplication";
 import ServiceProviderManagement from "./pages/admin/ServiceProviderManagement";
@@ -819,6 +819,18 @@ const App = () => (
             />
 
             {/* Security modules */}
+            <Route
+              path="/panic-alerts"
+              element={
+                <ProtectedRoute>
+                  <RequireNotRoles roles={["service_provider"]}>
+                    <Layout>
+                      <PanicAlerts />
+                    </Layout>
+                  </RequireNotRoles>
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/patrol-interface"
               element={

@@ -25,7 +25,7 @@ import { CommunityDirectoryWidget } from "./CommunityDirectoryWidget";
 import { PrayerTimesWidget } from "./PrayerTimesWidget";
 import InteractiveUnitEditor from "@/components/location/InteractiveUnitEditor";
 
-
+import PanicButton from "@/components/emergency/PanicButton";
 
 import { useModuleAccess } from "@/hooks/use-module-access";
 import {
@@ -511,6 +511,8 @@ export function ResidentDashboard() {
         </DialogContent>
       </Dialog>
 
+      {/* Floating Round Panic Button - only show if security module is enabled */}
+      {isModuleEnabled("security") && <PanicButton />}
     </div>
   );
 }

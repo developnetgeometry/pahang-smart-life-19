@@ -88,6 +88,14 @@ export function getSharedNavigationForUser(
     { title: t("myComplaints"), url: "/my-complaints", icon: FileText },
   ];
 
+  // Add panic alerts if security module is enabled
+  if (isModuleEnabled("security") && !hasRole("security_officer")) {
+    personalItems.push({
+      title: t("panicAlerts"),
+      url: "/panic-alerts",
+      icon: AlertTriangle,
+    });
+  }
 
   // Add visitor management if module is enabled
   if (isModuleEnabled("visitor_management")) {
@@ -342,6 +350,12 @@ export function getSharedNavigationForUser(
         icon: AlertTriangle,
         requiredRoles: ["facility_manager"],
       },
+      {
+        title: t("panicAlerts"),
+        url: "/panic-alerts",
+        icon: AlertTriangle,
+        requiredRoles: ["security_officer", "state_admin", "community_admin"],
+      }
     );
 
     // Visitor Management modules (require visitor_management module to be enabled)
