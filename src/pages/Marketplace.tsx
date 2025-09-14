@@ -657,7 +657,7 @@ export default function Marketplace() {
           </h1>
           <p className="text-muted-foreground mt-2">{t.subtitle}</p>
         </div>
-        <pre>{JSON.stringify(user, null, 2)}</pre>
+        {/* <pre>{JSON.stringify(user, null, 2)}</pre> */}
 
         <div className="flex flex-col sm:flex-row items-center gap-2">
           <CartIcon onClick={() => setShowCart(!showCart)} />
