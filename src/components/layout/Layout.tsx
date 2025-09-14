@@ -2,8 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Header } from './Header';
 import { AppSidebar } from './Sidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-// import { useView } from '@/contexts/ViewContext';
-// import { MobileLayout } from './MobileLayout';
+import { useDevice } from '@/contexts/DeviceContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,8 +10,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const { isAuthenticated } = useAuth();
-  // const { viewMode } = useView();
-  // Using desktop layout only as fallback while ViewProvider is disabled
+  const { viewMode } = useDevice();
 
   if (!isAuthenticated) {
     return <>{children}</>;

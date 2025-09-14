@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/lib/translations';
-// import { useView } from '@/contexts/ViewContext';
+import { useDevice } from '@/contexts/DeviceContext';
 import { Separator } from '@/components/ui/separator';
 import { useRealtimeMessaging } from '@/hooks/use-realtime-messaging';
 import { useChatRooms } from '@/hooks/use-chat-rooms';
@@ -82,8 +82,7 @@ interface CommunityChatProps {
 export default function CommunityChat({ marketplaceChat, directoryChat, initialRoomId }: CommunityChatProps = {}) {
   const { language, user } = useAuth();
   const { t } = useTranslation(language);
-  // const { isMobile } = useView();
-  const isMobile = false; // Temporary fallback
+  const { isMobile } = useDevice();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
