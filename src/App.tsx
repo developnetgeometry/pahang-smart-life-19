@@ -172,14 +172,13 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <ViewProvider>
-        <AuthProvider>
-          <NotificationProvider>
-            <Toaster />
-            <Sonner />
-            <PWAInstallPrompt />
-            <BrowserRouter>
+    <ViewProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <Toaster />
+          <Sonner />
+          <PWAInstallPrompt />
+          <BrowserRouter>
           <Routes>
             <Route
               path="/login"
@@ -1041,11 +1040,10 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-      </NotificationProvider>
-    </AuthProvider>
-  </ViewProvider>
-</TooltipProvider>
-    </QueryClientProvider>
+        </NotificationProvider>
+      </AuthProvider>
+    </ViewProvider>
+  </QueryClientProvider>
 );
 
 export default App;
