@@ -113,6 +113,47 @@ export const translations = {
     noNotificationsYet: "No notifications yet",
     high: "High",
     viewAllNotifications: "View all notifications",
+    deleteChat: "Delete Chat",
+    deleteChatConfirm: "Are you sure you want to delete this chat? This action cannot be undone and all messages will be permanently deleted.",
+    delete: "Delete",
+    loadingChat: "Loading chat...",
+    marketplaceChat: "Marketplace Chat",
+    
+    // Notification Settings
+    settingsUpdated: "Settings Updated",
+    notificationPreferencesSaved: "Notification preferences saved",
+    failedToSavePreferences: "Failed to save preferences",
+    chatMessages: "Chat Messages",
+    getNotifiedForNewMessages: "Get notified for new messages",
+    voiceVideoCalls: "Voice & Video Calls",
+    incomingCallNotifications: "Incoming call notifications",
+    emergencyAlerts: "Emergency Alerts",
+    criticalSafetyNotifications: "Critical safety notifications",
+    mentionsReplies: "Mentions & Replies",
+    whenSomeoneMentionsReplies: "When someone mentions or replies to you",
+    soundNotifications: "Sound Notifications",
+    playSoundsForNotifications: "Play sounds for notifications",
+    emailNotifications: "Email Notifications",
+    receiveNotificationsByEmail: "Receive notifications by email",
+    pushNotifications: "Push Notifications",
+    mobilePushNotifications: "Mobile push notifications",
+
+    // Poll Component
+    poll: "Poll",
+    votes: "votes",
+    vote: "Vote",
+    voted: "Voted",
+    expires: "Expires",
+    expired: "Expired",
+    anonymous: "Anonymous Poll",
+    multipleVotes: "Multiple votes allowed",
+    totalVotes: "Total votes",
+    votingError: "Error submitting vote",
+    votingSuccess: "Vote submitted successfully",
+    loadingError: "Error loading poll",
+    
+    // Upload errors
+    uploadFailed: "Upload failed",
 
     // Activities & Announcements
     viewDetails: "View Details",
@@ -125,7 +166,6 @@ export const translations = {
 
     // System
     smartCommunity: "Integrated Smart City System",
-    
     poweredBy: "Powered by Smart City Initiative",
 
     // New navigation items (not duplicates)

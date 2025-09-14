@@ -22,6 +22,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/lib/translations';
 import { useDeviceInfo } from '@/hooks/use-mobile';
 import { Separator } from '@/components/ui/separator';
 import { useRealtimeMessaging } from '@/hooks/use-realtime-messaging';
@@ -80,6 +81,7 @@ interface CommunityChatProps {
 
 export default function CommunityChat({ marketplaceChat, directoryChat, initialRoomId }: CommunityChatProps = {}) {
   const { language, user } = useAuth();
+  const { t } = useTranslation(language);
   const { isMobile } = useDeviceInfo();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -333,7 +335,7 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
         <div className="p-4 md:p-4 border-b border-border/50 bg-gradient-to-r from-primary/5 to-secondary/5 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-lg">
-              {language === 'en' ? 'Chats' : 'Sembang'}
+              {t('chats')}
             </h3>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -344,7 +346,7 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
               <DropdownMenuContent>
                 <DropdownMenuItem onClick={handleNewChatClick}>
                   <MessageCircle className="h-4 w-4 mr-2" />
-                  {language === 'en' ? 'New Chat' : 'Sembang Baru'}
+                  {t('newChat')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -354,7 +356,7 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={language === 'en' ? 'Search chats...' : 'Cari sembang...'}
+              placeholder={t('searchChats')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -441,30 +443,27 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
                       <AlertDialogTrigger asChild>
                         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                           <Trash2 className="h-4 w-4 mr-2" />
-                          {language === 'en' ? 'Delete Chat' : 'Padam Chat'}
+                          {t('deleteChat')}
                         </DropdownMenuItem>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>
-                            {language === 'en' ? 'Delete Chat' : 'Padam Chat'}
+                            {t('deleteChat')}
                           </AlertDialogTitle>
                           <AlertDialogDescription>
-                            {language === 'en' 
-                              ? 'Are you sure you want to delete this chat? This action cannot be undone and all messages will be permanently deleted.'
-                              : 'Adakah anda pasti untuk memadam chat ini? Tindakan ini tidak dapat dibuat asal dan semua mesej akan dipadam secara kekal.'
-                            }
+                            {t('deleteChatConfirm')}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>
-                            {language === 'en' ? 'Cancel' : 'Batal'}
+                            {t('cancel')}
                           </AlertDialogCancel>
                           <AlertDialogAction
                             onClick={handleDeleteChat}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
-                            {language === 'en' ? 'Delete' : 'Padam'}
+                            {t('delete')}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -479,11 +478,11 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
               <div className="space-y-4">
                 {messagesLoading ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    {language === 'en' ? 'Loading messages...' : 'Memuatkan mesej...'}
+                    {t('loadingMessages')}
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    {language === 'en' ? 'No messages yet' : 'Belum ada mesej'}
+                    {t('noMessagesYet')}
                   </div>
                 ) : (
                   messages.map((message, index) => {
@@ -640,8 +639,8 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
                     onBlur={stopTyping}
                     placeholder={
                       editingMessageId
-                        ? language === 'en' ? 'Edit message...' : 'Edit mesej...'
-                        : language === 'en' ? 'Type a message...' : 'Taip mesej...'
+                        ? t('editMessage')
+                        : t('typeAMessage')
                     }
                     className="w-full"
                   />
@@ -657,7 +656,7 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
             <div className="text-center">
               <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>{language === 'en' ? 'Select a chat to start messaging' : 'Pilih sembang untuk mula berkirim mesej'}</p>
+              <p>{t('selectChatToStart')}</p>
             </div>
           </div>
         )}
@@ -674,7 +673,7 @@ export default function CommunityChat({ marketplaceChat, directoryChat, initialR
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {language === 'en' ? 'Upload File' : 'Muat Naik Fail'}
+              {t('uploadFile')}
             </DialogTitle>
           </DialogHeader>
           <FileUpload onFileUploaded={handleFileUpload} />

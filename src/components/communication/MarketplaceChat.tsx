@@ -32,6 +32,7 @@ export default function MarketplaceChat({
   onBack,
 }: MarketplaceChatProps) {
   const { user, language } = useAuth();
+  const { t } = useTranslation(language);
   const { sendMessageNotification } = useNotificationSystem();
   const [roomId, setRoomId] = useState<string | null>(null);
   const [sellerProfile, setSellerProfile] = useState<SellerProfile | null>(
@@ -147,7 +148,7 @@ export default function MarketplaceChat({
           <div className="text-center">
             <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
             <p className="text-muted-foreground">
-              {language === "en" ? "Loading chat..." : "Memuat chat..."}
+              {t('loadingChat')}
             </p>
           </div>
         </CardContent>
@@ -187,7 +188,7 @@ export default function MarketplaceChat({
                     : "Penjual"}
                 </span>
                 <Badge variant="secondary" className="text-xs">
-                  {language === "en" ? "Marketplace Chat" : "Chat Marketplace"}
+                  {t('marketplaceChat')}
                 </Badge>
               </div>
             </div>
@@ -199,7 +200,7 @@ export default function MarketplaceChat({
         <ScrollArea className="flex-1 p-4">
           {messagesLoading ? (
             <div className="text-center text-muted-foreground">
-              {language === "en" ? "Loading messages..." : "Memuat pesan..."}
+              {t('loadingMessages')}
             </div>
           ) : messages.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">

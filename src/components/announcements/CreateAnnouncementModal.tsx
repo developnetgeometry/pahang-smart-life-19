@@ -244,7 +244,7 @@ export default function CreateAnnouncementModal({
     } catch (error) {
       console.error("Error uploading image:", error);
       toast({
-        title: language === "en" ? "Upload failed" : "Muat naik gagal",
+        title: t('uploadFailed'),
         description: error.message,
         variant: "destructive",
       });
@@ -281,7 +281,7 @@ export default function CreateAnnouncementModal({
     } catch (error) {
       console.error("Error uploading attachment:", error);
       toast({
-        title: language === "en" ? "Upload failed" : "Muat naik gagal",
+        title: t('uploadFailed'),
         variant: "destructive",
       });
     } finally {
