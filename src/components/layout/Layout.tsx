@@ -4,7 +4,6 @@ import { AppSidebar } from './Sidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { useView } from '@/contexts/ViewContext';
 import { MobileLayout } from './MobileLayout';
-import { TooltipProvider } from '@/components/ui/tooltip';
 
 interface LayoutProps {
   children: React.ReactNode;
