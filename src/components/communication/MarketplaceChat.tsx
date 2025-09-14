@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Send, ArrowLeft, Package } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "@/lib/translations";
 import { useRealtimeMessaging } from "@/hooks/use-realtime-messaging";
 import { useNotificationSystem } from "@/hooks/use-notification-system";
 import { supabase } from "@/integrations/supabase/client";

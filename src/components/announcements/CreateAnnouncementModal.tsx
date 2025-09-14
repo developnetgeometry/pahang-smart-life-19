@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "@/lib/translations";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Card,
@@ -244,7 +245,7 @@ export default function CreateAnnouncementModal({
     } catch (error) {
       console.error("Error uploading image:", error);
       toast({
-        title: t('uploadFailed'),
+        title: language === "en" ? "Upload failed" : "Muat naik gagal",
         description: error.message,
         variant: "destructive",
       });
@@ -281,7 +282,7 @@ export default function CreateAnnouncementModal({
     } catch (error) {
       console.error("Error uploading attachment:", error);
       toast({
-        title: t('uploadFailed'),
+        title: language === "en" ? "Upload failed" : "Muat naik gagal",
         variant: "destructive",
       });
     } finally {
