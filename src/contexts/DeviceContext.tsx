@@ -1,5 +1,5 @@
-// Completely new static device context - no React hooks
 import { createContext, useContext, ReactNode } from 'react';
+import { useDeviceInfo } from '@/hooks/use-mobile';
 
 export type DeviceType = 'mobile' | 'tablet' | 'desktop';
 
@@ -12,8 +12,8 @@ export interface DeviceInfo {
   viewMode: 'mobile' | 'desktop';
 }
 
-// Static device info - no dynamic detection to avoid hook issues
-const STATIC_DEVICE_INFO: DeviceInfo = {
+// Default device info for SSR
+const DEFAULT_DEVICE_INFO: DeviceInfo = {
   width: 1024,
   isMobile: false,
   isTablet: false,
@@ -22,16 +22,23 @@ const STATIC_DEVICE_INFO: DeviceInfo = {
   viewMode: 'desktop'
 };
 
-const DeviceContext = createContext<DeviceInfo>(STATIC_DEVICE_INFO);
+const DeviceContext = createContext<DeviceInfo>(DEFAULT_DEVICE_INFO);
 
 interface DeviceProviderProps {
   children: ReactNode;
 }
 
-// Static provider with no hooks
 export function DeviceProvider({ children }: DeviceProviderProps) {
+  const deviceInfo = useDeviceInfo();
+  
+  // Convert to our context format with viewMode
+  const contextValue: DeviceInfo = {
+    ...deviceInfo,
+    viewMode: deviceInfo.isMobile ? 'mobile' : 'desktop'
+  };
+
   return (
-    <DeviceContext.Provider value={STATIC_DEVICE_INFO}>
+    <DeviceContext.Provider value={contextValue}>
       {children}
     </DeviceContext.Provider>
   );
