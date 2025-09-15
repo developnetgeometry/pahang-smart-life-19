@@ -402,9 +402,15 @@ export function BusinessSetupModal({ open, onOpenChange, onComplete }: BusinessS
                 id="businessPhone"
                 type="tel"
                 value={formData.businessPhone}
-                onChange={(e) => setFormData(prev => ({ ...prev, businessPhone: e.target.value }))}
-                placeholder="+60123456789"
+                onChange={(e) => {
+                  const sanitized = e.target.value.replace(/[^0-9]/g, '');
+                  setFormData(prev => ({ ...prev, businessPhone: sanitized }));
+                }}
+                placeholder="0123456789"
               />
+              {formData.businessPhone && !formData.businessPhone.startsWith('0') && (
+                <p className="text-xs text-destructive">Phone must start with 0</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="businessEmail">{t.businessEmail}</Label>

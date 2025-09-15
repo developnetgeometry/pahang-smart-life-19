@@ -5,6 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/lib/translations';
 import { useNotificationSystem } from '@/hooks/use-notification-system';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -34,6 +35,7 @@ interface NotificationSettings {
 
 export default function NotificationCenter() {
   const { language } = useAuth();
+  const { t } = useTranslation(language);
   const { toast } = useToast();
   const { 
     notifications, 
@@ -66,8 +68,8 @@ export default function NotificationCenter() {
     try {
       await updatePreferences({ [key]: newValue });
       toast({
-        title: language === 'en' ? 'Settings Updated' : 'Tetapan Dikemas Kini',
-        description: language === 'en' ? 'Notification preferences saved' : 'Pilihan notifikasi disimpan',
+        title: t('settingsUpdated'),
+        description: t('notificationPreferencesSaved'),
       });
     } catch (error) {
       console.error('Error updating preferences:', error);
@@ -77,8 +79,8 @@ export default function NotificationCenter() {
         [key]: !newValue
       }));
       toast({
-        title: language === 'en' ? 'Error' : 'Ralat',
-        description: language === 'en' ? 'Failed to save preferences' : 'Gagal menyimpan pilihan',
+        title: t('error'),
+        description: t('failedToSavePreferences'),
         variant: 'destructive',
       });
     }
@@ -88,36 +90,36 @@ export default function NotificationCenter() {
     {
       key: 'messages' as keyof NotificationSettings,
       icon: MessageSquare,
-      title: language === 'en' ? 'Chat Messages' : 'Mesej Chat',
-      description: language === 'en' ? 'Get notified for new messages' : 'Dapatkan notifikasi untuk mesej baru',
+      title: t('chatMessages'),
+      description: t('getNotifiedForNewMessages'),
       color: 'text-blue-600'
     },
     {
       key: 'calls' as keyof NotificationSettings,
       icon: Phone,
-      title: language === 'en' ? 'Voice & Video Calls' : 'Panggilan Suara & Video',
-      description: language === 'en' ? 'Incoming call notifications' : 'Notifikasi panggilan masuk',
+      title: t('voiceVideoCalls'),
+      description: t('incomingCallNotifications'),
       color: 'text-green-600'
     },
     {
       key: 'announcements' as keyof NotificationSettings,
       icon: Bell,
-      title: language === 'en' ? 'Announcements' : 'Pengumuman',
-      description: language === 'en' ? 'Community announcements and updates' : 'Pengumuman dan kemas kini komuniti',
+      title: t('announcements'),
+      description: t('communityAnnouncementsUpdates'),
       color: 'text-orange-600'
     },
     {
       key: 'emergencies' as keyof NotificationSettings,
       icon: AlertTriangle,
-      title: language === 'en' ? 'Emergency Alerts' : 'Amaran Kecemasan',
-      description: language === 'en' ? 'Critical safety notifications' : 'Notifikasi keselamatan kritikal',
+      title: t('emergencyAlerts'),
+      description: t('criticalSafetyNotifications'),
       color: 'text-red-600'
     },
     {
       key: 'mentions' as keyof NotificationSettings,
       icon: Users,
-      title: language === 'en' ? 'Mentions & Replies' : 'Sebutan & Balasan',
-      description: language === 'en' ? 'When someone mentions or replies to you' : 'Apabila seseorang menyebut atau membalas anda',
+      title: t('mentionsReplies'),
+      description: t('whenSomeoneMentionsReplies'),
       color: 'text-purple-600'
     }
   ];
@@ -126,20 +128,20 @@ export default function NotificationCenter() {
     {
       key: 'sound' as keyof NotificationSettings,
       icon: Volume2,
-      title: language === 'en' ? 'Sound Notifications' : 'Notifikasi Bunyi',
-      description: language === 'en' ? 'Play sounds for notifications' : 'Mainkan bunyi untuk notifikasi'
+      title: t('soundNotifications'),
+      description: t('playSoundsForNotifications')
     },
     {
       key: 'push' as keyof NotificationSettings,
       icon: Smartphone,
-      title: language === 'en' ? 'Push Notifications' : 'Notifikasi Push',
-      description: language === 'en' ? 'Browser push notifications' : 'Notifikasi push pelayar'
+      title: t('pushNotifications'),
+      description: t('mobilePushNotifications')
     },
     {
       key: 'email' as keyof NotificationSettings,
       icon: Mail,
-      title: language === 'en' ? 'Email Notifications' : 'Notifikasi E-mel',
-      description: language === 'en' ? 'Send notifications to email' : 'Hantar notifikasi ke e-mel'
+      title: t('emailNotifications'),
+      description: t('receiveNotificationsByEmail')
     }
   ];
 

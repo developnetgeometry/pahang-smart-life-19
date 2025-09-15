@@ -345,17 +345,10 @@ export default function Login() {
 
     switch (fieldName) {
       case "phone":
-        if (value && !validateMalaysianPhoneNumber(value)) {
-          error =
-            language === "en"
-              ? "Invalid Malaysian phone number format"
-              : "Format nombor telefon Malaysia tidak sah";
-        }
-        if (value && !/^\+?[\d\s\-\(\)]+$/.test(value)) {
-          error =
-            language === "en"
-              ? "Phone number must contain numbers only"
-              : "Nombor telefon mesti mengandungi nombor sahaja";
+        if (/[A-Za-z]/.test(value)) {
+          error = language === "en" ? "Phone cannot contain letters" : "Telefon tidak boleh mengandungi huruf";
+        } else if (value && !/^0\d*$/.test(value)) {
+          error = language === "en" ? "Phone must start with 0 and contain digits only" : "Telefon mesti bermula dengan 0 dan mengandungi nombor sahaja";
         }
         break;
       case "businessName":
@@ -396,17 +389,9 @@ export default function Login() {
   };
 
   // Enhanced validation functions
-  const validateMalaysianPhoneNumber = (phone: string): boolean => {
-    // Remove all spaces, dashes, and brackets
-    const cleanPhone = phone.replace(/[\s\-\(\)]/g, "");
-
-    // Malaysian phone number patterns:
-    // Mobile: +60123456789 or 60123456789 or 0123456789
-    // Landline: +6032123456 or 6032123456 or 032123456
-    const mobilePattern = /^(\+?60|0)?1[0-9]{8,9}$/;
-    const landlinePattern = /^(\+?60|0)?[2-9][0-9]{7,8}$/;
-
-    return mobilePattern.test(cleanPhone) || landlinePattern.test(cleanPhone);
+  const validateMalaysianPhoneNumber = (input: string): boolean => {
+    // New simple rule: digits only and must start with 0
+    return /^0\d+$/.test(input);
   };
 
   const validateBusinessName = (name: string): boolean => {
@@ -487,7 +472,7 @@ export default function Login() {
       );
     }
 
-    // Phone number validation (now required for service providers)
+    // Phone number validation (required for service providers)
     if (!phone.trim()) {
       throw new Error(
         language === "en"
@@ -496,21 +481,12 @@ export default function Login() {
       );
     }
 
-    // Validate Malaysian phone format and numbers only
-    const phoneNumbersOnly = /^\+?[\d\s\-\(\)]+$/;
-    if (!phoneNumbersOnly.test(phone)) {
+    // Digits only and must start with 0
+    if (/[A-Za-z]/.test(phone) || !/^0\d+$/.test(phone)) {
       throw new Error(
         language === "en"
-          ? "Phone number must contain numbers only"
-          : "Nombor telefon mesti mengandungi nombor sahaja"
-      );
-    }
-
-    if (!validateMalaysianPhoneNumber(phone)) {
-      throw new Error(
-        language === "en"
-          ? "Please enter a valid Malaysian phone number (e.g., +60123456789 or 0123456789)"
-          : "Sila masukkan nombor telefon Malaysia yang sah (cth: +60123456789 atau 0123456789)"
+          ? "Phone must start with 0 and contain digits only"
+          : "Telefon mesti bermula dengan 0 dan mengandungi nombor sahaja"
       );
     }
 
@@ -1188,52 +1164,50 @@ export default function Login() {
           BM
         </Button>
       </div>
-      <div className="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
-        {/* Left side - Hero content */}
-        <div className="text-center lg:text-left space-y-6 text-white">
-          <div className="space-y-4">
-            <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur rounded-full px-4 py-2">
-              <MapPin className="w-5 h-5" />
-              <span className="font-medium">{t("pahangState")}</span>
-            </div>
-            <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
-              {t("smartCommunity")}
-            </h1>
-            <p className="text-xl text-white/90 max-w-lg">
-              {language === "en"
-                ? "Connecting communities across Pahang state with modern digital solutions for residents, administrators, and security personnel."
-                : "Menghubungkan komuniti di seluruh negeri Pahang dengan penyelesaian digital moden untuk penduduk, pentadbir, dan kakitangan keselamatan."}
-            </p>
-          </div>
-
-          {/* Feature highlights */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-8">
-            <div className="bg-white/10 backdrop-blur rounded-lg p-4 text-center">
-              <Users className="w-8 h-8 mx-auto mb-2" />
-              <p className="font-medium">
+      <div className="relative z-10 w-full max-w-7xl mx-auto">
+        <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-12 xl:gap-16 items-center min-h-[80vh]">
+          {/* Left side - Hero content */}
+          <div className="text-center lg:text-left space-y-8 text-white lg:pr-8">
+            <div className="space-y-6">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
+                {t("smartCommunity")}
+              </h1>
+              <p className="text-xl md:text-2xl text-white/90 leading-relaxed max-w-2xl">
                 {language === "en"
-                  ? "Multi-Role System"
-                  : "Sistem Pelbagai Peranan"}
+                  ? "Connecting communities nationwide with modern digital solutions for residents, administrators, and security personnel."
+                  : "Menghubungkan komuniti di seluruh negara dengan penyelesaian digital moden untuk penduduk, pentadbir, dan kakitangan keselamatan."}
               </p>
             </div>
-            <div className="bg-white/10 backdrop-blur rounded-lg p-4 text-center">
-              <Shield className="w-8 h-8 mx-auto mb-2" />
-              <p className="font-medium">
-                {language === "en" ? "Smart Security" : "Keselamatan Pintar"}
-              </p>
-            </div>
-            <div className="bg-white/10 backdrop-blur rounded-lg p-4 text-center">
-              <MapPin className="w-8 h-8 mx-auto mb-2" />
-              <p className="font-medium">
-                {language === "en" ? "Community Hub" : "Hub Komuniti"}
-              </p>
+
+            {/* Feature highlights */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4">
+              <div className="bg-white/10 backdrop-blur rounded-xl p-6 text-center hover:bg-white/20 transition-all duration-300">
+                <Users className="w-10 h-10 mx-auto mb-3" />
+                <p className="font-semibold text-lg">
+                  {language === "en"
+                    ? "Multi-Role System"
+                    : "Sistem Pelbagai Peranan"}
+                </p>
+              </div>
+              <div className="bg-white/10 backdrop-blur rounded-xl p-6 text-center hover:bg-white/20 transition-all duration-300">
+                <Shield className="w-10 h-10 mx-auto mb-3" />
+                <p className="font-semibold text-lg">
+                  {language === "en" ? "Smart Security" : "Keselamatan Pintar"}
+                </p>
+              </div>
+              <div className="bg-white/10 backdrop-blur rounded-xl p-6 text-center hover:bg-white/20 transition-all duration-300">
+                <MapPin className="w-10 h-10 mx-auto mb-3" />
+                <p className="font-semibold text-lg">
+                  {language === "en" ? "Community Hub" : "Hub Komuniti"}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Right side - Login form */}
-        <div className="w-full max-w-md mx-auto">
-          <Card className="shadow-elegant border-white/20 bg-card/95 backdrop-blur max-h-[85vh] overflow-y-auto">
+          {/* Right side - Login form */}
+          <div className="w-full flex justify-center lg:justify-start">
+            <div className="w-full max-w-lg">
+              <Card className="shadow-elegant border-white/20 bg-card/95 backdrop-blur max-h-[85vh] overflow-y-auto">
             <CardHeader className="text-center pb-4">
               <CardTitle className="text-2xl font-bold">
                 {mode === "signIn"
@@ -1597,18 +1571,15 @@ export default function Login() {
                               type="tel"
                               value={phone}
                               onChange={(e) => {
-                                // Allow only numbers, spaces, dashes, brackets and plus sign
-                                const value = e.target.value.replace(
-                                  /[^\d\s\-\(\)\+]/g,
-                                  ""
-                                );
+                                // Allow digits only
+                                const value = e.target.value.replace(/[^0-9]/g, "");
                                 setPhone(value);
                                 if (fieldTouched.phone) {
                                   validateField("phone", value);
                                 }
                               }}
                               onBlur={() => handleFieldBlur("phone", phone)}
-                              placeholder="+60123456789"
+                              placeholder="0123456789"
                               required
                               className={`transition-smooth pr-10 ${
                                 fieldTouched.phone && validationErrors.phone
@@ -1637,8 +1608,8 @@ export default function Login() {
                           )}
                           <p className="text-xs text-muted-foreground">
                             {language === "en"
-                              ? "Malaysian phone number format (e.g., +60123456789 or 0123456789)"
-                              : "Format nombor telefon Malaysia (cth: +60123456789 atau 0123456789)"}
+                              ? "Digits only; must start with 0 (e.g., 0123456789)"
+                              : "Nombor sahaja; mesti bermula dengan 0 (cth: 0123456789)"}
                           </p>
                         </div>
 
@@ -2429,6 +2400,8 @@ export default function Login() {
           <p className="text-center text-white/70 text-sm mt-6">
             {t("poweredBy")}
           </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

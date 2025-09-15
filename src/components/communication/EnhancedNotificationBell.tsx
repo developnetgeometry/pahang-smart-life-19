@@ -13,12 +13,14 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useNotificationSystem, NotificationData } from '@/hooks/use-notification-system';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/lib/translations';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
 export default function EnhancedNotificationBell() {
   const { language } = useAuth();
+  const { t } = useTranslation(language);
   const navigate = useNavigate();
   const {
     notifications,
@@ -118,7 +120,7 @@ export default function EnhancedNotificationBell() {
       <DropdownMenuContent align="end" className="w-80">
         <div className="flex items-center justify-between p-2">
           <h4 className="font-semibold">
-            {language === 'en' ? 'Notifications' : 'Notifikasi'}
+            {t('notifications')}
           </h4>
           {unreadCount > 0 && (
             <Button
@@ -128,7 +130,7 @@ export default function EnhancedNotificationBell() {
               className="text-xs"
             >
               <Check className="h-3 w-3 mr-1" />
-              {language === 'en' ? 'Mark all read' : 'Tandai semua dibaca'}
+              {t('markAllRead')}
             </Button>
           )}
         </div>
@@ -138,13 +140,13 @@ export default function EnhancedNotificationBell() {
         <ScrollArea className="h-96">
           {isLoading ? (
             <div className="p-4 text-center text-muted-foreground">
-              {language === 'en' ? 'Loading notifications...' : 'Memuat notifikasi...'}
+              {t('loadingNotifications')}
             </div>
           ) : recentNotifications.length === 0 ? (
             <div className="p-4 text-center text-muted-foreground">
               <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">
-                {language === 'en' ? 'No notifications yet' : 'Belum ada notifikasi'}
+                {t('noNotificationsYet')}
               </p>
             </div>
           ) : (
@@ -191,7 +193,7 @@ export default function EnhancedNotificationBell() {
                             </time>
                             {notification.priority === 'high' && (
                               <Badge variant="destructive" className="text-xs px-1 py-0">
-                                {language === 'en' ? 'High' : 'Tinggi'}
+                                {t('high')}
                               </Badge>
                             )}
                           </div>
@@ -215,7 +217,7 @@ export default function EnhancedNotificationBell() {
                 setIsOpen(false);
               }}
             >
-              {language === 'en' ? 'View all notifications' : 'Lihat semua notifikasi'}
+              {t('viewAllNotifications')}
             </DropdownMenuItem>
           </>
         )}

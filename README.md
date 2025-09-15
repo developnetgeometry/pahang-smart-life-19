@@ -1,22 +1,22 @@
-# Welcome to your Lovable project
+# Welcome to your Netgeometry project
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/a44ffb98-9454-4379-8a8d-73f9f837f1f5
+**URL**: https://netgeometry.com/projects/a44ffb98-9454-4379-8a8d-73f9f837f1f5
 
 ## How can I edit this code?
 
 There are several ways of editing your application.
 
-**Use Lovable**
+**Use Netgeometry**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a44ffb98-9454-4379-8a8d-73f9f837f1f5) and start prompting.
+Simply visit the [Netgeometry Project](https://netgeometry.com/projects/a44ffb98-9454-4379-8a8d-73f9f837f1f5) and start prompting.
 
-Changes made via Lovable will be committed automatically to this repo.
+Changes made via Netgeometry will be committed automatically to this repo.
 
 **Use your preferred IDE**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Netgeometry.
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
@@ -121,12 +121,12 @@ Notes
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/a44ffb98-9454-4379-8a8d-73f9f837f1f5) and click on Share -> Publish.
+Simply open [Netgeometry](https://netgeometry.com/projects/a44ffb98-9454-4379-8a8d-73f9f837f1f5) and click on Share -> Publish.
 
-## Can I connect a custom domain to my Lovable project?
+## Can I connect a custom domain to my Netgeometry project?
 
 Yes, you can!
 
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Read more here: [Setting up a custom domain](https://docs.netgeometry.com/tips-tricks/custom-domain#step-by-step-guide)

@@ -5139,6 +5139,7 @@ export type Database = {
           allow_backorder: boolean | null
           category: string
           category_id: string | null
+          community_id: string | null
           condition: string | null
           created_at: string | null
           description: string | null
@@ -5171,6 +5172,7 @@ export type Database = {
           allow_backorder?: boolean | null
           category: string
           category_id?: string | null
+          community_id?: string | null
           condition?: string | null
           created_at?: string | null
           description?: string | null
@@ -5203,6 +5205,7 @@ export type Database = {
           allow_backorder?: boolean | null
           category?: string
           category_id?: string | null
+          community_id?: string | null
           condition?: string | null
           created_at?: string | null
           description?: string | null
@@ -5237,6 +5240,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_items_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
             referencedColumns: ["id"]
           },
           {
@@ -5581,6 +5591,7 @@ export type Database = {
           bookings: boolean | null
           complaints: boolean | null
           created_at: string | null
+          email_enabled: boolean | null
           emergencies: boolean | null
           events: boolean | null
           id: string
@@ -5588,6 +5599,7 @@ export type Database = {
           marketplace: boolean | null
           mentions: boolean | null
           messages: boolean | null
+          push_enabled: boolean | null
           security: boolean | null
           updated_at: string | null
           user_id: string
@@ -5597,6 +5609,7 @@ export type Database = {
           bookings?: boolean | null
           complaints?: boolean | null
           created_at?: string | null
+          email_enabled?: boolean | null
           emergencies?: boolean | null
           events?: boolean | null
           id?: string
@@ -5604,6 +5617,7 @@ export type Database = {
           marketplace?: boolean | null
           mentions?: boolean | null
           messages?: boolean | null
+          push_enabled?: boolean | null
           security?: boolean | null
           updated_at?: string | null
           user_id: string
@@ -5613,6 +5627,7 @@ export type Database = {
           bookings?: boolean | null
           complaints?: boolean | null
           created_at?: string | null
+          email_enabled?: boolean | null
           emergencies?: boolean | null
           events?: boolean | null
           id?: string
@@ -5620,6 +5635,7 @@ export type Database = {
           marketplace?: boolean | null
           mentions?: boolean | null
           messages?: boolean | null
+          push_enabled?: boolean | null
           security?: boolean | null
           updated_at?: string | null
           user_id?: string

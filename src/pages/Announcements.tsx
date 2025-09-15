@@ -346,12 +346,19 @@ export default function Announcements() {
     is_published: true,
     publish_at: "",
     expire_at: "",
+    attachments: [] as Array<{ name: string; url: string; size?: number }>,
+    newAttachments: [] as File[],
+    images: [] as string[],
+    newImages: [] as File[],
   });
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [replyToComment, setReplyToComment] = useState<string | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [uploadingAttachments, setUploadingAttachments] = useState(false);
+  const [attachmentToDelete, setAttachmentToDelete] = useState<string[]>([]);
+  const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
 
   const canCreateAnnouncements =
     hasRole("community_admin") ||
@@ -427,7 +434,8 @@ export default function Announcements() {
       refresh: "Refresh",
       filters: "Filters",
       clearFilters: "Clear Filters",
-      applyFilters: "Apply Filters"
+      applyFilters: "Apply Filters",
+      content: "Content"
     },
     ms: {
       title: "Pengumuman Komuniti",
@@ -497,7 +505,8 @@ export default function Announcements() {
       refresh: "Muat Semula",
       filters: "Penapis",
       clearFilters: "Kosongkan Penapis",
-      applyFilters: "Gunakan Penapis"
+      applyFilters: "Gunakan Penapis",
+      content: "Kandungan"
     },
   };
 
@@ -776,24 +785,15 @@ export default function Announcements() {
   }, []);
 
   const handleAnnouncementClick = useCallback((announcement: Announcement) => {
+    console.log('Clicking announcement:', announcement.id, announcement.title);
     setSelectedAnnouncement(announcement);
+    console.log('Setting details modal open...');
     setDetailsModalOpen(true);
-    trackAnnouncementView(announcement.id);
+    console.log('Details modal should be open now');
+    // View tracking removed to avoid 409 error
   }, []);
 
-  const trackAnnouncementView = async (announcementId: string) => {
-    if (!user) return;
-
-    try {
-      await supabase.from("announcement_views").upsert({
-        announcement_id: announcementId,
-        user_id: user.id,
-        viewed_at: new Date().toISOString(),
-      });
-    } catch (error) {
-      console.error("Error tracking view:", error);
-    }
-  };
+  // trackAnnouncementView function removed to prevent 409 errors
 
   const handleTogglePin = async (announcementId: string, currentPinStatus: boolean) => {
     if (!canCreateAnnouncements) {
@@ -851,6 +851,179 @@ export default function Announcements() {
         return "secondary";
       default:
         return "secondary";
+    }
+  };
+
+  // Helper function to upload attachments
+  const uploadAttachments = async (files: File[]): Promise<Array<{ name: string; url: string; size: number }>> => {
+    const uploadedAttachments = [];
+    
+    for (const file of files) {
+      try {
+        // Check file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+          toast({
+            title: language === 'en' ? 'File too large' : 'Fail terlalu besar',
+            description: `${file.name} exceeds 10MB limit`,
+            variant: 'destructive'
+          });
+          continue;
+        }
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `announcements/attachments/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('announcements')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw uploadError;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('announcements')
+          .getPublicUrl(filePath);
+
+        uploadedAttachments.push({
+          name: file.name,
+          url: urlData.publicUrl,
+          size: file.size
+        });
+
+        console.log(`Successfully uploaded: ${file.name}`);
+      } catch (error) {
+        console.error('Error uploading attachment:', error);
+        toast({
+          title: language === 'en' ? 'Upload failed' : 'Gagal muat naik',
+          description: `Failed to upload ${file.name}: ${error.message || 'Unknown error'}`,
+          variant: 'destructive'
+        });
+      }
+    }
+    
+    return uploadedAttachments;
+  };
+
+  // Helper function to upload images
+  const uploadImages = async (files: File[]): Promise<string[]> => {
+    const uploadedImages = [];
+    
+    for (const file of files) {
+      try {
+        // Check file size (5MB limit for images)
+        if (file.size > 5 * 1024 * 1024) {
+          toast({
+            title: language === 'en' ? 'Image too large' : 'Gambar terlalu besar',
+            description: `${file.name} exceeds 5MB limit`,
+            variant: 'destructive'
+          });
+          continue;
+        }
+
+        // Validate image type
+        if (!file.type.startsWith('image/')) {
+          toast({
+            title: language === 'en' ? 'Invalid file type' : 'Jenis fail tidak sah',
+            description: `${file.name} is not an image file`,
+            variant: 'destructive'
+          });
+          continue;
+        }
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `announcements/images/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('announcements')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Image upload error:', uploadError);
+          throw uploadError;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('announcements')
+          .getPublicUrl(filePath);
+
+        uploadedImages.push(urlData.publicUrl);
+        console.log(`Successfully uploaded image: ${file.name}`);
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        toast({
+          title: language === 'en' ? 'Image upload failed' : 'Gagal muat naik gambar',
+          description: `Failed to upload ${file.name}: ${error.message || 'Unknown error'}`,
+          variant: 'destructive'
+        });
+      }
+    }
+    
+    return uploadedImages;
+  };
+
+  // Helper function to delete attachments from storage
+  const deleteAttachmentsFromStorage = async (urls: string[]) => {
+    for (const url of urls) {
+      try {
+        // Extract file path from URL
+        const urlParts = url.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+        
+        // Check if this is a valid attachment URL from our storage
+        if (url.includes('announcements/attachments/')) {
+          const filePath = `announcements/attachments/${fileName}`;
+          
+          const { error } = await supabase.storage
+            .from('announcements')
+            .remove([filePath]);
+            
+          if (error) {
+            console.error('Error deleting attachment from storage:', error);
+          } else {
+            console.log(`Successfully deleted: ${fileName}`);
+          }
+        }
+      } catch (error) {
+        console.error('Error deleting attachment from storage:', error);
+      }
+    }
+  };
+
+  // Helper function to delete images from storage
+  const deleteImagesFromStorage = async (urls: string[]) => {
+    for (const url of urls) {
+      try {
+        // Extract file path from URL
+        const urlParts = url.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+        
+        // Check if this is a valid image URL from our storage
+        if (url.includes('announcements/images/')) {
+          const filePath = `announcements/images/${fileName}`;
+          
+          const { error } = await supabase.storage
+            .from('announcements')
+            .remove([filePath]);
+            
+          if (error) {
+            console.error('Error deleting image from storage:', error);
+          } else {
+            console.log(`Successfully deleted image: ${fileName}`);
+          }
+        }
+      } catch (error) {
+        console.error('Error deleting image from storage:', error);
+      }
     }
   };
 
@@ -1217,7 +1390,26 @@ export default function Announcements() {
                 </div>
                 {canCreateAnnouncements && (
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setEditModalOpen(true)}>
+                    <Button variant="outline" size="sm" onClick={() => {
+                      if (selectedAnnouncement) {
+                        setEditForm({
+                          title: selectedAnnouncement.title,
+                          content: selectedAnnouncement.content,
+                          type: selectedAnnouncement.type,
+                          is_urgent: selectedAnnouncement.is_urgent,
+                          is_published: true,
+                          publish_at: selectedAnnouncement.publish_at || new Date().toISOString().slice(0, 16),
+                          expire_at: selectedAnnouncement.expire_at || "",
+                          attachments: selectedAnnouncement.attachments || [],
+                          newAttachments: [],
+                          images: selectedAnnouncement.images || [],
+                          newImages: [],
+                        });
+                        setAttachmentToDelete([]);
+                        setImagesToDelete([]);
+                      }
+                      setEditModalOpen(true);
+                    }}>
                       <FileText className="w-4 h-4 mr-1" /> Edit
                     </Button>
                     <Button
@@ -1293,26 +1485,34 @@ export default function Announcements() {
 
       {/* Edit Modal */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Announcement</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Edit Announcement
+              {selectedAnnouncement && (
+                <span className="text-sm font-normal text-muted-foreground">
+                  • {selectedAnnouncement.title}
+                </span>
+              )}
+            </DialogTitle>
           </DialogHeader>
           {selectedAnnouncement && (
             <div className="space-y-4">
               <Input
-                placeholder={t.announcementTitle}
-                value={editForm.title || selectedAnnouncement.title}
+                placeholder={t.title}
+                value={editForm.title}
                 onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
               />
               <Textarea
                 rows={5}
                 placeholder={t.content}
-                value={editForm.content || selectedAnnouncement.content}
+                value={editForm.content}
                 onChange={(e) => setEditForm((p) => ({ ...p, content: e.target.value }))}
               />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <Select
-                  value={editForm.type || selectedAnnouncement.type}
+                  value={editForm.type}
                   onValueChange={(v) => setEditForm((p) => ({ ...p, type: v }))}
                 >
                   <SelectTrigger>
@@ -1327,14 +1527,14 @@ export default function Announcements() {
                 </Select>
                 <div className="flex items-center gap-2">
                   <Switch
-                    checked={editForm.is_urgent ?? selectedAnnouncement.is_urgent}
+                    checked={editForm.is_urgent}
                     onCheckedChange={(c) => setEditForm((p) => ({ ...p, is_urgent: c }))}
                   />
                   <span className="text-sm">{t.urgent}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch
-                    checked={editForm.is_published ?? true}
+                    checked={editForm.is_published}
                     onCheckedChange={(c) => setEditForm((p) => ({ ...p, is_published: c }))}
                   />
                   <span className="text-sm">Published</span>
@@ -1345,7 +1545,8 @@ export default function Announcements() {
                   <Label>Publish At</Label>
                   <Input
                     type="datetime-local"
-                    value={(editForm.publish_at || selectedAnnouncement.publish_at || '').toString().slice(0,16)}
+                    value={editForm.publish_at}
+                    min={new Date().toISOString().slice(0, 16)}
                     onChange={(e) => setEditForm((p) => ({ ...p, publish_at: e.target.value }))}
                   />
                 </div>
@@ -1353,32 +1554,370 @@ export default function Announcements() {
                   <Label>Expire At</Label>
                   <Input
                     type="datetime-local"
-                    value={(editForm.expire_at || selectedAnnouncement.expire_at || '').toString().slice(0,16)}
+                    value={editForm.expire_at}
+                    min={new Date().toISOString().slice(0, 16)}
                     onChange={(e) => setEditForm((p) => ({ ...p, expire_at: e.target.value }))}
                   />
                 </div>
               </div>
+              
+              {/* Images Management */}
+              <div className="space-y-4">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <ImageIcon className="w-5 h-5" />
+                  {t.images}
+                </Label>
+                
+                {/* Existing Images */}
+                {editForm.images && editForm.images.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="text-sm font-medium text-muted-foreground">Existing Images:</div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {editForm.images.map((imageUrl, index) => (
+                        <div key={`existing-img-${index}`} className="relative group">
+                          <div className="aspect-square rounded-lg overflow-hidden border-2 border-muted">
+                            <img 
+                              src={imageUrl} 
+                              alt={`Image ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => {
+                                const newImages = editForm.images.filter((_, i) => i !== index);
+                                setEditForm(prev => ({ ...prev, images: newImages }));
+                                setImagesToDelete(prev => [...prev, imageUrl]);
+                              }}
+                              className="h-8 w-8 p-0"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* New Images Upload */}
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-muted-foreground">Add New Images:</div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => document.getElementById('image-upload')?.click()}
+                        className="h-10"
+                      >
+                        <ImageIcon className="w-4 h-4 mr-2" />
+                        Choose Images
+                      </Button>
+                      <input
+                        id="image-upload"
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          const maxSize = 5 * 1024 * 1024; // 5MB
+                          const validFiles = files.filter(file => {
+                            if (file.size > maxSize) {
+                              toast({
+                                title: language === 'en' ? 'Image too large' : 'Gambar terlalu besar',
+                                description: `${file.name} is larger than 5MB`,
+                                variant: 'destructive'
+                              });
+                              return false;
+                            }
+                            if (!file.type.startsWith('image/')) {
+                              toast({
+                                title: language === 'en' ? 'Invalid file type' : 'Jenis fail tidak sah',
+                                description: `${file.name} is not an image`,
+                                variant: 'destructive'
+                              });
+                              return false;
+                            }
+                            return true;
+                          });
+                          setEditForm(prev => ({ ...prev, newImages: validFiles }));
+                        }}
+                        className="hidden"
+                      />
+                      <div className="text-xs text-muted-foreground">
+                        JPG, PNG, GIF, WebP (Max 5MB each)
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Preview New Images */}
+                  {editForm.newImages && editForm.newImages.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="text-sm font-medium text-green-700 dark:text-green-400">New Images to Upload:</div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {editForm.newImages.map((file, index) => (
+                          <div key={`new-img-${index}`} className="relative group">
+                            <div className="aspect-square rounded-lg overflow-hidden border-2 border-green-300 dark:border-green-700">
+                              <img 
+                                src={URL.createObjectURL(file)} 
+                                alt={file.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  const newFiles = editForm.newImages.filter((_, i) => i !== index);
+                                  setEditForm(prev => ({ ...prev, newImages: newFiles }));
+                                }}
+                                className="h-8 w-8 p-0"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white text-xs p-1 truncate">
+                              {file.name}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Attachments Management */}
+              <div className="space-y-4">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <Paperclip className="w-5 h-5" />
+                  {t.attachments}
+                </Label>
+                
+                {/* Existing Attachments */}
+                {editForm.attachments && editForm.attachments.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="text-sm font-medium text-muted-foreground">Existing Attachments:</div>
+                    <div className="space-y-2">
+                      {editForm.attachments.map((attachment, index) => (
+                        <div key={`existing-${index}`} className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-md">
+                              <Paperclip className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate">{attachment.name}</div>
+                              {attachment.size && (
+                                <div className="text-xs text-muted-foreground">
+                                  {(attachment.size / 1024 / 1024).toFixed(2)} MB
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 ml-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              asChild
+                              title="Preview attachment"
+                            >
+                              <a href={attachment.url} target="_blank" rel="noopener noreferrer">
+                                <Eye className="w-4 h-4" />
+                              </a>
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => {
+                                const newAttachments = editForm.attachments.filter((_, i) => i !== index);
+                                setEditForm(prev => ({ ...prev, attachments: newAttachments }));
+                                setAttachmentToDelete(prev => [...prev, attachment.url]);
+                              }}
+                              title="Remove attachment"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* New Attachments Upload */}
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-muted-foreground">Add New Attachments:</div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => document.getElementById('attachment-upload')?.click()}
+                        className="h-10"
+                      >
+                        <Paperclip className="w-4 h-4 mr-2" />
+                        Choose Files
+                      </Button>
+                      <input
+                        id="attachment-upload"
+                        type="file"
+                        multiple
+                        accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,.xls,.zip,.rar"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          const maxSize = 10 * 1024 * 1024; // 10MB
+                          const validFiles = files.filter(file => {
+                            if (file.size > maxSize) {
+                              toast({
+                                title: language === 'en' ? 'File too large' : 'Fail terlalu besar',
+                                description: `${file.name} is larger than 10MB`,
+                                variant: 'destructive'
+                              });
+                              return false;
+                            }
+                            return true;
+                          });
+                          setEditForm(prev => ({ ...prev, newAttachments: validFiles }));
+                        }}
+                        className="hidden"
+                      />
+                      <div className="text-xs text-muted-foreground">
+                        PDF, DOC, TXT, Excel, ZIP files (Max 10MB each)
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Preview New Attachments */}
+                  {editForm.newAttachments && editForm.newAttachments.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium text-green-700 dark:text-green-400">New Attachments to Upload:</div>
+                      {editForm.newAttachments.map((file, index) => (
+                        <div key={`new-${index}`} className="flex items-center justify-between p-3 border rounded-lg bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-md">
+                              <Paperclip className="w-4 h-4 text-green-600 dark:text-green-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate">{file.name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {(file.size / 1024 / 1024).toFixed(2)} MB
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const newFiles = editForm.newAttachments.filter((_, i) => i !== index);
+                              setEditForm(prev => ({ ...prev, newAttachments: newFiles }));
+                            }}
+                            title="Remove file"
+                            className="ml-3 text-green-600 hover:text-green-700 hover:bg-green-100"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Summary */}
+                {(editForm.images.length > 0 || editForm.newImages.length > 0 || editForm.attachments.length > 0 || editForm.newAttachments.length > 0) && (
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="text-sm text-blue-800 dark:text-blue-200">
+                      <strong>Summary:</strong> 
+                      {editForm.images.length > 0 && ` ${editForm.images.length} existing image(s)`}
+                      {editForm.newImages.length > 0 && `, ${editForm.newImages.length} new image(s) to upload`}
+                      {editForm.attachments.length > 0 && `, ${editForm.attachments.length} existing attachment(s)`}
+                      {editForm.newAttachments.length > 0 && `, ${editForm.newAttachments.length} new attachment(s) to upload`}
+                      {(imagesToDelete.length > 0 || attachmentToDelete.length > 0) && (
+                        <span className="text-red-600 dark:text-red-400">
+                          {imagesToDelete.length > 0 && ` • ${imagesToDelete.length} image(s) will be removed`}
+                          {attachmentToDelete.length > 0 && ` • ${attachmentToDelete.length} attachment(s) will be removed`}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setEditModalOpen(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => {
+                  setEditModalOpen(false);
+                  setAttachmentToDelete([]);
+                  setEditForm({
+                    title: "",
+                    content: "",
+                    type: "general",
+                    is_urgent: false,
+                    is_published: true,
+                    publish_at: "",
+                    expire_at: "",
+                    attachments: [],
+                    newAttachments: [],
+                  });
+                }}>Cancel</Button>
                 <Button
                   onClick={async () => {
                     if (!selectedAnnouncement) return;
                     setEditSubmitting(true);
                     try {
+                      // Handle image uploads
+                      let newUploadedImages: string[] = [];
+                      if (editForm.newImages.length > 0) {
+                        setUploadingAttachments(true);
+                        newUploadedImages = await uploadImages(editForm.newImages);
+                      }
+
+                      // Handle attachment uploads
+                      let newUploadedAttachments: Array<{ name: string; url: string; size: number }> = [];
+                      if (editForm.newAttachments.length > 0) {
+                        setUploadingAttachments(true);
+                        newUploadedAttachments = await uploadAttachments(editForm.newAttachments);
+                        setUploadingAttachments(false);
+                      }
+
+                      // Combine existing with new uploads
+                      const finalImages = [
+                        ...editForm.images,
+                        ...newUploadedImages
+                      ];
+                      
+                      const finalAttachments = [
+                        ...editForm.attachments,
+                        ...newUploadedAttachments
+                      ];
+
                       const updates: any = {
-                        title: editForm.title || selectedAnnouncement.title,
-                        content: editForm.content || selectedAnnouncement.content,
-                        type: editForm.type || selectedAnnouncement.type,
-                        is_urgent: editForm.is_urgent ?? selectedAnnouncement.is_urgent,
-                        is_published: editForm.is_published ?? true,
-                        publish_at: editForm.publish_at || selectedAnnouncement.publish_at,
-                        expire_at: editForm.expire_at || selectedAnnouncement.expire_at,
+                        title: editForm.title,
+                        content: editForm.content,
+                        type: editForm.type,
+                        is_urgent: editForm.is_urgent,
+                        is_published: editForm.is_published,
+                        publish_at: editForm.publish_at,
+                        expire_at: editForm.expire_at || null,
+                        images: finalImages,
+                        attachments: finalAttachments,
                       };
+
                       const { error } = await supabase
                         .from('announcements')
                         .update(updates)
                         .eq('id', selectedAnnouncement.id);
+
                       if (error) throw error;
+
+                      // Delete removed files from storage
+                      if (imagesToDelete.length > 0) {
+                        await deleteImagesFromStorage(imagesToDelete);
+                      }
+                      if (attachmentToDelete.length > 0) {
+                        await deleteAttachmentsFromStorage(attachmentToDelete);
+                      }
+
                       // Reflect changes locally
                       setAnnouncements((prev) => prev.map((a) => a.id === selectedAnnouncement.id ? {
                         ...a,
@@ -1390,19 +1929,41 @@ export default function Announcements() {
                         publish_at: updates.publish_at,
                         expire_at: updates.expire_at,
                         type: updates.type,
+                        images: finalImages,
+                        attachments: finalAttachments,
                       } : a));
+
+                      // Update selected announcement for the detail view
+                      setSelectedAnnouncement(prev => prev ? {
+                        ...prev,
+                        title: updates.title,
+                        content: updates.content,
+                        category: updates.type,
+                        is_urgent: updates.is_urgent,
+                        priority: updates.is_urgent ? 'urgent' : prev.priority,
+                        publish_at: updates.publish_at,
+                        expire_at: updates.expire_at,
+                        type: updates.type,
+                        images: finalImages,
+                        attachments: finalAttachments,
+                      } : null);
+
                       setEditModalOpen(false);
+                      setAttachmentToDelete([]);
+                      setImagesToDelete([]);
                       toast({ title: language === 'en' ? 'Updated successfully' : 'Berjaya dikemaskini' });
                     } catch (e) {
+                      console.error('Update error:', e);
                       toast({ title: language === 'en' ? 'Update failed' : 'Gagal kemaskini', variant: 'destructive' });
                     } finally {
                       setEditSubmitting(false);
+                      setUploadingAttachments(false);
                     }
                   }}
-                  disabled={editSubmitting}
+                  disabled={editSubmitting || uploadingAttachments}
                 >
-                  {editSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                  Save
+                  {(editSubmitting || uploadingAttachments) ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                  {uploadingAttachments ? 'Uploading...' : 'Save'}
                 </Button>
               </div>
             </div>

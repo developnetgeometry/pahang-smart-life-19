@@ -36,6 +36,10 @@ export default function MyVisitors() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedVisitor, setSelectedVisitor] = useState<Visitor | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [visitorPhone, setVisitorPhone] = useState('');
+  const [visitorPhoneError, setVisitorPhoneError] = useState('');
+  const [editVisitorPhone, setEditVisitorPhone] = useState('');
+  const [editVisitorPhoneError, setEditVisitorPhoneError] = useState('');
   
   // Form refs for register dialog
   const nameRef = useRef<HTMLInputElement>(null);
@@ -87,7 +91,7 @@ export default function MyVisitors() {
     try {
       const formData = {
         name: nameRef.current?.value || '',
-        phone: phoneRef.current?.value || '',
+        phone: visitorPhone || '',
         ic: icRef.current?.value || '',
         vehicle: vehicleRef.current?.value || '',
         date: dateRef.current?.value || '',
@@ -99,6 +103,15 @@ export default function MyVisitors() {
         toast({
           title: 'Error',
           description: language === 'en' ? 'Please fill in required fields' : 'Sila lengkapkan medan yang diperlukan',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (!/^0\d+$/.test(formData.phone)) {
+        toast({
+          title: 'Invalid phone',
+          description: language === 'en' ? 'Phone must start with 0 and contain digits only' : 'Telefon mesti bermula dengan 0 dan mengandungi nombor sahaja',
           variant: 'destructive',
         });
         return;
@@ -127,7 +140,8 @@ export default function MyVisitors() {
 
       // Clear form
       if (nameRef.current) nameRef.current.value = '';
-      if (phoneRef.current) phoneRef.current.value = '';
+      setVisitorPhone('');
+      setVisitorPhoneError('');
       if (icRef.current) icRef.current.value = '';
       if (vehicleRef.current) vehicleRef.current.value = '';
       if (dateRef.current) dateRef.current.value = '';
@@ -187,7 +201,7 @@ export default function MyVisitors() {
     // Populate edit form with current data
     setTimeout(() => {
       if (editNameRef.current) editNameRef.current.value = visitor.visitor_name;
-      if (editPhoneRef.current) editPhoneRef.current.value = visitor.visitor_phone;
+      setEditVisitorPhone(visitor.visitor_phone || '');
       if (editIcRef.current) editIcRef.current.value = visitor.visitor_ic || '';
       if (editVehicleRef.current) editVehicleRef.current.value = visitor.vehicle_plate || '';
       if (editDateRef.current) editDateRef.current.value = visitor.visit_date;
@@ -202,7 +216,7 @@ export default function MyVisitors() {
     try {
       const formData = {
         name: editNameRef.current?.value || '',
-        phone: editPhoneRef.current?.value || '',
+        phone: editVisitorPhone || '',
         ic: editIcRef.current?.value || '',
         vehicle: editVehicleRef.current?.value || '',
         date: editDateRef.current?.value || '',
@@ -214,6 +228,15 @@ export default function MyVisitors() {
         toast({
           title: 'Error',
           description: language === 'en' ? 'Please fill in required fields' : 'Sila lengkapkan medan yang diperlukan',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (!/^0\d+$/.test(formData.phone)) {
+        toast({
+          title: 'Invalid phone',
+          description: language === 'en' ? 'Phone must start with 0 and contain digits only' : 'Telefon mesti bermula dengan 0 dan mengandungi nombor sahaja',
           variant: 'destructive',
         });
         return;
@@ -413,11 +436,19 @@ export default function MyVisitors() {
                 <Label htmlFor="phone">
                   {language === 'en' ? 'Phone Number' : 'Nombor Telefon'} *
                 </Label>
-                <Input 
-                  ref={phoneRef} 
-                  id="phone" 
-                  placeholder="+60123456789" 
+                <Input
+                  id="phone"
+                  value={visitorPhone}
+                  onChange={(e) => {
+                    const sanitized = e.target.value.replace(/[^0-9]/g, '');
+                    setVisitorPhone(sanitized);
+                    setVisitorPhoneError(sanitized && !sanitized.startsWith('0') ? 'Phone must start with 0' : '');
+                  }}
+                  placeholder="0123456789"
                 />
+                {visitorPhoneError && (
+                  <p className="text-xs text-destructive">{visitorPhoneError}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="ic">
@@ -717,11 +748,19 @@ export default function MyVisitors() {
               <Label htmlFor="edit-phone">
                 {language === 'en' ? 'Phone Number' : 'Nombor Telefon'} *
               </Label>
-              <Input 
-                ref={editPhoneRef} 
-                id="edit-phone" 
-                placeholder="+60123456789" 
+              <Input
+                id="edit-phone"
+                value={editVisitorPhone}
+                onChange={(e) => {
+                  const sanitized = e.target.value.replace(/[^0-9]/g, '');
+                  setEditVisitorPhone(sanitized);
+                  setEditVisitorPhoneError(sanitized && !sanitized.startsWith('0') ? 'Phone must start with 0' : '');
+                }}
+                placeholder="0123456789"
               />
+              {editVisitorPhoneError && (
+                <p className="text-xs text-destructive">{editVisitorPhoneError}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-ic">
