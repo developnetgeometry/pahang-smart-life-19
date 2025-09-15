@@ -292,155 +292,156 @@ export default function ProductReviews({ itemId, sellerId, language }: ProductRe
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>{t.reviews}</CardTitle>
-            {totalReviews > 0 && (
-              <CardDescription className="flex items-center space-x-2 mt-1">
-                {renderStars(averageRating)}
-                <span>{averageRating} {t.outOf5} ({totalReviews} reviews)</span>
-              </CardDescription>
-            )}
-          </div>
+    <></>
+    // <Card>
+    //   <CardHeader>
+    //     <div className="flex items-center justify-between">
+    //       <div>
+    //         <CardTitle>{t.reviews}</CardTitle>
+    //         {totalReviews > 0 && (
+    //           <CardDescription className="flex items-center space-x-2 mt-1">
+    //             {renderStars(averageRating)}
+    //             <span>{averageRating} {t.outOf5} ({totalReviews} reviews)</span>
+    //           </CardDescription>
+    //         )}
+    //       </div>
           
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                {t.writeReview}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{t.writeReview}</DialogTitle>
-                <DialogDescription>
-                  Share your experience with this product
-                </DialogDescription>
-              </DialogHeader>
+    //       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+    //         <DialogTrigger asChild>
+    //           <Button variant="outline">
+    //             <MessageSquare className="h-4 w-4 mr-2" />
+    //             {t.writeReview}
+    //           </Button>
+    //         </DialogTrigger>
+    //         <DialogContent>
+    //           <DialogHeader>
+    //             <DialogTitle>{t.writeReview}</DialogTitle>
+    //             <DialogDescription>
+    //               Share your experience with this product
+    //             </DialogDescription>
+    //           </DialogHeader>
               
-              <div className="space-y-4">
-                <div>
-                  <Label>{t.yourRating}</Label>
-                  {renderRatingInput()}
-                </div>
+    //           <div className="space-y-4">
+    //             <div>
+    //               <Label>{t.yourRating}</Label>
+    //               {renderRatingInput()}
+    //             </div>
                 
-                <div>
-                  <Label htmlFor="title">{t.reviewTitle}</Label>
-                  <Input
-                    id="title"
-                    value={newReview.title}
-                    onChange={(e) => setNewReview({ ...newReview, title: e.target.value })}
-                    placeholder="Summarize your review"
-                  />
-                </div>
+    //             <div>
+    //               <Label htmlFor="title">{t.reviewTitle}</Label>
+    //               <Input
+    //                 id="title"
+    //                 value={newReview.title}
+    //                 onChange={(e) => setNewReview({ ...newReview, title: e.target.value })}
+    //                 placeholder="Summarize your review"
+    //               />
+    //             </div>
                 
-                <div>
-                  <Label htmlFor="comment">{t.reviewComment}</Label>
-                  <Textarea
-                    id="comment"
-                    value={newReview.comment}
-                    onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-                    placeholder="Tell others about your experience"
-                    rows={4}
-                  />
-                </div>
+    //             <div>
+    //               <Label htmlFor="comment">{t.reviewComment}</Label>
+    //               <Textarea
+    //                 id="comment"
+    //                 value={newReview.comment}
+    //                 onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+    //                 placeholder="Tell others about your experience"
+    //                 rows={4}
+    //               />
+    //             </div>
                 
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsCreateOpen(false)}
-                  >
-                    {t.cancel}
-                  </Button>
-                  <Button
-                    onClick={handleSubmitReview}
-                    disabled={submitting || !newReview.title.trim() || !newReview.comment.trim()}
-                  >
-                    {submitting ? 'Submitting...' : t.submit}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </CardHeader>
+    //             <div className="flex justify-end space-x-2">
+    //               <Button
+    //                 variant="outline"
+    //                 onClick={() => setIsCreateOpen(false)}
+    //               >
+    //                 {t.cancel}
+    //               </Button>
+    //               <Button
+    //                 onClick={handleSubmitReview}
+    //                 disabled={submitting || !newReview.title.trim() || !newReview.comment.trim()}
+    //               >
+    //                 {submitting ? 'Submitting...' : t.submit}
+    //               </Button>
+    //             </div>
+    //           </div>
+    //         </DialogContent>
+    //       </Dialog>
+    //     </div>
+    //   </CardHeader>
       
-      <CardContent>
-        {reviews.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>{t.noReviews}</p>
-            <p className="text-sm">{t.beFirst}</p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {reviews.map((review) => (
-              <div key={review.id} className="border-b pb-6 last:border-b-0">
-                <div className="flex items-start space-x-4">
-                  <Avatar>
-                    <AvatarFallback>
-                      {review.reviewer_name?.charAt(0) || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
+    //   <CardContent>
+    //     {reviews.length === 0 ? (
+    //       <div className="text-center py-8 text-muted-foreground">
+    //         <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+    //         <p>{t.noReviews}</p>
+    //         <p className="text-sm">{t.beFirst}</p>
+    //       </div>
+    //     ) : (
+    //       <div className="space-y-6">
+    //         {reviews.map((review) => (
+    //           <div key={review.id} className="border-b pb-6 last:border-b-0">
+    //             <div className="flex items-start space-x-4">
+    //               <Avatar>
+    //                 <AvatarFallback>
+    //                   {review.reviewer_name?.charAt(0) || 'U'}
+    //                 </AvatarFallback>
+    //               </Avatar>
                   
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center space-x-2">
-                      {renderStars(review.rating, 'sm')}
-                      {review.is_verified_purchase && (
-                        <Badge variant="secondary" className="text-xs">
-                          {t.verified}
-                        </Badge>
-                      )}
-                    </div>
+    //               <div className="flex-1 space-y-2">
+    //                 <div className="flex items-center space-x-2">
+    //                   {renderStars(review.rating, 'sm')}
+    //                   {review.is_verified_purchase && (
+    //                     <Badge variant="secondary" className="text-xs">
+    //                       {t.verified}
+    //                     </Badge>
+    //                   )}
+    //                 </div>
                     
-                    <h4 className="font-medium">{review.title}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      by {review.reviewer_name} on {new Date(review.created_at).toLocaleDateString()}
-                    </p>
-                    <p className="text-sm">{review.comment}</p>
+    //                 <h4 className="font-medium">{review.title}</h4>
+    //                 <p className="text-sm text-muted-foreground">
+    //                   by {review.reviewer_name} on {new Date(review.created_at).toLocaleDateString()}
+    //                 </p>
+    //                 <p className="text-sm">{review.comment}</p>
                     
-                    {user && (
-                      <div className="flex items-center space-x-4 pt-2">
-                        <button
-                          onClick={() => handleHelpfulVote(review.id, true)}
-                          className={`flex items-center space-x-1 text-xs transition-colors ${
-                            review.user_voted_helpful === true
-                              ? 'text-green-600'
-                              : 'text-muted-foreground hover:text-green-600'
-                          }`}
-                        >
-                          <ThumbsUp className="h-3 w-3" />
-                          <span>{t.helpful}</span>
-                        </button>
+    //                 {user && (
+    //                   <div className="flex items-center space-x-4 pt-2">
+    //                     <button
+    //                       onClick={() => handleHelpfulVote(review.id, true)}
+    //                       className={`flex items-center space-x-1 text-xs transition-colors ${
+    //                         review.user_voted_helpful === true
+    //                           ? 'text-green-600'
+    //                           : 'text-muted-foreground hover:text-green-600'
+    //                       }`}
+    //                     >
+    //                       <ThumbsUp className="h-3 w-3" />
+    //                       <span>{t.helpful}</span>
+    //                     </button>
                         
-                        <button
-                          onClick={() => handleHelpfulVote(review.id, false)}
-                          className={`flex items-center space-x-1 text-xs transition-colors ${
-                            review.user_voted_helpful === false
-                              ? 'text-red-600'
-                              : 'text-muted-foreground hover:text-red-600'
-                          }`}
-                        >
-                          <ThumbsDown className="h-3 w-3" />
-                          <span>{t.notHelpful}</span>
-                        </button>
+    //                     <button
+    //                       onClick={() => handleHelpfulVote(review.id, false)}
+    //                       className={`flex items-center space-x-1 text-xs transition-colors ${
+    //                         review.user_voted_helpful === false
+    //                           ? 'text-red-600'
+    //                           : 'text-muted-foreground hover:text-red-600'
+    //                       }`}
+    //                     >
+    //                       <ThumbsDown className="h-3 w-3" />
+    //                       <span>{t.notHelpful}</span>
+    //                     </button>
                         
-                        {review.helpful_count > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            {review.helpful_count} people found this helpful
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    //                     {review.helpful_count > 0 && (
+    //                       <span className="text-xs text-muted-foreground">
+    //                         {review.helpful_count} people found this helpful
+    //                       </span>
+    //                     )}
+    //                   </div>
+    //                 )}
+    //               </div>
+    //             </div>
+    //           </div>
+    //         ))}
+    //       </div>
+    //     )}
+    //   </CardContent>
+    // </Card>
   );
 }
