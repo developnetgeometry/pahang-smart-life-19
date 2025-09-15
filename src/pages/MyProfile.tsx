@@ -45,13 +45,20 @@ import {
   FileText,
   CheckCircle,
   Heart,
+  Link as LinkIcon,
+  Loader2,
 } from "lucide-react";
+
+const BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || "";
 
 export default function MyProfile() {
   const { user, language, updateProfile } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+    // extra UI states for Telegram linking
+  const [polling, setPolling] = useState(false);
+  const [linking, setLinking] = useState(false);
   const [formData, setFormData] = useState({
     // Maklumat Peribadi
     fullname: user?.display_name || "",
@@ -99,6 +106,9 @@ export default function MyProfile() {
     // Pengisytiharan
     pdpa_declare: false,
     agree_declare: false,
+
+    // Telegram
+    telegram_chat_id: "",
   });
 
   // Load profile data from database
@@ -158,6 +168,7 @@ export default function MyProfile() {
           user_id: user.id,
           pdpa_declare: profile.pdpa_declare || false,
           agree_declare: profile.agree_declare || false,
+          telegram_chat_id: profile.telegram_chat_id || "",
         });
       }
     } catch (error) {
@@ -345,6 +356,90 @@ export default function MyProfile() {
       .toUpperCase();
   };
 
+  // --- Telegram linking helpers ---
+const openTelegramDeepLink = () => {
+  if (!BOT_USERNAME) {
+    toast.error(
+      language === "en"
+        ? "Telegram bot is not configured (VITE_TELEGRAM_BOT_USERNAME)."
+        : "Bot Telegram belum dikonfigurasi (VITE_TELEGRAM_BOT_USERNAME)."
+    );
+    return;
+  }
+
+  setLinking(true);
+
+  // IMPORTANT: payload must be EXACT Auth user UUID (profiles.user_id)
+  const payload = user!.id;
+
+  // Use HTTPS deep link so it works even if tg:// handler isn’t present
+  const webLink = `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(payload)}`;
+
+  // Try to open in a NEW TAB
+  const newWin = window.open(webLink, "_blank", "noopener,noreferrer");
+
+  // If the browser blocked the popup, fall back to same-tab navigation
+  if (!newWin) {
+    window.location.href = webLink;
+  }
+
+  // Keep spinner only briefly; actual linking completes after they press Start
+  setTimeout(() => setLinking(false), 600);
+};
+
+const pollForChatId = async (timeoutMs = 60_000, intervalMs = 2_000) => {
+  setPolling(true);
+  const end = Date.now() + timeoutMs;
+
+  try {
+    while (Date.now() < end) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("telegram_chat_id")
+        .eq("user_id", user!.id)
+        .single();
+
+      if (error && (error as any).code !== "PGRST116") {
+        console.error("Polling error (profiles):", error);
+        break;
+      }
+
+      if (data?.telegram_chat_id) {
+        setFormData((prev) => ({
+          ...prev,
+          telegram_chat_id: String(data.telegram_chat_id),
+        }));
+        toast.success(
+          language === "en"
+            ? "Telegram linked successfully."
+            : "Telegram berjaya dipautkan."
+        );
+        return;
+      }
+
+      await new Promise((r) => setTimeout(r, intervalMs));
+    }
+
+    toast.error(
+      language === "en"
+        ? "Could not detect the link. Please press Start in Telegram, then try again."
+        : "Tidak dapat kesan pautan. Sila tekan Start dalam Telegram, kemudian cuba semula."
+    );
+  } finally {
+    setPolling(false);
+  }
+};
+
+const handleLinkTelegram = () => {
+  // Call window.open synchronously inside the click handler (avoids popup blockers)
+  openTelegramDeepLink();
+
+  // Then start polling on the current page
+  pollForChatId();
+};
+  // --- end Telegram helpers ---
+
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -450,6 +545,83 @@ export default function MyProfile() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Telegram – Linking Notification */}
+          {user?.user_role === "security_officer" && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <LinkIcon className="w-5 h-5" />
+                <span>
+                  {language === "en" ? "Link Telegram" : "Pautan Telegram"}
+                </span>
+              </CardTitle>
+              <CardDescription className="mt-1 text-sm">
+                {language === "en"
+                  ? "Receive notifications for panic alerts"
+                  : "Terima notifikasi untuk amaran kecemasan"}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  {language === "en" ? "Link Status" : "Status Pautan"}
+                </Label>
+
+                {formData.telegram_chat_id ? (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="px-3 py-1 text-xs rounded-full">
+                      <LinkIcon className="w-3 h-3 mr-1 inline" />
+                      {language === "en"
+                        ? `Linked • Chat ID: ${String(formData.telegram_chat_id)}`
+                        : `Dipautkan • Chat ID: ${String(formData.telegram_chat_id)}`}
+                    </Badge>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-muted/60 rounded p-2 mb-2">
+                      <p className="text-xs text-muted-foreground">
+                        {language === "en"
+                          ? 'Click "Link Telegram", then press Start in the Telegram app.'
+                          : 'Klik "Pautkan Telegram", kemudian tekan Start dalam aplikasi Telegram.'}
+                      </p>
+                    </div>
+
+                    <Button
+                      onClick={handleLinkTelegram}
+                      disabled={linking || polling}
+                      aria-label={language === "en" ? "Link Telegram" : "Pautkan Telegram"}
+                      className="w-full font-semibold"
+                    >
+                      {(linking || polling) ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          {linking
+                            ? (language === "en" ? "Opening Telegram…" : "Membuka Telegram…")
+                            : (language === "en" ? "Awaiting confirmation…" : "Menunggu pengesahan…")}
+                        </>
+                      ) : (
+                        <>
+                          <LinkIcon className="w-4 h-4 mr-2" />
+                          {language === "en" ? "Link Telegram" : "Pautkan Telegram"}
+                        </>
+                      )}
+                    </Button>
+
+                    <div className="mt-2 px-2 py-1 bg-muted/40 rounded">
+                      <p className="text-[11px] text-muted-foreground">
+                        {language === "en"
+                          ? "Tip: Ensure you’re logged into the correct Telegram account before pressing Start."
+                          : "Tip: Pastikan anda log masuk ke akaun Telegram yang betul sebelum tekan Start."}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+          )}
         </div>
 
         {/* Right Column - Profile Details */}
