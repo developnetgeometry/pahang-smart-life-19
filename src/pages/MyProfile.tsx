@@ -356,89 +356,75 @@ export default function MyProfile() {
       .toUpperCase();
   };
 
-  // --- Telegram linking helpers ---
-const openTelegramDeepLink = () => {
-  if (!BOT_USERNAME) {
-    toast.error(
-      language === "en"
-        ? "Telegram bot is not configured (VITE_TELEGRAM_BOT_USERNAME)."
-        : "Bot Telegram belum dikonfigurasi (VITE_TELEGRAM_BOT_USERNAME)."
-    );
-    return;
-  }
-
-  setLinking(true);
-
-  // IMPORTANT: payload must be EXACT Auth user UUID (profiles.user_id)
-  const payload = user!.id;
-
-  // Use HTTPS deep link so it works even if tg:// handler isn’t present
-  const webLink = `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(payload)}`;
-
-  // Try to open in a NEW TAB
-  const newWin = window.open(webLink, "_blank", "noopener,noreferrer");
-
-  // If the browser blocked the popup, fall back to same-tab navigation
-  if (!newWin) {
-    window.location.href = webLink;
-  }
-
-  // Keep spinner only briefly; actual linking completes after they press Start
-  setTimeout(() => setLinking(false), 600);
-};
-
-const pollForChatId = async (timeoutMs = 60_000, intervalMs = 2_000) => {
-  setPolling(true);
-  const end = Date.now() + timeoutMs;
-
-  try {
-    while (Date.now() < end) {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("telegram_chat_id")
-        .eq("user_id", user!.id)
-        .single();
-
-      if (error && (error as any).code !== "PGRST116") {
-        console.error("Polling error (profiles):", error);
-        break;
-      }
-
-      if (data?.telegram_chat_id) {
-        setFormData((prev) => ({
-          ...prev,
-          telegram_chat_id: String(data.telegram_chat_id),
-        }));
-        toast.success(
-          language === "en"
-            ? "Telegram linked successfully."
-            : "Telegram berjaya dipautkan."
-        );
-        return;
-      }
-
-      await new Promise((r) => setTimeout(r, intervalMs));
+  // --- Telegram linking helpers (HTTPS-only, new tab) ---
+  const openTelegramDeepLink = () => {
+    if (!BOT_USERNAME) {
+      toast.error(
+        language === "en"
+          ? "Telegram bot is not configured (VITE_TELEGRAM_BOT_USERNAME)."
+          : "Bot Telegram belum dikonfigurasi (VITE_TELEGRAM_BOT_USERNAME)."
+      );
+      return;
     }
 
-    toast.error(
-      language === "en"
-        ? "Could not detect the link. Please press Start in Telegram, then try again."
-        : "Tidak dapat kesan pautan. Sila tekan Start dalam Telegram, kemudian cuba semula."
-    );
-  } finally {
-    setPolling(false);
-  }
-};
+    setLinking(true);
 
-const handleLinkTelegram = () => {
-  // Call window.open synchronously inside the click handler (avoids popup blockers)
-  openTelegramDeepLink();
+    // Must be the exact Auth user UUID (matches profiles.user_id)
+    const payload = user!.id;
+    console.log("Telegram link payload:", payload);
 
-  // Then start polling on the current page
-  pollForChatId();
-};
+    // ✅ HTTPS deep link works everywhere (app or Telegram Web)
+    const webLink = `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(payload)}`;
+
+    // Try new tab; if blocked, fall back to same tab
+    const w = window.open(webLink, "_blank", "noopener,noreferrer");
+    // if (!w) window.location.href = webLink;
+
+    setTimeout(() => setLinking(false), 600);
+  };
+
+  const pollForChatId = async (timeoutMs = 60_000, intervalMs = 2_000) => {
+    setPolling(true);
+    const end = Date.now() + timeoutMs;
+
+    try {
+      while (Date.now() < end) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("telegram_chat_id")
+          .eq("user_id", user!.id)
+          .single();
+
+        if (error && (error as any).code !== "PGRST116") {
+          console.error("Polling error (profiles):", error);
+          break;
+        }
+
+        if (data?.telegram_chat_id) {
+          setFormData((prev) => ({ ...prev, telegram_chat_id: String(data.telegram_chat_id) }));
+          toast.success(language === "en" ? "Telegram linked successfully." : "Telegram berjaya dipautkan.");
+          return;
+        }
+
+        await new Promise((r) => setTimeout(r, intervalMs));
+      }
+
+      toast.error(
+        language === "en"
+          ? "Could not detect the link. Please press Start in Telegram, then try again."
+          : "Tidak dapat kesan pautan. Sila tekan Start dalam Telegram, kemudian cuba semula."
+      );
+    } finally {
+      setPolling(false);
+    }
+  };
+
+  const handleLinkTelegram = () => {
+    // Important: call window.open synchronously in this click handler
+    openTelegramDeepLink();
+    pollForChatId();
+  };
   // --- end Telegram helpers ---
-
 
   return (
     <div className="space-y-6">
