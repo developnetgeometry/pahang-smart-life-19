@@ -8,7 +8,6 @@ import React, {
   useState,
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { CheckCircle } from "lucide-react";
 
 export type UserRole =
@@ -34,10 +33,14 @@ export interface User {
   id: string;
   display_name: string;
   email: string;
+  full_name?: string;
   associated_community_ids: string[];
   active_community_id: string;
   district: string;
   community: string;
+  district_id?: string;
+  community_id?: string;
+  account_status?: string;
   user_role: UserRole; // primary role for display
   available_roles: UserRole[];
   // current_view_role removed - using role-based navigation
@@ -90,7 +93,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
   const [theme, setTheme] = useState<Theme>("light");
   const [roles, setRoles] = useState<UserRole[]>([]);
-  const { toast } = useToast();
 
   // Move isProcessing outside useEffect to persist across renders
   const isProcessingRef = useRef(false);
@@ -356,11 +358,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .eq("user_id", user.id);
       } catch (error) {
         console.error("Failed to update language preference:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Could not save your language preference.",
-        });
+        // Toast notification removed to avoid dependency issues
+        // Consider showing error in UI when toast context is properly set up
       }
     }
   };
@@ -404,7 +403,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .eq("user_id", sessionUser.id);
 
         // Refresh local state
-        await loadProfileAndRoles();
+        if (user?.id) {
+          await loadProfileAndRoles(user.id);
+        }
       } catch (e) {
         console.error("updateProfile error:", e);
       }

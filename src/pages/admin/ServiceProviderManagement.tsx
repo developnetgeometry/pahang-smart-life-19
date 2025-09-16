@@ -380,6 +380,7 @@ export default function ServiceProviderManagement() {
       let query = supabase.from("service_provider_applications").select(
         `
           id,
+          applicant_id,
           business_name,
           business_type,
           contact_person,
@@ -389,21 +390,31 @@ export default function ServiceProviderManagement() {
           priority,
           created_at,
           service_categories,
-          services_offered
+          services_offered,
+          profiles!applicant_id(
+            district_id,
+            community_id
+          )
         `,
         { count: "exact" }
       );
 
-      // Apply district filtering based on role
+      // Apply district and community filtering based on role
       if (!hasRole("state_admin")) {
         const { data: me } = await supabase
           .from("profiles")
-          .select("district_id")
-          .eq("id", user?.id)
+          .select("district_id, community_id")
+          .eq("user_id", user?.id)
           .maybeSingle();
 
         if (me?.district_id) {
-          query = query.eq("district_id", me.district_id);
+          // Filter by district_id from the joined profiles table
+          query = query.eq("profiles.district_id", me.district_id) as any;
+
+          // For community-level admins, also filter by community_id
+          if (hasRole("community_admin") && me?.community_id) {
+            query = query.eq("profiles.community_id", me.community_id) as any;
+          }
         }
       }
 
@@ -411,17 +422,17 @@ export default function ServiceProviderManagement() {
       if (debouncedSearchTerm) {
         query = query.or(
           `business_name.ilike.%${debouncedSearchTerm}%,contact_person.ilike.%${debouncedSearchTerm}%`
-        );
+        ) as any;
       }
 
       // Apply status filter
       if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
+        query = query.eq("status", statusFilter) as any;
       }
 
       // Apply priority filter
       if (priorityFilter !== "all") {
-        query = query.eq("priority", priorityFilter);
+        query = query.eq("priority", priorityFilter) as any;
       }
 
       // Apply pagination
@@ -470,10 +481,11 @@ export default function ServiceProviderManagement() {
       setLoading(true);
       console.log("Fetching providers...");
 
-      // Build query with pagination
+      // Build query with pagination and join with profiles
       let query = supabase.from("service_provider_profiles").select(
         `
           id,
+          user_id,
           business_name,
           business_type,
           contact_phone,
@@ -483,21 +495,31 @@ export default function ServiceProviderManagement() {
           compliance_status,
           average_rating,
           total_reviews,
-          service_categories
+          service_categories,
+          profiles!user_id(
+            district_id,
+            community_id
+          )
         `,
         { count: "exact" }
       );
 
-      // Apply district filtering based on role
+      // Apply district and community filtering based on role
       if (!hasRole("state_admin")) {
         const { data: me } = await supabase
           .from("profiles")
-          .select("district_id")
-          .eq("id", user?.id)
+          .select("district_id, community_id")
+          .eq("user_id", user?.id)
           .maybeSingle();
 
         if (me?.district_id) {
-          query = query.eq("district_id", me.district_id);
+          // Filter by district_id from the joined profiles table
+          query = query.eq("profiles.district_id", me.district_id) as any;
+
+          // For community-level admins, also filter by community_id
+          if (hasRole("community_admin") && me?.community_id) {
+            query = query.eq("profiles.community_id", me.community_id) as any;
+          }
         }
       }
 
@@ -505,18 +527,18 @@ export default function ServiceProviderManagement() {
       if (debouncedSearchTerm) {
         query = query.or(
           `business_name.ilike.%${debouncedSearchTerm}%,business_type.ilike.%${debouncedSearchTerm}%`
-        );
+        ) as any;
       }
 
       // Apply provider status filter
       if (providerStatusFilter === "active") {
-        query = query.eq("is_active", true);
+        query = query.eq("is_active", true) as any;
       } else if (providerStatusFilter === "inactive") {
-        query = query.eq("is_active", false);
+        query = query.eq("is_active", false) as any;
       } else if (providerStatusFilter === "verified") {
-        query = query.eq("is_verified", true);
+        query = query.eq("is_verified", true) as any;
       } else if (providerStatusFilter === "unverified") {
-        query = query.eq("is_verified", false);
+        query = query.eq("is_verified", false) as any;
       }
 
       // Apply pagination
