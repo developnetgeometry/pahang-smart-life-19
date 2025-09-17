@@ -875,7 +875,7 @@ export default function Announcements() {
         const filePath = `announcements/attachments/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
-          .from('announcements')
+          .from('public')
           .upload(filePath, file, {
             cacheControl: '3600',
             upsert: false
@@ -887,7 +887,7 @@ export default function Announcements() {
         }
 
         const { data: urlData } = supabase.storage
-          .from('announcements')
+          .from('public')
           .getPublicUrl(filePath);
 
         uploadedAttachments.push({
@@ -941,7 +941,7 @@ export default function Announcements() {
         const filePath = `announcements/images/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
-          .from('announcements')
+          .from('public')
           .upload(filePath, file, {
             cacheControl: '3600',
             upsert: false
@@ -953,7 +953,7 @@ export default function Announcements() {
         }
 
         const { data: urlData } = supabase.storage
-          .from('announcements')
+          .from('public')
           .getPublicUrl(filePath);
 
         uploadedImages.push(urlData.publicUrl);
@@ -984,7 +984,7 @@ export default function Announcements() {
           const filePath = `announcements/attachments/${fileName}`;
           
           const { error } = await supabase.storage
-            .from('announcements')
+            .from('public')
             .remove([filePath]);
             
           if (error) {
@@ -1012,7 +1012,7 @@ export default function Announcements() {
           const filePath = `announcements/images/${fileName}`;
           
           const { error } = await supabase.storage
-            .from('announcements')
+            .from('public')
             .remove([filePath]);
             
           if (error) {
@@ -1392,14 +1392,24 @@ export default function Announcements() {
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => {
                       if (selectedAnnouncement) {
+                        // Format the existing publish_at date for datetime-local input
+                        const existingPublishAt = selectedAnnouncement.publish_at 
+                          ? new Date(selectedAnnouncement.publish_at).toISOString().slice(0, 16)
+                          : new Date().toISOString().slice(0, 16);
+                          
+                        // Format the existing expire_at date for datetime-local input
+                        const existingExpireAt = selectedAnnouncement.expire_at 
+                          ? new Date(selectedAnnouncement.expire_at).toISOString().slice(0, 16)
+                          : "";
+                          
                         setEditForm({
                           title: selectedAnnouncement.title,
                           content: selectedAnnouncement.content,
                           type: selectedAnnouncement.type,
                           is_urgent: selectedAnnouncement.is_urgent,
                           is_published: true,
-                          publish_at: selectedAnnouncement.publish_at || new Date().toISOString().slice(0, 16),
-                          expire_at: selectedAnnouncement.expire_at || "",
+                          publish_at: existingPublishAt,
+                          expire_at: existingExpireAt,
                           attachments: selectedAnnouncement.attachments || [],
                           newAttachments: [],
                           images: selectedAnnouncement.images || [],

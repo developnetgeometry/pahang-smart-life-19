@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, User, UserCheck } from "lucide-react";
+import { Loader2, Search, User, UserCheck, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -60,6 +60,8 @@ export default function AssignCommunityAdminModal({
   const [searchResults, setSearchResults] = useState<Profile[]>([]);
   const [searching, setSearching] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+  const [initialUsers, setInitialUsers] = useState<Profile[]>([]);
+  const [loadingInitial, setLoadingInitial] = useState(false);
 
   // Create new user form
   const [createData, setCreateData] = useState({
@@ -68,6 +70,64 @@ export default function AssignCommunityAdminModal({
     password: "",
     phone: "",
   });
+
+  // Form validation errors
+  const [validationErrors, setValidationErrors] = useState({
+    phone: "",
+  });
+
+  // Malaysian phone validation (local format with 0 or international format with 60)
+  const validatePhoneNumber = (phone: string, language: 'en' | 'ms' = 'en'): { isValid: boolean; error?: string } => {
+    if (!phone || phone.trim() === '') {
+      return { isValid: true }; // Phone is optional
+    }
+
+    // Remove all spaces, hyphens and other formatting characters
+    const cleanPhone = phone.replace(/[\s\-\+]/g, '');
+    
+    // Check if contains only numbers
+    if (!/^\d+$/.test(cleanPhone)) {
+      return {
+        isValid: false,
+        error: language === 'en'
+          ? 'Phone number can only contain numbers'
+          : 'Nombor telefon hanya boleh mengandungi nombor'
+      };
+    }
+    
+    // Check if starts with 0 (local Malaysian format) or 60 (international format)
+    if (cleanPhone.startsWith('0')) {
+      // Local Malaysian format: 0123456789 (10-11 digits)
+      if (cleanPhone.length < 10 || cleanPhone.length > 11) {
+        return {
+          isValid: false,
+          error: language === 'en'
+            ? 'Malaysian phone number must be 10-11 digits (0123456789)'
+            : 'Nombor telefon Malaysia mestilah 10-11 digit (0123456789)'
+        };
+      }
+    } else if (cleanPhone.startsWith('60')) {
+      // International Malaysian format: 60123456789 (11-12 digits)
+      if (cleanPhone.length < 11 || cleanPhone.length > 12) {
+        return {
+          isValid: false,
+          error: language === 'en'
+            ? 'Malaysian phone number must be 11-12 digits (60123456789)'
+            : 'Nombor telefon Malaysia mestilah 11-12 digit (60123456789)'
+        };
+      }
+    } else {
+      // Not starting with 0 or 60 - invalid
+      return {
+        isValid: false,
+        error: language === 'en'
+          ? 'Phone number must start with 0 (local) or 60 (international) for Malaysia'
+          : 'Nombor telefon mesti bermula dengan 0 (tempatan) atau 60 (antarabangsa) untuk Malaysia'
+      };
+    }
+
+    return { isValid: true };
+  };
 
   const text = {
     en: {
@@ -89,6 +149,7 @@ export default function AssignCommunityAdminModal({
       creating: "Creating...",
       assigning: "Assigning...",
       communityAdmin: "Community Admin",
+      onlyAdminNote: "Only users with Community Admin role are shown",
     },
     ms: {
       assignAdminTitle: "Tetapkan Pentadbir Komuniti",
@@ -109,10 +170,46 @@ export default function AssignCommunityAdminModal({
       creating: "Mencipta...",
       assigning: "Menetapkan...",
       communityAdmin: "Pentadbir Komuniti",
+      onlyAdminNote: "Hanya pengguna dengan peranan Pentadbir Komuniti ditunjukkan",
     },
   };
 
   const t = text[language];
+
+  // Function to load initial community admin users
+  const loadInitialUsers = async () => {
+    setLoadingInitial(true);
+    try {
+      // First get user IDs with community_admin role
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'community_admin');
+
+      if (rolesError) throw rolesError;
+
+      const userIds = userRoles?.map(role => role.user_id) || [];
+
+      if (userIds.length === 0) {
+        setInitialUsers([]);
+        return;
+      }
+
+      // Then get profiles for those users
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, user_id, full_name, email, phone, community_id")
+        .in('user_id', userIds)
+        .limit(5);
+
+      if (error) throw error;
+      setInitialUsers(data || []);
+    } catch (error) {
+      console.error("Error loading initial users:", error);
+    } finally {
+      setLoadingInitial(false);
+    }
+  };
 
   // Reset form when modal opens/closes
   useEffect(() => {
@@ -123,10 +220,15 @@ export default function AssignCommunityAdminModal({
         password: "",
         phone: "",
       });
+      setValidationErrors({ phone: "" });
       setSearchTerm("");
       setSearchResults([]);
+      setInitialUsers([]);
       setSelectedUser(null);
       setActiveTab("create");
+    } else {
+      // Load initial users when modal opens
+      loadInitialUsers();
     }
   }, [open]);
 
@@ -140,9 +242,26 @@ export default function AssignCommunityAdminModal({
 
       setSearching(true);
       try {
+        // First get user IDs with community_admin role
+        const { data: userRoles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'community_admin');
+
+        if (rolesError) throw rolesError;
+
+        const userIds = userRoles?.map(role => role.user_id) || [];
+
+        if (userIds.length === 0) {
+          setSearchResults([]);
+          return;
+        }
+
+        // Then get profiles for those users
         const { data, error } = await supabase
           .from("profiles")
-          .select("id,user_id, full_name, email, phone, community_id")
+          .select("id, user_id, full_name, email, phone, community_id")
+          .in('user_id', userIds)
           .or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
           .limit(10);
 
@@ -161,6 +280,10 @@ export default function AssignCommunityAdminModal({
   }, [searchTerm]);
 
   const handleCreateAdmin = async () => {
+    // Clear previous validation errors
+    setValidationErrors({ phone: "" });
+
+    // Validate required fields
     if (
       !community ||
       !createData.full_name ||
@@ -169,6 +292,16 @@ export default function AssignCommunityAdminModal({
     ) {
       toast.error("Please fill in all required fields");
       return;
+    }
+
+    // Validate phone number if provided
+    if (createData.phone && createData.phone.trim() !== '') {
+      const phoneValidation = validatePhoneNumber(createData.phone, language);
+      if (!phoneValidation.isValid) {
+        setValidationErrors({ phone: phoneValidation.error || "" });
+        toast.error(phoneValidation.error);
+        return;
+      }
     }
 
     setLoading(true);
@@ -343,13 +476,40 @@ export default function AssignCommunityAdminModal({
                   id="create-phone"
                   type="tel"
                   value={createData.phone}
-                  onChange={(e) =>
+                  className={validationErrors.phone ? "border-red-500 focus:ring-red-500" : ""}
+                  placeholder={language === 'en' ? "e.g., 0123456789 or 60123456789" : "cth: 0123456789 atau 60123456789"}
+                  onChange={(e) => {
+                    const newPhone = e.target.value;
                     setCreateData((prev) => ({
                       ...prev,
-                      phone: e.target.value,
-                    }))
-                  }
+                      phone: newPhone,
+                    }));
+                    
+                    // Clear validation error when user starts typing
+                    if (validationErrors.phone) {
+                      setValidationErrors({ phone: "" });
+                    }
+                    
+                    // Real-time validation for phone number
+                    if (newPhone && newPhone.trim() !== '') {
+                      const phoneValidation = validatePhoneNumber(newPhone, language);
+                      if (!phoneValidation.isValid) {
+                        setValidationErrors({ phone: phoneValidation.error || "" });
+                      }
+                    }
+                  }}
                 />
+                {validationErrors.phone && (
+                  <div className="flex items-center space-x-1 text-red-500 text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>{validationErrors.phone}</span>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {language === 'en' 
+                    ? "Malaysian format only: 0123456789 (local) or 60123456789 (international)" 
+                    : "Format Malaysia sahaja: 0123456789 (tempatan) atau 60123456789 (antarabangsa)"}
+                </p>
               </div>
             </div>
 
@@ -394,22 +554,32 @@ export default function AssignCommunityAdminModal({
                   className="pl-10"
                 />
               </div>
+              <p className="text-xs text-muted-foreground">
+                {t.onlyAdminNote}
+              </p>
             </div>
 
             <div className="space-y-2 max-h-60 overflow-y-auto">
-              {searching && (
+              {(searching || loadingInitial) && (
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="h-4 w-4 animate-spin" />
                 </div>
               )}
 
-              {!searching && searchResults.length === 0 && searchTerm && (
+              {!searching && !loadingInitial && searchTerm && searchResults.length === 0 && (
                 <div className="text-center py-4 text-muted-foreground">
                   {t.noResults}
                 </div>
               )}
 
-              {searchResults.map((user) => (
+              {!searching && !loadingInitial && !searchTerm && initialUsers.length === 0 && (
+                <div className="text-center py-4 text-muted-foreground">
+                  No community admins found
+                </div>
+              )}
+
+              {/* Show search results when searching, or initial users when not searching */}
+              {(searchTerm ? searchResults : initialUsers).map((user) => (
                 <Card
                   key={user.id}
                   className={`cursor-pointer transition-colors ${
