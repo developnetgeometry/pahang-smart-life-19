@@ -356,13 +356,6 @@ export default function PanicButton() {
 
   return (
     <>
-    {user && (
-<pre className="bg-muted p-4 rounded text-xs overflow-auto mb-4">
-{JSON.stringify(user, null, 2)}
-</pre>
-)}
-
-can y
       <div className="fixed bottom-6 right-6 z-[9999]">
         <div className="relative">
           {/* Progress Circle */}
