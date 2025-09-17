@@ -186,7 +186,7 @@ export function AppSidebar() {
           icon: Building,
         });
       }
-      if (!hasRole("resident") && !hasRole("tenant") && !hasRole("guest")) {
+      if (!hasRole("tenant") && !hasRole("guest")) {
         servicesItems.push({
           title: t("myListings"),
           url: "/my-listings",
