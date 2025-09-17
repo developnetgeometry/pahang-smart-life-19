@@ -506,6 +506,7 @@ export default function ServiceProviderManagement() {
 
       // Apply district and community filtering based on role
       if (!hasRole("state_admin")) {
+        console.log("Applying district/community filters for non-state admin");
         const { data: me } = await supabase
           .from("profiles")
           .select("district_id, community_id")
@@ -513,11 +514,13 @@ export default function ServiceProviderManagement() {
           .maybeSingle();
 
         if (me?.district_id) {
+          console.log("User district_id:", me.district_id);
           // Filter by district_id from the joined profiles table
           query = query.eq("profiles.district_id", me.district_id) as any;
 
           // For community-level admins, also filter by community_id
           if (hasRole("community_admin") && me?.community_id) {
+            console.log("User community_id:", me.community_id);
             query = query.eq("profiles.community_id", me.community_id) as any;
           }
         }

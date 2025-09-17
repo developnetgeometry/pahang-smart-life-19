@@ -174,10 +174,10 @@ const App = () => (
       <AuthProvider>
         <NotificationProvider>
           <DeviceProvider>
-            <Toaster />
-            <Sonner />
-            <PWAInstallPrompt />
             <BrowserRouter>
+              <Toaster />
+              <Sonner />
+              <PWAInstallPrompt />
               <Routes>
             <Route
               path="/login"
