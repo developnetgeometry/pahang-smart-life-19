@@ -97,951 +97,960 @@ const queryClient = new QueryClient({
 });
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, initializing, isApproved, accountStatus } = useAuth();
-  
-  console.log('🔒 ProtectedRoute - Auth State:', { 
-    isAuthenticated, 
-    initializing, 
-    isApproved, 
-    accountStatus 
+  const { isAuthenticated, initializing, isApproved, accountStatus } =
+    useAuth();
+
+  console.log("🔒 ProtectedRoute - Auth State:", {
+    isAuthenticated,
+    initializing,
+    isApproved,
+    accountStatus,
   });
-  
+
   if (initializing) {
-    console.log('🔒 ProtectedRoute: Still initializing...');
+    console.log("🔒 ProtectedRoute: Still initializing...");
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
-  
+
   if (!isAuthenticated) {
-    console.log('🔒 ProtectedRoute: Not authenticated, redirecting to login');
+    console.log("🔒 ProtectedRoute: Not authenticated, redirecting to login");
     return <Navigate to="/login" replace />;
   }
-  
-  if (isAuthenticated && accountStatus === 'pending_completion') {
-    console.log('🔒 ProtectedRoute: Account pending completion, redirecting');
+
+  if (isAuthenticated && accountStatus === "pending_completion") {
+    console.log("🔒 ProtectedRoute: Account pending completion, redirecting");
     return <Navigate to="/complete-account" replace />;
   }
-  
-  if (isAuthenticated && !isApproved && accountStatus !== 'pending_completion') {
-    console.log('🔒 ProtectedRoute: Account not approved, redirecting to pending approval');
+
+  if (
+    isAuthenticated &&
+    !isApproved &&
+    accountStatus !== "pending_completion"
+  ) {
+    console.log(
+      "🔒 ProtectedRoute: Account not approved, redirecting to pending approval"
+    );
     return <Navigate to="/pending-approval" replace />;
   }
-  
-  console.log('🔒 ProtectedRoute: Access granted to protected content');
+
+  console.log("🔒 ProtectedRoute: Access granted to protected content");
   return <>{children}</>;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, initializing, isApproved, accountStatus } = useAuth();
-  
-  console.log('🌐 PublicRoute - Auth State:', { 
-    isAuthenticated, 
-    initializing, 
-    isApproved, 
-    accountStatus 
+  const { isAuthenticated, initializing, isApproved, accountStatus } =
+    useAuth();
+
+  console.log("🌐 PublicRoute - Auth State:", {
+    isAuthenticated,
+    initializing,
+    isApproved,
+    accountStatus,
   });
-  
+
   if (initializing) {
-    console.log('🌐 PublicRoute: Still initializing, showing content...');
+    console.log("🌐 PublicRoute: Still initializing, showing content...");
     return <>{children}</>;
   }
-  
+
   // KEY LOGIC: Redirect authenticated & approved users to dashboard
   if (isAuthenticated && isApproved) {
-    console.log('🌐 PublicRoute: User authenticated & approved - redirecting to dashboard');
+    console.log(
+      "🌐 PublicRoute: User authenticated & approved - redirecting to dashboard"
+    );
     return <Navigate to="/" replace />;
   }
-  
-  if (isAuthenticated && accountStatus === 'pending_completion') {
-    console.log('🌐 PublicRoute: Account pending completion, redirecting');
+
+  if (isAuthenticated && accountStatus === "pending_completion") {
+    console.log("🌐 PublicRoute: Account pending completion, redirecting");
     return <Navigate to="/complete-account" replace />;
   }
-  
-  if (isAuthenticated && !isApproved && accountStatus !== 'pending_completion') {
-    console.log('🌐 PublicRoute: Account not approved, redirecting to pending approval');
+
+  if (
+    isAuthenticated &&
+    !isApproved &&
+    accountStatus !== "pending_completion"
+  ) {
+    console.log(
+      "🌐 PublicRoute: Account not approved, redirecting to pending approval"
+    );
     return <Navigate to="/pending-approval" replace />;
   }
-  
-  console.log('🌐 PublicRoute: Showing public content');
+
+  console.log("🌐 PublicRoute: Showing public content");
   return <>{children}</>;
 }
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <NotificationProvider>
-          <DeviceProvider>
-            <BrowserRouter>
-              <Toaster />
-              <Sonner />
-              <PWAInstallPrompt />
-              <Routes>
-            <Route
-              path="/login"
-              element={
-                <PublicRoute>
-                  <Login />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/pending-approval"
-              element={<PendingApproval />}
-            />
-            <Route
-              path="/complete-account"
-              element={
-                <CompleteAccount />
-              }
-            />
-            <Route
-              path="/login/complete-account"
-              element={<Navigate to="/complete-account" replace />}
-            />
-            <Route
-              path="/reset-password"
-              element={
-                <ResetPassword />
-              }
-            />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Index />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+    <AuthProvider>
+      <NotificationProvider>
+        <DeviceProvider>
+          <BrowserRouter>
+            <Toaster />
+            <Sonner />
+            <PWAInstallPrompt />
+            <Routes>
+              <Route
+                path="/login"
+                element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                }
+              />
+              <Route path="/pending-approval" element={<PendingApproval />} />
+              <Route path="/complete-account" element={<CompleteAccount />} />
+              <Route
+                path="/login/complete-account"
+                element={<Navigate to="/complete-account" replace />}
+              />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Index />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Resident modules */}
-            <Route
-              path="/my-complaints"
-              element={
-                <ProtectedRoute>
-                  <RequireNotRoles roles={["service_provider"]}>
+              {/* Resident modules */}
+              <Route
+                path="/my-complaints"
+                element={
+                  <ProtectedRoute>
+                    <RequireNotRoles roles={["service_provider"]}>
+                      <Layout>
+                        <MyComplaints />
+                      </Layout>
+                    </RequireNotRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/complaint/:id"
+                element={
+                  <ProtectedRoute>
                     <Layout>
-                      <MyComplaints />
+                      <ComplaintDetail />
                     </Layout>
-                  </RequireNotRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/complaint/:id"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <ComplaintDetail />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/my-visitors"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <MyVisitors />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/my-applications"
-              element={
-                <AuthOnlyRoute>
-                  <Layout>
-                    <MyApplications />
-                  </Layout>
-                </AuthOnlyRoute>
-              }
-            />
-            <Route
-              path="/service-provider-application"
-              element={
-                <AuthOnlyRoute>
-                  <Layout>
-                    <ServiceProviderApplication />
-                  </Layout>
-                </AuthOnlyRoute>
-              }
-            />
-            <Route
-              path="/my-profile"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <MyProfile />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/notifications"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <NotificationPage />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/notification-settings"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <NotificationSettings />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/mobile-notifications"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <MobileNotifications />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/notification-test"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <NotificationTest />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dev/notification-test"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <DevNotificationTest />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/announcements"
-              element={
-                <ProtectedRoute>
-                  <RequireNotRoles roles={["service_provider"]}>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/my-visitors"
+                element={
+                  <ProtectedRoute>
                     <Layout>
-                      <Announcements />
+                      <MyVisitors />
                     </Layout>
-                  </RequireNotRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/events"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Events />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/discussions"
-              element={
-                <ProtectedRoute>
-                  <RequireNotRoles roles={["service_provider"]}>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/my-applications"
+                element={
+                  <AuthOnlyRoute>
                     <Layout>
-                      <Discussions />
+                      <MyApplications />
                     </Layout>
-                  </RequireNotRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/marketplace"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Marketplace />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/marketplace/item/:id"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <MarketplaceItemDetail />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/my-orders"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <MyOrders />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/favorites"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Favorites />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/seller-dashboard"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["service_provider"]}>
+                  </AuthOnlyRoute>
+                }
+              />
+              <Route
+                path="/service-provider-application"
+                element={
+                  <AuthOnlyRoute>
                     <Layout>
-                      <SellerDashboard />
+                      <ServiceProviderApplication />
                     </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/services"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Services />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/my-listings"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <MyListings />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/seller/:sellerId"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <SellerProfile />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/marketplace-analytics"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <ResidentAnalytics />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/advertisement/:id"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <AdvertisementDetail />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/advertisements"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["service_provider"]}>
+                  </AuthOnlyRoute>
+                }
+              />
+              <Route
+                path="/my-profile"
+                element={
+                  <ProtectedRoute>
                     <Layout>
-                      <AdvertisementManagement />
+                      <MyProfile />
                     </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/communication"
-              element={<Navigate to="/communication-hub" replace />}
-            />
-            <Route
-              path="/communication-hub"
-              element={
-                <ProtectedRoute>
-                  <RequireNotRoles roles={["service_provider"]}>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/notifications"
+                element={
+                  <ProtectedRoute>
                     <Layout>
-                      <CommunicationHub />
+                      <NotificationPage />
                     </Layout>
-                  </RequireNotRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/directory"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Directory />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/visitor-security"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <VisitorSecurity />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/visitor-management"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles
-                    roles={[
-                      "security_officer",
-                      "community_admin",
-                      "district_coordinator",
-                      "state_admin",
-                    ]}
-                  >
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/notification-settings"
+                element={
+                  <ProtectedRoute>
                     <Layout>
-                      <VisitorApprovals />
+                      <NotificationSettings />
                     </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/visitor-dashboard"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles
-                    roles={[
-                      "security_officer",
-                      "community_admin",
-                      "district_coordinator",
-                      "state_admin",
-                    ]}
-                  >
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/mobile-notifications"
+                element={
+                  <ProtectedRoute>
                     <Layout>
-                      <VisitorDashboard />
+                      <MobileNotifications />
                     </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/visitor-analytics"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <VisitorAnalytics />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/cctv-live"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <CCTVManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/cctv"
-              element={<Navigate to="/cctv-live-feed" replace />}
-            />
-
-            {/* Professional view routes */}
-            <Route
-              path="/admin/users"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <UserManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/guest-management"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["community_admin", "district_coordinator", "state_admin"]}>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/notification-test"
+                element={
+                  <ProtectedRoute>
                     <Layout>
-                      <GuestManagement />
+                      <NotificationTest />
                     </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/permissions/:userId"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles
-                    roles={[
-                      "community_admin",
-                      "district_coordinator",
-                      "state_admin",
-                    ]}
-                  >
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dev/notification-test"
+                element={
+                  <ProtectedRoute>
                     <Layout>
-                      <PermissionsManagement />
+                      <DevNotificationTest />
                     </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/service-providers"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles
-                    roles={[
-                      "community_admin",
-                      "district_coordinator",
-                      "state_admin",
-                    ]}
-                  >
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/announcements"
+                element={
+                  <ProtectedRoute>
+                    <RequireNotRoles roles={["service_provider"]}>
+                      <Layout>
+                        <Announcements />
+                      </Layout>
+                    </RequireNotRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/events"
+                element={
+                  <ProtectedRoute>
                     <Layout>
-                      <ServiceProviderManagement />
+                      <Events />
                     </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/service-providers/review/:id"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles
-                    roles={[
-                      "community_admin",
-                      "district_coordinator",
-                      "state_admin",
-                    ]}
-                  >
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/discussions"
+                element={
+                  <ProtectedRoute>
+                    <RequireNotRoles roles={["service_provider"]}>
+                      <Layout>
+                        <Discussions />
+                      </Layout>
+                    </RequireNotRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/marketplace"
+                element={
+                  <ProtectedRoute>
                     <Layout>
-                      <ServiceProviderReview />
+                      <Marketplace />
                     </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/security"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <SecurityDashboard />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/communities"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <CommunityManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/districts"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <DistrictManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/districts/:id"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <DistrictDetail />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/facilities"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <FacilitiesManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/floor-plans"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles
-                    roles={[
-                      "facility_manager",
-                      "community_admin",
-                      "state_admin",
-                    ]}
-                  >
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/marketplace/item/:id"
+                element={
+                  <ProtectedRoute>
                     <Layout>
-                      <FloorPlanManagement />
+                      <MarketplaceItemDetail />
                     </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/maintenance"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <MaintenanceManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/complaints"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <ComplaintsManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/complaints-management"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <ComplaintsManagement />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/complaints-analytics"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles
-                    roles={[
-                      "community_admin",
-                      "district_coordinator",
-                      "state_admin",
-                    ]}
-                  >
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/my-orders"
+                element={
+                  <ProtectedRoute>
                     <Layout>
-                      <ComplaintsAnalytics />
+                      <MyOrders />
                     </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/cctv"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles
-                    roles={[
-                      "security_officer",
-                      "state_admin",
-                      "community_admin",
-                    ]}
-                  >
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/favorites"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Favorites />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/seller-dashboard"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles roles={["service_provider"]}>
+                      <Layout>
+                        <SellerDashboard />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/services"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Services />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/my-listings"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <MyListings />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/seller/:sellerId"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <SellerProfile />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/marketplace-analytics"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <ResidentAnalytics />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/advertisement/:id"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <AdvertisementDetail />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/advertisements"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles roles={["service_provider"]}>
+                      <Layout>
+                        <AdvertisementManagement />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/communication"
+                element={<Navigate to="/communication-hub" replace />}
+              />
+              <Route
+                path="/communication-hub"
+                element={
+                  <ProtectedRoute>
+                    <RequireNotRoles roles={["service_provider"]}>
+                      <Layout>
+                        <CommunicationHub />
+                      </Layout>
+                    </RequireNotRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/directory"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Directory />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/visitor-security"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <VisitorSecurity />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/visitor-management"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles
+                      roles={[
+                        "security_officer",
+                        "community_admin",
+                        "district_coordinator",
+                        "state_admin",
+                      ]}
+                    >
+                      <Layout>
+                        <VisitorApprovals />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/visitor-dashboard"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles
+                      roles={[
+                        "security_officer",
+                        "community_admin",
+                        "district_coordinator",
+                        "state_admin",
+                      ]}
+                    >
+                      <Layout>
+                        <VisitorDashboard />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/visitor-analytics"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <VisitorAnalytics />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/cctv-live"
+                element={
+                  <ProtectedRoute>
                     <Layout>
                       <CCTVManagement />
                     </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/modules"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["community_admin"]}>
-                    <Layout>
-                      <ModuleManagement />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/cctv"
+                element={<Navigate to="/cctv-live-feed" replace />}
+              />
 
-            {/* CCTV Management for residents */}
-            <Route
-              path="/cctv-live-feed"
-              element={
-                <ProtectedRoute>
-                  <RequireNotRoles roles={["service_provider"]}>
+              {/* Professional view routes */}
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute>
                     <Layout>
-                      <CCTVManagement />
+                      <UserManagement />
                     </Layout>
-                  </RequireNotRoles>
-                </ProtectedRoute>
-              }
-            />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/guest-management"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles
+                      roles={[
+                        "community_admin",
+                        "district_coordinator",
+                        "state_admin",
+                      ]}
+                    >
+                      <Layout>
+                        <GuestManagement />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/permissions/:userId"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles
+                      roles={[
+                        "community_admin",
+                        "district_coordinator",
+                        "state_admin",
+                      ]}
+                    >
+                      <Layout>
+                        <PermissionsManagement />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/service-providers"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles
+                      roles={[
+                        "community_admin",
+                        "district_coordinator",
+                        "state_admin",
+                      ]}
+                    >
+                      <Layout>
+                        <ServiceProviderManagement />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/service-providers/review/:id"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles
+                      roles={[
+                        "community_admin",
+                        "district_coordinator",
+                        "state_admin",
+                      ]}
+                    >
+                      <Layout>
+                        <ServiceProviderReview />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/security"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <SecurityDashboard />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/communities"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <CommunityManagement />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/districts"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <DistrictManagement />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/districts/:id"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <DistrictDetail />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/facilities"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <FacilitiesManagement />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/floor-plans"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles
+                      roles={[
+                        "facility_manager",
+                        "community_admin",
+                        "state_admin",
+                      ]}
+                    >
+                      <Layout>
+                        <FloorPlanManagement />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/maintenance"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <MaintenanceManagement />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/complaints"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <ComplaintsManagement />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/complaints-management"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <ComplaintsManagement />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/complaints-analytics"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles
+                      roles={[
+                        "community_admin",
+                        "district_coordinator",
+                        "state_admin",
+                      ]}
+                    >
+                      <Layout>
+                        <ComplaintsAnalytics />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/cctv"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles
+                      roles={[
+                        "security_officer",
+                        "state_admin",
+                        "community_admin",
+                      ]}
+                    >
+                      <Layout>
+                        <CCTVManagement />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/modules"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles roles={["community_admin"]}>
+                      <Layout>
+                        <ModuleManagement />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Security modules */}
-            <Route
-              path="/panic-alerts"
-              element={
-                <ProtectedRoute>
-                  <RequireNotRoles roles={["service_provider"]}>
-                    <Layout>
-                      <PanicAlerts />
-                    </Layout>
-                  </RequireNotRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/patrol-interface"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["security_officer"]}>
-                    <Layout>
-                      <PatrolInterfacePage />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
+              {/* CCTV Management for residents */}
+              <Route
+                path="/cctv-live-feed"
+                element={
+                  <ProtectedRoute>
+                    <RequireNotRoles roles={["service_provider"]}>
+                      <Layout>
+                        <CCTVManagement />
+                      </Layout>
+                    </RequireNotRoles>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Management modules */}
-            <Route
-              path="/facilities"
-              element={
-                <ProtectedRoute>
-                  <RequireNotRoles roles={["service_provider"]}>
-                    <Layout>
-                      <Facilities />
-                    </Layout>
-                  </RequireNotRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/my-bookings"
-              element={
-                <ProtectedRoute>
-                  <RequireNotRoles roles={["service_provider"]}>
-                    <Layout>
-                      <MyBookings />
-                    </Layout>
-                  </RequireNotRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/service-requests"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <ServiceRequests />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/asset-management"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles
-                    roles={[
-                      "facility_manager",
-                      "community_admin",
-                      "district_coordinator",
-                      "state_admin",
-                    ]}
-                  >
-                    <Layout>
-                      <AssetManagement />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/financial-management"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles
-                    roles={[
-                      "community_admin",
-                      "district_coordinator",
-                      "state_admin",
-                    ]}
-                  >
-                    <Layout>
-                      <FinancialManagement />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/inventory-management"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles
-                    roles={[
-                      "facility_manager",
-                      "maintenance_staff",
-                      "community_admin",
-                      "district_coordinator",
-                      "state_admin",
-                    ]}
-                  >
-                    <Layout>
-                      <InventoryManagement />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/precision-mapping"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <PrecisionMapping />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+              {/* Security modules */}
+              <Route
+                path="/panic-alerts"
+                element={
+                  <ProtectedRoute>
+                    <RequireNotRoles roles={["service_provider"]}>
+                      <Layout>
+                        <PanicAlerts />
+                      </Layout>
+                    </RequireNotRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/patrol-interface"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles roles={["security_officer"]}>
+                      <Layout>
+                        <PatrolInterfacePage />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Maintenance Staff Routes */}
-            <Route
-              path="/facility-complaint-center"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["facility_manager"]}>
+              {/* Management modules */}
+              <Route
+                path="/facilities"
+                element={
+                  <ProtectedRoute>
+                    <RequireNotRoles roles={["service_provider"]}>
+                      <Layout>
+                        <Facilities />
+                      </Layout>
+                    </RequireNotRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/my-bookings"
+                element={
+                  <ProtectedRoute>
+                    <RequireNotRoles roles={["service_provider"]}>
+                      <Layout>
+                        <MyBookings />
+                      </Layout>
+                    </RequireNotRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/service-requests"
+                element={
+                  <ProtectedRoute>
                     <Layout>
-                      <FacilityComplaintCenterPage />
+                      <ServiceRequests />
                     </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/work-orders-management"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["maintenance_staff"]}>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/asset-management"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles
+                      roles={[
+                        "facility_manager",
+                        "community_admin",
+                        "district_coordinator",
+                        "state_admin",
+                      ]}
+                    >
+                      <Layout>
+                        <AssetManagement />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/financial-management"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles
+                      roles={[
+                        "community_admin",
+                        "district_coordinator",
+                        "state_admin",
+                      ]}
+                    >
+                      <Layout>
+                        <FinancialManagement />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/inventory-management"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles
+                      roles={[
+                        "facility_manager",
+                        "maintenance_staff",
+                        "community_admin",
+                        "district_coordinator",
+                        "state_admin",
+                      ]}
+                    >
+                      <Layout>
+                        <InventoryManagement />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/precision-mapping"
+                element={
+                  <ProtectedRoute>
                     <Layout>
-                      <WorkOrdersManagement />
+                      <PrecisionMapping />
                     </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/maintenance-complaint-center"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["maintenance_staff"]}>
-                    <Layout>
-                      <MaintenanceComplaintCenterPage />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/maintenance-emergency"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["maintenance_staff"]}>
-                    <Layout>
-                      <MaintenanceEmergency />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/maintenance-assets"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["maintenance_staff"]}>
-                    <Layout>
-                      <MaintenanceAssets />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/maintenance-scheduler"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["maintenance_staff"]}>
-                    <Layout>
-                      <MaintenanceScheduler />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/maintenance-reports"
-              element={
-                <ProtectedRoute>
-                  <RequireRoles roles={["maintenance_staff"]}>
-                    <Layout>
-                      <MaintenanceReports />
-                    </Layout>
-                  </RequireRoles>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/maintenance"
-              element={<Navigate to="/maintenance-reports" replace />}
-            />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-          </DeviceProvider>
-        </NotificationProvider>
-      </AuthProvider>
+              {/* Maintenance Staff Routes */}
+              <Route
+                path="/facility-complaint-center"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles roles={["facility_manager"]}>
+                      <Layout>
+                        <FacilityComplaintCenterPage />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/work-orders-management"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles roles={["maintenance_staff"]}>
+                      <Layout>
+                        <WorkOrdersManagement />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/maintenance-complaint-center"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles roles={["maintenance_staff"]}>
+                      <Layout>
+                        <MaintenanceComplaintCenterPage />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/maintenance-emergency"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles roles={["maintenance_staff"]}>
+                      <Layout>
+                        <MaintenanceEmergency />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/maintenance-assets"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles roles={["maintenance_staff"]}>
+                      <Layout>
+                        <MaintenanceAssets />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/maintenance-scheduler"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles roles={["maintenance_staff"]}>
+                      <Layout>
+                        <MaintenanceScheduler />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/maintenance-reports"
+                element={
+                  <ProtectedRoute>
+                    <RequireRoles roles={["maintenance_staff"]}>
+                      <Layout>
+                        <MaintenanceReports />
+                      </Layout>
+                    </RequireRoles>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/maintenance"
+                element={<Navigate to="/maintenance-reports" replace />}
+              />
+
+              {/* Catch-all route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </DeviceProvider>
+      </NotificationProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
