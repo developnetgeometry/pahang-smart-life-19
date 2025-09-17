@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, MapPin, Users, Building, Calendar, Map as MapIcon, Settings, Plus, Loader2, Filter, UserCheck, Pencil, Trash2, UserPlus, Globe, Hash } from 'lucide-react';
+import { ArrowLeft, MapPin, Users, Building, Calendar, Map as MapIcon, Settings, Plus, Loader2, Filter, UserCheck, Pencil, Trash2, UserPlus, Globe, Hash, UserMinus, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import CreateCommunityModal from '@/components/communities/CreateCommunityModal';
 import EditCommunityModal from '@/components/communities/EditCommunityModal';
@@ -82,6 +82,9 @@ export default function DistrictDetail() {
   const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
   const [editCommunityId, setEditCommunityId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Community | null>(null);
+  const [showReassignModal, setShowReassignModal] = useState(false);
+  const [communityToReassign, setCommunityToReassign] = useState<Community | null>(null);
+  const [removingAdmin, setRemovingAdmin] = useState<string | null>(null);
 
   const text = {
     en: {
@@ -132,7 +135,12 @@ export default function DistrictDetail() {
       adminLabel: 'Admin',
       viewOnMap: 'View on map',
       notSet: 'Not set',
-      additional: 'Additional'
+      additional: 'Additional',
+      reassignAdmin: 'Reassign Admin',
+      removeAdmin: 'Remove Admin',
+      confirmRemoveAdmin: 'Are you sure you want to remove the admin assignment from this community?',
+      adminRemoved: 'Admin assignment removed successfully',
+      removeAdminFailed: 'Failed to remove admin assignment'
     },
     ms: {
       backToDistricts: 'Kembali ke Daerah',
@@ -182,7 +190,12 @@ export default function DistrictDetail() {
       adminLabel: 'Pentadbir',
       viewOnMap: 'Lihat pada peta',
       notSet: 'Belum ditetapkan',
-      additional: 'Maklumat Lain'
+      additional: 'Maklumat Lain',
+      reassignAdmin: 'Tugaskan Semula Pentadbir',
+      removeAdmin: 'Buang Pentadbir',
+      confirmRemoveAdmin: 'Adakah anda pasti mahu membuang tugasan pentadbir dari komuniti ini?',
+      adminRemoved: 'Tugasan pentadbir berjaya dibuang',
+      removeAdminFailed: 'Gagal membuang tugasan pentadbir'
     }
   };
 
@@ -367,6 +380,35 @@ export default function DistrictDetail() {
       setFilteredCommunities(communities.filter(community => community.community_type === typeFilter));
     }
   }, [communities, typeFilter]);
+
+  // Function to remove admin assignment from a community
+  const handleRemoveAdmin = async (communityId: string) => {
+    try {
+      setRemovingAdmin(communityId);
+      
+      // Update profiles to remove community_id assignment
+      const { error } = await supabase
+        .from('profiles')
+        .update({ community_id: null })
+        .eq('community_id', communityId);
+
+      if (error) {
+        console.error('Error removing admin assignment:', error);
+        toast.error(t.removeAdminFailed);
+        return;
+      }
+
+      toast.success(t.adminRemoved);
+      
+      // Refresh communities to update the UI
+      fetchCommunities();
+    } catch (error) {
+      console.error('Error removing admin assignment:', error);
+      toast.error(t.removeAdminFailed);
+    } finally {
+      setRemovingAdmin(null);
+    }
+  };
 
   if (!hasRole('state_admin') && !hasRole('district_coordinator')) {
     return (
@@ -574,115 +616,181 @@ export default function DistrictDetail() {
           ) : filteredCommunities.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredCommunities.map((community) => (
-                <Card key={community.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-base">{community.name}</CardTitle>
-                        <CardDescription className="text-sm">
+                <Card key={community.id} className="group hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500 hover:border-l-blue-600">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-base font-semibold text-gray-900 truncate">
+                          {community.name}
+                        </CardTitle>
+                        <CardDescription className="text-xs text-gray-600 mt-1">
                           {getTypeText(community.community_type)}
                         </CardDescription>
-                      </div>
-                      <div className="flex gap-2 items-center">
-                        {community.has_admin && (
-                          <Badge variant="secondary" className="flex items-center gap-1">
-                            <UserCheck className="h-3 w-3" /> {t.adminAssigned}
+                        <div className="flex gap-1 mt-2">
+                          <Badge className={`${getStatusColor(community.status || 'active')} text-xs px-2 py-0.5`} variant="secondary">
+                            {getStatusText(community.status)}
                           </Badge>
-                        )}
-                        <Badge className={getStatusColor(community.status || 'active')} variant="secondary">
-                          {getStatusText(community.status)}
-                        </Badge>
-                        {canManage && !community.has_admin && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedCommunity(community);
-                              setShowAssignModal(true);
-                            }}
-                          >
-                            <UserPlus className="h-4 w-4 mr-1" /> Assign Admin
-                          </Button>
-                        )}
-                        {canManage && (
-                          <>
-                            <Button size="icon" variant="ghost" aria-label="Edit community"
-                              onClick={() => setEditCommunityId(community.id)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button size="icon" variant="ghost" aria-label="Delete community" onClick={() => setDeleteTarget(community)}>
-                                  <Trash2 className="h-4 w-4 text-red-600" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete community?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action will deactivate the community "{deleteTarget?.name}". You can re-create it later if needed.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel onClick={() => setDeleteTarget(null)}>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={async () => {
-                                    if (!deleteTarget) return;
-                                    const { error } = await supabase
-                                      .from('communities')
-                                      .update({ is_active: false })
-                                      .eq('id', deleteTarget.id);
-                                    if (error) {
-                                      toast.error('Failed to delete community');
-                                      return;
-                                    }
-                                    setCommunities(prev => prev.filter(c => c.id !== deleteTarget.id));
-                                    setFilteredCommunities(prev => prev.filter(c => c.id !== deleteTarget.id));
-                                    setDeleteTarget(null);
-                                    toast.success('Community deleted');
-                                  }}>Delete</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </>
-                        )}
+                          {community.has_admin ? (
+                            <Badge variant="default" className="bg-green-100 text-green-800 border-green-200 text-xs px-2 py-0.5">
+                              <UserCheck className="h-3 w-3 mr-1" /> {t.adminAssigned}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-xs px-2 py-0.5">
+                              <UserPlus className="h-3 w-3 mr-1" /> {t.unassigned}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
+                      {canManage && (
+                        <div className="flex gap-1">
+                          <Button size="icon" variant="ghost" className="h-7 w-7 opacity-60 hover:opacity-100"
+                            onClick={() => setEditCommunityId(community.id)}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="icon" variant="ghost" className="h-7 w-7 opacity-60 hover:opacity-100 hover:text-red-600" 
+                                onClick={() => setDeleteTarget(community)}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete community?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action will deactivate the community "{deleteTarget?.name}". You can re-create it later if needed.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => setDeleteTarget(null)}>Cancel</AlertDialogCancel>
+                                <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={async () => {
+                                  if (!deleteTarget) return;
+                                  const { error } = await supabase
+                                    .from('communities')
+                                    .update({ is_active: false })
+                                    .eq('id', deleteTarget.id);
+                                  if (error) {
+                                    toast.error('Failed to delete community');
+                                    return;
+                                  }
+                                  setCommunities(prev => prev.filter(c => c.id !== deleteTarget.id));
+                                  setFilteredCommunities(prev => prev.filter(c => c.id !== deleteTarget.id));
+                                  setDeleteTarget(null);
+                                  toast.success('Community deleted');
+                                }}>Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      )}
                     </div>
                   </CardHeader>
-                  <CardContent className="pt-2">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-2 text-sm flex-1">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">{t.totalUnits}:</span>
-                            <span className="font-medium">{community.total_units || 0}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">{t.occupancy}:</span>
-                            <span className="font-medium">
-                              {community.total_units 
-                                ? `${Math.round(((community.occupied_units || 0) / community.total_units) * 100)}%`
-                                : '0%'
-                              }
-                            </span>
-                          </div>
-                          {community.has_admin && (
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">{t.adminLabel}:</span>
-                              <span className="font-medium">{community.admin_name || '-'}</span>
-                            </div>
-                          )}
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">{t.established}:</span>
-                            <span className="font-medium">
-                              {community.established_date 
-                                ? new Date(community.established_date).getFullYear()
-                                : 'Not set'
-                              }
-                            </span>
-                          </div>
+                  <CardContent className="pt-0">
+                    <div className="space-y-2">
+                      {/* Statistics */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="text-center p-2 bg-gray-50 rounded-lg">
+                          <div className="text-lg font-bold text-gray-900">{community.total_units || 0}</div>
+                          <div className="text-xs text-gray-600">{t.totalUnits}</div>
                         </div>
-                        
+                        <div className="text-center p-2 bg-gray-50 rounded-lg">
+                          <div className="text-lg font-bold text-gray-900">
+                            {community.total_units 
+                              ? `${Math.round(((community.occupied_units || 0) / community.total_units) * 100)}%`
+                              : '0%'
+                            }
+                          </div>
+                          <div className="text-xs text-gray-600">{t.occupancy}</div>
+                        </div>
                       </div>
+
+                      {/* Admin Info */}
+                      {community.has_admin && (
+                        <div className="p-2 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <UserCheck className="h-3 w-3 text-green-600" />
+                            <span className="text-xs font-medium text-green-800">{t.adminLabel}</span>
+                          </div>
+                          <div className="text-xs text-green-700 mt-1 truncate">{community.admin_name || '-'}</div>
+                        </div>
+                      )}
+
+                      {/* Established Date */}
+                      <div className="text-xs text-gray-500">
+                        {t.established}: {community.established_date 
+                          ? new Date(community.established_date).getFullYear()
+                          : 'Not set'
+                        }
+                      </div>
+
+                      {/* Action Buttons */}
+                      {canManage && (
+                        <div className="flex gap-1 pt-2">
+                          {!community.has_admin ? (
+                            <Button 
+                              size="sm" 
+                              className="flex-1 bg-blue-600 hover:bg-blue-700 text-xs h-8"
+                              onClick={() => {
+                                setSelectedCommunity(community);
+                                setShowAssignModal(true);
+                              }}
+                            >
+                              <UserPlus className="h-3 w-3 mr-1" />
+                              Assign Admin
+                            </Button>
+                          ) : (
+                            <>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                className="flex-1 text-xs h-8"
+                                onClick={() => {
+                                  setCommunityToReassign(community);
+                                  setShowReassignModal(true);
+                                }}
+                              >
+                                <Edit className="h-3 w-3 mr-1" />
+                                {t.reassignAdmin}
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 px-2"
+                                    disabled={removingAdmin === community.id}
+                                  >
+                                    {removingAdmin === community.id ? (
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                      <UserMinus className="h-3 w-3" />
+                                    )}
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>{t.removeAdmin}</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      {t.confirmRemoveAdmin}
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                      className="bg-red-600 hover:bg-red-700"
+                                      onClick={() => handleRemoveAdmin(community.id)}
+                                    >
+                                      {t.removeAdmin}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -727,6 +835,32 @@ export default function DistrictDetail() {
         onSuccess={() => {
           // Refresh any community admin data if needed
           fetchCommunities();
+        }}
+      />
+      
+      {/* Reassign Admin Modal - reuses the same component */}
+      <AssignCommunityAdminModal
+        open={showReassignModal}
+        onOpenChange={setShowReassignModal}
+        community={communityToReassign}
+        districtId={id!}
+        onSuccess={() => {
+          // Refresh community data after reassignment
+          fetchCommunities();
+          setCommunityToReassign(null);
+        }}
+      />
+      
+      {/* Reassign Admin Modal */}
+      <AssignCommunityAdminModal
+        open={showReassignModal}
+        onOpenChange={setShowReassignModal}
+        community={communityToReassign}
+        districtId={id!}
+        onSuccess={() => {
+          // Refresh any community admin data if needed
+          fetchCommunities();
+          setCommunityToReassign(null);
         }}
       />
     </div>
