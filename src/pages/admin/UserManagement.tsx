@@ -3263,8 +3263,8 @@ export default function UserManagement() {
                 </div>
               </div>
 
-              {/* Household Members Section - hidden for tenants */}
-              {!['guest','tenant'].includes(selectedUser.role as string) && (
+              {/* Household Members Section - only for resident */}
+              {['resident'].includes(selectedUser.role as string) && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="text-lg font-semibold">
