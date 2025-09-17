@@ -36,6 +36,7 @@ export interface User {
   email: string;
   associated_community_ids: string[];
   active_community_id: string;
+  district_id: string;
   district: string;
   community: string;
   user_role: UserRole; // primary role for display
@@ -194,6 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: profileData?.email || "",
         associated_community_ids: [],
         active_community_id: profileData?.community_id || "",
+        district_id: profileData?.district_id || "",
         district: districtResult.data?.name || "",
         community: communityResult.data?.name || "",
         user_role: primaryRole,

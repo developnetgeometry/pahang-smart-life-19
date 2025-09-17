@@ -686,6 +686,7 @@ export default function Marketplace() {
 
               <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                 <DialogTrigger asChild>
+                  {!hasRole("resident") && !hasRole("tenant") && !hasRole("guest") && (
                   <Button className="w-full sm:w-auto">
                     <Plus className="h-4 w-4 mr-2" />
                     <span className="hidden sm:inline">{t.newListing}</span>
@@ -693,6 +694,7 @@ export default function Marketplace() {
                       {language === "en" ? "New" : "Baru"}
                     </span>
                   </Button>
+                  )}
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[525px]">
                   <DialogHeader>

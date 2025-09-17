@@ -186,11 +186,13 @@ export function AppSidebar() {
           icon: Building,
         });
       }
-      servicesItems.push({
-        title: t("myListings"),
-        url: "/my-listings",
-        icon: Package,
-      });
+      if (!hasRole("resident") && !hasRole("tenant") && !hasRole("guest")) {
+        servicesItems.push({
+          title: t("myListings"),
+          url: "/my-listings",
+          icon: Package,
+        });
+      }
     }
 
     // Add facilities if module is enabled (exclude security officers)

@@ -198,6 +198,13 @@ async function sendUserEmail({
 }
 
 async function assignUserRole(userId: string, role: string, context: AdminContext) {
+
+  await context.supabaseAdmin
+    .from("enhanced_user_roles")
+    .delete()
+    .eq('user_id', userId)
+    .eq('role', 'resident');
+    
   const { error: roleUpsertError } = await context.supabaseAdmin
     .from("enhanced_user_roles")
     .upsert({

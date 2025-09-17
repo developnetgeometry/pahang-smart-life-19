@@ -97,6 +97,7 @@ export default function ActivePanicAlerts() {
         .from("panic_alerts")
         .select(`*`)
         .eq("alert_status", "active")
+        .eq("community_id", user?.active_community_id)
         .order("created_at", { ascending: false })
         .limit(10);
 

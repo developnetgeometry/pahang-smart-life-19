@@ -847,6 +847,29 @@ export default function Login() {
                 authData.user.id
               );
 
+              if (selectedRole === 'service_provider') {
+                const { error: applicationError } = await supabase
+                  .from('service_provider_applications')
+                  .insert({
+                    applicant_id: authData.user.id,
+                    district_id: districtId?.replace('district-', '') || districtId,
+                    business_name: businessName.trim(),
+                    business_type: businessType.trim(),
+                    business_description: `Service provider registered via signup`,
+                    contact_person: fullName.trim(),
+                    contact_phone: phone.trim(),
+                    contact_email: email.trim(),
+                    business_address: location.trim(),
+                    experience_years: parseInt(yearsOfExperience) || 0,
+                    status: 'pending'
+                  });
+
+                if (applicationError) {
+                  console.error('Service provider application error:', applicationError);
+                  throw new Error(`Service provider application failed: ${applicationError.message}`);
+                }
+              }
+
               // Assign selected role using enhanced_user_roles table
               const roleData = {
                 user_id: authData.user.id,

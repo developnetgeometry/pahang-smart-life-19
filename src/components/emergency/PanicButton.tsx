@@ -25,7 +25,8 @@ export default function PanicButton() {
   const [progress, setProgress] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const progressRef = useRef<NodeJS.Timeout | null>(null);
-  const { communityId } = useModuleAccess();
+  const communityId = user?.active_community_id || null;
+  const districtId = user?.district_id || null;
   const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN as string;
   const TG_API = TELEGRAM_BOT_TOKEN ? `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}` : "";
 
@@ -238,7 +239,7 @@ export default function PanicButton() {
           variant: 'destructive',
         });
       }
-
+        console.log("User object:", user);
       // Create panic alert in database
       const { data: panicAlert, error } = await supabase
         .from('panic_alerts')
@@ -248,7 +249,8 @@ export default function PanicButton() {
           location_longitude: currentLocation?.longitude,
           location_address: currentLocation?.address,
           alert_status: 'active',
-          district_id: null // Allow null since user might not have district assigned yet
+          district_id: districtId,
+          community_id: communityId,
         })
         .select()
         .single();
@@ -354,6 +356,13 @@ export default function PanicButton() {
 
   return (
     <>
+    {user && (
+<pre className="bg-muted p-4 rounded text-xs overflow-auto mb-4">
+{JSON.stringify(user, null, 2)}
+</pre>
+)}
+
+can y
       <div className="fixed bottom-6 right-6 z-[9999]">
         <div className="relative">
           {/* Progress Circle */}
