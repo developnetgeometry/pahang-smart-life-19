@@ -369,15 +369,16 @@ export default function CreateCommunityModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>{t.createCommunity}</DialogTitle>
           <DialogDescription>{t.communityDetails}</DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Essential Details */}
-          <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Essential Details */}
+            <div className="space-y-4">
             {/* Community Name */}
             <div>
               <Label htmlFor="name">{t.name} *</Label>
@@ -592,27 +593,28 @@ export default function CreateCommunityModal({
             </CollapsibleContent>
           </Collapsible>
 
-          <div className="flex justify-end gap-3">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
-            >
-              {t.cancel}
-            </Button>
-            <Button type="submit" disabled={loading || checkingName || !!nameError}>
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {t.creating}
-                </>
-              ) : (
-                t.create
-              )}
-            </Button>
-          </div>
-        </form>
+            <div className="flex justify-end gap-3 pt-4 border-t bg-background sticky bottom-0">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+                disabled={loading}
+              >
+                {t.cancel}
+              </Button>
+              <Button type="submit" disabled={loading || checkingName || !!nameError}>
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {t.creating}
+                  </>
+                ) : (
+                  t.create
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
